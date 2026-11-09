@@ -12,7 +12,8 @@
 <body>
 <div class="map"></div>
 <div class="party-icon">G</div>
-<div class="chat-tpl">[Czat] Ktoś: siema<br>[Klan] Bratanek: lecimy na e2</div>
+<div class="big-messages" style="position:absolute;bottom:120px;left:0;right:0;text-align:center"></div>
+<div class="new-chat-window chat-tpl">[Czat] Ktoś: siema<br>[Klan] Bratanek: lecimy na e2</div>
 <div class="eq" id="eq"></div>
 <div class="loot-wnd" id="loot"><div class="item item-id-900">łup</div><div class="item item-id-901">łup</div></div>
 <script>
@@ -31,25 +32,36 @@
     15: mkItem(15,'Legendarny pas',13,0,'rarity=legendary;legbon=curse'),
     16: mkItem(16,'Mikstura życia',16,0,'leczy=5000'),
   };
-  function Other(d){ this.d=d; }
-  Other.prototype.createMenu = function(){ Engine.interface.showPopupMenu([['Atakuj '+this.d.nick, ()=>{}], ['Rozmawiaj', ()=>{}]], {}); };
+  // jak w prawdziwej grze: metody przypięte do każdego gracza osobno, relacje jako liczby
+  function Other(d){
+    this.d=d;
+    this.oncontextmenu = () => Engine.interface.showPopupMenu([['Atakuj', ()=>{}], ['Pokaż ekwipunek', ()=>this.showEq()], ['Zaproś do grupy', ()=>{}]], {}, {});
+    this.onhover = () => {};
+    this.showEq = () => {
+      const w = document.createElement('div'); w.className = 'c-window border-window showeq-window';
+      w.innerHTML = '<div class="close-button"></div>' + [1,2,15].map(i => '<div class="item item-id-'+i+'-showeq"></div>').join('');
+      w.querySelector('.close-button').onclick = () => w.remove();
+      setTimeout(() => document.body.appendChild(w), 200);
+    };
+  }
   const OTH = {
-    101: new Other({id:101,nick:'Wrogus',lvl:82,prof:'w',x:11,y:10,relation:'en',clan:{id:7,name:'Złe Chłopaki'}}),
-    102: new Other({id:102,nick:'Bratanek',lvl:80,prof:'m',x:10,y:11,relation:'cl',clan:{id:5,name:'Moi'}}),
-    103: new Other({id:103,nick:'Kumpel',lvl:79,prof:'t',x:12,y:10,relation:'fr'}),
-    104: new Other({id:104,nick:'Obcy',lvl:85,prof:'h',x:20,y:20,relation:''}),
-    105: new Other({id:105,nick:'Sojusznik',lvl:81,prof:'p',x:9,y:9,relation:'cl-fr'}),
+    101: new Other({id:101,nick:'Wrogus',lvl:82,prof:'w',x:11,y:10,relation:1,clan:{id:7,name:'Złe Chłopaki'}}),
+    102: new Other({id:102,nick:'Bratanek',lvl:80,prof:'m',x:10,y:11,relation:4,clan:{id:5,name:'Moi'}}),
+    103: new Other({id:103,nick:'Kumpel',lvl:79,prof:'t',x:12,y:10,relation:2}),
+    104: new Other({id:104,nick:'Obcy',lvl:85,prof:'h',x:20,y:20,relation:1}),
+    105: new Other({id:105,nick:'Sojusznik',lvl:81,prof:'p',x:9,y:9,relation:5}),
   };
   window.Engine = {
     hero: { d: { id: 1, nick: 'Tester', lvl: 80, x: 10, y: 10, prof: 'b', clan: { id: 5 } } },
     map: { d: { id: 33, name: 'Ithan', pvp: 2 } },
-    others: { check: () => OTH },
+    others: { check: () => OTH, getById: (id) => OTH[id] },
     items: { fetchLocationItems: () => Object.values(ITEMS), getItemById: (id) => ITEMS[id] },
     party: { getMembers: () => [1, 102, 103] },
-    battle: { show: false },
+    battle: { _s: false, isBattleShow(){ return this._s; }, show(){} },
     interface: { showPopupMenu(menu){ window.LAST_MENU = menu; } },
     communication: { parseJSON(d){ return d; } },
   };
+  window.message = function(t){ const m = document.createElement('div'); m.className = 'message'; m.textContent = t; document.querySelector('.big-messages').appendChild(m); setTimeout(()=>m.remove(), 3000); };
   window._g = function(task, cb){
     SENT.push(task);
     let resp = {};
