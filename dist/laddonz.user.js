@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.0
+// @version      1.1.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Napad, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -124,6 +124,7 @@ const config = {
       panelPos: null,
       accent: '#7c5cff',
       glass: 0.55,          // przezroczystość tła panelu
+      menuSelector: '.popup-menu\n.menu-wrapper\n[class*="popup-menu"]\n[class*="context-menu"]', // menu prawego przycisku gry (zapas)
     },
     commands: {},           // nadpisania szablonów komend (patrz net.js)
     addons: {},
@@ -458,8 +459,9 @@ const keys = {
 function toast(msg, type = 'info', ms = 3200) {
   let host = document.getElementById('mp-toasts');
   if (!host) { host = el('div', { id: 'mp-toasts' }); document.body.appendChild(host); }
-  const t = el('div', { class: `mp-toast mp-toast-${type}` }, el('span', { class: 'mp-toast-dot' }), el('span', null, msg));
+  const t = el('div', { class: `mp-toast mp-toast-${type}` }, msg);
   host.appendChild(t);
+  while (host.children.length > 4) host.firstChild.remove();
   requestAnimationFrame(() => t.classList.add('in'));
   setTimeout(() => { t.classList.remove('in'); setTimeout(() => t.remove(), 300); }, ms);
 }
@@ -488,6 +490,7 @@ const DEFAULT_COMMANDS = {
   useItem:      { t: 'moveitem&st=1&id={id}', destructive: false, label: 'Użycie przedmiotu', how: 'Użyj (2× klik) dowolnej mikstury.' },
   eqSet:        { t: '', destructive: false, label: 'Zmiana zestawu', how: 'Przełącz ręcznie zestaw ekwipunku.' },
   otherEq:      { t: '', destructive: false, label: 'Podgląd EQ gracza', how: 'Kliknij u gracza „Pokaż ekwipunek".' },
+  friendAdd:    { t: '', destructive: false, label: 'Dodanie do znajomych', how: 'Dodaj ręcznie kogoś do znajomych.' },
   destroyItem:  { t: '', destructive: true, label: 'Usunięcie przedmiotu', how: 'Usuń ręcznie JEDEN bezwartościowy przedmiot.' },
   enhance:      { t: '', destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
 };
@@ -545,35 +548,85 @@ const net = {
     bus.emit('log');
   },
 
-  /** Owinięcie window._g — instalowane raz. */
+  /**
+   * Podpięcie pod wysyłanie komend gry.
+   * Nie zakładamy, że gra używa window._g — owijamy też WSZYSTKIE funkcje w Engine.communication,
+   * które dostają komendę w postaci tekstu „coś&a=…". Pierwsza (zewnętrzna) funkcja, przez którą gra
+   * faktycznie wysyła komendę, zostaje zapamiętana jako „transport" i przez nią panel wysyła swoje komendy.
+   * Bezpieczniki (Bratan) działają na każdej z tych dróg.
+   */
   install() {
-    if (this.origG || typeof W._g !== 'function') return !!this.origG;
-    const orig = W._g;
-    this.origG = orig;
+    let any = false;
+    if (typeof W._g === 'function') {
+      if (!this.origG) this.origG = W._g.__mpOrig || W._g;
+      this.wrapTaskFn(W, '_g', 'window._g');
+      any = true;
+    }
+    const c = E() && E().communication;
+    if (c) {
+      const names = new Set();
+      for (let o = c; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) Object.getOwnPropertyNames(o).forEach((n) => names.add(n));
+      for (const n of names) {
+        if (n === 'constructor' || /parse|success|dispatch|json|response|receive|onmessage/i.test(n)) continue;
+        try { if (typeof c[n] === 'function') { this.wrapTaskFn(c, n, 'communication.' + n); any = true; } } catch {}
+      }
+    }
+    this.hookResponses();
+    this.installed = any;
+    return any;
+  },
+  installed: false,
+  transport: null,     // { obj, name, orig, label } — droga, którą gra wysyła komendy
+  _depth: 0,
+  _lastSniff: { task: '', t: 0 },
+
+  isTask(x) { return typeof x === 'string' && /^[a-z_0-9]+&[a-z_0-9]+=/i.test(x); },
+
+  wrapTaskFn(obj, name, label) {
+    const orig = obj[name];
+    if (typeof orig !== 'function' || orig.__mpTask) return;
     const self = this;
-    const wrapped = function (task, ...rest) {
-      const t = typeof task === 'string' ? task : '';
+    const w = function (...args) {
+      const t = self.isTask(args[0]) ? args[0] : null;
+      if (!t) return orig.apply(this, args);
       if (!self._ours) {
-        self.stats.gameCalls++;
-        if (self.sniffing && t) {
-          self.sniff.unshift({ t: now(), task: t });
-          if (self.sniff.length > 40) self.sniff.length = 40;
-          bus.emit('sniff');
+        if (self._depth === 0) {
+          self.transport = { obj, name, orig, label, ctx: this };
+          if (!(self._lastSniff.task === t && now() - self._lastSniff.t < 80)) {
+            self._lastSniff = { task: t, t: now() };
+            self.stats.gameCalls++;
+            if (self.sniffing) {
+              self.sniff.unshift({ t: now(), task: t, via: label });
+              if (self.sniff.length > 40) self.sniff.length = 40;
+              bus.emit('sniff');
+            }
+          }
+        }
+        const g = self.checkGuards(t);
+        if (g) {
+          self.stats.blocked++;
+          self.pushLog({ kind: 'block', task: t, msg: g.reason, src: g.src || 'bezpiecznik' });
+          toast(g.reason, 'bad');
+          return;
         }
       }
-      const g = t && self.checkGuards(t);
-      if (g) {
-        self.stats.blocked++;
-        self.pushLog({ kind: 'block', task: t, msg: g.reason, src: g.src || 'bezpiecznik' });
-        toast(g.reason, 'warn');
-        return;
-      }
-      return orig.call(this, task, ...rest);
+      self._depth++;
+      try { return orig.apply(this, args); } finally { self._depth--; }
     };
-    for (const k of Object.keys(orig)) { try { wrapped[k] = orig[k]; } catch {} }
-    W._g = wrapped;
-    this.hookResponses();
-    return true;
+    for (const k of Object.keys(orig)) { try { w[k] = orig[k]; } catch {} }
+    w.__mpTask = true; w.__mpOrig = orig;
+    try { obj[name] = w; } catch {}
+  },
+
+  /** Wysyła komendę tą samą drogą, której używa gra. */
+  rawSend(task, cb) {
+    const tr = this.transport;
+    this._ours = true;
+    try {
+      if (tr) return tr.orig.call(tr.ctx && tr.ctx !== W ? tr.ctx : tr.obj, task, cb);
+      if (this.origG) return this.origG.call(W, task, cb);
+      throw new Error('Nie znaleziono funkcji wysyłającej komendy gry');
+    } finally { this._ours = false; }
   },
 
   /**
@@ -615,16 +668,16 @@ const net = {
         this.lastSent = now();
         const { task, opts } = job;
 
-        if (!this.origG && !this.install()) {
-          this.pushLog({ kind: 'error', task, msg: 'Brak funkcji _g gry', src: opts.src });
-          job.resolve({ ok: false, error: 'no _g' });
+        if (!this.installed && !this.install()) {
+          this.pushLog({ kind: 'error', task, msg: 'Nie znaleziono funkcji wysyłającej komendy gry', src: opts.src });
+          job.resolve({ ok: false, error: 'no transport' });
           continue;
         }
         const g = this.checkGuards(task);
         if (g) {
           this.stats.blocked++;
           this.pushLog({ kind: 'block', task, msg: g.reason, src: g.src || opts.src });
-          toast(g.reason, 'warn');
+          toast(g.reason, 'bad');
           job.resolve({ ok: false, blocked: true, error: g.reason });
           continue;
         }
@@ -638,13 +691,12 @@ const net = {
         let done = false;
         const finish = (data) => { if (done) return; done = true; try { opts.onResponse && opts.onResponse(data || {}); } catch {} job.resolve({ ok: true, data }); };
         try {
-          this._ours = true;
-          this.origG.call(W, task, (data) => finish(data));
+          this.rawSend(task, (data) => finish(data));
         } catch (e) {
           this.pushLog({ kind: 'error', task, msg: String(e), src: opts.src });
           done = true;
           job.resolve({ ok: false, error: String(e) });
-        } finally { this._ours = false; }
+        }
         // jeśli gra nie wywoła callbacka, po 1.5 s uznajemy żądanie za wysłane
         setTimeout(() => finish(this._lastData), 1500);
       }
@@ -739,6 +791,11 @@ function templatize(name, task) {
     });
     return t;
   }
+  const nicks = game.others().map((p) => p.nick).filter(Boolean);
+  t = t.replace(/=([^&]+)(?=&|$)/g, (m, v) => {
+    let dv = v; try { dv = decodeURIComponent(v); } catch {}
+    return nicks.some((n) => n.toLowerCase() === dv.toLowerCase()) ? '={nick}' : m;
+  });
   return t.replace(/=(-?\d+)(?=&|$)/g, (m, id) => (itemIds.has(id) || otherIds.has(id) || /^\d{4,}$/.test(id) ? '={id}' : m));
 }
 
@@ -771,7 +828,7 @@ const ICON_PATHS = {
   ulepszarka: '<path d="M3 21l8.5-8.5"/><path d="M13.5 4.5l6 6"/><path d="M11 7l6 6-2 2-6-6z"/><path d="M19 3l.6 1.4L21 5l-1.4.6L19 7l-.6-1.4L17 5l1.4-.6z"/><path d="M5 4l.4 1 1 .4-1 .4L5 7l-.4-1.2-1-.4 1-.4z"/>',
   minichat: '<path d="M4 5h16v10.5H9l-5 4z"/><path d="M14 10.5h3.5M14 10.5v-3.5"/><path d="M8 8.5l2.5 2.5"/>',
   // interfejs
-  logo: '<path d="M12 2.5l8.5 5v9L12 21.5l-8.5-5v-9z"/><path d="M12 7.5l4 2.3v4.4L12 16.5l-4-2.3V9.8z"/>',
+  logo: '<path d="M12 2.5l8.5 5v9L12 21.5l-8.5-5v-9z"/><path d="M10 7.8v8.4h5" stroke-width="2.3"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
   diag: '<path d="M3 12h4l2.5-6 5 12 2.5-6H21"/>',
@@ -828,7 +885,7 @@ const CSS = `
 .mp-side{width:250px;border-right:1px solid var(--mp-line);display:flex;flex-direction:column;min-height:0}
 .mp-search{margin:10px;display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:11px;background:rgba(255,255,255,.06);color:var(--mp-dim)}
 .mp-search input{all:unset;flex:1;color:var(--mp-fg);font-size:12.5px}
-.mp-list{overflow:auto;padding:0 8px 10px;flex:1}
+.mp-list{overflow-y:auto;overflow-x:hidden;padding:0 6px 10px 8px;margin:0 2px 8px 0;flex:1;overscroll-behavior:contain}
 .mp-row{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:12px;cursor:pointer;margin-bottom:2px}
 .mp-row:hover{background:rgba(255,255,255,.05)}
 .mp-row.sel{background:rgba(255,255,255,.09);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
@@ -836,7 +893,7 @@ const CSS = `
 .mp-row.off .nm{color:var(--mp-dim);font-weight:500}
 .mp-tile{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;flex:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 12px rgba(0,0,0,.25)}
 .mp-row.off .mp-tile{filter:grayscale(.85) brightness(.75)}
-.mp-main{flex:1;overflow:auto;padding:18px 22px;min-width:0}
+.mp-main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 18px 18px 22px;min-width:0;margin:6px 4px 6px 0;overscroll-behavior:contain}
 .mp-h{display:flex;align-items:center;gap:14px;margin-bottom:6px}
 .mp-h .mp-tile{width:46px;height:46px;border-radius:14px}
 .mp-h h2{margin:0;font-size:18px}
@@ -904,12 +961,34 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-ctx-item{all:unset;display:block;width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:12.5px}
 .mp-ctx-item:hover{background:color-mix(in srgb,var(--mp-accent) 35%,transparent)}
 
-/* toasty (Hey WakeUP! zmienia zmienne) */
-#mp-toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:2147483200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
-.mp-toast{--c:var(--mp-accent);display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:12px;background:var(--mp-toast-bg,rgba(16,17,28,.78));color:var(--mp-toast-fg,#fff);font:var(--mp-toast-weight,600) var(--mp-toast-size,13px)/1.3 var(--mp-toast-font,"Segoe UI",system-ui,sans-serif);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--mp-toast-border,rgba(255,255,255,.14));box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;transform:translateY(-8px);transition:.25s;text-shadow:var(--mp-toast-shadow,none)}
+/* powiadomienia — domyślnie jak komunikaty gry: żółty tekst na dole ekranu; Hey WakeUP! zmienia zmienne */
+#mp-toasts{position:fixed;left:50%;bottom:var(--mp-toast-bottom,140px);transform:translateX(-50%);z-index:2147483200;display:flex;flex-direction:column-reverse;gap:2px;align-items:center;pointer-events:none;max-width:70vw}
+.mp-toast{padding:var(--mp-toast-pad,1px 8px);border-radius:6px;background:var(--mp-toast-bg,transparent);color:var(--mp-toast-fg,#ffe066);font:var(--mp-toast-weight,700) var(--mp-toast-size,14px)/1.35 var(--mp-toast-font,Arial,"Segoe UI",sans-serif);border:var(--mp-toast-border,0 solid transparent);text-shadow:var(--mp-toast-shadow,0 0 3px #000,1px 1px 1px #000,-1px -1px 1px #000);opacity:0;transform:translateY(6px);transition:.25s;text-align:center}
 .mp-toast.in{opacity:1;transform:none}
-.mp-toast-dot{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
-.mp-toast-warn{--c:var(--mp-warn)}.mp-toast-bad{--c:var(--mp-bad)}.mp-toast-ok{--c:var(--mp-ok)}
+.mp-toast-warn{color:var(--mp-toast-warn,#ffb547)}.mp-toast-bad{color:var(--mp-toast-bad,#ff6b6b)}.mp-toast-ok{color:var(--mp-toast-ok,var(--mp-toast-fg,#ffe066))}
+
+/* przewijanie i suwaki w stylu panelu */
+.mp-glass ::-webkit-scrollbar,.mp-glass::-webkit-scrollbar{width:8px;height:8px}
+.mp-glass ::-webkit-scrollbar-track,.mp-glass::-webkit-scrollbar-track{background:transparent;margin:10px 0}
+.mp-glass ::-webkit-scrollbar-thumb,.mp-glass::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+.mp-glass ::-webkit-scrollbar-thumb:hover{background-color:color-mix(in srgb,var(--mp-accent) 70%,transparent)}
+.mp-glass ::-webkit-scrollbar-corner{background:transparent}
+.mp-glass *{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+.mp-range{-webkit-appearance:none;appearance:none;width:150px;height:22px;background:transparent;cursor:pointer;margin:0 6px;padding:0}
+.mp-range::-webkit-slider-runnable-track{height:5px;border-radius:999px;background:linear-gradient(90deg,var(--mp-accent) var(--p,50%),rgba(255,255,255,.14) var(--p,50%))}
+.mp-range::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-5.5px;border-radius:50%;background:#fff;border:3px solid var(--mp-accent);box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.mp-range::-moz-range-track{height:5px;border-radius:999px;background:rgba(255,255,255,.14)}
+.mp-range::-moz-range-progress{height:5px;border-radius:999px;background:var(--mp-accent)}
+.mp-range::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--mp-accent)}
+
+/* okno do wpisywania (Podpisownik itd.) */
+.mp-input-big{all:unset;box-sizing:border-box;width:100%;padding:10px 12px;border-radius:11px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.14);color:var(--mp-fg);font-size:14px}
+.mp-input-big:focus{border-color:var(--mp-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--mp-accent) 25%,transparent)}
+.mp-sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mp-sugg button{all:unset;cursor:pointer;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.07);font-size:12px}
+.mp-sugg button:hover{background:color-mix(in srgb,var(--mp-accent) 40%,transparent)}
+.mp-itemhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.mp-itemhead img{width:32px;height:32px;image-rendering:pixelated}
 
 /* nakładki na przedmioty */
 .mp-ibadge{position:absolute;pointer-events:none;z-index:5;font:700 9px/1 "Segoe UI",system-ui,sans-serif;padding:2px 3px;border-radius:4px;background:rgba(10,10,18,.82);color:#ffd36b;border:1px solid rgba(255,211,107,.45);text-shadow:0 1px 1px #000;white-space:nowrap}
@@ -939,6 +1018,14 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-prow .tag.fr{background:rgba(63,162,255,.15);color:#8cc8ff}
 .mp-prow .tag.al{background:rgba(124,92,255,.18);color:#c9bbff}
 .mp-prow .tag.en{background:rgba(255,93,122,.15);color:var(--mp-bad)}
+.mp-prow{cursor:pointer}
+.mp-prow.open{background:color-mix(in srgb,var(--mp-accent) 22%,transparent)}
+.mp-plist.mini{min-width:0}
+.mp-plist.mini .mp-prow{padding:3px 6px;gap:6px}
+.mp-pcard{margin:-1px 0 4px;padding:8px 9px;border-radius:0 0 10px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-top:0}
+.mp-pinfo{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--mp-dim)}
+.mp-pinfo .tag{font-size:10px;padding:1px 6px;border-radius:999px}
+.mp-pinfo .tag.cl{background:rgba(61,220,151,.15);color:var(--mp-ok)}.mp-pinfo .tag.fr{background:rgba(63,162,255,.15);color:#8cc8ff}.mp-pinfo .tag.al{background:rgba(124,92,255,.18);color:#c9bbff}.mp-pinfo .tag.en{background:rgba(255,93,122,.15);color:var(--mp-bad)}
 .mp-mini{all:unset;cursor:pointer;padding:3px 7px;border-radius:7px;background:rgba(255,255,255,.08);font-size:11px}
 .mp-mini:hover{background:var(--mp-accent)}
 .mp-filters{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
@@ -1078,6 +1165,28 @@ function confirmBox({ title, html, items, okText = 'Potwierdź', danger = false,
   });
 }
 
+/* ───────── ładne okno do wpisania tekstu (zamiast prompt()) ───────── */
+function promptBox({ title, label, value = '', placeholder = '', suggestions = [], head = null, maxLength = 40, okText = 'Zapisz', allowClear = false }) {
+  return new Promise((resolve) => {
+    const inp = el('input', { class: 'mp-input-big', value, placeholder, maxlength: maxLength });
+    const ok = el('button', { class: 'mp-btn pri' }, okText);
+    const cancel = el('button', { class: 'mp-btn' }, 'Anuluj');
+    const clear = allowClear && value ? el('button', { class: 'mp-btn bad', style: { marginRight: 'auto' } }, 'Usuń') : null;
+    const sugg = suggestions.length ? el('div', { class: 'mp-sugg' }, suggestions.map((s) => el('button', { onclick: () => { inp.value = s; inp.focus(); } }, s))) : null;
+    const bg = el('div', { class: 'mp-modal-bg' }, el('div', { class: 'mp-modal mp-glass', style: { width: '380px' } },
+      el('h3', null, title), head, label ? el('div', { class: 'mp-dim', style: { margin: '0 0 6px' } }, label) : null, inp, sugg,
+      el('div', { class: 'mp-btns', style: { justifyContent: 'flex-end', marginTop: '14px' } }, clear, cancel, ok)));
+    const done = (v) => { bg.remove(); resolve(v); };
+    ok.onclick = () => done(inp.value.trim());
+    cancel.onclick = () => done(null);
+    if (clear) clear.onclick = () => done('');
+    bg.addEventListener('mousedown', (e) => { if (e.target === bg) done(null); });
+    inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') done(inp.value.trim()); if (e.key === 'Escape') done(null); });
+    document.body.appendChild(bg);
+    setTimeout(() => { inp.focus(); inp.select(); }, 30);
+  });
+}
+
 function grad(c) {
   const [a, b] = Array.isArray(c) ? c : [c || '#7c5cff', c || '#5b8cff'];
   return `linear-gradient(135deg, ${a}, ${b})`;
@@ -1087,6 +1196,7 @@ MP.addons = addons;
 MP.defineAddon = defineAddon;
 MP.floatWin = floatWin;
 MP.confirmBox = confirmBox;
+MP.promptBox = promptBox;
 
 // ═══ src/core/menus.js ═══
 /* ───────────────────────── menus.js ─────────────────────────
@@ -1135,33 +1245,80 @@ const menus = {
     }, true);
 
     // 2) próba założenia haków (gra ładuje się asynchronicznie — ponawiamy)
+    let n = 0;
     const tick = setInterval(() => {
       this.hookPopup();
       this.hookOthers();
-      if (this.hooked && this.otherHooked) clearInterval(tick);
+      if (++n > 40) clearInterval(tick);
     }, 1500);
+    this.domFallback();
   },
 
+  /** Owijamy każdą funkcję Engine.interface z „menu"/„popup" w nazwie, która dostaje tablicę pozycji. */
   hookPopup() {
-    if (this.hooked) return;
     const I = E() && E().interface;
-    if (!I || typeof I.showPopupMenu !== 'function') return;
-    const orig = I.showPopupMenu;
+    if (!I) return;
     const self = this;
-    I.showPopupMenu = function (menu, ...rest) {
-      try {
-        if (Array.isArray(menu)) {
-          let tgt = self.last && now() - self.last.t < 700 ? self.last : null;
-          if (!tgt) tgt = self.guessPlayerFromMenu(menu);
-          if (tgt) {
-            const add = self.entriesFor(tgt.type, tgt.id);
-            add.forEach((x) => menu.push(self.toGameEntry(menu, x)));
-          }
-        }
-      } catch (e) { console.warn('[laddonz] menu', e); }
-      return orig.call(this, menu, ...rest);
-    };
-    this.hooked = true;
+    const names = new Set();
+    for (let o = I; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) Object.getOwnPropertyNames(o).forEach((n) => names.add(n));
+    for (const n of names) {
+      if (!/menu|popup/i.test(n)) continue;
+      let f; try { f = I[n]; } catch { continue; }
+      if (typeof f !== 'function' || f.__mpMenu) continue;
+      const w = function (...args) {
+        try {
+          const menu = args.find((a) => Array.isArray(a) && a.length && a.every((m) => Array.isArray(m) || (m && typeof m === 'object')));
+          if (menu) self.inject(menu);
+        } catch (e) { console.warn('[laddonz] menu', e); }
+        return f.apply(this, args);
+      };
+      w.__mpMenu = true;
+      try { I[n] = w; this.hooked = true; this.hookName = n; } catch {}
+    }
+  },
+
+  inject(menu) {
+    let tgt = this.last && now() - this.last.t < 800 ? this.last : null;
+    if (!tgt) tgt = this.guessPlayerFromMenu(menu);
+    if (!tgt) return;
+    const add = this.entriesFor(tgt.type, tgt.id);
+    add.forEach((x) => menu.push(this.toGameEntry(menu, x)));
+    if (add.length) this.lastInject = now();
+  },
+  lastInject: 0,
+
+  /**
+   * Zapas: gdy gra rysuje menu w DOM bez funkcji, którą da się owinąć — dopisujemy pozycje do gotowego menu.
+   * Gracz rozpoznawany po nicku w treści menu.
+   */
+  domFallback() {
+    let armed = 0;
+    const arm = () => { armed = now(); };
+    document.addEventListener('contextmenu', arm, true);
+    document.addEventListener('mousedown', (e) => { if (e.button === 2) arm(); }, true);
+    new MutationObserver(debounce(() => {
+      if (!armed || now() - armed > 1500 || now() - this.lastInject < 1500) return;
+      const sel = (config.data.global.menuSelector || '').split('\n').map((x) => x.trim()).filter(Boolean).join(',');
+      if (!sel) return;
+      const m = $$(sel).filter((n) => isVisible(n) && !n.closest('#mp-ctx') && !n.dataset.mpDone).pop();
+      if (!m) return;
+      const txt = (m.textContent || '').toLowerCase();
+      const p = game.others().find((o) => o.nick && txt.includes(o.nick.toLowerCase()));
+      if (!p) return;
+      const entries = this.entriesFor('player', p.id);
+      if (!entries.length) return;
+      m.dataset.mpDone = '1';
+      const items = Array.from(m.children).filter((c) => (c.textContent || '').trim());
+      const tpl = items[items.length - 1];
+      for (const x of entries) {
+        let n;
+        if (tpl) { n = tpl.cloneNode(true); n.removeAttribute('id'); n.textContent = x.label; }
+        else n = el('div', { style: { padding: '3px 8px', cursor: 'pointer' } }, x.label);
+        n.addEventListener('click', (ev) => { ev.stopPropagation(); m.style.display = 'none'; x.fn(); }, true);
+        m.appendChild(n);
+      }
+      armed = 0;
+    }, 30)).observe(document.body, { childList: true, subtree: true });
   },
 
   /** Format pozycji menu w grze: najczęściej [tekst, funkcja]; obsługujemy też obiekty. */
@@ -1196,15 +1353,27 @@ const menus = {
       const self = this;
       let n = 0;
       for (const name of Object.getOwnPropertyNames(proto)) {
-        if (!/menu|click|context/i.test(name)) continue;
+        const isMenu = /menu|click|context/i.test(name);
+        const isHover = /tip|hover|mouseover|mouseenter|onover/i.test(name);
+        if (!isMenu && !isHover) continue;
         const d = Object.getOwnPropertyDescriptor(proto, name);
         if (!d || typeof d.value !== 'function') continue;
         const orig = d.value;
         proto[name] = function (...a) {
-          try { const id = this.d && this.d.id; if (id) self.setLast('player', id); } catch {}
+          try {
+            const id = this.d && this.d.id;
+            if (id) {
+              if (isMenu) self.setLast('player', id);
+              if (isHover && !(self.hover && self.hover.id === Number(id) && now() - self.hover.t < 300)) {
+                self.hover = { id: Number(id), t: now() };
+                bus.emit('player:hover', Number(id));
+              }
+            }
+          } catch {}
           return orig.apply(this, a);
         };
         n++;
+        if (isHover) this.hoverHooked = true;
       }
       proto.__mpMenu = true;
       this.otherHooked = n > 0;
@@ -1238,10 +1407,35 @@ const ui = {
 
   start() {
     this.applyTheme();
+    this.fixWheel();
     this.launcher();
     keys.bind({ label: 'Panel: otwórz/zamknij', get: () => config.data.global.panelKey || '', fn: () => this.toggle() });
     bus.on('log', debounce(() => { if (this.panel && this.tab === 'log') this.renderMain(); }, 300));
     bus.on('sniff', debounce(() => { if (this.panel && this.tab === 'diag') this.renderMain(); }, 300));
+  },
+
+  /**
+   * Gra przechwytuje kółko myszy (zoom mapy), więc w naszych oknach przewijamy ręcznie
+   * i nie przepuszczamy zdarzenia do gry.
+   */
+  fixWheel() {
+    window.addEventListener('wheel', (e) => {
+      const root = e.target && e.target.closest && e.target.closest('.mp-glass');
+      if (!root) return;
+      let n = e.target;
+      while (n && n !== root.parentNode) {
+        if (n.nodeType === 1) {
+          const cs = getComputedStyle(n);
+          if (/(auto|scroll)/.test(cs.overflowY) && n.scrollHeight > n.clientHeight + 1) break;
+        }
+        n = n.parentNode;
+      }
+      e.stopImmediatePropagation();
+      if (n && n !== root.parentNode && n.nodeType === 1) {
+        e.preventDefault();
+        n.scrollTop += e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
+      }
+    }, { capture: true, passive: false });
   },
 
   applyTheme() {
@@ -1392,12 +1586,14 @@ const ui = {
     const checks = [
       ['Obiekt gry Engine', !!E0],
       ['Funkcja wysyłania _g', typeof W._g === 'function'],
-      ['Panel podpięty pod _g', !!net.origG],
+      ['Wysyłanie komend (droga: ' + (net.transport ? net.transport.label : (net.origG ? 'window._g' : 'brak')) + ')', !!(net.transport || net.origG)],
+      ['Komendy gry przechwycone (naciśnij X na graczu)', net.stats.gameCalls > 0],
       ['Bohater (Engine.hero)', !!game.hero()],
       ['Lista graczy (Engine.others)', !!(E0 && E0.others)],
       ['Przedmioty (Engine.items)', game.heroItems().length > 0],
       ['Odpowiedzi serwera (hak: ' + (net.respHook || 'brak') + ')', !!net.respHook],
-      ['Menu prawego przycisku (Engine.interface.showPopupMenu)', menus.hooked],
+      ['Menu prawego przycisku (' + (menus.hookName || 'brak funkcji') + ')', menus.hooked],
+      ['Najechanie na gracza (prototyp Other)', !!menus.hoverHooked],
       ['Cel menu na graczu (prototyp Other)', menus.otherHooked],
     ];
     M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Punkty zaczepienia'),
@@ -1438,7 +1634,7 @@ const ui = {
         const yes = await confirmBox({ title: 'Przypisać komendę?', okText: 'Zapisz', html: `<div>Akcja: <b>${esc(DEFAULT_COMMANDS[name].label)}</b></div><div style="margin-top:8px">Podsłuchane:</div><div class="mp-mono">${esc(s.task)}</div><div style="margin-top:8px">Szablon (zmienne w nawiasach):</div><div class="mp-mono mp-okc">${esc(tpl)}</div><div class="mp-dim" style="margin-top:8px">Jeśli szablon jest zły, popraw go ręcznie w tabeli „Komendy".</div>` });
         if (yes) { net.setCmd(name, tpl, true); toast('Komenda zweryfikowana', 'ok'); this.renderMain(); } else sel.value = '';
       };
-      sb.appendChild(el('tr', null, el('td', { class: 'mp-dim', style: { width: '62px' } }, new Date(s.t).toLocaleTimeString()), el('td', { class: 'mp-mono' }, s.task), el('td', { style: { width: '160px' } }, sel)));
+      sb.appendChild(el('tr', null, el('td', { class: 'mp-dim', style: { width: '62px' } }, new Date(s.t).toLocaleTimeString()), el('td', { class: 'mp-mono' }, s.task, el('div', { class: 'mp-dim' }, s.via || '')), el('td', { style: { width: '160px' } }, sel)));
     });
     sn.appendChild(el('table', { class: 'mp-table' }, sb));
     M.appendChild(sn);
@@ -1471,6 +1667,7 @@ const ui = {
       { key: 'perCharacter', type: 'bool', label: 'Osobne ustawienia dla każdej postaci', hint: 'Zmiana zadziała po odświeżeniu gry.' },
       { key: 'accent', type: 'color', label: 'Kolor akcentu' },
       { key: 'glass', type: 'range', label: 'Przezroczystość tła', min: 0.2, max: 0.95, step: 0.05 },
+      { key: 'menuSelector', type: 'textarea', label: 'Selektor menu prawego przycisku w grze', hint: 'Zapas, gdy opcje (np. „⚔ Napad") nie pojawiają się w menu gracza.' },
     ];
     const card = el('div', { class: 'mp-card' }, el('h3', null, 'Ogólne'));
     S.forEach((s) => card.appendChild(field(s, g, () => { save(); if (s.key === 'dryRun') this.renderAll(); })));
@@ -1523,8 +1720,10 @@ function field(s, obj, onSave) {
       break;
     case 'range': {
       const out = el('span', { class: 'mp-dim', style: { width: '36px', textAlign: 'right' } }, String(v));
-      const r = el('input', { type: 'range', min: s.min, max: s.max, step: s.step || 1, value: v, style: { width: '140px', accentColor: 'var(--mp-accent)' } });
-      r.addEventListener('input', () => { out.textContent = r.value; obj[s.key] = Number(r.value); if (s.live) s.live(Number(r.value)); });
+      const r = el('input', { class: 'mp-range', type: 'range', min: s.min, max: s.max, step: s.step || 1, value: v });
+      const paint = () => r.style.setProperty('--p', ((r.value - s.min) / (s.max - s.min)) * 100 + '%');
+      paint();
+      r.addEventListener('input', () => { paint(); out.textContent = r.value; obj[s.key] = Number(r.value); if (s.live) s.live(Number(r.value)); });
       r.addEventListener('change', () => set(Number(r.value)));
       ctrl = el('span', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, r, out);
       break;
@@ -1790,23 +1989,28 @@ function parseProtection(data) {
  */
 (() => {
   let cfg;
-  const FONTS = [['"Segoe UI",system-ui,sans-serif', 'Systemowa'], ['Georgia,serif', 'Georgia (szeryfowa)'], ['"Trebuchet MS",sans-serif', 'Trebuchet'], ['Verdana,sans-serif', 'Verdana'], ['Consolas,monospace', 'Consolas (mono)'], ['"Comic Sans MS",cursive', 'Comic Sans'], ['Impact,sans-serif', 'Impact']];
+  const FONTS = [['Arial,"Segoe UI",sans-serif', 'Jak w grze (Arial)'], ['"Segoe UI",system-ui,sans-serif', 'Systemowa'], ['Georgia,serif', 'Georgia (szeryfowa)'], ['"Trebuchet MS",sans-serif', 'Trebuchet'], ['Verdana,sans-serif', 'Verdana'], ['Consolas,monospace', 'Consolas (mono)'], ['"Comic Sans MS",cursive', 'Comic Sans'], ['Impact,sans-serif', 'Impact']];
 
+  /** Gdy dodatek jest wyłączony — powiadomienia wyglądają jak komunikaty gry (żółty tekst na dole). */
   function apply() {
     const R = document.documentElement.style;
     const on = cfg && cfg.enabled;
     const set = (k, v) => (on ? R.setProperty(k, v) : R.removeProperty(k));
     set('--mp-toast-fg', cfg.fg);
+    set('--mp-toast-warn', cfg.warn);
+    set('--mp-toast-bad', cfg.bad);
     set('--mp-toast-bg', hexA(cfg.bg, cfg.bgAlpha));
-    set('--mp-toast-border', cfg.border);
+    set('--mp-toast-pad', cfg.bgAlpha > 0 || cfg.frame ? '5px 12px' : '1px 8px');
+    set('--mp-toast-border', cfg.frame ? `1px solid ${cfg.glow}` : '0 solid transparent');
     set('--mp-toast-font', cfg.font);
     set('--mp-toast-size', cfg.size + 'px');
     set('--mp-toast-weight', cfg.bold ? '700' : '400');
-    set('--mp-toast-shadow', cfg.shadow ? '0 0 6px ' + cfg.border + ', 0 1px 2px #000' : 'none');
+    set('--mp-toast-shadow', cfg.shadow ? `0 0 8px ${cfg.glow},0 0 3px #000,1px 1px 1px #000` : '0 0 3px #000,1px 1px 1px #000,-1px -1px 1px #000');
+    set('--mp-toast-bottom', cfg.bottom + 'px');
     let st = document.getElementById('mp-wakeup-css');
     if (!st) { st = el('style', { id: 'mp-wakeup-css' }); document.head.appendChild(st); }
     const sel = (cfg.gameSelectors || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-    st.textContent = on && cfg.styleGame && sel ? `${sel}{color:${cfg.fg}!important;font-family:${cfg.font}!important;font-size:${cfg.size}px!important;font-weight:${cfg.bold ? 700 : 400}!important;${cfg.shadow ? `text-shadow:0 0 6px ${cfg.border},0 1px 2px #000!important;` : ''}}` : '';
+    st.textContent = on && cfg.styleGame && sel ? `${sel}{color:${cfg.fg}!important;font-family:${cfg.font}!important;font-size:${cfg.size}px!important;font-weight:${cfg.bold ? 700 : 400}!important;${cfg.shadow ? `text-shadow:0 0 8px ${cfg.glow},0 0 3px #000!important;` : ''}}` : '';
   }
   function hexA(hex, a) {
     const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex || '');
@@ -1816,25 +2020,30 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'],
-    desc: 'Własne kolory i czcionki powiadomień tekstowych — żeby ważny komunikat od razu rzucał się w oczy.',
-    defaults: { enabled: true, fg: '#ffffff', bg: '#10111c', bgAlpha: 0.8, border: '#7c5cff', font: '"Segoe UI",system-ui,sans-serif', size: 14, bold: true, shadow: false, styleGame: false,
+    desc: 'Domyślnie powiadomienia wyglądają jak komunikaty gry (żółty tekst na dole). Po włączeniu tego dodatku zmieniasz ich kolory, czcionkę, rozmiar, tło i położenie — także dla komunikatów samej gry.',
+    defaults: { enabled: false, fg: '#ffe066', warn: '#ffb547', bad: '#ff6b6b', bg: '#10111c', bgAlpha: 0, frame: false, glow: '#ffb547', font: 'Arial,"Segoe UI",sans-serif', size: 14, bold: true, shadow: false, bottom: 140, styleGame: false,
       gameSelectors: '.big-messages .message\n.ingame-alert\n.small-info' },
     settings: [
-      { group: 'Wygląd', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
-      { group: 'Wygląd', key: 'bg', type: 'color', label: 'Kolor tła', live: () => apply() },
-      { group: 'Wygląd', key: 'bgAlpha', type: 'range', label: 'Krycie tła', min: 0, max: 1, step: 0.05, live: () => apply() },
-      { group: 'Wygląd', key: 'border', type: 'color', label: 'Kolor obramowania / poświaty', live: () => apply() },
-      { group: 'Wygląd', key: 'font', type: 'select', label: 'Czcionka', options: FONTS },
-      { group: 'Wygląd', key: 'size', type: 'number', label: 'Rozmiar (px)', min: 9, max: 32 },
-      { group: 'Wygląd', key: 'bold', type: 'bool', label: 'Pogrubienie' },
-      { group: 'Wygląd', key: 'shadow', type: 'bool', label: 'Poświata' },
-      { group: 'Komunikaty gry', key: 'styleGame', type: 'bool', label: 'Stosuj też do komunikatów gry' },
-      { group: 'Komunikaty gry', key: 'gameSelectors', type: 'textarea', label: 'Selektory CSS komunikatów gry (po jednym w linii)', hint: 'Jeśli gra zmieni wygląd, sprawdź klasę komunikatu (F12 → wskaż element) i wpisz ją tutaj.' },
+      { group: 'Kolory', key: 'fg', type: 'color', label: 'Zwykłe powiadomienie', live: () => apply() },
+      { group: 'Kolory', key: 'warn', type: 'color', label: 'Ostrzeżenie', live: () => apply() },
+      { group: 'Kolory', key: 'bad', type: 'color', label: 'Błąd / blokada', live: () => apply() },
+      { group: 'Kolory', key: 'glow', type: 'color', label: 'Ramka / poświata', live: () => apply() },
+      { group: 'Tekst', key: 'font', type: 'select', label: 'Czcionka', options: FONTS },
+      { group: 'Tekst', key: 'size', type: 'range', label: 'Rozmiar (px)', min: 10, max: 32, live: () => apply() },
+      { group: 'Tekst', key: 'bold', type: 'bool', label: 'Pogrubienie' },
+      { group: 'Tekst', key: 'shadow', type: 'bool', label: 'Kolorowa poświata' },
+      { group: 'Tło i położenie', key: 'bg', type: 'color', label: 'Kolor tła', live: () => apply() },
+      { group: 'Tło i położenie', key: 'bgAlpha', type: 'range', label: 'Krycie tła (0 = bez tła)', min: 0, max: 1, step: 0.05, live: () => apply() },
+      { group: 'Tło i położenie', key: 'frame', type: 'bool', label: 'Ramka' },
+      { group: 'Tło i położenie', key: 'bottom', type: 'range', label: 'Odległość od dołu ekranu (px)', min: 20, max: 600, step: 10, live: () => apply() },
+      { group: 'Komunikaty gry', key: 'styleGame', type: 'bool', label: 'Zmieniaj też komunikaty gry' },
+      { group: 'Komunikaty gry', key: 'gameSelectors', type: 'textarea', label: 'Selektory komunikatów gry (po jednym w linii)', hint: 'Jeśli komunikaty gry się nie zmieniają: F12 → wskaż komunikat → wpisz jego klasę.' },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-btns' },
-        el('button', { class: 'mp-btn pri', onclick: () => toast('Tak wygląda powiadomienie — Hey WakeUP!', 'info') }, 'Podgląd'),
-        el('button', { class: 'mp-btn', onclick: () => toast('Przykładowe ostrzeżenie', 'warn') }, 'Podgląd ostrzeżenia')));
+        el('button', { class: 'mp-btn pri', onclick: () => toast('Tak wygląda powiadomienie', 'info') }, 'Podgląd'),
+        el('button', { class: 'mp-btn', onclick: () => toast('Przykładowe ostrzeżenie', 'warn') }, 'Ostrzeżenie'),
+        el('button', { class: 'mp-btn', onclick: () => toast('Bratan: zablokowano atak', 'bad') }, 'Blokada')));
     },
     init(c) { cfg = c; apply(); },
     onToggle() { apply(); },
@@ -1877,24 +2086,43 @@ function parseProtection(data) {
 
 /* ───────── MiniChat ─────────
  * Zmniejsza okno czatu: szerokość, wysokość, czcionka, przezroczystość, zwijanie pod klawisz.
+ * Okno czatu jest wykrywane automatycznie (element z „chat" w klasie, zawierający pole do pisania),
+ * a jeśli to zawiedzie — używany jest selektor z ustawień.
  */
 (() => {
-  let cfg, collapsed = false;
+  let cfg, collapsed = false, found = '';
+  function detect() {
+    $$('[data-mp-chat]').forEach((n) => n.removeAttribute('data-mp-chat'));
+    const sel = (cfg.selector || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
+    let target = null;
+    if (sel) { try { target = $$(sel).find(isVisible) || null; } catch {} }
+    if (!target) {
+      // automatycznie: największy widoczny element z „chat" w klasie, który ma w środku pole tekstowe
+      const cands = $$('[class*="chat"], [id*="chat"]').filter((n) => isVisible(n) && !n.closest('.mp-glass') && n.querySelector('input, textarea, [contenteditable]'));
+      cands.sort((a, b) => { const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return rb.width * rb.height - ra.width * ra.height; });
+      target = cands.find((n) => { const r = n.getBoundingClientRect(); return r.width < innerWidth * 0.9 && r.height < innerHeight * 0.9; }) || null;
+    }
+    if (target) {
+      target.setAttribute('data-mp-chat', '');
+      found = (target.id ? '#' + target.id : '') + (typeof target.className === 'string' ? '.' + target.className.trim().split(/\s+/).join('.') : '');
+    } else found = '';
+    return target;
+  }
   function apply() {
     let st = document.getElementById('mp-minichat-css');
     if (!st) { st = el('style', { id: 'mp-minichat-css' }); document.head.appendChild(st); }
-    if (!cfg.enabled) { st.textContent = ''; return; }
-    const sel = (cfg.selector || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-    if (!sel) { st.textContent = ''; return; }
+    if (!cfg.enabled) { st.textContent = ''; $$('[data-mp-chat]').forEach((n) => n.removeAttribute('data-mp-chat')); return; }
+    if (!detect()) { st.textContent = ''; return; }
+    const S = '[data-mp-chat]';
     st.textContent = `
-      ${sel}{width:${cfg.width}px!important;max-width:${cfg.width}px!important;${collapsed ? 'height:28px!important;overflow:hidden!important;' : `height:${cfg.height}px!important;max-height:${cfg.height}px!important;`}opacity:${cfg.opacity}!important;font-size:${cfg.font}px!important;transition:opacity .2s}
-      ${sel}:hover{opacity:1!important}
-      ${sel} *{font-size:${cfg.font}px!important}`;
+      ${S}{width:${cfg.width}px!important;max-width:${cfg.width}px!important;min-width:0!important;${collapsed ? 'height:30px!important;max-height:30px!important;overflow:hidden!important;' : `height:${cfg.height}px!important;max-height:${cfg.height}px!important;min-height:0!important;`}opacity:${cfg.opacity}!important;transition:opacity .2s}
+      ${S}:hover,${S}:focus-within{opacity:1!important}
+      ${S} *{font-size:${cfg.font}px!important}`;
   }
   defineAddon({
     id: 'minichat', name: 'MiniChat', icon: 'minichat', color: ['#5b8cff', '#3a5bd9'],
-    desc: 'Zmniejsza okno czatu według Twoich preferencji. Po najechaniu myszką czat wraca do pełnej widoczności.',
-    defaults: { width: 320, height: 160, opacity: 0.75, font: 11, key: '', selector: '.chat-tpl\n.chat-window\n#chat' },
+    desc: 'Zmniejsza okno czatu według Twoich preferencji. Po najechaniu myszką albo podczas pisania czat wraca do pełnej widoczności.',
+    defaults: { width: 320, height: 160, opacity: 0.75, font: 11, key: '', selector: '' },
     keys: [{ key: 'key', label: 'zwiń/rozwiń czat', fn: () => { collapsed = !collapsed; apply(); } }],
     settings: [
       { key: 'width', type: 'range', label: 'Szerokość (px)', min: 180, max: 700, step: 10, live: () => apply() },
@@ -1902,9 +2130,19 @@ function parseProtection(data) {
       { key: 'opacity', type: 'range', label: 'Przezroczystość', min: 0.2, max: 1, step: 0.05, live: () => apply() },
       { key: 'font', type: 'range', label: 'Czcionka (px)', min: 8, max: 16, step: 1, live: () => apply() },
       { key: 'key', type: 'key', label: 'Klawisz: zwiń/rozwiń' },
-      { key: 'selector', type: 'textarea', label: 'Selektor okna czatu', hint: 'Jeśli czat się nie zmienia: F12 → wskaż okno czatu → wpisz jego klasę (np. .chat-tpl).' },
+      { key: 'selector', type: 'textarea', label: 'Selektor okna czatu (opcjonalnie)', hint: 'Zostaw puste — czat wykrywa się sam. Wpisz tylko, gdy wykrywanie trafi w zły element.' },
     ],
-    init(c) { cfg = c; apply(); },
+    render(box) {
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Wykryte okno czatu'),
+        el('div', { class: found ? 'mp-mono mp-okc' : 'mp-warnc' }, found || 'Nie znaleziono — otwórz czat w grze i kliknij „Wykryj ponownie".'),
+        el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { apply(); ui.renderMain(); } }, 'Wykryj ponownie'))));
+    },
+    init(c) {
+      cfg = c;
+      apply();
+      // czat w NI potrafi się przerysować (zmiana zakładki, przeładowanie) — pilnujemy, żeby styl nie zniknął
+      setInterval(() => { if (cfg.enabled && !document.querySelector('[data-mp-chat]')) apply(); }, 2000);
+    },
     onToggle() { apply(); },
     onChange() { apply(); },
   });
@@ -1912,10 +2150,11 @@ function parseProtection(data) {
 
 // ═══ src/addons/ktotu_ktozlapie_cook.js ═══
 /* ───────── Kto tu jest? ─────────
- * Okno z listą graczy na mapie + wiele filtrów (nick, poziom, profesja, relacja, klan) i zapisywane zestawy filtrów.
+ * Lista graczy na mapie + filtry i zapisane zestawy filtrów. Tryb minimalny: sama lista po filtrach.
+ * Kliknięcie gracza → karta z informacjami i akcjami (EQ, Napad, zaproś, znajomi, Bratan…).
  */
 (() => {
-  let cfg, timer = null, win = null;
+  let cfg, timer = null, win = null, openId = null;
   const F0 = { nick: '', clan: '', lvlMin: 0, lvlMax: 0, rel: 'all', profs: [], sort: 'dist' };
 
   function filtered() {
@@ -1934,8 +2173,8 @@ function parseProtection(data) {
   }
 
   function open() {
-    const w = floatWin({ id: 'ktotu', title: 'Kto tu jest?', iconName: 'ktotu', color: ['#3fa2ff', '#2a6fd6'], x: 90, y: 140, width: 380, onClose: () => { clearInterval(timer); win = null; } });
-    win = w;
+    win = floatWin({ id: 'ktotu', title: 'Kto tu jest?', iconName: 'ktotu', color: ['#3fa2ff', '#2a6fd6'], x: 90, y: 140, width: cfg.minimal ? 250 : 380, onClose: () => { clearInterval(timer); win = null; } });
+    win.win.style.width = (cfg.minimal ? 250 : 380) + 'px';
     draw();
     clearInterval(timer);
     timer = setInterval(drawList, 1000);
@@ -1948,61 +2187,93 @@ function parseProtection(data) {
     const b = win.body; b.innerHTML = '';
     const f = cfg.filter;
     const save = () => { config.save(); drawList(); };
-    const inp = (k, ph, type = 'text') => { const i = el('input', { class: 'mp-in', placeholder: ph, type, value: f[k] || '' }); i.addEventListener('input', () => { f[k] = type === 'number' ? Number(i.value) || 0 : i.value; save(); }); return i; };
-    const sel = (k, opts) => { const s = el('select', { class: 'mp-in' }, opts.map(([v, l]) => { const o = el('option', { value: v }, l); if (f[k] === v) o.selected = true; return o; })); s.onchange = () => { f[k] = s.value; save(); }; return s; };
-    const profs = el('div', { class: 'mp-profs' }, Object.entries(game.PROF_NAMES).map(([k, n]) => {
-      const bt = el('button', { class: 'mp-pf' + (f.profs.includes(k) ? ' on' : ''), title: n }, n);
-      bt.onclick = () => { const i = f.profs.indexOf(k); if (i < 0) f.profs.push(k); else f.profs.splice(i, 1); bt.classList.toggle('on'); save(); };
-      return bt;
-    }));
-    // zapisane zestawy filtrów
-    const presetSel = el('select', { class: 'mp-in', style: { flex: 1 } }, el('option', { value: '' }, 'Zapisane filtry…'), Object.keys(cfg.presets).map((n) => el('option', { value: n }, n)));
-    presetSel.onchange = () => { if (!presetSel.value) return; cfg.filter = structuredClone(cfg.presets[presetSel.value]); config.save(); draw(); };
-    const presetRow = el('div', { style: { display: 'flex', gap: '6px', marginBottom: '8px' } }, presetSel,
-      el('button', { class: 'mp-mini', title: 'Zapisz obecne filtry', onclick: () => { const n = prompt('Nazwa zestawu filtrów:'); if (n) { cfg.presets[n] = structuredClone(cfg.filter); config.save(); draw(); } } }, 'Zapisz'),
-      el('button', { class: 'mp-mini', title: 'Usuń wybrany', onclick: () => { if (presetSel.value) { delete cfg.presets[presetSel.value]; config.save(); draw(); } } }, 'Usuń'),
-      el('button', { class: 'mp-mini', onclick: () => { cfg.filter = structuredClone(F0); config.save(); draw(); } }, 'Reset'));
-    b.append(presetRow, el('div', { class: 'mp-filters' },
-      inp('nick', 'Nick zawiera…'), inp('clan', 'Klan zawiera…'),
-      inp('lvlMin', 'Lvl od', 'number'), inp('lvlMax', 'Lvl do', 'number'),
-      sel('rel', [['all', 'Wszyscy'], ['enemy', 'Obcy (nie swoi)'], ['tagged', 'Oznaczeni wrogowie'], ['friendly', 'Swoi'], ['clan', 'Klan'], ['friend', 'Znajomi'], ['ally', 'Sojusz']]),
-      sel('sort', [['dist', 'Sortuj: odległość'], ['lvl', 'Sortuj: poziom'], ['nick', 'Sortuj: nick']]),
-      profs));
-    countEl = el('div', { class: 'mp-dim', style: { margin: '2px 0 6px', fontSize: '11.5px' } });
-    listBox = el('div', { class: 'mp-plist' });
-    b.append(countEl, listBox);
+    const modeBtn = el('button', { class: 'mp-mini', title: cfg.minimal ? 'Pokaż filtry' : 'Tryb minimalny (sama lista)', onclick: () => { cfg.minimal = !cfg.minimal; config.save(); open(); } }, cfg.minimal ? '⚙ filtry' : '▭ minimalny');
+    countEl = el('span', { class: 'mp-dim', style: { fontSize: '11.5px', flex: 1 } });
+    b.appendChild(el('div', { style: { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' } }, countEl, modeBtn));
+    if (!cfg.minimal) {
+      const inp = (k, ph, type = 'text') => { const i = el('input', { class: 'mp-in', placeholder: ph, type, value: f[k] || '' }); i.addEventListener('input', () => { f[k] = type === 'number' ? Number(i.value) || 0 : i.value; save(); }); i.addEventListener('keydown', (e) => e.stopPropagation()); return i; };
+      const sel = (k, opts) => { const s = el('select', { class: 'mp-in' }, opts.map(([v, l]) => { const o = el('option', { value: v }, l); if (f[k] === v) o.selected = true; return o; })); s.onchange = () => { f[k] = s.value; save(); }; return s; };
+      const profs = el('div', { class: 'mp-profs' }, Object.entries(game.PROF_NAMES).map(([k, n]) => {
+        const bt = el('button', { class: 'mp-pf' + (f.profs.includes(k) ? ' on' : ''), title: n }, n);
+        bt.onclick = () => { const i = f.profs.indexOf(k); if (i < 0) f.profs.push(k); else f.profs.splice(i, 1); bt.classList.toggle('on'); save(); };
+        return bt;
+      }));
+      const presetSel = el('select', { class: 'mp-in', style: { flex: 1 } }, el('option', { value: '' }, 'Zapisane filtry…'), Object.keys(cfg.presets).map((n) => el('option', { value: n }, n)));
+      presetSel.onchange = () => { if (!presetSel.value) return; cfg.filter = structuredClone(cfg.presets[presetSel.value]); config.save(); draw(); };
+      b.append(el('div', { style: { display: 'flex', gap: '6px', marginBottom: '8px' } }, presetSel,
+        el('button', { class: 'mp-mini', onclick: async () => { const n = await promptBox({ title: 'Zapisz filtry', label: 'Nazwa zestawu filtrów:', placeholder: 'np. wrogowie 80+' }); if (n) { cfg.presets[n] = structuredClone(cfg.filter); config.save(); draw(); } } }, 'Zapisz'),
+        el('button', { class: 'mp-mini', onclick: () => { if (presetSel.value) { delete cfg.presets[presetSel.value]; config.save(); draw(); } } }, 'Usuń'),
+        el('button', { class: 'mp-mini', onclick: () => { cfg.filter = structuredClone(F0); config.save(); draw(); } }, 'Reset')),
+      el('div', { class: 'mp-filters' },
+        inp('nick', 'Nick zawiera…'), inp('clan', 'Klan zawiera…'),
+        inp('lvlMin', 'Lvl od', 'number'), inp('lvlMax', 'Lvl do', 'number'),
+        sel('rel', [['all', 'Wszyscy'], ['enemy', 'Obcy (nie swoi)'], ['tagged', 'Oznaczeni wrogowie'], ['friendly', 'Swoi'], ['clan', 'Klan'], ['friend', 'Znajomi'], ['ally', 'Sojusz']]),
+        sel('sort', [['dist', 'Sortuj: odległość'], ['lvl', 'Sortuj: poziom'], ['nick', 'Sortuj: nick']]),
+        profs));
+    }
+    listBox = el('div', { class: 'mp-plist' + (cfg.minimal ? ' mini' : '') });
+    b.append(listBox);
     drawList();
   }
-  function drawList() {
+
+  function card(p) {
+    const [cls, tl] = relTag(p);
+    const ncfg = addons.cfg('napad') || {};
+    const bcfg = addons.cfg('bratan') || {};
+    const isTarget = nickIn(ncfg.targetList, p.nick);
+    const isProt = nickIn(bcfg.nicks, p.nick);
+    const btn = (label, ic, fn, title) => el('button', { class: 'mp-btn', style: { padding: '5px 9px', fontSize: '11.5px' }, title: title || label, onclick: (e) => { e.stopPropagation(); fn(e); } }, ic ? icon(ic, 13) : null, label);
+    const togList = (c, key, nick, on) => { c[key] = (c[key] || []).filter((n) => n.toLowerCase() !== nick.toLowerCase()); if (!on) c[key].push(nick); config.save(); drawList(true); };
+    return el('div', { class: 'mp-pcard' },
+      el('div', { class: 'mp-pinfo' },
+        el('span', null, game.PROF_NAMES[p.prof] || p.prof || '?'), el('span', null, `poziom ${p.lvl}`),
+        p.clanName ? el('span', null, `klan: ${p.clanName}`) : null,
+        cls ? el('span', { class: 'tag ' + cls }, tl) : null, el('span', null, `odl. ${p.d.toFixed(1)}`)),
+      el('div', { class: 'mp-btns', style: { marginTop: '6px', gap: '5px' } },
+        btn('EQ', 'pokazeq', (e) => MP.pokazEq.showForce(p.id, e.clientX + 14, e.clientY - 20)),
+        !isFriendly(p) ? btn('Napad', 'napad', () => MP.napad.attack(game.otherById(p.id) || p, 'key')) : null,
+        btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
+        !p.isFriend ? btn('Znajomy', 'ktotu', () => net.send('friendAdd', { id: p.id, nick: p.nick }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Wysłano zaproszenie do znajomych: ${p.nick}`, 'ok', 1500)), 'Dodaj do znajomych') : null,
+        btn(isProt ? 'Bratan ✓' : 'Bratan', 'bratan', () => togList(bcfg, 'nicks', p.nick, isProt), isProt ? 'Usuń z ochrony Bratana' : 'Chroń przed atakiem (Bratan)'),
+        !isFriendly(p) ? btn(isTarget ? 'Cel ✓' : 'Cel', null, () => togList(ncfg, 'targetList', p.nick, isTarget), 'Lista celów Napadu') : null,
+        btn('Kopiuj', null, () => { try { navigator.clipboard.writeText(p.nick); toast('Skopiowano nick', 'ok', 1200); } catch {} })));
+  }
+
+  function drawList(force) {
     if (!listBox || !listBox.isConnected) return;
+    if (!force && listBox.matches(':hover') && openId) return; // nie przerysowuj pod kursorem przy otwartej karcie
     const l = filtered();
-    countEl.textContent = `Na mapie: ${game.others().length} · po filtrach: ${l.length}`;
+    countEl.textContent = `Na mapie: ${game.others().length} · widocznych: ${l.length}`;
     listBox.innerHTML = '';
     if (!l.length) { listBox.appendChild(el('div', { class: 'mp-dim', style: { padding: '8px' } }, 'Nikogo nie ma.')); return; }
     for (const p of l.slice(0, 80)) {
       const [cls, tl] = relTag(p);
-      const row = el('div', { class: 'mp-prow', 'data-pid': p.id },
-        el('span', { class: 'mp-dim', style: { width: '26px', fontSize: '11px' } }, p.prof.toUpperCase()),
-        el('span', { class: 'n', title: p.clanName ? `${p.nick} [${p.clanName}]` : p.nick }, `${p.nick} `, el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, `(${p.lvl})`)),
-        cls ? el('span', { class: 'tag ' + cls }, tl) : null,
-        el('span', { class: 'mp-dim', style: { fontSize: '11px', width: '34px', textAlign: 'right' } }, p.d.toFixed(1)),
-        addons.on('napad') && !isFriendly(p) ? el('button', { class: 'mp-mini', title: 'Napad', onclick: () => MP.napad.attack(game.otherById(p.id), 'key') }, icon('napad', 12)) : null,
-        addons.on('cook') ? el('button', { class: 'mp-mini', title: 'Zaproś do grupy', onclick: () => net.send('partyInvite', { id: p.id }, { src: 'Kto tu jest?' }) }, icon('cook', 12)) : null);
-      if (addons.on('pokazeq')) row.addEventListener('mouseenter', (e) => MP.pokazEq && MP.pokazEq.show(p.id, e.clientX + 16, e.clientY));
-      if (addons.on('pokazeq')) row.addEventListener('mouseleave', () => MP.pokazEq && MP.pokazEq.hide());
+      const row = el('div', { class: 'mp-prow' + (openId === p.id ? ' open' : ''), 'data-pid': p.id, onclick: () => { openId = openId === p.id ? null : p.id; drawList(true); } },
+        cfg.minimal ? null : el('span', { class: 'mp-dim', style: { width: '22px', fontSize: '11px' } }, p.prof.toUpperCase()),
+        el('span', { class: 'n', title: p.clanName ? `${p.nick} [${p.clanName}]` : p.nick }, `${p.nick} `, el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, `(${p.lvl}${cfg.minimal ? p.prof : ''})`)),
+        cls ? el('span', { class: 'tag ' + cls }, cfg.minimal ? tl[0].toUpperCase() : tl) : null,
+        el('span', { class: 'mp-dim', style: { fontSize: '11px', width: '30px', textAlign: 'right' } }, p.d.toFixed(0)));
+      row.addEventListener('mouseenter', (e) => MP.pokazEq && MP.pokazEq.show(p.id, e.clientX + 16, e.clientY));
+      row.addEventListener('mouseleave', () => MP.pokazEq && MP.pokazEq.hide());
       listBox.appendChild(row);
+      if (openId === p.id) listBox.appendChild(card(p));
     }
   }
 
   defineAddon({
     id: 'ktotu', name: 'Kto tu jest?', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
-    desc: 'Lista graczy na mapie z wieloma filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami filtrów.',
-    defaults: { enabled: true, key: '', filter: structuredClone(F0), presets: {} },
+    desc: 'Lista graczy na mapie z filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami. Tryb minimalny pokazuje samą listę po filtrach. Kliknij gracza, żeby zobaczyć jego kartę: EQ, Napad, zaproszenie do grupy i znajomych, Bratan.',
+    defaults: { enabled: true, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
-    settings: [{ key: 'key', type: 'key', label: 'Klawisz: pokaż/ukryj listę graczy' }],
+    notes: () => [!net.cmd('friendAdd').t ? { type: 'info', text: 'Przycisk „Znajomy" zadziała po jednorazowym nauczeniu komendy: dodaj ręcznie kogoś do znajomych, potem Diagnostyka → Podsłuch → „Dodanie do znajomych".' } : null],
+    settings: [
+      { key: 'key', type: 'key', label: 'Klawisz: pokaż/ukryj listę graczy' },
+      { key: 'minimal', type: 'bool', label: 'Tryb minimalny (sama lista po filtrach)' },
+    ],
     render(box) { box.appendChild(el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn pri', onclick: () => open() }, 'Otwórz listę graczy'))); },
     init(c) { cfg = c; },
     onToggle(on) { if (!on) close(); },
+    onChange() { if (win) open(); },
   });
 })();
 
@@ -2235,10 +2506,18 @@ MP.itemDeco = itemDeco;
   async function signItem(id) {
     const it = game.itemById(id);
     const cur = cfg.byId[id] || '';
-    const v = prompt(`Podpis dla „${it ? it.name : id}" (puste = usuń):`, cur);
+    const towns = ['Ithan', 'Torneg', 'Werbin', 'Eder', 'Karka-han', 'Nithal', 'Tuzmer', 'Thuzal', 'Mythar', 'Port Tuzmer'];
+    const isTp = it && (it.stats.teleport || /telepor|kamie[nń]|zw[oó]j/i.test(it.name));
+    const head = it ? el('div', { class: 'mp-itemhead' }, it.icon ? el('img', { src: game.iconUrl(it.icon), alt: '' }) : null,
+      el('div', null, el('b', null, it.name), el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, cur ? 'Obecny podpis: ' + cur : 'Bez podpisu'))) : null;
+    const v = await promptBox({
+      title: 'Podpisz przedmiot', head, label: 'Krótki podpis, widoczny na przedmiocie w ekwipunku (do 14 znaków):',
+      value: cur, placeholder: isTp ? 'np. Ithan' : 'np. na e2', maxLength: 14, suggestions: isTp ? towns : [], allowClear: true,
+    });
     if (v === null) return;
-    if (v.trim()) cfg.byId[id] = v.trim().slice(0, 14); else delete cfg.byId[id];
+    if (v) cfg.byId[id] = v.slice(0, 14); else delete cfg.byId[id];
     config.save(); bus.emit('deco');
+    toast(v ? `Podpisano: ${v}` : 'Usunięto podpis', 'ok', 1500);
   }
 
   defineAddon({
@@ -2301,8 +2580,8 @@ MP.itemDeco = itemDeco;
     return items;
   }
 
-  async function show(id, x, y) {
-    if (!cfg.enabled) return;
+  async function show(id, x, y, force) {
+    if (!cfg.enabled && !force) return;
     hoverId = id;
     const p = game.otherById(id);
     if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass' }); document.body.appendChild(tip); }
@@ -2327,25 +2606,41 @@ MP.itemDeco = itemDeco;
       Object.keys(sum).length ? el('div', { style: { marginTop: '4px' } }, Object.entries(sum).map(([k, n]) => el('span', { class: 'mp-chip', style: { marginRight: '4px', padding: '2px 8px' } }, `${MP.legAbbr(k)} ×${n}`))) : el('div', { class: 'mp-dim' }, 'Brak bonusów legendarnych')));
   }
 
-  /* wykrywanie najechania na gracza na mapie: gra pokazuje własny dymek z nickiem — czytamy go */
+  /*
+   * Najechanie na gracza NA MAPIE — dwa sposoby naraz:
+   *  1) hak w prototypie gracza (funkcje tip/hover gry) → zdarzenie player:hover,
+   *  2) zapas: dymek gry z nickiem (selektor w ustawieniach).
+   */
   function watchHover() {
-    let mx = 0, my = 0, shift = false;
-    document.addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; shift = e.shiftKey; }, true);
-    const check = debounce(() => {
+    let mx = 0, my = 0, shift = false, shownAt = null, hoverT = 0;
+    document.addEventListener('mousemove', (e) => {
+      mx = e.clientX; my = e.clientY; shift = e.shiftKey;
+      // chowamy podgląd z mapy, gdy kursor odjedzie
+      if (shownAt && Math.hypot(mx - shownAt.x, my - shownAt.y) > 60 && now() - hoverT > 350 && !document.querySelector('.mp-prow:hover')) { shownAt = null; hide(); }
+    }, true);
+    let pend = null;
+    const want = (id) => {
       if (!cfg.enabled || !cfg.mapHover) return;
       if (cfg.needShift && !shift) return;
+      hoverT = now();
+      if (hoverId === id) return;
+      clearTimeout(pend);
+      pend = setTimeout(() => { shownAt = { x: mx, y: my }; show(id, mx + 18, my + 10); }, Number(cfg.delay) || 400);
+    };
+    bus.on('player:hover', (id) => want(id));
+    const check = debounce(() => {
+      if (!cfg.enabled || !cfg.mapHover || menus.hoverHooked) return;
       const tipSel = cfg.tipSelector.split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-      const t = tipSel && $$(tipSel).find(isVisible);
-      if (!t) { if (hoverId && !document.querySelector('.mp-prow:hover')) hide(); return; }
+      const t = tipSel && $$(tipSel).find((n) => isVisible(n) && !n.closest('.mp-glass'));
+      if (!t) return;
       const txt = t.textContent.toLowerCase();
       const p = game.others().find((o) => o.nick && txt.includes(o.nick.toLowerCase()));
-      if (p && p.id !== hoverId) show(p.id, mx + 18, my + 10);
-      else if (!p) hide();
-    }, Number(cfg.delay) || 400);
+      if (p) want(p.id);
+    }, 120);
     new MutationObserver(check).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
   }
 
-  MP.pokazEq = { show: (id, x, y) => (cfg.listHover ? show(id, x, y) : null), hide };
+  MP.pokazEq = { show: (id, x, y) => (cfg.enabled && cfg.listHover ? show(id, x, y) : null), showForce: (id, x, y) => { show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', hide, { once: true, capture: true }), 50); }, hide };
 
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
@@ -2474,33 +2769,29 @@ MP.itemDeco = itemDeco;
 })();
 
 /* ───────── Auto f ─────────
- * Na starcie walki od razu włącza szybką walkę (AUTOMAT, domyślnie wyłączony) albo pod klawisz.
+ * Włączone = na starcie każdej walki postać od razu przechodzi na szybką walkę.
+ * Do tego jest przełącznik na liście dodatków — np. przy kolosie, gdy odchodzisz od komputera.
  */
 (() => {
   let cfg, doneFor = 0;
-  function fast(src) {
-    if (!game.inBattle()) { if (src === 'key') toast('Auto f: nie jesteś w walce', 'warn', 1400); return; }
-    net.send('fastFight', {}, { src: 'Auto f', urgent: true });
-  }
   defineAddon({
     id: 'autof', name: 'Auto f', icon: 'autof', color: ['#ffd447', '#ff8a00'], risk: 'auto',
-    desc: 'Od razu przełącza walkę na szybką walkę — automatycznie na starcie walki lub pod klawisz.',
-    defaults: { key: '', auto: false, delayMin: 250, delayMax: 600 },
-    keys: [{ key: 'key', label: 'szybka walka', fn: () => fast('key') }],
+    desc: 'Włącz/wyłącz. Gdy jest włączony, każda walka od razu przechodzi na szybką walkę — np. przy kolosie, gdy odchodzisz od komputera, a reszta nie musi czekać na Twoją turę.',
+    defaults: { enabled: false, delayMin: 250, delayMax: 600 },
+    notes: () => [{ type: 'warn', text: 'To automat: działa bez Twojego kliknięcia, dopóki go nie wyłączysz.' }],
     settings: [
-      { key: 'key', type: 'key', label: 'Klawisz: szybka walka teraz' },
-      { key: 'auto', type: 'bool', auto: true, label: 'Automatycznie na początku każdej walki', confirm: 'To automatyzacja — szybka walka będzie włączana bez Twojego kliknięcia. Na własne ryzyko.', countdown: 2 },
-      { key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000, show: (c) => c.auto },
-      { key: 'delayMax', type: 'number', label: 'Opóźnienie do (ms)', min: 150, max: 4000, show: (c) => c.auto },
+      { key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000 },
+      { key: 'delayMax', type: 'number', label: 'Opóźnienie do (ms)', min: 150, max: 4000 },
     ],
     init(c) {
       cfg = c;
       bus.on('battle:start', () => {
-        if (!cfg.enabled || !cfg.auto) return;
+        if (!cfg.enabled) return;
         const t = now(); if (t - doneFor < 2000) return; doneFor = t;
-        setTimeout(() => fast('auto'), rnd(cfg.delayMin, Math.max(cfg.delayMin + 50, cfg.delayMax)));
+        setTimeout(() => { if (game.inBattle()) net.send('fastFight', {}, { src: 'Auto f', urgent: true }); }, rnd(cfg.delayMin, Math.max(cfg.delayMin + 50, cfg.delayMax)));
       });
     },
+    onToggle(on) { toast(on ? 'Auto f: włączony' : 'Auto f: wyłączony', on ? 'warn' : 'info', 1600); },
   });
 })();
 
@@ -2514,11 +2805,11 @@ MP.itemDeco = itemDeco;
   const S = { disbandArmed: false };
 
   function queued(id) { return cfg.queue.find((q) => q.id === Number(id)); }
-  function toggleQueue(id, repeat) {
+  function toggleQueue(id) {
     const it = game.itemById(id);
     const i = cfg.queue.findIndex((q) => q.id === Number(id));
     if (i >= 0) { cfg.queue.splice(i, 1); toast('Szybka rączka: usunięto z kolejki', 'info', 1500); }
-    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, repeat: !!repeat, tp: !!(it && (it.stats.teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka rączka: „${it ? it.name : id}" po walce`, 'ok', 1600); }
+    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, tp: !!(it && (it.stats.teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka rączka: „${it ? it.name : id}" po walce`, 'ok', 1600); }
     config.save(); bus.emit('deco'); indicator();
   }
 
@@ -2529,7 +2820,7 @@ MP.itemDeco = itemDeco;
       const it = game.itemById(q.id);
       if (!it) { cfg.queue = cfg.queue.filter((x) => x.id !== q.id); continue; }
       await net.send('useItem', { id: q.id }, { src: 'Szybka rączka' });
-      if (!q.repeat) cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
+      cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
       await sleep(400);
     }
     if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? await MP.cook.disband() : await net.send('partyDisband', {}, { src: 'Szybka rączka' }); }
@@ -2589,7 +2880,6 @@ MP.itemDeco = itemDeco;
     ],
     render(box, c, rerender) {
       const tb = el('tbody', null, c.queue.map((q, i) => el('tr', null, el('td', null, q.name, q.tp ? el('span', { class: 'mp-dim' }, ' (teleport)') : null),
-        el('td', null, el('label', { style: { display: 'flex', gap: '6px', alignItems: 'center' } }, switchEl(q.repeat, (v) => { q.repeat = v; config.save(); }, true), 'po każdej walce')),
         el('td', null, el('button', { class: 'mp-mini', onclick: () => { c.queue.splice(i, 1); config.save(); bus.emit('deco'); indicator(); rerender(); } }, '×')))));
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Kolejka „po walce"'),
         c.queue.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Pusta — prawy klik na przedmiocie → „Użyj po walce" (lub Alt + prawy klik).'),
@@ -2602,9 +2892,9 @@ MP.itemDeco = itemDeco;
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
         return queued(id) ? [{ label: '✖ Usuń z „po walce"', fn: () => toggleQueue(id) }]
-          : [{ label: '⏱ Użyj po walce', fn: () => toggleQueue(id, false) }, { label: '⟳ Używaj po każdej walce', fn: () => toggleQueue(id, true) }];
+          : [{ label: '⏱ Użyj po walce', fn: () => toggleQueue(id) }];
       });
-      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: queued(id).repeat ? '⟳' : '⏱', title: 'Szybka rączka: użyj po walce' } : null));
+      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: '⏱', title: 'Szybka rączka: użyj po walce' } : null));
       bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => runQueue('auto'), rnd(500, 900)); });
       hookPartyIcon();
       setTimeout(indicator, 1500);
@@ -2731,6 +3021,8 @@ MP.itemDeco = itemDeco;
   config.load(h && h.nick);
   injectCSS();
   net.install();
+  // część obiektów gry powstaje później — ponawiamy podpięcie przez pierwsze 2 minuty
+  { let n = 0; const iv = setInterval(() => { net.install(); if (++n > 40) clearInterval(iv); }, 3000); }
   keys.start();
   menus.start();
   battleWatch.start();
@@ -2745,5 +3037,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.0.0";
+MP.version = "1.1.0";
 })();
