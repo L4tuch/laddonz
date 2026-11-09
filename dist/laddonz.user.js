@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.5.4
+// @version      1.5.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1045,6 +1045,16 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 
 /* Pokaż EQ */
 #mp-eqtip{position:fixed;z-index:2147483150;border-radius:14px;padding:10px;width:290px;pointer-events:none}
+/* styl jak dymek gry: ciemne tło, szara ramka, wyśrodkowany nagłówek */
+#mp-eqtip.gamey{background:rgba(12,12,12,.93)!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:2px solid #5d5d5d!important;border-radius:3px;box-shadow:0 0 0 1px #000,0 4px 14px rgba(0,0,0,.6)!important;padding:6px 8px;font:12px/1.35 Arial,sans-serif;color:#e8e8e8;width:auto;min-width:200px}
+#mp-eqtip.gamey .mp-eqhead{display:none}
+#mp-eqtip.gamey .mp-eqgrid{grid-template-columns:repeat(6,36px);gap:3px;margin:2px 0 4px;justify-content:center}
+#mp-eqtip.gamey .mp-eqcell{width:36px;height:36px;border-radius:2px;background:rgba(255,255,255,.04);border:1px solid #3c3c3c}
+#mp-eqtip.gamey .mp-eqcell.legendary{border-color:#ff8a1c}
+#mp-eqtip.gamey .mp-eqcell.heroic{border-color:#3fa2ff}
+#mp-eqtip.gamey .mp-eqcell.unique{border-color:#e6c84a}
+#mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
+#mp-eqtip.gamey .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px}
 .mp-eqgrid{display:grid;grid-template-columns:repeat(6,40px);gap:5px;margin:6px 0}
 .mp-eqcell{width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);position:relative;display:flex;align-items:center;justify-content:center}
 .mp-eqcell img{max-width:32px;max-height:32px;image-rendering:pixelated}
@@ -2853,7 +2863,15 @@ MP.itemDeco = itemDeco;
     return items;
   }
 
+  let anchor = null;   // dymek gry, pod którym przyklejamy podgląd (mapa)
   function place(x, y) {
+    if (anchor && anchor.isConnected) {
+      const r = anchor.getBoundingClientRect();
+      tip.style.left = clamp(r.left, 4, innerWidth - (tip.offsetWidth || 260) - 4) + 'px';
+      const below = r.bottom + 3;
+      tip.style.top = (below + (tip.offsetHeight || 120) < innerHeight ? below : Math.max(4, r.top - (tip.offsetHeight || 120) - 3)) + 'px';
+      return;
+    }
     tip.style.left = clamp(x, 4, innerWidth - 300) + 'px';
     tip.style.top = clamp(y, 4, innerHeight - 280) + 'px';
   }
@@ -2861,7 +2879,7 @@ MP.itemDeco = itemDeco;
   async function render(id) {
     const p = game.otherById(id);
     tip.innerHTML = '';
-    tip.appendChild(el('div', { style: { fontWeight: 700 } }, p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id, p && p.clanName ? el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, ` [${p.clanName}]`) : null));
+    tip.appendChild(el('div', { class: 'mp-eqhead', style: { fontWeight: 700 } }, p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id, p && p.clanName ? el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, ` [${p.clanName}]`) : null));
     const loading = el('div', { class: 'mp-dim' }, 'Wczytuję ekwipunek…');
     tip.appendChild(loading);
     const items = await fetchEq(id);
@@ -2873,14 +2891,17 @@ MP.itemDeco = itemDeco;
       el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }), it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon)) : null)));
     const sum = {};
     items.forEach((i) => { if (i.legbon) sum[i.legbon] = (sum[i.legbon] || 0) + 1; });
-    tip.append(grid, el('div', { style: { fontSize: '12px' } },
+    tip.append(grid, el('div', { class: 'mp-eqsum', style: { fontSize: '12px' } },
       el('div', null, 'Legendy: ', el('b', null, String(items.filter((i) => i.rarity === 'legendary').length)), ' · Heroiki: ', el('b', null, String(items.filter((i) => i.rarity === 'heroic').length))),
       Object.keys(sum).length ? el('div', { style: { marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px' } }, Object.entries(sum).map(([k, n]) => el('span', { class: 'mp-chip', style: { padding: '2px 8px' }, title: MP.legName(k) }, `${MP.legAbbr(k)} ×${n}`))) : el('div', { class: 'mp-dim' }, 'Brak bonusów legendarnych')));
+    if (anchor) place();
   }
 
-  function show(id, x, y, force) {
+  function show(id, x, y, force, anc) {
     if (!cfg.enabled && !force) return;
     if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass' }); document.body.appendChild(tip); }
+    anchor = anc || null;
+    tip.classList.toggle('gamey', !!anchor);
     place(x, y);
     tip.style.display = 'block';
     if (hoverId === id) return;          // ten sam gracz — tylko przesuwamy
@@ -2896,12 +2917,14 @@ MP.itemDeco = itemDeco;
   function watchHover() {
     let mx = 0, my = 0, shift = false, src = null;   // src: 'map' | 'list' | null — skąd pokazany podgląd
     const follow = () => { if (tip && tip.style.display === 'block' && src) place(mx + 18, my + 14); };
-    const want = (id, from) => {
+    let tipNode = null;
+    const want = (id, from, anc) => {
       if (!cfg.enabled) return;
       if (from === 'map' && (!cfg.mapHover || (cfg.needShift && !shift))) return;
       if (from === 'list' && !cfg.listHover) return;
       src = from;
-      show(id, mx + 18, my + 14);
+      show(id, mx + 18, my + 14, false, anc);
+      if (anc) place();
     };
     const stop = (from) => { if (src === from) { src = null; hide(); } };
 
@@ -2920,10 +2943,10 @@ MP.itemDeco = itemDeco;
           if (Math.hypot(dx, dy) > 90) continue;                       // dymek nie przy kursorze
           const txt = (n.textContent || '').toLowerCase();
           p = game.others().find((o) => o.nick && txt.includes(o.nick.toLowerCase()));
-          if (p) break;
+          if (p) { tipNode = n; break; }
         }
       }
-      if (p) want(p.id, 'map'); else stop('map');
+      if (p) want(p.id, 'map', tipNode); else stop('map');
     };
 
     /* LISTA GRACZY W GRZE („Kto tu jest" gry) i lista laddonz: najechanie na wiersz → podgląd, zjechanie → koniec */
@@ -3362,5 +3385,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.5.4";
+MP.version = "1.5.5";
 })();

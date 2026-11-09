@@ -180,6 +180,16 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 
 /* Pokaż EQ */
 #mp-eqtip{position:fixed;z-index:2147483150;border-radius:14px;padding:10px;width:290px;pointer-events:none}
+/* styl jak dymek gry: ciemne tło, szara ramka, wyśrodkowany nagłówek */
+#mp-eqtip.gamey{background:rgba(12,12,12,.93)!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:2px solid #5d5d5d!important;border-radius:3px;box-shadow:0 0 0 1px #000,0 4px 14px rgba(0,0,0,.6)!important;padding:6px 8px;font:12px/1.35 Arial,sans-serif;color:#e8e8e8;width:auto;min-width:200px}
+#mp-eqtip.gamey .mp-eqhead{display:none}
+#mp-eqtip.gamey .mp-eqgrid{grid-template-columns:repeat(6,36px);gap:3px;margin:2px 0 4px;justify-content:center}
+#mp-eqtip.gamey .mp-eqcell{width:36px;height:36px;border-radius:2px;background:rgba(255,255,255,.04);border:1px solid #3c3c3c}
+#mp-eqtip.gamey .mp-eqcell.legendary{border-color:#ff8a1c}
+#mp-eqtip.gamey .mp-eqcell.heroic{border-color:#3fa2ff}
+#mp-eqtip.gamey .mp-eqcell.unique{border-color:#e6c84a}
+#mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
+#mp-eqtip.gamey .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px}
 .mp-eqgrid{display:grid;grid-template-columns:repeat(6,40px);gap:5px;margin:6px 0}
 .mp-eqcell{width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);position:relative;display:flex;align-items:center;justify-content:center}
 .mp-eqcell img{max-width:32px;max-height:32px;image-rendering:pixelated}
