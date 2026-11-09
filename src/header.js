@@ -2,7 +2,7 @@
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/__GITHUB_USER__/__GITHUB_REPO__
 // @version      __VERSION__
-// @description  Panel dodatków do Margonem (nowy interfejs): Napad, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
+// @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       __GITHUB_USER__
 // @match        https://*.margonem.pl/*
 // @match        https://*.margonem.com/*

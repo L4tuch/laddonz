@@ -1,6 +1,6 @@
 /* ───────────────────────── menus.js ─────────────────────────
  * Dodawanie własnych opcji do menu prawego przycisku myszy w grze:
- *   • na graczu:      „⚔ Napad"
+ *   • na graczu:      „Dobij"
  *   • na przedmiocie: „Użyj po walce", „Podpisz…", „Cel ulepszania"
  *
  * Jak to działa: owijamy funkcję gry, która pokazuje menu (Engine.interface.showPopupMenu)

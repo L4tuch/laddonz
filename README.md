@@ -11,7 +11,7 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 - **Wszystko przechodzi przez jedną kolejkę** z minimalnym odstępem (domyślnie 300 ms) i jest zapisywane w zakładce **Log**.
 - **Tryb próbny** (Ogólne → Tryb próbny): panel niczego nie wysyła, tylko zapisuje w logu, co by zrobił.
 
-> ⚠️ Żaden dodatek firm trzecich nie jest oficjalnie zatwierdzony przez Garmory. Funkcje automatyczne (Napad AUTO, Auto f, Fake Taxi, automat Szybkiej rączki i Ulepszarki, auto-zaproszenia) to dokładnie ten rodzaj rzeczy, za który najłatwiej o bana. Używasz ich na własne ryzyko.
+> ⚠️ Żaden dodatek firm trzecich nie jest oficjalnie zatwierdzony przez Garmory. Funkcje automatyczne (Dobijarka, Auto f, Fake Taxi, automat Szybkiej rączki i Ulepszarki, auto-zaproszenia) to dokładnie ten rodzaj rzeczy, za który najłatwiej o bana. Używasz ich na własne ryzyko.
 
 ---
 
@@ -19,10 +19,10 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 
 | | Dodatek | Co robi |
 |---|---|---|
-| ⚔ | **Napad** | Klawisz = atak na najbliższego wroga w zasięgu (bez podchodzenia). „⚔ Napad" w menu prawego przycisku na graczu. Pamięta ochronę i nie marnuje na nią ataków. Zmiana zestawu przed atakiem (opcjonalnie tylko gdy na mapie jest 1 wróg). **Tryb AUTO** (domyślnie wyłączony): atakuje graczy wchodzących w zasięg według tych samych filtrów; gdy działa, na ekranie świeci czerwony wskaźnik „NAPAD AUTO" (klik = wyłącz). |
+| ⚔ | **Dobijarka** | Włączona: atakuje każdego gracza, który wejdzie w zasięg (zakres poziomów od–do). Klawisz (działa też przy wyłączonej): namierza najbliższego gracza i atakuje go, gdy będzie w zasięgu. W menu gracza: „Dobij" / „Przerwij dobijanie". Postać nigdy sama nie podchodzi. |
 | 🔔 | **Hey WakeUP!** | Domyślnie powiadomienia wyglądają jak w grze (żółty tekst na dole). Dodatek zmienia ich kolory, czcionkę, rozmiar, tło i położenie — także dla komunikatów gry. |
 | 🛡 | **Bratan** | Blokuje każdy atak (także ręczny) na klanowiczów, znajomych, sojuszników i osoby z listy. |
-| 👥 | **Kto tu jest?** | Okno z graczami na mapie: filtry, sortowanie, zapisywane zestawy, tryb minimalny. Klik na gracza → karta z EQ, Napadem, zaproszeniem do grupy i znajomych, Bratanem. |
+| 👥 | **Kto tu jest?** | Okno z graczami na mapie: filtry, sortowanie, zapisywane zestawy, tryb minimalny. Klik na gracza → karta z EQ, Dobij, zaproszeniem do grupy i znajomych, Bratanem. |
 | 🏆 | **Kto złapie** | Pod kafelkami łupu: Twoja szansa (%) na złapanie przedmiotu przy biciu w grupie. |
 | 🍲 | **Let's Cook Together** | Klawisz = zaproś znajomych/klan/sojusz/wszystkich z mapy. Klawisz = rozwiąż grupę. Opcjonalny automat. |
 | ✎ | **Podpisownik** | Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny). |
@@ -94,7 +94,7 @@ Komendy z pomarańczowym statusem **domyślna** (atak, szybka walka, zaproszenie
 
 - **Panel się nie pokazuje:** sprawdź, czy grasz na nowym interfejsie i czy w Tampermonkey skrypt jest włączony (zielony przełącznik). F12 → Konsola → szukaj wpisów `[laddonz]`.
 - **Liczby/plakietki nie pojawiają się na oknie (łup, czat, ikona grupy, przywołanie):** gra mogła zmienić nazwę klasy okna. F12 → strzałka „wskaż element" → kliknij okno → skopiuj jego klasę (np. `.loot-wnd`) do pola *Selektor…* w ustawieniach dodatku.
-- **Menu prawego przycisku nie ma nowych opcji:** sprawdź Diagnostykę. Zapasowo: **Alt + prawy klik** na przedmiocie zawsze otwiera menu panelu, a Napad jest też dostępny w oknie „Kto tu jest?".
+- **Menu prawego przycisku nie ma nowych opcji:** sprawdź Diagnostykę. Zapasowo: **Alt + prawy klik** na przedmiocie zawsze otwiera menu panelu, a Dobij jest też dostępne w oknie „Kto tu jest?".
 - **Kopia ustawień:** Ogólne → Eksportuj / Importuj.
 
 ## Diagnostyka (gdy coś nie działa w Twojej wersji gry)

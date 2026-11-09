@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.5.1
-// @description  Panel dodatków do Margonem (nowy interfejs): Napad, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
+// @version      1.5.2
+// @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
 // @match        https://*.margonem.com/*
@@ -1247,7 +1247,7 @@ MP.promptBox = promptBox;
 // ═══ src/core/menus.js ═══
 /* ───────────────────────── menus.js ─────────────────────────
  * Dodawanie własnych opcji do menu prawego przycisku myszy w grze:
- *   • na graczu:      „⚔ Napad"
+ *   • na graczu:      „Dobij"
  *   • na przedmiocie: „Użyj po walce", „Podpisz…", „Cel ulepszania"
  *
  * Jak to działa: owijamy funkcję gry, która pokazuje menu (Engine.interface.showPopupMenu)
@@ -1738,7 +1738,7 @@ const ui = {
       { key: 'perCharacter', type: 'bool', label: 'Osobne ustawienia dla każdej postaci', hint: 'Zmiana zadziała po odświeżeniu gry.' },
       { key: 'accent', type: 'color', label: 'Kolor akcentu' },
       { key: 'glass', type: 'range', label: 'Przezroczystość tła', min: 0.2, max: 0.95, step: 0.05 },
-      { key: 'menuSelector', type: 'textarea', label: 'Selektor menu prawego przycisku w grze', hint: 'Zapas, gdy opcje (np. „⚔ Napad") nie pojawiają się w menu gracza.' },
+      { key: 'menuSelector', type: 'textarea', label: 'Selektor menu prawego przycisku w grze', hint: 'Zapas, gdy opcje (np. „Dobij") nie pojawiają się w menu gracza.' },
     ];
     const card = el('div', { class: 'mp-card' }, el('h3', null, 'Ogólne'));
     S.forEach((s) => card.appendChild(field(s, g, () => { save(); if (s.key === 'dryRun') this.renderAll(); })));
@@ -2036,12 +2036,12 @@ function parseProtection(data) {
 }
 
 // ═══ src/addons/napad.js ═══
-/* ───────── Napad ─────────
+/* ───────── Dobijarka (id: napad — zostawione dla zgodności ustawień) ─────────
  * Włączony  → atakuje każdego gracza, który wejdzie w zasięg (w zakresie poziomów).
  * Klawisz   → działa ZAWSZE (także gdy dodatek jest wyłączony): namierza najbliższego gracza
  *             i atakuje go w chwili, gdy będzie w zasięgu. Postać nie podchodzi sama.
- * Menu gracza (prawy klik) → „Napad": namierza tego gracza, atak gdy będzie w zasięgu.
- * Kogo NIE atakować (klan, znajomi…) — decyduje Bratan; Napad takich graczy po prostu pomija.
+ * Menu gracza (prawy klik) → „Dobij": namierza tego gracza, atak gdy będzie w zasięgu.
+ * Kogo NIE atakować (klan, znajomi…) — decyduje Bratan; Dobijarka takich graczy po prostu pomija.
  */
 (() => {
   const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
@@ -2064,7 +2064,7 @@ function parseProtection(data) {
     S.last = t;
     S.tried[p.id] = t;
     const r = await net.send('attackPlayer', { id: p.id }, {
-      src: 'Napad',
+      src: 'Dobijarka',
       onResponse: (data) => {
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
@@ -2076,7 +2076,7 @@ function parseProtection(data) {
         const sec = parseProtection(data);
         if (sec) {
           S.protectedUntil[p.id] = now() + sec * 1000;
-          if (S.lock && S.lock.id === p.id) toast(`Napad: ${p.nick} ma ochronę jeszcze ${sec} s — zaatakuję, gdy minie`);
+          if (S.lock && S.lock.id === p.id) toast(`Dobijarka: ${p.nick} ma ochronę jeszcze ${sec} s — zaatakuję, gdy minie`);
         }
       },
     });
@@ -2086,10 +2086,10 @@ function parseProtection(data) {
   /* ── namierzanie (klawisz / menu / lista) ── */
   function lockOn(p) {
     if (!p) return;
-    if (!allowed(p)) { toast(`Napad: ${p.nick} jest chroniony przez Bratana`); return; }
+    if (!allowed(p)) { toast(`Dobijarka: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
     mark.set(p.id);
-    toast(`Napad: cel ${p.nick} (${p.lvl}${p.prof})`);
+    
     ensureLoop();
     tick();
   }
@@ -2103,7 +2103,7 @@ function parseProtection(data) {
   function keyNearest() {
     const h = game.hero(); if (!h) return;
     const list = game.others().filter(allowed).sort((a, b) => dist(h, a) - dist(h, b));
-    if (!list.length) { toast('Napad: brak graczy na mapie'); return; }
+    if (!list.length) { toast('Dobijarka: brak graczy na mapie'); return; }
     // ponowne naciśnięcie przy tym samym celu = następny najbliższy
     let p = list[0];
     if (S.lock && S.lock.id === p.id && list[1]) p = list[1];
@@ -2123,8 +2123,8 @@ function parseProtection(data) {
     // 1) namierzony cel — atak, gdy tylko będzie w zasięgu
     if (S.lock) {
       const p = game.otherById(S.lock.id);
-      if (!p) { unlock(`Napad: ${S.lock.nick} zniknął z mapy`); return; }
-      if (now() - S.lock.t > LOCK_MS) { unlock('Napad: namierzanie wygasło'); return; }
+      if (!p) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
+      if (now() - S.lock.t > LOCK_MS) { unlock('Dobijarka: namierzanie wygasło'); return; }
       if (dist(h, p) <= RANGE) attack(p);
       return;
     }
@@ -2157,41 +2157,33 @@ function parseProtection(data) {
       if (!silent) this.ind();
     },
     ind() {
-      let n = document.getElementById('mp-napad-ind');
-      if (!S.lock) { n && n.remove(); return; }
-      if (!n) {
-        const pos = store.get('win:napad-ind', { x: Math.round(innerWidth / 2 - 80), y: 70 });
-        n = el('div', { id: 'mp-napad-ind', class: 'mp-glass mp-target', title: 'Kliknij, żeby anulować', style: { left: pos.x + 'px', top: pos.y + 'px' } });
-        const moved = makeDraggable(n, n, (p) => store.set('win:napad-ind', p));
-        n.addEventListener('click', () => { if (!moved()) unlock('Napad: anulowano'); });
-        document.body.appendChild(n);
-      }
-      n.innerHTML = '';
-      n.append(icon('napad', 14), el('span', null, 'Cel: ', el('b', null, S.lock.nick)));
+      // bez komunikatu na ekranie — cel widać w menu gracza („Przerwij dobijanie")
+      const n = document.getElementById('mp-napad-ind'); if (n) n.remove();
     },
   };
 
   defineAddon({
-    id: 'napad', name: 'Napad', icon: 'napad', color: ['#ff5d7a', '#b8325a'], risk: 'auto',
-    desc: 'Włączony: atakuje każdego gracza, który wejdzie w zasięg (w podanym zakresie poziomów). Klawisz działa zawsze — namierza najbliższego gracza i atakuje go, gdy tylko będzie w zasięgu. To samo robi opcja „Napad" w menu gracza. Kogo nie atakować, ustawiasz w Bratanie.',
+    id: 'napad', name: 'Dobijarka', icon: 'napad', color: ['#ff5d7a', '#b8325a'], risk: 'auto',
+    desc: 'Włączona: atakuje każdego gracza, który wejdzie w zasięg (w podanym zakresie poziomów). Klawisz działa zawsze — namierza najbliższego gracza i atakuje go, gdy tylko będzie w zasięgu. To samo robi opcja „Dobij" w menu gracza; „Przerwij dobijanie" cofa polecenie. Kogo nie atakować, ustawiasz w Bratanie.',
     defaults: { enabled: false, keyAttack: '', lvlMin: 0, lvlMax: 500 },
-    notes: () => [{ type: 'warn', text: 'Włączony Napad atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
+    notes: () => [{ type: 'warn', text: 'Włączona Dobijarka atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
     settings: [
       { key: 'lvlMin', type: 'number', label: 'Atakuj od poziomu', min: 0, max: 500, hint: 'Dotyczy ataku na każdego w zasięgu.' },
       { key: 'lvlMax', type: 'number', label: 'Atakuj do poziomu', min: 0, max: 500 },
-      { key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Działa także przy wyłączonym dodatku. Ponowne naciśnięcie = następny najbliższy. Klik we wskaźnik celu = anuluj.' },
+      { key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Działa także przy wyłączonym dodatku. Ponowne naciśnięcie = następny najbliższy. Przerwanie: prawy klik na celu → „Przerwij dobijanie".' },
     ],
     init(c) {
       cfg = c;
       if (!c._v15) { c._v15 = true; c.lvlMin = 0; c.lvlMax = 500; config.save(); }
       // klawisz działa niezależnie od włączenia dodatku
-      keys.bind({ label: 'Napad: namierz najbliższego', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
+      keys.bind({ label: 'Dobijarka: namierz najbliższego', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
       menus.add('player', (id) => {
-        // namierzony gracz → zamiast „Napad" jest „Przerwij napad" (cofa polecenie ataku)
-        if (S.lock && S.lock.id === Number(id)) return [{ label: 'Przerwij napad', fn: () => unlock(`Napad: przerwano atak na ${S.lock ? S.lock.nick : 'cel'}`) }];
+        // namierzony gracz → zamiast „Dobij" jest „Przerwij dobijanie" (cofa polecenie ataku)
+        const pp = game.otherById(id);
+        if (S.lock && (S.lock.id === Number(id) || (pp && pp.nick === S.lock.nick))) return [{ label: 'Przerwij dobijanie', fn: () => unlock(`Dobijarka: przerwano atak na ${S.lock ? S.lock.nick : 'cel'}`) }];
         const p = game.otherById(id);
         if (!p || !allowed(p)) return [];
-        return [{ label: 'Napad', fn: () => lockOn(game.otherById(id) || p) }];
+        return [{ label: 'Dobij', fn: () => lockOn(game.otherById(id) || p) }];
       });
       bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; unlock(); });
       MP.napad = { attack: (p) => lockOn(p), lockOn, unlock };
@@ -2366,7 +2358,7 @@ function parseProtection(data) {
 // ═══ src/addons/ktotu_ktozlapie_cook.js ═══
 /* ───────── Kto tu jest? ─────────
  * Lista graczy na mapie + filtry i zapisane zestawy filtrów. Tryb minimalny: sama lista po filtrach.
- * Kliknięcie gracza → karta z informacjami i akcjami (EQ, Napad, zaproś, znajomi, Bratan…).
+ * Kliknięcie gracza → karta z informacjami i akcjami (EQ, Dobij, zaproś, znajomi, Bratan…).
  */
 (() => {
   let cfg, timer = null, win = null, openId = null;
@@ -2446,12 +2438,11 @@ function parseProtection(data) {
         cls ? el('span', { class: 'tag ' + cls }, tl) : null, el('span', null, `odl. ${p.d.toFixed(1)}`)),
       el('div', { class: 'mp-btns', style: { marginTop: '6px', gap: '5px' } },
         btn('EQ', 'pokazeq', (e) => MP.pokazEq.showForce(p.id, e.clientX + 14, e.clientY - 20)),
-        !isFriendly(p) ? btn('Napad', 'napad', () => MP.napad.attack(game.otherById(p.id) || p, 'key')) : null,
+        !isFriendly(p) ? btn('Dobij', 'napad', () => MP.napad.attack(game.otherById(p.id) || p, 'key')) : null,
         btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
         !p.isFriend ? btn('Znajomy', 'ktotu', () => net.send('friendAdd', { id: p.id, nick: p.nick }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Wysłano zaproszenie do znajomych: ${p.nick}`, 'ok', 1500)), 'Dodaj do znajomych') : null,
         btn(isProt ? 'Bratan ✓' : 'Bratan', 'bratan', () => togList(bcfg, 'nicks', p.nick, isProt), isProt ? 'Usuń z ochrony Bratana' : 'Chroń przed atakiem (Bratan)'),
-        !isFriendly(p) ? btn(isTarget ? 'Cel ✓' : 'Cel', null, () => togList(ncfg, 'targetList', p.nick, isTarget), 'Lista celów Napadu') : null,
-        btn('Kopiuj', null, () => { try { navigator.clipboard.writeText(p.nick); toast('Skopiowano nick', 'ok', 1200); } catch {} })));
+                btn('Kopiuj', null, () => { try { navigator.clipboard.writeText(p.nick); toast('Skopiowano nick', 'ok', 1200); } catch {} })));
   }
 
   function drawList(force) {
@@ -2477,7 +2468,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'ktotu', name: 'Kto tu jest?', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
-    desc: 'Lista graczy na mapie z filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami. Tryb minimalny pokazuje samą listę po filtrach. Kliknij gracza, żeby zobaczyć jego kartę: EQ, Napad, zaproszenie do grupy i znajomych, Bratan.',
+    desc: 'Lista graczy na mapie z filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami. Tryb minimalny pokazuje samą listę po filtrach. Kliknij gracza, żeby zobaczyć jego kartę: EQ, Dobij, zaproszenie do grupy i znajomych, Bratan.',
     defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
     notes: () => [!net.cmd('friendAdd').t ? { type: 'info', text: 'Przycisk „Znajomy" zadziała po jednorazowym nauczeniu komendy: dodaj ręcznie kogoś do znajomych, potem Diagnostyka → Podsłuch → „Dodanie do znajomych".' } : null],
@@ -3286,5 +3277,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.5.1";
+MP.version = "1.5.2";
 })();
