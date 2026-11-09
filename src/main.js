@@ -14,6 +14,8 @@
   config.load(h && h.nick);
   injectCSS();
   net.install();
+  // część obiektów gry powstaje później — ponawiamy podpięcie przez pierwsze 2 minuty
+  { let n = 0; const iv = setInterval(() => { net.install(); if (++n > 40) clearInterval(iv); }, 3000); }
   keys.start();
   menus.start();
   battleWatch.start();
