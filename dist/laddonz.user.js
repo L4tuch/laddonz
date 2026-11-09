@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.1.0
+// @version      1.2.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Napad, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -195,12 +195,14 @@ const E = () => W.Engine;
 
 const PROF_NAMES = { w: 'Wojownik', p: 'Paladyn', b: 'Tancerz ostrzy', m: 'Mag', t: 'Tropiciel', h: 'Łowca' };
 
-// Kody relacji w NI (pole d.relation u innych graczy). Gdyby gra zmieniła kody, popraw tutaj.
+// Kody relacji w NI (pole d.relation u innych graczy) — gra używa liczb:
+//   1 = brak, 2 = przyjaciel, 3 = wróg, 4 = klan, 5 = sojusz klanu, 6 = wróg klanu, 7 = sojusz frakcji, 8 = wróg frakcji.
+// Kody tekstowe zostawione na wypadek starszych wersji.
 const REL = {
-  friend: ['fr'],
-  clan: ['cl'],
-  ally: ['cl-fr', 'fr-cl', 'clfr', 'ally'],
-  enemy: ['en', 'cl-en', 'en-cl'],
+  friend: ['2', 'fr'],
+  clan: ['4', 'cl'],
+  ally: ['5', '7', 'cl-fr', 'fr-cl', 'clfr', 'ally'],
+  enemy: ['3', '6', '8', 'en', 'cl-en', 'en-cl'],
 };
 
 function parseStats(item) {
@@ -241,7 +243,9 @@ function normItem(it) {
 function normOther(o, heroClan) {
   const d = (o && (o.d || o)) || {};
   const clanId = Number(d.clan && typeof d.clan === 'object' ? d.clan.id : d.clan) || 0;
-  const rel = String(d.relation || '');
+  let rel = d.relation;
+  try { if ((rel == null || rel === '') && o && typeof o.getRelation === 'function') rel = o.getRelation(); } catch {}
+  rel = String(rel ?? '');
   const isClan = REL.clan.includes(rel) || (heroClan && clanId && clanId === heroClan);
   return {
     id: Number(d.id),
@@ -357,13 +361,26 @@ const game = {
     try {
       const b = E().battle;
       if (b) {
+        // UWAGA: w NI „show" to funkcja (pokazująca okno), a nie flaga — nie wolno jej sprawdzać jako wartości.
+        if (typeof b.isBattleShow === 'function') return !!b.isBattleShow();
+        if (typeof b.getShow === 'function') return !!b.getShow();
         if (typeof b.isShow === 'function') return !!b.isShow();
-        if ('show' in b) return !!b.show;
-        if ('isBattle' in b) return !!b.isBattle;
+        if (typeof b.show === 'boolean') return b.show;
+        if (typeof b.isBattle === 'boolean') return b.isBattle;
       }
     } catch {}
-    const w = document.querySelector('.battle-controller, .battle-window, #battle');
+    const w = document.querySelector('.battle-controller, .battle-window');
     return !!(w && isVisible(w));
+  },
+
+  /** Obiekt gracza z gry (NI: Engine.others.getById). */
+  otherRaw(id) {
+    try {
+      const o = E().others;
+      if (typeof o.getById === 'function') { const r = o.getById(Number(id)) || o.getById(String(id)); if (r) return r; }
+      const src = typeof o.check === 'function' ? o.check() : {};
+      return src[id] || Object.values(src).find((x) => Number((x.d || x).id) === Number(id)) || null;
+    } catch { return null; }
   },
 
   /** Ścieżka do ikon przedmiotów. */
@@ -457,6 +474,9 @@ const keys = {
 
 /* ───────── Powiadomienia (toasty) — wygląd ustawia dodatek Hey WakeUP! ───────── */
 function toast(msg, type = 'info', ms = 3200) {
+  // Najpierw komunikat samej gry (żółty tekst na dole) — wygląda dokładnie jak w grze,
+  // a Hey WakeUP! zmienia jego wygląd stylami. Własny zapasowy tylko, gdy gra nie ma funkcji message().
+  try { if (typeof W.message === 'function' && !(config.data && config.data.global.ownToasts)) { W.message(String(msg)); return; } } catch {}
   let host = document.getElementById('mp-toasts');
   if (!host) { host = el('div', { id: 'mp-toasts' }); document.body.appendChild(host); }
   const t = el('div', { class: `mp-toast mp-toast-${type}` }, msg);
@@ -549,31 +569,16 @@ const net = {
   },
 
   /**
-   * Podpięcie pod wysyłanie komend gry.
-   * Nie zakładamy, że gra używa window._g — owijamy też WSZYSTKIE funkcje w Engine.communication,
-   * które dostają komendę w postaci tekstu „coś&a=…". Pierwsza (zewnętrzna) funkcja, przez którą gra
-   * faktycznie wysyła komendę, zostaje zapamiętana jako „transport" i przez nią panel wysyła swoje komendy.
-   * Bezpieczniki (Bratan) działają na każdej z tych dróg.
+   * Podpięcie pod wysyłanie komend gry: window._g (sprawdzone diagnostyką — gra wysyła nim m.in. atak).
+   * Bezpieczniki (Bratan) działają na wszystkim, co przez nie przechodzi — także na ręcznym ataku.
    */
   install() {
-    let any = false;
-    if (typeof W._g === 'function') {
-      if (!this.origG) this.origG = W._g.__mpOrig || W._g;
-      this.wrapTaskFn(W, '_g', 'window._g');
-      any = true;
-    }
-    const c = E() && E().communication;
-    if (c) {
-      const names = new Set();
-      for (let o = c; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) Object.getOwnPropertyNames(o).forEach((n) => names.add(n));
-      for (const n of names) {
-        if (n === 'constructor' || /parse|success|dispatch|json|response|receive|onmessage/i.test(n)) continue;
-        try { if (typeof c[n] === 'function') { this.wrapTaskFn(c, n, 'communication.' + n); any = true; } } catch {}
-      }
-    }
+    if (typeof W._g !== 'function') return false;
+    if (!this.origG) this.origG = W._g.__mpOrig || W._g;
+    this.wrapTaskFn(W, '_g', 'window._g');
     this.hookResponses();
-    this.installed = any;
-    return any;
+    this.installed = true;
+    return true;
   },
   installed: false,
   transport: null,     // { obj, name, orig, label } — droga, którą gra wysyła komendy
@@ -591,7 +596,6 @@ const net = {
       if (!t) return orig.apply(this, args);
       if (!self._ours) {
         if (self._depth === 0) {
-          self.transport = { obj, name, orig, label, ctx: this };
           if (!(self._lastSniff.task === t && now() - self._lastSniff.t < 80)) {
             self._lastSniff = { task: t, t: now() };
             self.stats.gameCalls++;
@@ -620,10 +624,8 @@ const net = {
 
   /** Wysyła komendę tą samą drogą, której używa gra. */
   rawSend(task, cb) {
-    const tr = this.transport;
     this._ours = true;
     try {
-      if (tr) return tr.orig.call(tr.ctx && tr.ctx !== W ? tr.ctx : tr.obj, task, cb);
       if (this.origG) return this.origG.call(W, task, cb);
       throw new Error('Nie znaleziono funkcji wysyłającej komendy gry');
     } finally { this._ours = false; }
@@ -1248,9 +1250,9 @@ const menus = {
     let n = 0;
     const tick = setInterval(() => {
       this.hookPopup();
-      this.hookOthers();
       if (++n > 40) clearInterval(tick);
     }, 1500);
+    setInterval(() => this.hookOthers(), 1000);
     this.domFallback();
   },
 
@@ -1261,8 +1263,9 @@ const menus = {
     const self = this;
     const names = new Set();
     for (let o = I; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) Object.getOwnPropertyNames(o).forEach((n) => names.add(n));
-    for (const n of names) {
-      if (!/menu|popup/i.test(n)) continue;
+    // NI: Engine.interface.showPopupMenu([[tekst, funkcja], …], …) — sprawdzone diagnostyką
+    const list = names.has('showPopupMenu') ? ['showPopupMenu'] : [...names].filter((n) => /^show.*(menu|popup)/i.test(n));
+    for (const n of list) {
       let f; try { f = I[n]; } catch { continue; }
       if (typeof f !== 'function' || f.__mpMenu) continue;
       const w = function (...args) {
@@ -1342,42 +1345,52 @@ const menus = {
     return p ? { type: 'player', id: p.id } : null;
   },
 
-  /** Owijamy metody „menu" w prototypie innych graczy, żeby znać cel kliknięcia. */
+  /**
+   * W NI metody gracza (oncontextmenu, createMenu, onhover…) są przypięte do KAŻDEGO gracza osobno,
+   * więc owijamy je na każdym obiekcie gracza (nowi gracze dochodzą — sprawdzamy co sekundę).
+   */
   hookOthers() {
-    if (this.otherHooked) return;
     try {
-      const sample = game.others()[0];
-      if (!sample || !sample.raw) return;
-      const proto = Object.getPrototypeOf(sample.raw);
-      if (!proto || proto.__mpMenu) { this.otherHooked = !!proto; return; }
-      const self = this;
-      let n = 0;
-      for (const name of Object.getOwnPropertyNames(proto)) {
-        const isMenu = /menu|click|context/i.test(name);
-        const isHover = /tip|hover|mouseover|mouseenter|onover/i.test(name);
-        if (!isMenu && !isHover) continue;
-        const d = Object.getOwnPropertyDescriptor(proto, name);
-        if (!d || typeof d.value !== 'function') continue;
-        const orig = d.value;
-        proto[name] = function (...a) {
-          try {
-            const id = this.d && this.d.id;
-            if (id) {
-              if (isMenu) self.setLast('player', id);
-              if (isHover && !(self.hover && self.hover.id === Number(id) && now() - self.hover.t < 300)) {
-                self.hover = { id: Number(id), t: now() };
-                bus.emit('player:hover', Number(id));
-              }
-            }
-          } catch {}
-          return orig.apply(this, a);
-        };
-        n++;
-        if (isHover) this.hoverHooked = true;
-      }
-      proto.__mpMenu = true;
-      this.otherHooked = n > 0;
+      const o = E().others;
+      const src = typeof o.check === 'function' ? o.check() : {};
+      const arr = Array.isArray(src) ? src : Object.values(src || {});
+      for (const raw of arr) this.wrapOther(raw);
+      // gdyby metody jednak były w prototypie
+      const proto = arr[0] && Object.getPrototypeOf(arr[0]);
+      if (proto && !proto.__mpMenu) { proto.__mpMenu = true; this.wrapOther(proto, true); }
     } catch {}
+  },
+
+  wrapOther(raw, isProto) {
+    if (!raw || raw.__mpWrapped) return;
+    raw.__mpWrapped = true;
+    const self = this;
+    const names = isProto ? Object.getOwnPropertyNames(raw) : Object.keys(raw);
+    for (const name of names) {
+      const isMenu = /^(oncontextmenu|createMenu|createBasicMenu)$/i.test(name);
+      const isHover = /^(onhover|onmousemove|tip|tipUpdate)$/i.test(name);
+      if (!isMenu && !isHover) continue;
+      let f; try { f = raw[name]; } catch { continue; }
+      if (typeof f !== 'function' || f.__mp) continue;
+      const w = function (...a) {
+        try {
+          const d = this && this.d ? this.d : raw.d;
+          const id = d && Number(d.id);
+          if (id) {
+            if (isMenu) self.setLast('player', id);
+            if (isHover && !(self.hover && self.hover.id === id && now() - self.hover.t < 250)) {
+              self.hover = { id, t: now() };
+              bus.emit('player:hover', id);
+            }
+          }
+        } catch {}
+        return f.apply(this, a);
+      };
+      w.__mp = true;
+      try { raw[name] = w; } catch {}
+      if (isMenu) this.otherHooked = true;
+      if (isHover) this.hoverHooked = true;
+    }
   },
 
   /** Własne, szklane menu panelu. */
@@ -1586,7 +1599,7 @@ const ui = {
     const checks = [
       ['Obiekt gry Engine', !!E0],
       ['Funkcja wysyłania _g', typeof W._g === 'function'],
-      ['Wysyłanie komend (droga: ' + (net.transport ? net.transport.label : (net.origG ? 'window._g' : 'brak')) + ')', !!(net.transport || net.origG)],
+      ['Wysyłanie komend (window._g)', !!net.origG],
       ['Komendy gry przechwycone (naciśnij X na graczu)', net.stats.gameCalls > 0],
       ['Bohater (Engine.hero)', !!game.hero()],
       ['Lista graczy (Engine.others)', !!(E0 && E0.others)],
@@ -2010,7 +2023,8 @@ function parseProtection(data) {
     let st = document.getElementById('mp-wakeup-css');
     if (!st) { st = el('style', { id: 'mp-wakeup-css' }); document.head.appendChild(st); }
     const sel = (cfg.gameSelectors || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-    st.textContent = on && cfg.styleGame && sel ? `${sel}{color:${cfg.fg}!important;font-family:${cfg.font}!important;font-size:${cfg.size}px!important;font-weight:${cfg.bold ? 700 : 400}!important;${cfg.shadow ? `text-shadow:0 0 8px ${cfg.glow},0 0 3px #000!important;` : ''}}` : '';
+    const box = cfg.bgAlpha > 0 || cfg.frame;
+    st.textContent = on && sel ? `${sel}{color:${cfg.fg}!important;font-family:${cfg.font}!important;font-size:${cfg.size}px!important;font-weight:${cfg.bold ? 700 : 400}!important;${cfg.shadow ? `text-shadow:0 0 8px ${cfg.glow},0 0 3px #000,1px 1px 1px #000!important;` : ''}${box ? `background:${hexA(cfg.bg, cfg.bgAlpha)}!important;padding:4px 12px!important;border-radius:8px!important;display:inline-block!important;${cfg.frame ? `border:1px solid ${cfg.glow}!important;` : ''}` : ''}}` : '';
   }
   function hexA(hex, a) {
     const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex || '');
@@ -2020,30 +2034,25 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'],
-    desc: 'Domyślnie powiadomienia wyglądają jak komunikaty gry (żółty tekst na dole). Po włączeniu tego dodatku zmieniasz ich kolory, czcionkę, rozmiar, tło i położenie — także dla komunikatów samej gry.',
+    desc: 'Powiadomienia panelu to zwykłe komunikaty gry (żółty tekst na dole). Po włączeniu tego dodatku zmieniasz wygląd WSZYSTKICH komunikatów — panelu i gry: kolor, czcionkę, rozmiar, tło i ramkę.',
     defaults: { enabled: false, fg: '#ffe066', warn: '#ffb547', bad: '#ff6b6b', bg: '#10111c', bgAlpha: 0, frame: false, glow: '#ffb547', font: 'Arial,"Segoe UI",sans-serif', size: 14, bold: true, shadow: false, bottom: 140, styleGame: false,
-      gameSelectors: '.big-messages .message\n.ingame-alert\n.small-info' },
+      gameSelectors: '.big-messages .message' },
     settings: [
-      { group: 'Kolory', key: 'fg', type: 'color', label: 'Zwykłe powiadomienie', live: () => apply() },
-      { group: 'Kolory', key: 'warn', type: 'color', label: 'Ostrzeżenie', live: () => apply() },
-      { group: 'Kolory', key: 'bad', type: 'color', label: 'Błąd / blokada', live: () => apply() },
+      { group: 'Kolory', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
       { group: 'Kolory', key: 'glow', type: 'color', label: 'Ramka / poświata', live: () => apply() },
       { group: 'Tekst', key: 'font', type: 'select', label: 'Czcionka', options: FONTS },
       { group: 'Tekst', key: 'size', type: 'range', label: 'Rozmiar (px)', min: 10, max: 32, live: () => apply() },
       { group: 'Tekst', key: 'bold', type: 'bool', label: 'Pogrubienie' },
       { group: 'Tekst', key: 'shadow', type: 'bool', label: 'Kolorowa poświata' },
-      { group: 'Tło i położenie', key: 'bg', type: 'color', label: 'Kolor tła', live: () => apply() },
-      { group: 'Tło i położenie', key: 'bgAlpha', type: 'range', label: 'Krycie tła (0 = bez tła)', min: 0, max: 1, step: 0.05, live: () => apply() },
-      { group: 'Tło i położenie', key: 'frame', type: 'bool', label: 'Ramka' },
-      { group: 'Tło i położenie', key: 'bottom', type: 'range', label: 'Odległość od dołu ekranu (px)', min: 20, max: 600, step: 10, live: () => apply() },
-      { group: 'Komunikaty gry', key: 'styleGame', type: 'bool', label: 'Zmieniaj też komunikaty gry' },
-      { group: 'Komunikaty gry', key: 'gameSelectors', type: 'textarea', label: 'Selektory komunikatów gry (po jednym w linii)', hint: 'Jeśli komunikaty gry się nie zmieniają: F12 → wskaż komunikat → wpisz jego klasę.' },
+      { group: 'Tło', key: 'bg', type: 'color', label: 'Kolor tła', live: () => apply() },
+      { group: 'Tło', key: 'bgAlpha', type: 'range', label: 'Krycie tła (0 = bez tła)', min: 0, max: 1, step: 0.05, live: () => apply() },
+      { group: 'Tło', key: 'frame', type: 'bool', label: 'Ramka' },
+      { group: 'Zaawansowane', key: 'gameSelectors', type: 'textarea', label: 'Selektor komunikatów gry', hint: 'Zostaw domyślny (.big-messages .message). Zmień tylko, jeśli gra zmieni wygląd komunikatów.' },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-btns' },
         el('button', { class: 'mp-btn pri', onclick: () => toast('Tak wygląda powiadomienie', 'info') }, 'Podgląd'),
-        el('button', { class: 'mp-btn', onclick: () => toast('Przykładowe ostrzeżenie', 'warn') }, 'Ostrzeżenie'),
-        el('button', { class: 'mp-btn', onclick: () => toast('Bratan: zablokowano atak', 'bad') }, 'Blokada')));
+        el('button', { class: 'mp-btn', onclick: () => toast('Bratan: zablokowano atak', 'bad') }, 'Drugi przykład')));
     },
     init(c) { cfg = c; apply(); },
     onToggle() { apply(); },
@@ -2085,62 +2094,44 @@ function parseProtection(data) {
 })();
 
 /* ───────── MiniChat ─────────
- * Zmniejsza okno czatu: szerokość, wysokość, czcionka, przezroczystość, zwijanie pod klawisz.
- * Okno czatu jest wykrywane automatycznie (element z „chat" w klasie, zawierający pole do pisania),
- * a jeśli to zawiedzie — używany jest selektor z ustawień.
+ * Zmienia tylko wysokość okna czatu.
  */
 (() => {
-  let cfg, collapsed = false, found = '';
+  let cfg, found = '';
   function detect() {
     $$('[data-mp-chat]').forEach((n) => n.removeAttribute('data-mp-chat'));
     const sel = (cfg.selector || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
     let target = null;
     if (sel) { try { target = $$(sel).find(isVisible) || null; } catch {} }
-    if (!target) {
-      // automatycznie: największy widoczny element z „chat" w klasie, który ma w środku pole tekstowe
-      const cands = $$('[class*="chat"], [id*="chat"]').filter((n) => isVisible(n) && !n.closest('.mp-glass') && n.querySelector('input, textarea, [contenteditable]'));
-      cands.sort((a, b) => { const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return rb.width * rb.height - ra.width * ra.height; });
-      target = cands.find((n) => { const r = n.getBoundingClientRect(); return r.width < innerWidth * 0.9 && r.height < innerHeight * 0.9; }) || null;
-    }
     if (target) {
       target.setAttribute('data-mp-chat', '');
-      found = (target.id ? '#' + target.id : '') + (typeof target.className === 'string' ? '.' + target.className.trim().split(/\s+/).join('.') : '');
+      found = (typeof target.className === 'string' ? '.' + target.className.trim().split(/\s+/).join('.') : target.tagName.toLowerCase());
     } else found = '';
     return target;
   }
   function apply() {
     let st = document.getElementById('mp-minichat-css');
     if (!st) { st = el('style', { id: 'mp-minichat-css' }); document.head.appendChild(st); }
-    if (!cfg.enabled) { st.textContent = ''; $$('[data-mp-chat]').forEach((n) => n.removeAttribute('data-mp-chat')); return; }
-    if (!detect()) { st.textContent = ''; return; }
-    const S = '[data-mp-chat]';
-    st.textContent = `
-      ${S}{width:${cfg.width}px!important;max-width:${cfg.width}px!important;min-width:0!important;${collapsed ? 'height:30px!important;max-height:30px!important;overflow:hidden!important;' : `height:${cfg.height}px!important;max-height:${cfg.height}px!important;min-height:0!important;`}opacity:${cfg.opacity}!important;transition:opacity .2s}
-      ${S}:hover,${S}:focus-within{opacity:1!important}
-      ${S} *{font-size:${cfg.font}px!important}`;
+    if (!cfg.enabled || !detect()) { st.textContent = ''; return; }
+    st.textContent = `[data-mp-chat]{height:${cfg.height}px!important;max-height:${cfg.height}px!important;min-height:0!important}`;
   }
   defineAddon({
     id: 'minichat', name: 'MiniChat', icon: 'minichat', color: ['#5b8cff', '#3a5bd9'],
-    desc: 'Zmniejsza okno czatu według Twoich preferencji. Po najechaniu myszką albo podczas pisania czat wraca do pełnej widoczności.',
-    defaults: { width: 320, height: 160, opacity: 0.75, font: 11, key: '', selector: '' },
-    keys: [{ key: 'key', label: 'zwiń/rozwiń czat', fn: () => { collapsed = !collapsed; apply(); } }],
+    desc: 'Ustawia wysokość okna czatu.',
+    defaults: { height: 160, selector: '.new-chat-window' },
     settings: [
-      { key: 'width', type: 'range', label: 'Szerokość (px)', min: 180, max: 700, step: 10, live: () => apply() },
-      { key: 'height', type: 'range', label: 'Wysokość (px)', min: 60, max: 600, step: 10, live: () => apply() },
-      { key: 'opacity', type: 'range', label: 'Przezroczystość', min: 0.2, max: 1, step: 0.05, live: () => apply() },
-      { key: 'font', type: 'range', label: 'Czcionka (px)', min: 8, max: 16, step: 1, live: () => apply() },
-      { key: 'key', type: 'key', label: 'Klawisz: zwiń/rozwiń' },
-      { key: 'selector', type: 'textarea', label: 'Selektor okna czatu (opcjonalnie)', hint: 'Zostaw puste — czat wykrywa się sam. Wpisz tylko, gdy wykrywanie trafi w zły element.' },
+      { key: 'height', type: 'range', label: 'Wysokość czatu (px)', min: 60, max: 700, step: 10, live: () => apply() },
+      { key: 'selector', type: 'text', label: 'Selektor okna czatu', hint: 'Domyślnie .new-chat-window — zmień tylko, jeśli gra zmieni wygląd czatu.' },
     ],
     render(box) {
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Wykryte okno czatu'),
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Okno czatu'),
         el('div', { class: found ? 'mp-mono mp-okc' : 'mp-warnc' }, found || 'Nie znaleziono — otwórz czat w grze i kliknij „Wykryj ponownie".'),
         el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { apply(); ui.renderMain(); } }, 'Wykryj ponownie'))));
     },
     init(c) {
       cfg = c;
+      if (cfg.selector === '.chat-tpl\n.chat-window\n#chat' || cfg.selector === '') cfg.selector = '.new-chat-window';
       apply();
-      // czat w NI potrafi się przerysować (zmiana zakładki, przeładowanie) — pilnujemy, żeby styl nie zniknął
       setInterval(() => { if (cfg.enabled && !document.querySelector('[data-mp-chat]')) apply(); }, 2000);
     },
     onToggle() { apply(); },
@@ -2555,28 +2546,45 @@ MP.itemDeco = itemDeco;
 
   function hide() { hoverId = null; tip && (tip.style.display = 'none'); }
 
+  /**
+   * Pobranie EQ gracza tak samo, jak robi to gra po kliknięciu „Pokaż ekwipunek":
+   * wywołujemy funkcję gry showEq(), okno gry jest na ten czas niewidoczne, odczytujemy z niego
+   * przedmioty i zamykamy je. (Sprawdzone diagnostyką: okno .showeq-window, przedmioty .item-id-<id>-showeq)
+   */
+  let busy = false;
   async function fetchEq(id) {
     const c = cache[id];
     if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
-    if (now() - lastReq < 1500) return null;        // nie spamujemy serwera
-    lastReq = now();
-    const collected = {};
-    const off = bus.on('data', (data) => {
-      for (const src of [data.item, data.items, data.other && data.other.items, data.eq, data.other_eq]) {
-        if (!src || typeof src !== 'object') continue;
-        for (const [k, v] of Object.entries(src)) {
-          if (!v || typeof v !== 'object' || !v.name) continue;
-          if (v.loc === 'g' && !(v.own && Number(v.own) === id)) continue; // nasze przedmioty — pomijamy
-          collected[k] = v;
-        }
+    if (busy || now() - lastReq < 1200) return null;   // nie spamujemy serwera
+    const raw = game.otherRaw(id);
+    if (!raw || typeof raw.showEq !== 'function') return null;
+    busy = true; lastReq = now();
+    const hideCss = el('style', null, '.showeq-window{visibility:hidden!important;pointer-events:none!important}');
+    const already = $$('.showeq-window').filter(isVisible);
+    document.head.appendChild(hideCss);
+    let items = null;
+    try {
+      raw.showEq();
+      const t0 = now();
+      let w = null;
+      while (now() - t0 < 2500) {
+        await sleep(100);
+        w = $$('.showeq-window').find((n) => !already.includes(n) && n.querySelector('[class*="-showeq"]'));
+        if (w) { await sleep(150); break; }
       }
-    });
-    const r = await net.send('otherEq', { id }, { src: 'Pokaż EQ' });
-    await sleep(900);
-    off();
-    if (!r.ok) return null;
-    const items = Object.values(collected).map(game.normItem).filter(Boolean);
-    cache[id] = { t: now(), items };
+      if (w) {
+        const ids = $$('[class*="item-id-"]', w).map((n) => { const m = String(n.className).match(/item-id-(\d+)-showeq/); return m ? Number(m[1]) : null; }).filter(Boolean);
+        items = ids.map((iid) => {
+          let it = null;
+          try { it = E().items.getItemById(iid); } catch {}
+          return it ? game.normItem(it) : null;
+        }).filter(Boolean);
+        const close = w.querySelector('.close-button, [class*="close-button"], .close, [class*="close"]');
+        if (close) close.click(); else w.style.display = 'none';
+      }
+    } catch (e) { console.warn('[laddonz] showEq', e); }
+    finally { setTimeout(() => hideCss.remove(), 200); busy = false; }
+    if (items) cache[id] = { t: now(), items };
     return items;
   }
 
@@ -2594,7 +2602,7 @@ MP.itemDeco = itemDeco;
     const items = await fetchEq(id);
     if (hoverId !== id) return;
     tip.lastChild.remove();
-    if (!items) { tip.appendChild(el('div', { class: 'mp-warnc' }, net.cmd('otherEq').t ? 'Nie udało się pobrać (spróbuj za chwilę).' : 'Ustaw komendę „Podgląd EQ gracza" w Diagnostyce.')); return; }
+    if (!items) { tip.appendChild(el('div', { class: 'mp-warnc' }, 'Nie udało się pobrać — spróbuj za chwilę.')); return; }
     if (!items.length) { tip.appendChild(el('div', { class: 'mp-dim' }, 'Brak danych o przedmiotach.')); return; }
     const grid = el('div', { class: 'mp-eqgrid' }, items.slice(0, 18).map((it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: `${it.name} (${it.rarity})` },
       el('img', { src: game.iconUrl(it.icon), alt: '' }), it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon)) : null)));
@@ -2645,9 +2653,8 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
     desc: 'Po najechaniu na gracza pokazuje jego ekwipunek, a na dole podsumowanie bonusów legendarnych.',
-    defaults: { mapHover: true, listHover: true, needShift: true, delay: 450, cacheSec: 120, tipSelector: '.tip-wrapper\n.tip\n.tooltip' },
-    notes: () => [!net.cmd('otherEq').t ? { type: 'warn', text: 'Najpierw naucz panel komendy: kliknij u dowolnego gracza „Pokaż ekwipunek", potem Diagnostyka → Podsłuch → „Podgląd EQ gracza".' } : null,
-      { type: 'info', text: 'Każdy podgląd to jedno zapytanie do serwera, dlatego domyślnie trzeba trzymać Shift, a wynik jest pamiętany przez 2 minuty.' }],
+    defaults: { mapHover: true, listHover: true, needShift: true, delay: 450, cacheSec: 120, tipSelector: '.tip-wrapper.normal-tip' },
+    notes: () => [{ type: 'info', text: 'Podgląd korzysta z tej samej funkcji co „Pokaż ekwipunek" w grze. Każdy podgląd to jedno zapytanie do serwera, dlatego na mapie domyślnie trzeba trzymać Shift, a wynik jest pamiętany przez 2 minuty.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
       { key: 'listHover', type: 'bool', label: 'Najechanie na gracza w „Kto tu jest?"' },
@@ -3037,5 +3044,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.1.0";
+MP.version = "1.2.0";
 })();
