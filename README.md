@@ -20,9 +20,9 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 | | Dodatek | Co robi |
 |---|---|---|
 | ⚔ | **Napad** | Klawisz = atak na najbliższego wroga w zasięgu (bez podchodzenia). „⚔ Napad" w menu prawego przycisku na graczu. Pamięta ochronę i nie marnuje na nią ataków. Zmiana zestawu przed atakiem (opcjonalnie tylko gdy na mapie jest 1 wróg). **Tryb AUTO** (domyślnie wyłączony): atakuje graczy wchodzących w zasięg według tych samych filtrów; gdy działa, na ekranie świeci czerwony wskaźnik „NAPAD AUTO" (klik = wyłącz). |
-| 🔔 | **Hey WakeUP!** | Kolory, czcionki, rozmiar i poświata powiadomień. |
+| 🔔 | **Hey WakeUP!** | Domyślnie powiadomienia wyglądają jak w grze (żółty tekst na dole). Dodatek zmienia ich kolory, czcionkę, rozmiar, tło i położenie — także dla komunikatów gry. |
 | 🛡 | **Bratan** | Blokuje każdy atak (także ręczny) na klanowiczów, znajomych, sojuszników i osoby z listy. |
-| 👥 | **Kto tu jest?** | Okno z graczami na mapie: filtry po nicku, klanie, poziomie, profesji, relacji, sortowanie, zapisywane zestawy filtrów. |
+| 👥 | **Kto tu jest?** | Okno z graczami na mapie: filtry, sortowanie, zapisywane zestawy, tryb minimalny. Klik na gracza → karta z EQ, Napadem, zaproszeniem do grupy i znajomych, Bratanem. |
 | 🏆 | **Kto złapie** | Pod kafelkami łupu: Twoja szansa (%) na złapanie przedmiotu przy biciu w grupie. |
 | 🍲 | **Let's Cook Together** | Klawisz = zaproś znajomych/klan/sojusz/wszystkich z mapy. Klawisz = rozwiąż grupę. Opcjonalny automat. |
 | ✎ | **Podpisownik** | Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny). |
@@ -30,8 +30,8 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 | ★ | **Jaki To Bon** | Skrót bonusu legendarnego w rogu przedmiotu (OR, CBK, DA…). Skróty edytowalne. |
 | 🗑 | **Śmieciara** | Usuwa tylko przedmioty po terminie ważności, po potwierdzeniu listy. |
 | 🚕 | **Fake Taxi** | Automatyczne przyjmowanie przywołań od wybranych osób. |
-| ⚡ | **Auto f** | Szybka walka pod klawisz albo automatycznie na starcie walki. |
-| ✋ | **Szybka rączka** | Prawy klik na przedmiocie → „Użyj po walce" / „Używaj po każdej walce". Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". |
+| ⚡ | **Auto f** | Włącz/wyłącz: gdy włączony, każda walka od razu przechodzi na szybką walkę (np. przy kolosie, gdy odchodzisz od komputera). |
+| ✋ | **Szybka rączka** | Prawy klik na przedmiocie → „Użyj po walce". Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". |
 | ✦ | **Ulepszarka** | Ulepsza wybrany przedmiot składnikami z torby wg rzadkości (zwykłe / unikaty / heroiki). Pod klawisz albo po walce. |
 | 💬 | **MiniChat** | Rozmiar, czcionka i przezroczystość czatu, zwijanie pod klawisz. |
 
@@ -96,6 +96,10 @@ Komendy z pomarańczowym statusem **domyślna** (atak, szybka walka, zaproszenie
 - **Liczby/plakietki nie pojawiają się na oknie (łup, czat, ikona grupy, przywołanie):** gra mogła zmienić nazwę klasy okna. F12 → strzałka „wskaż element" → kliknij okno → skopiuj jego klasę (np. `.loot-wnd`) do pola *Selektor…* w ustawieniach dodatku.
 - **Menu prawego przycisku nie ma nowych opcji:** sprawdź Diagnostykę. Zapasowo: **Alt + prawy klik** na przedmiocie zawsze otwiera menu panelu, a Napad jest też dostępny w oknie „Kto tu jest?".
 - **Kopia ustawień:** Ogólne → Eksportuj / Importuj.
+
+## Diagnostyka (gdy coś nie działa w Twojej wersji gry)
+
+Plik `test/diagnostyka.js`: skopiuj całość, w grze naciśnij F12 → Console, wklej i Enter. Przez 60 s skrypt tylko podgląda, co robi gra (nic nie wysyła). Wykonaj w tym czasie akcje z opisu na górze pliku. Potem pobierze się `laddonz-diagnostyka.txt`.
 
 ## Testowanie bez gry
 
