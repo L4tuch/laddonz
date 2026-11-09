@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.3.1
+// @version      1.4.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Napad, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -849,6 +849,7 @@ const ICON_PATHS = {
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 018 0v3"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/>',
+  pin: '<path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z"/><path d="M12 14v7"/>',
   drag: '<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>',
 };
 
@@ -940,6 +941,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-sw.small{width:32px;height:18px}.mp-sw.small span:before{width:12px;height:12px}.mp-sw.small input:checked+span:before{transform:translateX(14px)}
 .mp-btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);font-size:12.5px;font-weight:600;color:var(--mp-fg)}
 .mp-btn:hover{background:rgba(255,255,255,.14)}
+.mp-btn.on{border-color:var(--mp-accent);color:#fff;background:color-mix(in srgb,var(--mp-accent) 25%,transparent)}
 .mp-btn.pri{background:var(--mp-accent);border-color:transparent;color:#fff}
 .mp-btn.pri:hover{filter:brightness(1.1)}
 .mp-btn.bad{background:rgba(255,93,122,.2);border-color:rgba(255,93,122,.4)}
@@ -1619,6 +1621,8 @@ const ui = {
             a.risk === 'auto' ? el('span', { class: 'mp-badge auto' }, icon('warn', 11), 'automat') : null,
             a.risk === 'destructive' ? el('span', { class: 'mp-badge destr' }, icon('warn', 11), 'usuwa/zużywa') : null),
           el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
+        cfg.enabled ? el('button', { class: 'mp-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów po prawej', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); rerender(); } },
+          icon('pin', 14), quickbar.isPinned(a.id) ? 'W skrótach ✓' : 'Dodaj do skrótów') : null,
         switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, M.querySelector('.mp-h .mp-sw')))));
       M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
     }
@@ -1737,13 +1741,14 @@ const ui = {
     M.appendChild(card);
 
     // pasek skrótów
-    const q = (g.quickbar = g.quickbar || { show: true, hidden: [], pos: null });
-    const qc = el('div', { class: 'mp-card' }, el('h3', null, 'Pasek skrótów (przy ekwipunku)'),
-      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj pasek skrótów', el('small', null, 'Lewy klik na ikonce = ustawienia dodatku, prawy klik = włącz/wyłącz.')), switchEl(q.show, (v) => { q.show = v; config.save(); quickbar.draw(); })),
-      el('div', { class: 'mp-chips', style: { marginTop: '8px' } }, addons.list.map((a) => {
-        const on = !(q.hidden || []).includes(a.id);
-        const b = el('button', { class: 'mp-pf' + (on ? ' on' : '') }, a.name);
-        b.onclick = () => { q.hidden = q.hidden || []; const i = q.hidden.indexOf(a.id); if (i >= 0) q.hidden.splice(i, 1); else q.hidden.push(a.id); config.save(); b.classList.toggle('on'); quickbar.draw(); };
+    const q = (g.quickbar = g.quickbar || { show: true, pinned: [], pos: null });
+    if (!Array.isArray(q.pinned)) q.pinned = [];
+    const qc = el('div', { class: 'mp-card' }, el('h3', null, 'Pasek skrótów (po prawej)'),
+      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj pasek skrótów', el('small', null, 'Na pasku są dodatki dodane przyciskiem „Dodaj do skrótów". Lewy klik na ikonce = ustawienia, prawy klik = włącz/wyłącz.')), switchEl(q.show, (v) => { q.show = v; config.save(); quickbar.draw(); })),
+      el('div', { class: 'mp-dim', style: { margin: '8px 0 4px', fontSize: '11.5px' } }, 'W skrótach (kliknij, żeby dodać/usunąć):'),
+      el('div', { class: 'mp-chips' }, addons.list.map((a) => {
+        const b = el('button', { class: 'mp-pf' + (quickbar.isPinned(a.id) ? ' on' : '') }, a.name);
+        b.onclick = () => { quickbar.togglePin(a.id); b.classList.toggle('on'); };
         return b;
       })),
       el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { q.pos = null; config.save(); quickbar.place(); } }, 'Przywróć położenie paska')));
@@ -1893,31 +1898,39 @@ const quickbar = {
     }, true);
   },
 
+  /** Na pasku są tylko dodatki dodane do skrótów (przycisk „Dodaj do skrótów" przy włączonym dodatku). */
+  pinned() { const q = config.data.global.quickbar || {}; return Array.isArray(q.pinned) ? q.pinned : (q.pinned = []); },
+  isPinned(id) { return this.pinned().includes(id); },
+  togglePin(id) {
+    const p = this.pinned();
+    const i = p.indexOf(id);
+    if (i >= 0) p.splice(i, 1); else p.push(id);
+    config.save();
+    this.draw();
+    bus.emit('quickbar:pins');
+    return i < 0;
+  },
   enabledList() {
-    const q = config.data.global.quickbar || {};
-    return addons.list.filter((a) => !(q.hidden || []).includes(a.id));
+    const order = this.pinned();
+    return addons.list.filter((a) => order.includes(a.id));
   },
 
   defaultPos() {
-    // spróbuj przykleić się do lewej krawędzi prawej kolumny interfejsu (okolice ekwipunku)
-    const cands = ['.right-column', '.right-main-column', '.interface-layer .right', '.bags-navigation', '.inventory-layer', '.right-container'];
-    for (const s of cands) {
-      const n = document.querySelector(s);
-      if (n && isVisible(n)) { const r = n.getBoundingClientRect(); return { x: Math.max(0, r.left - 34), y: Math.max(60, r.top + 40) }; }
-    }
-    return { x: innerWidth - 40, y: Math.round(innerHeight * 0.25) };
+    return { x: innerWidth - 40, y: Math.round(innerHeight * 0.3) };
   },
 
   place() {
     if (!this.bar) return;
     const p = (config.data.global.quickbar || {}).pos || this.defaultPos();
-    this.bar.style.left = clamp(p.x, 0, innerWidth - 44) + 'px';
-    this.bar.style.top = clamp(p.y, 0, innerHeight - 80) + 'px';
+    const h = this.bar.offsetHeight || 200;
+    this.bar.style.left = clamp(p.x, 0, innerWidth - 34) + 'px';
+    this.bar.style.top = clamp(p.y, 0, Math.max(0, innerHeight - h - 4)) + 'px';
   },
 
   draw() {
-    const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, hidden: [], pos: null });
-    if (!q.show) { this.bar && this.bar.remove(); this.bar = null; return; }
+    const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, pinned: [], pos: null });
+    if (!Array.isArray(q.pinned)) q.pinned = [];
+    if (!q.show || !q.pinned.length) { this.bar && this.bar.remove(); this.bar = null; return; }
     if (!this.bar) {
       this.bar = el('div', { id: 'mp-qbar', class: 'mp-glass' });
       document.body.appendChild(this.bar);
@@ -1943,6 +1956,7 @@ const quickbar = {
       this.bar.appendChild(t);
     }
     this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Pełny panel laddonz', onclick: () => ui.toggle() }, icon('logo', 15)));
+    this.place();
   },
 
   openPop(id, anchor, refresh) {
@@ -1962,6 +1976,7 @@ const quickbar = {
       el('div', { class: 'mp-tile', style: { width: '30px', height: '30px', borderRadius: '9px', background: grad(a.color) } }, icon(a.icon, 17)),
       el('div', { style: { flex: 1, minWidth: 0 } }, el('div', { class: 'mp-title', style: { fontSize: '14px' } }, a.name), el('div', { class: 'mp-sub' }, cfg.enabled ? 'włączony' : 'wyłączony')),
       sw,
+      el('button', { class: 'mp-x', title: 'Usuń ze skrótów', onclick: () => { this.togglePin(id); this.closePop(); toast(`${a.name}: usunięto ze skrótów`); } }, icon('pin', 15)),
       el('button', { class: 'mp-x', title: 'Otwórz w pełnym panelu', onclick: () => { this.closePop(); ui.open(id); } }, icon('grid', 15)),
       el('button', { class: 'mp-x', title: 'Zamknij', onclick: () => this.closePop() }, icon('close', 16)));
     const body = el('div', { class: 'mp-qbody' });
@@ -2290,7 +2305,7 @@ function parseProtection(data) {
   defineAddon({
     id: 'bratan', name: 'Bratan', icon: 'bratan', color: ['#3ddc97', '#1c9b6c'],
     desc: 'Blokuje atak na klanowiczów, znajomych i sojuszników. Działa na wszystkie ataki — także kliknięte ręcznie w grze.',
-    defaults: { enabled: true, clan: true, friends: true, allies: true, nicks: [] },
+    defaults: { enabled: false, clan: true, friends: true, allies: true, nicks: [] },
     settings: [
       { key: 'clan', type: 'bool', label: 'Chroń klanowiczów' },
       { key: 'friends', type: 'bool', label: 'Chroń znajomych' },
@@ -2476,7 +2491,7 @@ function parseProtection(data) {
   defineAddon({
     id: 'ktotu', name: 'Kto tu jest?', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
     desc: 'Lista graczy na mapie z filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami. Tryb minimalny pokazuje samą listę po filtrach. Kliknij gracza, żeby zobaczyć jego kartę: EQ, Napad, zaproszenie do grupy i znajomych, Bratan.',
-    defaults: { enabled: true, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
+    defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
     notes: () => [!net.cmd('friendAdd').t ? { type: 'info', text: 'Przycisk „Znajomy" zadziała po jednorazowym nauczeniu komendy: dodaj ręcznie kogoś do znajomych, potem Diagnostyka → Podsłuch → „Dodanie do znajomych".' } : null],
     settings: [
@@ -2530,7 +2545,7 @@ function parseProtection(data) {
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
     desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu przy biciu w grupie.',
-    defaults: { enabled: true, onlyOnMap: true, lootSelector: '.loot-wnd\n.loots-window\n.loot-window' },
+    defaults: { enabled: false, onlyOnMap: true, lootSelector: '.loot-wnd\n.loots-window\n.loot-window' },
     notes: () => [{ type: 'info', text: 'To przybliżenie: zakłada równą szansę dla wszystkich członków grupy (opcjonalnie tylko tych na tej samej mapie). Jeśli liczby się nie pojawiają, sprawdź selektor okna łupu (F12 → wskaż okno łupu).' }],
     settings: [
       { key: 'onlyOnMap', type: 'bool', label: 'Licz tylko członków grupy na tej samej mapie' },
@@ -2667,7 +2682,7 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'jakibon', name: 'Jaki To Bon', icon: 'jakibon', color: ['#ff9a3c', '#d4561c'],
     desc: 'Dodaje do założonych przedmiotów legendarnych skrót bonusu w prawym górnym rogu (OR — Ostatni ratunek, CBK — Cios bardzo krytyczny itd.).',
-    defaults: { enabled: true, allItems: false, map: DEFAULT_MAP },
+    defaults: { enabled: false, allItems: false, map: DEFAULT_MAP },
     settings: [{ key: 'allItems', type: 'bool', label: 'Pokazuj też na przedmiotach w torbach', hint: 'Domyślnie tylko założone.' }],
     render(box, c, rerender) {
       const tb = el('tbody');
@@ -2736,7 +2751,7 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
     desc: 'Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny), widoczne w ekwipunku. Prawy klik na przedmiocie → „Podpisz…" (albo Alt + prawy klik).',
-    defaults: { enabled: true, byId: {}, rules: [], autoTeleport: true },
+    defaults: { enabled: false, byId: {}, rules: [], autoTeleport: true },
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu (jeśli gra ją podaje)' }],
     render(box, c, rerender) {
       const tb = el('tbody');
@@ -2887,7 +2902,7 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
     desc: 'Po najechaniu na gracza (na mapie albo w „Kto tu jest?") pokazuje jego ekwipunek, a na dole podsumowanie bonusów legendarnych.',
-    defaults: { enabled: true, mapHover: true, listHover: true, needShift: false, cacheSec: 120, tipSelector: '.tip-wrapper.normal-tip' },
+    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, cacheSec: 120, tipSelector: '.tip-wrapper.normal-tip' },
     notes: () => [{ type: 'info', text: 'Podgląd korzysta z tej samej funkcji co „Pokaż ekwipunek" w grze, więc pierwszy podgląd danego gracza trwa tyle, ile odpowiedź serwera. Kolejne przez 2 minuty są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
@@ -3284,5 +3299,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.3.1";
+MP.version = "1.4.0";
 })();

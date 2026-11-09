@@ -164,6 +164,8 @@ const ui = {
             a.risk === 'auto' ? el('span', { class: 'mp-badge auto' }, icon('warn', 11), 'automat') : null,
             a.risk === 'destructive' ? el('span', { class: 'mp-badge destr' }, icon('warn', 11), 'usuwa/zużywa') : null),
           el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
+        cfg.enabled ? el('button', { class: 'mp-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów po prawej', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); rerender(); } },
+          icon('pin', 14), quickbar.isPinned(a.id) ? 'W skrótach ✓' : 'Dodaj do skrótów') : null,
         switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, M.querySelector('.mp-h .mp-sw')))));
       M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
     }
@@ -282,13 +284,14 @@ const ui = {
     M.appendChild(card);
 
     // pasek skrótów
-    const q = (g.quickbar = g.quickbar || { show: true, hidden: [], pos: null });
-    const qc = el('div', { class: 'mp-card' }, el('h3', null, 'Pasek skrótów (przy ekwipunku)'),
-      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj pasek skrótów', el('small', null, 'Lewy klik na ikonce = ustawienia dodatku, prawy klik = włącz/wyłącz.')), switchEl(q.show, (v) => { q.show = v; config.save(); quickbar.draw(); })),
-      el('div', { class: 'mp-chips', style: { marginTop: '8px' } }, addons.list.map((a) => {
-        const on = !(q.hidden || []).includes(a.id);
-        const b = el('button', { class: 'mp-pf' + (on ? ' on' : '') }, a.name);
-        b.onclick = () => { q.hidden = q.hidden || []; const i = q.hidden.indexOf(a.id); if (i >= 0) q.hidden.splice(i, 1); else q.hidden.push(a.id); config.save(); b.classList.toggle('on'); quickbar.draw(); };
+    const q = (g.quickbar = g.quickbar || { show: true, pinned: [], pos: null });
+    if (!Array.isArray(q.pinned)) q.pinned = [];
+    const qc = el('div', { class: 'mp-card' }, el('h3', null, 'Pasek skrótów (po prawej)'),
+      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj pasek skrótów', el('small', null, 'Na pasku są dodatki dodane przyciskiem „Dodaj do skrótów". Lewy klik na ikonce = ustawienia, prawy klik = włącz/wyłącz.')), switchEl(q.show, (v) => { q.show = v; config.save(); quickbar.draw(); })),
+      el('div', { class: 'mp-dim', style: { margin: '8px 0 4px', fontSize: '11.5px' } }, 'W skrótach (kliknij, żeby dodać/usunąć):'),
+      el('div', { class: 'mp-chips' }, addons.list.map((a) => {
+        const b = el('button', { class: 'mp-pf' + (quickbar.isPinned(a.id) ? ' on' : '') }, a.name);
+        b.onclick = () => { quickbar.togglePin(a.id); b.classList.toggle('on'); };
         return b;
       })),
       el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { q.pos = null; config.save(); quickbar.place(); } }, 'Przywróć położenie paska')));

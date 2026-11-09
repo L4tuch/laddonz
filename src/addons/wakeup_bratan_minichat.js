@@ -88,7 +88,7 @@
   defineAddon({
     id: 'bratan', name: 'Bratan', icon: 'bratan', color: ['#3ddc97', '#1c9b6c'],
     desc: 'Blokuje atak na klanowiczów, znajomych i sojuszników. Działa na wszystkie ataki — także kliknięte ręcznie w grze.',
-    defaults: { enabled: true, clan: true, friends: true, allies: true, nicks: [] },
+    defaults: { enabled: false, clan: true, friends: true, allies: true, nicks: [] },
     settings: [
       { key: 'clan', type: 'bool', label: 'Chroń klanowiczów' },
       { key: 'friends', type: 'bool', label: 'Chroń znajomych' },

@@ -76,6 +76,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-sw.small{width:32px;height:18px}.mp-sw.small span:before{width:12px;height:12px}.mp-sw.small input:checked+span:before{transform:translateX(14px)}
 .mp-btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);font-size:12.5px;font-weight:600;color:var(--mp-fg)}
 .mp-btn:hover{background:rgba(255,255,255,.14)}
+.mp-btn.on{border-color:var(--mp-accent);color:#fff;background:color-mix(in srgb,var(--mp-accent) 25%,transparent)}
 .mp-btn.pri{background:var(--mp-accent);border-color:transparent;color:#fff}
 .mp-btn.pri:hover{filter:brightness(1.1)}
 .mp-btn.bad{background:rgba(255,93,122,.2);border-color:rgba(255,93,122,.4)}

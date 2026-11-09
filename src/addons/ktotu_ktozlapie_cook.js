@@ -112,7 +112,7 @@
   defineAddon({
     id: 'ktotu', name: 'Kto tu jest?', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
     desc: 'Lista graczy na mapie z filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami. Tryb minimalny pokazuje samą listę po filtrach. Kliknij gracza, żeby zobaczyć jego kartę: EQ, Napad, zaproszenie do grupy i znajomych, Bratan.',
-    defaults: { enabled: true, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
+    defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
     notes: () => [!net.cmd('friendAdd').t ? { type: 'info', text: 'Przycisk „Znajomy" zadziała po jednorazowym nauczeniu komendy: dodaj ręcznie kogoś do znajomych, potem Diagnostyka → Podsłuch → „Dodanie do znajomych".' } : null],
     settings: [
@@ -166,7 +166,7 @@
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
     desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu przy biciu w grupie.',
-    defaults: { enabled: true, onlyOnMap: true, lootSelector: '.loot-wnd\n.loots-window\n.loot-window' },
+    defaults: { enabled: false, onlyOnMap: true, lootSelector: '.loot-wnd\n.loots-window\n.loot-window' },
     notes: () => [{ type: 'info', text: 'To przybliżenie: zakłada równą szansę dla wszystkich członków grupy (opcjonalnie tylko tych na tej samej mapie). Jeśli liczby się nie pojawiają, sprawdź selektor okna łupu (F12 → wskaż okno łupu).' }],
     settings: [
       { key: 'onlyOnMap', type: 'bool', label: 'Licz tylko członków grupy na tej samej mapie' },

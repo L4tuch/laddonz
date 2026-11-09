@@ -23,31 +23,39 @@ const quickbar = {
     }, true);
   },
 
+  /** Na pasku są tylko dodatki dodane do skrótów (przycisk „Dodaj do skrótów" przy włączonym dodatku). */
+  pinned() { const q = config.data.global.quickbar || {}; return Array.isArray(q.pinned) ? q.pinned : (q.pinned = []); },
+  isPinned(id) { return this.pinned().includes(id); },
+  togglePin(id) {
+    const p = this.pinned();
+    const i = p.indexOf(id);
+    if (i >= 0) p.splice(i, 1); else p.push(id);
+    config.save();
+    this.draw();
+    bus.emit('quickbar:pins');
+    return i < 0;
+  },
   enabledList() {
-    const q = config.data.global.quickbar || {};
-    return addons.list.filter((a) => !(q.hidden || []).includes(a.id));
+    const order = this.pinned();
+    return addons.list.filter((a) => order.includes(a.id));
   },
 
   defaultPos() {
-    // spróbuj przykleić się do lewej krawędzi prawej kolumny interfejsu (okolice ekwipunku)
-    const cands = ['.right-column', '.right-main-column', '.interface-layer .right', '.bags-navigation', '.inventory-layer', '.right-container'];
-    for (const s of cands) {
-      const n = document.querySelector(s);
-      if (n && isVisible(n)) { const r = n.getBoundingClientRect(); return { x: Math.max(0, r.left - 34), y: Math.max(60, r.top + 40) }; }
-    }
-    return { x: innerWidth - 40, y: Math.round(innerHeight * 0.25) };
+    return { x: innerWidth - 40, y: Math.round(innerHeight * 0.3) };
   },
 
   place() {
     if (!this.bar) return;
     const p = (config.data.global.quickbar || {}).pos || this.defaultPos();
-    this.bar.style.left = clamp(p.x, 0, innerWidth - 44) + 'px';
-    this.bar.style.top = clamp(p.y, 0, innerHeight - 80) + 'px';
+    const h = this.bar.offsetHeight || 200;
+    this.bar.style.left = clamp(p.x, 0, innerWidth - 34) + 'px';
+    this.bar.style.top = clamp(p.y, 0, Math.max(0, innerHeight - h - 4)) + 'px';
   },
 
   draw() {
-    const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, hidden: [], pos: null });
-    if (!q.show) { this.bar && this.bar.remove(); this.bar = null; return; }
+    const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, pinned: [], pos: null });
+    if (!Array.isArray(q.pinned)) q.pinned = [];
+    if (!q.show || !q.pinned.length) { this.bar && this.bar.remove(); this.bar = null; return; }
     if (!this.bar) {
       this.bar = el('div', { id: 'mp-qbar', class: 'mp-glass' });
       document.body.appendChild(this.bar);
@@ -73,6 +81,7 @@ const quickbar = {
       this.bar.appendChild(t);
     }
     this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Pełny panel laddonz', onclick: () => ui.toggle() }, icon('logo', 15)));
+    this.place();
   },
 
   openPop(id, anchor, refresh) {
@@ -92,6 +101,7 @@ const quickbar = {
       el('div', { class: 'mp-tile', style: { width: '30px', height: '30px', borderRadius: '9px', background: grad(a.color) } }, icon(a.icon, 17)),
       el('div', { style: { flex: 1, minWidth: 0 } }, el('div', { class: 'mp-title', style: { fontSize: '14px' } }, a.name), el('div', { class: 'mp-sub' }, cfg.enabled ? 'włączony' : 'wyłączony')),
       sw,
+      el('button', { class: 'mp-x', title: 'Usuń ze skrótów', onclick: () => { this.togglePin(id); this.closePop(); toast(`${a.name}: usunięto ze skrótów`); } }, icon('pin', 15)),
       el('button', { class: 'mp-x', title: 'Otwórz w pełnym panelu', onclick: () => { this.closePop(); ui.open(id); } }, icon('grid', 15)),
       el('button', { class: 'mp-x', title: 'Zamknij', onclick: () => this.closePop() }, icon('close', 16)));
     const body = el('div', { class: 'mp-qbody' });
