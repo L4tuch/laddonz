@@ -29,6 +29,7 @@ const config = {
       panelPos: null,
       accent: '#7c5cff',
       glass: 0.55,          // przezroczystość tła panelu
+      menuSelector: '.popup-menu\n.menu-wrapper\n[class*="popup-menu"]\n[class*="context-menu"]', // menu prawego przycisku gry (zapas)
     },
     commands: {},           // nadpisania szablonów komend (patrz net.js)
     addons: {},

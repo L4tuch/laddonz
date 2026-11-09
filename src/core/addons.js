@@ -112,6 +112,28 @@ function confirmBox({ title, html, items, okText = 'Potwierdź', danger = false,
   });
 }
 
+/* ───────── ładne okno do wpisania tekstu (zamiast prompt()) ───────── */
+function promptBox({ title, label, value = '', placeholder = '', suggestions = [], head = null, maxLength = 40, okText = 'Zapisz', allowClear = false }) {
+  return new Promise((resolve) => {
+    const inp = el('input', { class: 'mp-input-big', value, placeholder, maxlength: maxLength });
+    const ok = el('button', { class: 'mp-btn pri' }, okText);
+    const cancel = el('button', { class: 'mp-btn' }, 'Anuluj');
+    const clear = allowClear && value ? el('button', { class: 'mp-btn bad', style: { marginRight: 'auto' } }, 'Usuń') : null;
+    const sugg = suggestions.length ? el('div', { class: 'mp-sugg' }, suggestions.map((s) => el('button', { onclick: () => { inp.value = s; inp.focus(); } }, s))) : null;
+    const bg = el('div', { class: 'mp-modal-bg' }, el('div', { class: 'mp-modal mp-glass', style: { width: '380px' } },
+      el('h3', null, title), head, label ? el('div', { class: 'mp-dim', style: { margin: '0 0 6px' } }, label) : null, inp, sugg,
+      el('div', { class: 'mp-btns', style: { justifyContent: 'flex-end', marginTop: '14px' } }, clear, cancel, ok)));
+    const done = (v) => { bg.remove(); resolve(v); };
+    ok.onclick = () => done(inp.value.trim());
+    cancel.onclick = () => done(null);
+    if (clear) clear.onclick = () => done('');
+    bg.addEventListener('mousedown', (e) => { if (e.target === bg) done(null); });
+    inp.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') done(inp.value.trim()); if (e.key === 'Escape') done(null); });
+    document.body.appendChild(bg);
+    setTimeout(() => { inp.focus(); inp.select(); }, 30);
+  });
+}
+
 function grad(c) {
   const [a, b] = Array.isArray(c) ? c : [c || '#7c5cff', c || '#5b8cff'];
   return `linear-gradient(135deg, ${a}, ${b})`;
@@ -121,3 +143,4 @@ MP.addons = addons;
 MP.defineAddon = defineAddon;
 MP.floatWin = floatWin;
 MP.confirmBox = confirmBox;
+MP.promptBox = promptBox;

@@ -18,6 +18,7 @@ const DEFAULT_COMMANDS = {
   useItem:      { t: 'moveitem&st=1&id={id}', destructive: false, label: 'Użycie przedmiotu', how: 'Użyj (2× klik) dowolnej mikstury.' },
   eqSet:        { t: '', destructive: false, label: 'Zmiana zestawu', how: 'Przełącz ręcznie zestaw ekwipunku.' },
   otherEq:      { t: '', destructive: false, label: 'Podgląd EQ gracza', how: 'Kliknij u gracza „Pokaż ekwipunek".' },
+  friendAdd:    { t: '', destructive: false, label: 'Dodanie do znajomych', how: 'Dodaj ręcznie kogoś do znajomych.' },
   destroyItem:  { t: '', destructive: true, label: 'Usunięcie przedmiotu', how: 'Usuń ręcznie JEDEN bezwartościowy przedmiot.' },
   enhance:      { t: '', destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
 };
@@ -75,35 +76,67 @@ const net = {
     bus.emit('log');
   },
 
-  /** Owinięcie window._g — instalowane raz. */
+  /**
+   * Podpięcie pod wysyłanie komend gry: window._g (sprawdzone diagnostyką — gra wysyła nim m.in. atak).
+   * Bezpieczniki (Bratan) działają na wszystkim, co przez nie przechodzi — także na ręcznym ataku.
+   */
   install() {
-    if (this.origG || typeof W._g !== 'function') return !!this.origG;
-    const orig = W._g;
-    this.origG = orig;
+    if (typeof W._g !== 'function') return false;
+    if (!this.origG) this.origG = W._g.__mpOrig || W._g;
+    this.wrapTaskFn(W, '_g', 'window._g');
+    this.hookResponses();
+    this.installed = true;
+    return true;
+  },
+  installed: false,
+  transport: null,     // { obj, name, orig, label } — droga, którą gra wysyła komendy
+  _depth: 0,
+  _lastSniff: { task: '', t: 0 },
+
+  isTask(x) { return typeof x === 'string' && /^[a-z_0-9]+&[a-z_0-9]+=/i.test(x); },
+
+  wrapTaskFn(obj, name, label) {
+    const orig = obj[name];
+    if (typeof orig !== 'function' || orig.__mpTask) return;
     const self = this;
-    const wrapped = function (task, ...rest) {
-      const t = typeof task === 'string' ? task : '';
+    const w = function (...args) {
+      const t = self.isTask(args[0]) ? args[0] : null;
+      if (!t) return orig.apply(this, args);
       if (!self._ours) {
-        self.stats.gameCalls++;
-        if (self.sniffing && t) {
-          self.sniff.unshift({ t: now(), task: t });
-          if (self.sniff.length > 40) self.sniff.length = 40;
-          bus.emit('sniff');
+        if (self._depth === 0) {
+          if (!(self._lastSniff.task === t && now() - self._lastSniff.t < 80)) {
+            self._lastSniff = { task: t, t: now() };
+            self.stats.gameCalls++;
+            if (self.sniffing) {
+              self.sniff.unshift({ t: now(), task: t, via: label });
+              if (self.sniff.length > 40) self.sniff.length = 40;
+              bus.emit('sniff');
+            }
+          }
+        }
+        const g = self.checkGuards(t);
+        if (g) {
+          self.stats.blocked++;
+          self.pushLog({ kind: 'block', task: t, msg: g.reason, src: g.src || 'bezpiecznik' });
+          toast(g.reason, 'bad');
+          return;
         }
       }
-      const g = t && self.checkGuards(t);
-      if (g) {
-        self.stats.blocked++;
-        self.pushLog({ kind: 'block', task: t, msg: g.reason, src: g.src || 'bezpiecznik' });
-        toast(g.reason, 'warn');
-        return;
-      }
-      return orig.call(this, task, ...rest);
+      self._depth++;
+      try { return orig.apply(this, args); } finally { self._depth--; }
     };
-    for (const k of Object.keys(orig)) { try { wrapped[k] = orig[k]; } catch {} }
-    W._g = wrapped;
-    this.hookResponses();
-    return true;
+    for (const k of Object.keys(orig)) { try { w[k] = orig[k]; } catch {} }
+    w.__mpTask = true; w.__mpOrig = orig;
+    try { obj[name] = w; } catch {}
+  },
+
+  /** Wysyła komendę tą samą drogą, której używa gra. */
+  rawSend(task, cb) {
+    this._ours = true;
+    try {
+      if (this.origG) return this.origG.call(W, task, cb);
+      throw new Error('Nie znaleziono funkcji wysyłającej komendy gry');
+    } finally { this._ours = false; }
   },
 
   /**
@@ -145,16 +178,16 @@ const net = {
         this.lastSent = now();
         const { task, opts } = job;
 
-        if (!this.origG && !this.install()) {
-          this.pushLog({ kind: 'error', task, msg: 'Brak funkcji _g gry', src: opts.src });
-          job.resolve({ ok: false, error: 'no _g' });
+        if (!this.installed && !this.install()) {
+          this.pushLog({ kind: 'error', task, msg: 'Nie znaleziono funkcji wysyłającej komendy gry', src: opts.src });
+          job.resolve({ ok: false, error: 'no transport' });
           continue;
         }
         const g = this.checkGuards(task);
         if (g) {
           this.stats.blocked++;
           this.pushLog({ kind: 'block', task, msg: g.reason, src: g.src || opts.src });
-          toast(g.reason, 'warn');
+          toast(g.reason, 'bad');
           job.resolve({ ok: false, blocked: true, error: g.reason });
           continue;
         }
@@ -168,13 +201,12 @@ const net = {
         let done = false;
         const finish = (data) => { if (done) return; done = true; try { opts.onResponse && opts.onResponse(data || {}); } catch {} job.resolve({ ok: true, data }); };
         try {
-          this._ours = true;
-          this.origG.call(W, task, (data) => finish(data));
+          this.rawSend(task, (data) => finish(data));
         } catch (e) {
           this.pushLog({ kind: 'error', task, msg: String(e), src: opts.src });
           done = true;
           job.resolve({ ok: false, error: String(e) });
-        } finally { this._ours = false; }
+        }
         // jeśli gra nie wywoła callbacka, po 1.5 s uznajemy żądanie za wysłane
         setTimeout(() => finish(this._lastData), 1500);
       }
@@ -269,6 +301,11 @@ function templatize(name, task) {
     });
     return t;
   }
+  const nicks = game.others().map((p) => p.nick).filter(Boolean);
+  t = t.replace(/=([^&]+)(?=&|$)/g, (m, v) => {
+    let dv = v; try { dv = decodeURIComponent(v); } catch {}
+    return nicks.some((n) => n.toLowerCase() === dv.toLowerCase()) ? '={nick}' : m;
+  });
   return t.replace(/=(-?\d+)(?=&|$)/g, (m, id) => (itemIds.has(id) || otherIds.has(id) || /^\d{4,}$/.test(id) ? '={id}' : m));
 }
 

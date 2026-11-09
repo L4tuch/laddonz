@@ -63,10 +63,14 @@ const keys = {
 
 /* ───────── Powiadomienia (toasty) — wygląd ustawia dodatek Hey WakeUP! ───────── */
 function toast(msg, type = 'info', ms = 3200) {
+  // Najpierw komunikat samej gry (żółty tekst na dole) — wygląda dokładnie jak w grze,
+  // a Hey WakeUP! zmienia jego wygląd stylami. Własny zapasowy tylko, gdy gra nie ma funkcji message().
+  try { if (typeof W.message === 'function' && !(config.data && config.data.global.ownToasts)) { W.message(String(msg)); return; } } catch {}
   let host = document.getElementById('mp-toasts');
   if (!host) { host = el('div', { id: 'mp-toasts' }); document.body.appendChild(host); }
-  const t = el('div', { class: `mp-toast mp-toast-${type}` }, el('span', { class: 'mp-toast-dot' }), el('span', null, msg));
+  const t = el('div', { class: `mp-toast mp-toast-${type}` }, msg);
   host.appendChild(t);
+  while (host.children.length > 4) host.firstChild.remove();
   requestAnimationFrame(() => t.classList.add('in'));
   setTimeout(() => { t.classList.remove('in'); setTimeout(() => t.remove(), 300); }, ms);
 }

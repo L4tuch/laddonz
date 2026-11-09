@@ -31,7 +31,7 @@ const CSS = `
 .mp-side{width:250px;border-right:1px solid var(--mp-line);display:flex;flex-direction:column;min-height:0}
 .mp-search{margin:10px;display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:11px;background:rgba(255,255,255,.06);color:var(--mp-dim)}
 .mp-search input{all:unset;flex:1;color:var(--mp-fg);font-size:12.5px}
-.mp-list{overflow:auto;padding:0 8px 10px;flex:1}
+.mp-list{overflow-y:auto;overflow-x:hidden;padding:0 6px 10px 8px;margin:0 2px 8px 0;flex:1;overscroll-behavior:contain}
 .mp-row{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:12px;cursor:pointer;margin-bottom:2px}
 .mp-row:hover{background:rgba(255,255,255,.05)}
 .mp-row.sel{background:rgba(255,255,255,.09);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
@@ -39,7 +39,7 @@ const CSS = `
 .mp-row.off .nm{color:var(--mp-dim);font-weight:500}
 .mp-tile{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;flex:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 4px 12px rgba(0,0,0,.25)}
 .mp-row.off .mp-tile{filter:grayscale(.85) brightness(.75)}
-.mp-main{flex:1;overflow:auto;padding:18px 22px;min-width:0}
+.mp-main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 18px 18px 22px;min-width:0;margin:6px 4px 6px 0;overscroll-behavior:contain}
 .mp-h{display:flex;align-items:center;gap:14px;margin-bottom:6px}
 .mp-h .mp-tile{width:46px;height:46px;border-radius:14px}
 .mp-h h2{margin:0;font-size:18px}
@@ -107,12 +107,34 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-ctx-item{all:unset;display:block;width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:12.5px}
 .mp-ctx-item:hover{background:color-mix(in srgb,var(--mp-accent) 35%,transparent)}
 
-/* toasty (Hey WakeUP! zmienia zmienne) */
-#mp-toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:2147483200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
-.mp-toast{--c:var(--mp-accent);display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:12px;background:var(--mp-toast-bg,rgba(16,17,28,.78));color:var(--mp-toast-fg,#fff);font:var(--mp-toast-weight,600) var(--mp-toast-size,13px)/1.3 var(--mp-toast-font,"Segoe UI",system-ui,sans-serif);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--mp-toast-border,rgba(255,255,255,.14));box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;transform:translateY(-8px);transition:.25s;text-shadow:var(--mp-toast-shadow,none)}
+/* powiadomienia — domyślnie jak komunikaty gry: żółty tekst na dole ekranu; Hey WakeUP! zmienia zmienne */
+#mp-toasts{position:fixed;left:50%;bottom:var(--mp-toast-bottom,140px);transform:translateX(-50%);z-index:2147483200;display:flex;flex-direction:column-reverse;gap:2px;align-items:center;pointer-events:none;max-width:70vw}
+.mp-toast{padding:var(--mp-toast-pad,1px 8px);border-radius:6px;background:var(--mp-toast-bg,transparent);color:var(--mp-toast-fg,#ffe066);font:var(--mp-toast-weight,700) var(--mp-toast-size,14px)/1.35 var(--mp-toast-font,Arial,"Segoe UI",sans-serif);border:var(--mp-toast-border,0 solid transparent);text-shadow:var(--mp-toast-shadow,0 0 3px #000,1px 1px 1px #000,-1px -1px 1px #000);opacity:0;transform:translateY(6px);transition:.25s;text-align:center}
 .mp-toast.in{opacity:1;transform:none}
-.mp-toast-dot{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
-.mp-toast-warn{--c:var(--mp-warn)}.mp-toast-bad{--c:var(--mp-bad)}.mp-toast-ok{--c:var(--mp-ok)}
+.mp-toast-warn{color:var(--mp-toast-warn,#ffb547)}.mp-toast-bad{color:var(--mp-toast-bad,#ff6b6b)}.mp-toast-ok{color:var(--mp-toast-ok,var(--mp-toast-fg,#ffe066))}
+
+/* przewijanie i suwaki w stylu panelu */
+.mp-glass ::-webkit-scrollbar,.mp-glass::-webkit-scrollbar{width:8px;height:8px}
+.mp-glass ::-webkit-scrollbar-track,.mp-glass::-webkit-scrollbar-track{background:transparent;margin:10px 0}
+.mp-glass ::-webkit-scrollbar-thumb,.mp-glass::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+.mp-glass ::-webkit-scrollbar-thumb:hover{background-color:color-mix(in srgb,var(--mp-accent) 70%,transparent)}
+.mp-glass ::-webkit-scrollbar-corner{background:transparent}
+.mp-glass *{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+.mp-range{-webkit-appearance:none;appearance:none;width:150px;height:22px;background:transparent;cursor:pointer;margin:0 6px;padding:0}
+.mp-range::-webkit-slider-runnable-track{height:5px;border-radius:999px;background:linear-gradient(90deg,var(--mp-accent) var(--p,50%),rgba(255,255,255,.14) var(--p,50%))}
+.mp-range::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-5.5px;border-radius:50%;background:#fff;border:3px solid var(--mp-accent);box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.mp-range::-moz-range-track{height:5px;border-radius:999px;background:rgba(255,255,255,.14)}
+.mp-range::-moz-range-progress{height:5px;border-radius:999px;background:var(--mp-accent)}
+.mp-range::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--mp-accent)}
+
+/* okno do wpisywania (Podpisownik itd.) */
+.mp-input-big{all:unset;box-sizing:border-box;width:100%;padding:10px 12px;border-radius:11px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.14);color:var(--mp-fg);font-size:14px}
+.mp-input-big:focus{border-color:var(--mp-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--mp-accent) 25%,transparent)}
+.mp-sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mp-sugg button{all:unset;cursor:pointer;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.07);font-size:12px}
+.mp-sugg button:hover{background:color-mix(in srgb,var(--mp-accent) 40%,transparent)}
+.mp-itemhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.mp-itemhead img{width:32px;height:32px;image-rendering:pixelated}
 
 /* nakładki na przedmioty */
 .mp-ibadge{position:absolute;pointer-events:none;z-index:5;font:700 9px/1 "Segoe UI",system-ui,sans-serif;padding:2px 3px;border-radius:4px;background:rgba(10,10,18,.82);color:#ffd36b;border:1px solid rgba(255,211,107,.45);text-shadow:0 1px 1px #000;white-space:nowrap}
@@ -142,6 +164,14 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-prow .tag.fr{background:rgba(63,162,255,.15);color:#8cc8ff}
 .mp-prow .tag.al{background:rgba(124,92,255,.18);color:#c9bbff}
 .mp-prow .tag.en{background:rgba(255,93,122,.15);color:var(--mp-bad)}
+.mp-prow{cursor:pointer}
+.mp-prow.open{background:color-mix(in srgb,var(--mp-accent) 22%,transparent)}
+.mp-plist.mini{min-width:0}
+.mp-plist.mini .mp-prow{padding:3px 6px;gap:6px}
+.mp-pcard{margin:-1px 0 4px;padding:8px 9px;border-radius:0 0 10px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);border-top:0}
+.mp-pinfo{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--mp-dim)}
+.mp-pinfo .tag{font-size:10px;padding:1px 6px;border-radius:999px}
+.mp-pinfo .tag.cl{background:rgba(61,220,151,.15);color:var(--mp-ok)}.mp-pinfo .tag.fr{background:rgba(63,162,255,.15);color:#8cc8ff}.mp-pinfo .tag.al{background:rgba(124,92,255,.18);color:#c9bbff}.mp-pinfo .tag.en{background:rgba(255,93,122,.15);color:var(--mp-bad)}
 .mp-mini{all:unset;cursor:pointer;padding:3px 7px;border-radius:7px;background:rgba(255,255,255,.08);font-size:11px}
 .mp-mini:hover{background:var(--mp-accent)}
 .mp-filters{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}

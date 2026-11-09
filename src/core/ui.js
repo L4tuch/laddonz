@@ -10,10 +10,35 @@ const ui = {
 
   start() {
     this.applyTheme();
+    this.fixWheel();
     this.launcher();
     keys.bind({ label: 'Panel: otwórz/zamknij', get: () => config.data.global.panelKey || '', fn: () => this.toggle() });
     bus.on('log', debounce(() => { if (this.panel && this.tab === 'log') this.renderMain(); }, 300));
     bus.on('sniff', debounce(() => { if (this.panel && this.tab === 'diag') this.renderMain(); }, 300));
+  },
+
+  /**
+   * Gra przechwytuje kółko myszy (zoom mapy), więc w naszych oknach przewijamy ręcznie
+   * i nie przepuszczamy zdarzenia do gry.
+   */
+  fixWheel() {
+    window.addEventListener('wheel', (e) => {
+      const root = e.target && e.target.closest && e.target.closest('.mp-glass');
+      if (!root) return;
+      let n = e.target;
+      while (n && n !== root.parentNode) {
+        if (n.nodeType === 1) {
+          const cs = getComputedStyle(n);
+          if (/(auto|scroll)/.test(cs.overflowY) && n.scrollHeight > n.clientHeight + 1) break;
+        }
+        n = n.parentNode;
+      }
+      e.stopImmediatePropagation();
+      if (n && n !== root.parentNode && n.nodeType === 1) {
+        e.preventDefault();
+        n.scrollTop += e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
+      }
+    }, { capture: true, passive: false });
   },
 
   applyTheme() {
@@ -164,12 +189,14 @@ const ui = {
     const checks = [
       ['Obiekt gry Engine', !!E0],
       ['Funkcja wysyłania _g', typeof W._g === 'function'],
-      ['Panel podpięty pod _g', !!net.origG],
+      ['Wysyłanie komend (window._g)', !!net.origG],
+      ['Komendy gry przechwycone (naciśnij X na graczu)', net.stats.gameCalls > 0],
       ['Bohater (Engine.hero)', !!game.hero()],
       ['Lista graczy (Engine.others)', !!(E0 && E0.others)],
       ['Przedmioty (Engine.items)', game.heroItems().length > 0],
       ['Odpowiedzi serwera (hak: ' + (net.respHook || 'brak') + ')', !!net.respHook],
-      ['Menu prawego przycisku (Engine.interface.showPopupMenu)', menus.hooked],
+      ['Menu prawego przycisku (' + (menus.hookName || 'brak funkcji') + ')', menus.hooked],
+      ['Najechanie na gracza (prototyp Other)', !!menus.hoverHooked],
       ['Cel menu na graczu (prototyp Other)', menus.otherHooked],
     ];
     M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Punkty zaczepienia'),
@@ -210,7 +237,7 @@ const ui = {
         const yes = await confirmBox({ title: 'Przypisać komendę?', okText: 'Zapisz', html: `<div>Akcja: <b>${esc(DEFAULT_COMMANDS[name].label)}</b></div><div style="margin-top:8px">Podsłuchane:</div><div class="mp-mono">${esc(s.task)}</div><div style="margin-top:8px">Szablon (zmienne w nawiasach):</div><div class="mp-mono mp-okc">${esc(tpl)}</div><div class="mp-dim" style="margin-top:8px">Jeśli szablon jest zły, popraw go ręcznie w tabeli „Komendy".</div>` });
         if (yes) { net.setCmd(name, tpl, true); toast('Komenda zweryfikowana', 'ok'); this.renderMain(); } else sel.value = '';
       };
-      sb.appendChild(el('tr', null, el('td', { class: 'mp-dim', style: { width: '62px' } }, new Date(s.t).toLocaleTimeString()), el('td', { class: 'mp-mono' }, s.task), el('td', { style: { width: '160px' } }, sel)));
+      sb.appendChild(el('tr', null, el('td', { class: 'mp-dim', style: { width: '62px' } }, new Date(s.t).toLocaleTimeString()), el('td', { class: 'mp-mono' }, s.task, el('div', { class: 'mp-dim' }, s.via || '')), el('td', { style: { width: '160px' } }, sel)));
     });
     sn.appendChild(el('table', { class: 'mp-table' }, sb));
     M.appendChild(sn);
@@ -243,6 +270,7 @@ const ui = {
       { key: 'perCharacter', type: 'bool', label: 'Osobne ustawienia dla każdej postaci', hint: 'Zmiana zadziała po odświeżeniu gry.' },
       { key: 'accent', type: 'color', label: 'Kolor akcentu' },
       { key: 'glass', type: 'range', label: 'Przezroczystość tła', min: 0.2, max: 0.95, step: 0.05 },
+      { key: 'menuSelector', type: 'textarea', label: 'Selektor menu prawego przycisku w grze', hint: 'Zapas, gdy opcje (np. „⚔ Napad") nie pojawiają się w menu gracza.' },
     ];
     const card = el('div', { class: 'mp-card' }, el('h3', null, 'Ogólne'));
     S.forEach((s) => card.appendChild(field(s, g, () => { save(); if (s.key === 'dryRun') this.renderAll(); })));
@@ -295,8 +323,10 @@ function field(s, obj, onSave) {
       break;
     case 'range': {
       const out = el('span', { class: 'mp-dim', style: { width: '36px', textAlign: 'right' } }, String(v));
-      const r = el('input', { type: 'range', min: s.min, max: s.max, step: s.step || 1, value: v, style: { width: '140px', accentColor: 'var(--mp-accent)' } });
-      r.addEventListener('input', () => { out.textContent = r.value; obj[s.key] = Number(r.value); if (s.live) s.live(Number(r.value)); });
+      const r = el('input', { class: 'mp-range', type: 'range', min: s.min, max: s.max, step: s.step || 1, value: v });
+      const paint = () => r.style.setProperty('--p', ((r.value - s.min) / (s.max - s.min)) * 100 + '%');
+      paint();
+      r.addEventListener('input', () => { paint(); out.textContent = r.value; obj[s.key] = Number(r.value); if (s.live) s.live(Number(r.value)); });
       r.addEventListener('change', () => set(Number(r.value)));
       ctrl = el('span', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, r, out);
       break;

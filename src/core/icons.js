@@ -21,7 +21,7 @@ const ICON_PATHS = {
   ulepszarka: '<path d="M3 21l8.5-8.5"/><path d="M13.5 4.5l6 6"/><path d="M11 7l6 6-2 2-6-6z"/><path d="M19 3l.6 1.4L21 5l-1.4.6L19 7l-.6-1.4L17 5l1.4-.6z"/><path d="M5 4l.4 1 1 .4-1 .4L5 7l-.4-1.2-1-.4 1-.4z"/>',
   minichat: '<path d="M4 5h16v10.5H9l-5 4z"/><path d="M14 10.5h3.5M14 10.5v-3.5"/><path d="M8 8.5l2.5 2.5"/>',
   // interfejs
-  logo: '<path d="M12 2.5l8.5 5v9L12 21.5l-8.5-5v-9z"/><path d="M12 7.5l4 2.3v4.4L12 16.5l-4-2.3V9.8z"/>',
+  logo: '<path d="M12 2.5l8.5 5v9L12 21.5l-8.5-5v-9z"/><path d="M10 7.8v8.4h5" stroke-width="2.3"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
   diag: '<path d="M3 12h4l2.5-6 5 12 2.5-6H21"/>',

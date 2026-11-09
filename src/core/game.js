@@ -9,12 +9,14 @@ const E = () => W.Engine;
 
 const PROF_NAMES = { w: 'Wojownik', p: 'Paladyn', b: 'Tancerz ostrzy', m: 'Mag', t: 'Tropiciel', h: 'Łowca' };
 
-// Kody relacji w NI (pole d.relation u innych graczy). Gdyby gra zmieniła kody, popraw tutaj.
+// Kody relacji w NI (pole d.relation u innych graczy) — gra używa liczb:
+//   1 = brak, 2 = przyjaciel, 3 = wróg, 4 = klan, 5 = sojusz klanu, 6 = wróg klanu, 7 = sojusz frakcji, 8 = wróg frakcji.
+// Kody tekstowe zostawione na wypadek starszych wersji.
 const REL = {
-  friend: ['fr'],
-  clan: ['cl'],
-  ally: ['cl-fr', 'fr-cl', 'clfr', 'ally'],
-  enemy: ['en', 'cl-en', 'en-cl'],
+  friend: ['2', 'fr'],
+  clan: ['4', 'cl'],
+  ally: ['5', '7', 'cl-fr', 'fr-cl', 'clfr', 'ally'],
+  enemy: ['3', '6', '8', 'en', 'cl-en', 'en-cl'],
 };
 
 function parseStats(item) {
@@ -55,7 +57,9 @@ function normItem(it) {
 function normOther(o, heroClan) {
   const d = (o && (o.d || o)) || {};
   const clanId = Number(d.clan && typeof d.clan === 'object' ? d.clan.id : d.clan) || 0;
-  const rel = String(d.relation || '');
+  let rel = d.relation;
+  try { if ((rel == null || rel === '') && o && typeof o.getRelation === 'function') rel = o.getRelation(); } catch {}
+  rel = String(rel ?? '');
   const isClan = REL.clan.includes(rel) || (heroClan && clanId && clanId === heroClan);
   return {
     id: Number(d.id),
@@ -171,13 +175,26 @@ const game = {
     try {
       const b = E().battle;
       if (b) {
+        // UWAGA: w NI „show" to funkcja (pokazująca okno), a nie flaga — nie wolno jej sprawdzać jako wartości.
+        if (typeof b.isBattleShow === 'function') return !!b.isBattleShow();
+        if (typeof b.getShow === 'function') return !!b.getShow();
         if (typeof b.isShow === 'function') return !!b.isShow();
-        if ('show' in b) return !!b.show;
-        if ('isBattle' in b) return !!b.isBattle;
+        if (typeof b.show === 'boolean') return b.show;
+        if (typeof b.isBattle === 'boolean') return b.isBattle;
       }
     } catch {}
-    const w = document.querySelector('.battle-controller, .battle-window, #battle');
+    const w = document.querySelector('.battle-controller, .battle-window');
     return !!(w && isVisible(w));
+  },
+
+  /** Obiekt gracza z gry (NI: Engine.others.getById). */
+  otherRaw(id) {
+    try {
+      const o = E().others;
+      if (typeof o.getById === 'function') { const r = o.getById(Number(id)) || o.getById(String(id)); if (r) return r; }
+      const src = typeof o.check === 'function' ? o.check() : {};
+      return src[id] || Object.values(src).find((x) => Number((x.d || x).id) === Number(id)) || null;
+    } catch { return null; }
   },
 
   /** Ścieżka do ikon przedmiotów. */
