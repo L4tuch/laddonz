@@ -105,33 +105,29 @@
 })();
 
 /* ───────── Auto f ─────────
- * Na starcie walki od razu włącza szybką walkę (AUTOMAT, domyślnie wyłączony) albo pod klawisz.
+ * Włączone = na starcie każdej walki postać od razu przechodzi na szybką walkę.
+ * Do tego jest przełącznik na liście dodatków — np. przy kolosie, gdy odchodzisz od komputera.
  */
 (() => {
   let cfg, doneFor = 0;
-  function fast(src) {
-    if (!game.inBattle()) { if (src === 'key') toast('Auto f: nie jesteś w walce', 'warn', 1400); return; }
-    net.send('fastFight', {}, { src: 'Auto f', urgent: true });
-  }
   defineAddon({
     id: 'autof', name: 'Auto f', icon: 'autof', color: ['#ffd447', '#ff8a00'], risk: 'auto',
-    desc: 'Od razu przełącza walkę na szybką walkę — automatycznie na starcie walki lub pod klawisz.',
-    defaults: { key: '', auto: false, delayMin: 250, delayMax: 600 },
-    keys: [{ key: 'key', label: 'szybka walka', fn: () => fast('key') }],
+    desc: 'Włącz/wyłącz. Gdy jest włączony, każda walka od razu przechodzi na szybką walkę — np. przy kolosie, gdy odchodzisz od komputera, a reszta nie musi czekać na Twoją turę.',
+    defaults: { enabled: false, delayMin: 250, delayMax: 600 },
+    notes: () => [{ type: 'warn', text: 'To automat: działa bez Twojego kliknięcia, dopóki go nie wyłączysz.' }],
     settings: [
-      { key: 'key', type: 'key', label: 'Klawisz: szybka walka teraz' },
-      { key: 'auto', type: 'bool', auto: true, label: 'Automatycznie na początku każdej walki', confirm: 'To automatyzacja — szybka walka będzie włączana bez Twojego kliknięcia. Na własne ryzyko.', countdown: 2 },
-      { key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000, show: (c) => c.auto },
-      { key: 'delayMax', type: 'number', label: 'Opóźnienie do (ms)', min: 150, max: 4000, show: (c) => c.auto },
+      { key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000 },
+      { key: 'delayMax', type: 'number', label: 'Opóźnienie do (ms)', min: 150, max: 4000 },
     ],
     init(c) {
       cfg = c;
       bus.on('battle:start', () => {
-        if (!cfg.enabled || !cfg.auto) return;
+        if (!cfg.enabled) return;
         const t = now(); if (t - doneFor < 2000) return; doneFor = t;
-        setTimeout(() => fast('auto'), rnd(cfg.delayMin, Math.max(cfg.delayMin + 50, cfg.delayMax)));
+        setTimeout(() => { if (game.inBattle()) net.send('fastFight', {}, { src: 'Auto f', urgent: true }); }, rnd(cfg.delayMin, Math.max(cfg.delayMin + 50, cfg.delayMax)));
       });
     },
+    onToggle(on) { toast(on ? 'Auto f: włączony' : 'Auto f: wyłączony', on ? 'warn' : 'info', 1600); },
   });
 })();
 
@@ -145,11 +141,11 @@
   const S = { disbandArmed: false };
 
   function queued(id) { return cfg.queue.find((q) => q.id === Number(id)); }
-  function toggleQueue(id, repeat) {
+  function toggleQueue(id) {
     const it = game.itemById(id);
     const i = cfg.queue.findIndex((q) => q.id === Number(id));
     if (i >= 0) { cfg.queue.splice(i, 1); toast('Szybka rączka: usunięto z kolejki', 'info', 1500); }
-    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, repeat: !!repeat, tp: !!(it && (it.stats.teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka rączka: „${it ? it.name : id}" po walce`, 'ok', 1600); }
+    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, tp: !!(it && (it.stats.teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka rączka: „${it ? it.name : id}" po walce`, 'ok', 1600); }
     config.save(); bus.emit('deco'); indicator();
   }
 
@@ -160,7 +156,7 @@
       const it = game.itemById(q.id);
       if (!it) { cfg.queue = cfg.queue.filter((x) => x.id !== q.id); continue; }
       await net.send('useItem', { id: q.id }, { src: 'Szybka rączka' });
-      if (!q.repeat) cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
+      cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
       await sleep(400);
     }
     if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? await MP.cook.disband() : await net.send('partyDisband', {}, { src: 'Szybka rączka' }); }
@@ -220,7 +216,6 @@
     ],
     render(box, c, rerender) {
       const tb = el('tbody', null, c.queue.map((q, i) => el('tr', null, el('td', null, q.name, q.tp ? el('span', { class: 'mp-dim' }, ' (teleport)') : null),
-        el('td', null, el('label', { style: { display: 'flex', gap: '6px', alignItems: 'center' } }, switchEl(q.repeat, (v) => { q.repeat = v; config.save(); }, true), 'po każdej walce')),
         el('td', null, el('button', { class: 'mp-mini', onclick: () => { c.queue.splice(i, 1); config.save(); bus.emit('deco'); indicator(); rerender(); } }, '×')))));
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Kolejka „po walce"'),
         c.queue.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Pusta — prawy klik na przedmiocie → „Użyj po walce" (lub Alt + prawy klik).'),
@@ -233,9 +228,9 @@
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
         return queued(id) ? [{ label: '✖ Usuń z „po walce"', fn: () => toggleQueue(id) }]
-          : [{ label: '⏱ Użyj po walce', fn: () => toggleQueue(id, false) }, { label: '⟳ Używaj po każdej walce', fn: () => toggleQueue(id, true) }];
+          : [{ label: '⏱ Użyj po walce', fn: () => toggleQueue(id) }];
       });
-      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: queued(id).repeat ? '⟳' : '⏱', title: 'Szybka rączka: użyj po walce' } : null));
+      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: '⏱', title: 'Szybka rączka: użyj po walce' } : null));
       bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => runQueue('auto'), rnd(500, 900)); });
       hookPartyIcon();
       setTimeout(indicator, 1500);

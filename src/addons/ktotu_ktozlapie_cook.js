@@ -1,8 +1,9 @@
 /* ───────── Kto tu jest? ─────────
- * Okno z listą graczy na mapie + wiele filtrów (nick, poziom, profesja, relacja, klan) i zapisywane zestawy filtrów.
+ * Lista graczy na mapie + filtry i zapisane zestawy filtrów. Tryb minimalny: sama lista po filtrach.
+ * Kliknięcie gracza → karta z informacjami i akcjami (EQ, Napad, zaproś, znajomi, Bratan…).
  */
 (() => {
-  let cfg, timer = null, win = null;
+  let cfg, timer = null, win = null, openId = null;
   const F0 = { nick: '', clan: '', lvlMin: 0, lvlMax: 0, rel: 'all', profs: [], sort: 'dist' };
 
   function filtered() {
@@ -21,8 +22,8 @@
   }
 
   function open() {
-    const w = floatWin({ id: 'ktotu', title: 'Kto tu jest?', iconName: 'ktotu', color: ['#3fa2ff', '#2a6fd6'], x: 90, y: 140, width: 380, onClose: () => { clearInterval(timer); win = null; } });
-    win = w;
+    win = floatWin({ id: 'ktotu', title: 'Kto tu jest?', iconName: 'ktotu', color: ['#3fa2ff', '#2a6fd6'], x: 90, y: 140, width: cfg.minimal ? 250 : 380, onClose: () => { clearInterval(timer); win = null; } });
+    win.win.style.width = (cfg.minimal ? 250 : 380) + 'px';
     draw();
     clearInterval(timer);
     timer = setInterval(drawList, 1000);
@@ -35,61 +36,93 @@
     const b = win.body; b.innerHTML = '';
     const f = cfg.filter;
     const save = () => { config.save(); drawList(); };
-    const inp = (k, ph, type = 'text') => { const i = el('input', { class: 'mp-in', placeholder: ph, type, value: f[k] || '' }); i.addEventListener('input', () => { f[k] = type === 'number' ? Number(i.value) || 0 : i.value; save(); }); return i; };
-    const sel = (k, opts) => { const s = el('select', { class: 'mp-in' }, opts.map(([v, l]) => { const o = el('option', { value: v }, l); if (f[k] === v) o.selected = true; return o; })); s.onchange = () => { f[k] = s.value; save(); }; return s; };
-    const profs = el('div', { class: 'mp-profs' }, Object.entries(game.PROF_NAMES).map(([k, n]) => {
-      const bt = el('button', { class: 'mp-pf' + (f.profs.includes(k) ? ' on' : ''), title: n }, n);
-      bt.onclick = () => { const i = f.profs.indexOf(k); if (i < 0) f.profs.push(k); else f.profs.splice(i, 1); bt.classList.toggle('on'); save(); };
-      return bt;
-    }));
-    // zapisane zestawy filtrów
-    const presetSel = el('select', { class: 'mp-in', style: { flex: 1 } }, el('option', { value: '' }, 'Zapisane filtry…'), Object.keys(cfg.presets).map((n) => el('option', { value: n }, n)));
-    presetSel.onchange = () => { if (!presetSel.value) return; cfg.filter = structuredClone(cfg.presets[presetSel.value]); config.save(); draw(); };
-    const presetRow = el('div', { style: { display: 'flex', gap: '6px', marginBottom: '8px' } }, presetSel,
-      el('button', { class: 'mp-mini', title: 'Zapisz obecne filtry', onclick: () => { const n = prompt('Nazwa zestawu filtrów:'); if (n) { cfg.presets[n] = structuredClone(cfg.filter); config.save(); draw(); } } }, 'Zapisz'),
-      el('button', { class: 'mp-mini', title: 'Usuń wybrany', onclick: () => { if (presetSel.value) { delete cfg.presets[presetSel.value]; config.save(); draw(); } } }, 'Usuń'),
-      el('button', { class: 'mp-mini', onclick: () => { cfg.filter = structuredClone(F0); config.save(); draw(); } }, 'Reset'));
-    b.append(presetRow, el('div', { class: 'mp-filters' },
-      inp('nick', 'Nick zawiera…'), inp('clan', 'Klan zawiera…'),
-      inp('lvlMin', 'Lvl od', 'number'), inp('lvlMax', 'Lvl do', 'number'),
-      sel('rel', [['all', 'Wszyscy'], ['enemy', 'Obcy (nie swoi)'], ['tagged', 'Oznaczeni wrogowie'], ['friendly', 'Swoi'], ['clan', 'Klan'], ['friend', 'Znajomi'], ['ally', 'Sojusz']]),
-      sel('sort', [['dist', 'Sortuj: odległość'], ['lvl', 'Sortuj: poziom'], ['nick', 'Sortuj: nick']]),
-      profs));
-    countEl = el('div', { class: 'mp-dim', style: { margin: '2px 0 6px', fontSize: '11.5px' } });
-    listBox = el('div', { class: 'mp-plist' });
-    b.append(countEl, listBox);
+    const modeBtn = el('button', { class: 'mp-mini', title: cfg.minimal ? 'Pokaż filtry' : 'Tryb minimalny (sama lista)', onclick: () => { cfg.minimal = !cfg.minimal; config.save(); open(); } }, cfg.minimal ? '⚙ filtry' : '▭ minimalny');
+    countEl = el('span', { class: 'mp-dim', style: { fontSize: '11.5px', flex: 1 } });
+    b.appendChild(el('div', { style: { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' } }, countEl, modeBtn));
+    if (!cfg.minimal) {
+      const inp = (k, ph, type = 'text') => { const i = el('input', { class: 'mp-in', placeholder: ph, type, value: f[k] || '' }); i.addEventListener('input', () => { f[k] = type === 'number' ? Number(i.value) || 0 : i.value; save(); }); i.addEventListener('keydown', (e) => e.stopPropagation()); return i; };
+      const sel = (k, opts) => { const s = el('select', { class: 'mp-in' }, opts.map(([v, l]) => { const o = el('option', { value: v }, l); if (f[k] === v) o.selected = true; return o; })); s.onchange = () => { f[k] = s.value; save(); }; return s; };
+      const profs = el('div', { class: 'mp-profs' }, Object.entries(game.PROF_NAMES).map(([k, n]) => {
+        const bt = el('button', { class: 'mp-pf' + (f.profs.includes(k) ? ' on' : ''), title: n }, n);
+        bt.onclick = () => { const i = f.profs.indexOf(k); if (i < 0) f.profs.push(k); else f.profs.splice(i, 1); bt.classList.toggle('on'); save(); };
+        return bt;
+      }));
+      const presetSel = el('select', { class: 'mp-in', style: { flex: 1 } }, el('option', { value: '' }, 'Zapisane filtry…'), Object.keys(cfg.presets).map((n) => el('option', { value: n }, n)));
+      presetSel.onchange = () => { if (!presetSel.value) return; cfg.filter = structuredClone(cfg.presets[presetSel.value]); config.save(); draw(); };
+      b.append(el('div', { style: { display: 'flex', gap: '6px', marginBottom: '8px' } }, presetSel,
+        el('button', { class: 'mp-mini', onclick: async () => { const n = await promptBox({ title: 'Zapisz filtry', label: 'Nazwa zestawu filtrów:', placeholder: 'np. wrogowie 80+' }); if (n) { cfg.presets[n] = structuredClone(cfg.filter); config.save(); draw(); } } }, 'Zapisz'),
+        el('button', { class: 'mp-mini', onclick: () => { if (presetSel.value) { delete cfg.presets[presetSel.value]; config.save(); draw(); } } }, 'Usuń'),
+        el('button', { class: 'mp-mini', onclick: () => { cfg.filter = structuredClone(F0); config.save(); draw(); } }, 'Reset')),
+      el('div', { class: 'mp-filters' },
+        inp('nick', 'Nick zawiera…'), inp('clan', 'Klan zawiera…'),
+        inp('lvlMin', 'Lvl od', 'number'), inp('lvlMax', 'Lvl do', 'number'),
+        sel('rel', [['all', 'Wszyscy'], ['enemy', 'Obcy (nie swoi)'], ['tagged', 'Oznaczeni wrogowie'], ['friendly', 'Swoi'], ['clan', 'Klan'], ['friend', 'Znajomi'], ['ally', 'Sojusz']]),
+        sel('sort', [['dist', 'Sortuj: odległość'], ['lvl', 'Sortuj: poziom'], ['nick', 'Sortuj: nick']]),
+        profs));
+    }
+    listBox = el('div', { class: 'mp-plist' + (cfg.minimal ? ' mini' : '') });
+    b.append(listBox);
     drawList();
   }
-  function drawList() {
+
+  function card(p) {
+    const [cls, tl] = relTag(p);
+    const ncfg = addons.cfg('napad') || {};
+    const bcfg = addons.cfg('bratan') || {};
+    const isTarget = nickIn(ncfg.targetList, p.nick);
+    const isProt = nickIn(bcfg.nicks, p.nick);
+    const btn = (label, ic, fn, title) => el('button', { class: 'mp-btn', style: { padding: '5px 9px', fontSize: '11.5px' }, title: title || label, onclick: (e) => { e.stopPropagation(); fn(e); } }, ic ? icon(ic, 13) : null, label);
+    const togList = (c, key, nick, on) => { c[key] = (c[key] || []).filter((n) => n.toLowerCase() !== nick.toLowerCase()); if (!on) c[key].push(nick); config.save(); drawList(true); };
+    return el('div', { class: 'mp-pcard' },
+      el('div', { class: 'mp-pinfo' },
+        el('span', null, game.PROF_NAMES[p.prof] || p.prof || '?'), el('span', null, `poziom ${p.lvl}`),
+        p.clanName ? el('span', null, `klan: ${p.clanName}`) : null,
+        cls ? el('span', { class: 'tag ' + cls }, tl) : null, el('span', null, `odl. ${p.d.toFixed(1)}`)),
+      el('div', { class: 'mp-btns', style: { marginTop: '6px', gap: '5px' } },
+        btn('EQ', 'pokazeq', (e) => MP.pokazEq.showForce(p.id, e.clientX + 14, e.clientY - 20)),
+        !isFriendly(p) ? btn('Napad', 'napad', () => MP.napad.attack(game.otherById(p.id) || p, 'key')) : null,
+        btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
+        !p.isFriend ? btn('Znajomy', 'ktotu', () => net.send('friendAdd', { id: p.id, nick: p.nick }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Wysłano zaproszenie do znajomych: ${p.nick}`, 'ok', 1500)), 'Dodaj do znajomych') : null,
+        btn(isProt ? 'Bratan ✓' : 'Bratan', 'bratan', () => togList(bcfg, 'nicks', p.nick, isProt), isProt ? 'Usuń z ochrony Bratana' : 'Chroń przed atakiem (Bratan)'),
+        !isFriendly(p) ? btn(isTarget ? 'Cel ✓' : 'Cel', null, () => togList(ncfg, 'targetList', p.nick, isTarget), 'Lista celów Napadu') : null,
+        btn('Kopiuj', null, () => { try { navigator.clipboard.writeText(p.nick); toast('Skopiowano nick', 'ok', 1200); } catch {} })));
+  }
+
+  function drawList(force) {
     if (!listBox || !listBox.isConnected) return;
+    if (!force && listBox.matches(':hover') && openId) return; // nie przerysowuj pod kursorem przy otwartej karcie
     const l = filtered();
-    countEl.textContent = `Na mapie: ${game.others().length} · po filtrach: ${l.length}`;
+    countEl.textContent = `Na mapie: ${game.others().length} · widocznych: ${l.length}`;
     listBox.innerHTML = '';
     if (!l.length) { listBox.appendChild(el('div', { class: 'mp-dim', style: { padding: '8px' } }, 'Nikogo nie ma.')); return; }
     for (const p of l.slice(0, 80)) {
       const [cls, tl] = relTag(p);
-      const row = el('div', { class: 'mp-prow', 'data-pid': p.id },
-        el('span', { class: 'mp-dim', style: { width: '26px', fontSize: '11px' } }, p.prof.toUpperCase()),
-        el('span', { class: 'n', title: p.clanName ? `${p.nick} [${p.clanName}]` : p.nick }, `${p.nick} `, el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, `(${p.lvl})`)),
-        cls ? el('span', { class: 'tag ' + cls }, tl) : null,
-        el('span', { class: 'mp-dim', style: { fontSize: '11px', width: '34px', textAlign: 'right' } }, p.d.toFixed(1)),
-        addons.on('napad') && !isFriendly(p) ? el('button', { class: 'mp-mini', title: 'Napad', onclick: () => MP.napad.attack(game.otherById(p.id), 'key') }, icon('napad', 12)) : null,
-        addons.on('cook') ? el('button', { class: 'mp-mini', title: 'Zaproś do grupy', onclick: () => net.send('partyInvite', { id: p.id }, { src: 'Kto tu jest?' }) }, icon('cook', 12)) : null);
-      if (addons.on('pokazeq')) row.addEventListener('mouseenter', (e) => MP.pokazEq && MP.pokazEq.show(p.id, e.clientX + 16, e.clientY));
-      if (addons.on('pokazeq')) row.addEventListener('mouseleave', () => MP.pokazEq && MP.pokazEq.hide());
+      const row = el('div', { class: 'mp-prow' + (openId === p.id ? ' open' : ''), 'data-pid': p.id, onclick: () => { openId = openId === p.id ? null : p.id; drawList(true); } },
+        cfg.minimal ? null : el('span', { class: 'mp-dim', style: { width: '22px', fontSize: '11px' } }, p.prof.toUpperCase()),
+        el('span', { class: 'n', title: p.clanName ? `${p.nick} [${p.clanName}]` : p.nick }, `${p.nick} `, el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, `(${p.lvl}${cfg.minimal ? p.prof : ''})`)),
+        cls ? el('span', { class: 'tag ' + cls }, cfg.minimal ? tl[0].toUpperCase() : tl) : null,
+        el('span', { class: 'mp-dim', style: { fontSize: '11px', width: '30px', textAlign: 'right' } }, p.d.toFixed(0)));
+      row.addEventListener('mouseenter', (e) => MP.pokazEq && MP.pokazEq.show(p.id, e.clientX + 16, e.clientY));
+      row.addEventListener('mouseleave', () => MP.pokazEq && MP.pokazEq.hide());
       listBox.appendChild(row);
+      if (openId === p.id) listBox.appendChild(card(p));
     }
   }
 
   defineAddon({
     id: 'ktotu', name: 'Kto tu jest?', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
-    desc: 'Lista graczy na mapie z wieloma filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami filtrów.',
-    defaults: { enabled: true, key: '', filter: structuredClone(F0), presets: {} },
+    desc: 'Lista graczy na mapie z filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami. Tryb minimalny pokazuje samą listę po filtrach. Kliknij gracza, żeby zobaczyć jego kartę: EQ, Napad, zaproszenie do grupy i znajomych, Bratan.',
+    defaults: { enabled: true, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
-    settings: [{ key: 'key', type: 'key', label: 'Klawisz: pokaż/ukryj listę graczy' }],
+    notes: () => [!net.cmd('friendAdd').t ? { type: 'info', text: 'Przycisk „Znajomy" zadziała po jednorazowym nauczeniu komendy: dodaj ręcznie kogoś do znajomych, potem Diagnostyka → Podsłuch → „Dodanie do znajomych".' } : null],
+    settings: [
+      { key: 'key', type: 'key', label: 'Klawisz: pokaż/ukryj listę graczy' },
+      { key: 'minimal', type: 'bool', label: 'Tryb minimalny (sama lista po filtrach)' },
+    ],
     render(box) { box.appendChild(el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn pri', onclick: () => open() }, 'Otwórz listę graczy'))); },
     init(c) { cfg = c; },
     onToggle(on) { if (!on) close(); },
+    onChange() { if (win) open(); },
   });
 })();
 

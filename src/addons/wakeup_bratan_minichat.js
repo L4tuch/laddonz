@@ -3,23 +3,29 @@
  */
 (() => {
   let cfg;
-  const FONTS = [['"Segoe UI",system-ui,sans-serif', 'Systemowa'], ['Georgia,serif', 'Georgia (szeryfowa)'], ['"Trebuchet MS",sans-serif', 'Trebuchet'], ['Verdana,sans-serif', 'Verdana'], ['Consolas,monospace', 'Consolas (mono)'], ['"Comic Sans MS",cursive', 'Comic Sans'], ['Impact,sans-serif', 'Impact']];
+  const FONTS = [['Arial,"Segoe UI",sans-serif', 'Jak w grze (Arial)'], ['"Segoe UI",system-ui,sans-serif', 'Systemowa'], ['Georgia,serif', 'Georgia (szeryfowa)'], ['"Trebuchet MS",sans-serif', 'Trebuchet'], ['Verdana,sans-serif', 'Verdana'], ['Consolas,monospace', 'Consolas (mono)'], ['"Comic Sans MS",cursive', 'Comic Sans'], ['Impact,sans-serif', 'Impact']];
 
+  /** Gdy dodatek jest wyłączony — powiadomienia wyglądają jak komunikaty gry (żółty tekst na dole). */
   function apply() {
     const R = document.documentElement.style;
     const on = cfg && cfg.enabled;
     const set = (k, v) => (on ? R.setProperty(k, v) : R.removeProperty(k));
     set('--mp-toast-fg', cfg.fg);
+    set('--mp-toast-warn', cfg.warn);
+    set('--mp-toast-bad', cfg.bad);
     set('--mp-toast-bg', hexA(cfg.bg, cfg.bgAlpha));
-    set('--mp-toast-border', cfg.border);
+    set('--mp-toast-pad', cfg.bgAlpha > 0 || cfg.frame ? '5px 12px' : '1px 8px');
+    set('--mp-toast-border', cfg.frame ? `1px solid ${cfg.glow}` : '0 solid transparent');
     set('--mp-toast-font', cfg.font);
     set('--mp-toast-size', cfg.size + 'px');
     set('--mp-toast-weight', cfg.bold ? '700' : '400');
-    set('--mp-toast-shadow', cfg.shadow ? '0 0 6px ' + cfg.border + ', 0 1px 2px #000' : 'none');
+    set('--mp-toast-shadow', cfg.shadow ? `0 0 8px ${cfg.glow},0 0 3px #000,1px 1px 1px #000` : '0 0 3px #000,1px 1px 1px #000,-1px -1px 1px #000');
+    set('--mp-toast-bottom', cfg.bottom + 'px');
     let st = document.getElementById('mp-wakeup-css');
     if (!st) { st = el('style', { id: 'mp-wakeup-css' }); document.head.appendChild(st); }
     const sel = (cfg.gameSelectors || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-    st.textContent = on && cfg.styleGame && sel ? `${sel}{color:${cfg.fg}!important;font-family:${cfg.font}!important;font-size:${cfg.size}px!important;font-weight:${cfg.bold ? 700 : 400}!important;${cfg.shadow ? `text-shadow:0 0 6px ${cfg.border},0 1px 2px #000!important;` : ''}}` : '';
+    const box = cfg.bgAlpha > 0 || cfg.frame;
+    st.textContent = on && sel ? `${sel}{color:${cfg.fg}!important;font-family:${cfg.font}!important;font-size:${cfg.size}px!important;font-weight:${cfg.bold ? 700 : 400}!important;${cfg.shadow ? `text-shadow:0 0 8px ${cfg.glow},0 0 3px #000,1px 1px 1px #000!important;` : ''}${box ? `background:${hexA(cfg.bg, cfg.bgAlpha)}!important;padding:4px 12px!important;border-radius:8px!important;display:inline-block!important;${cfg.frame ? `border:1px solid ${cfg.glow}!important;` : ''}` : ''}}` : '';
   }
   function hexA(hex, a) {
     const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex || '');
@@ -29,25 +35,25 @@
 
   defineAddon({
     id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'],
-    desc: 'Własne kolory i czcionki powiadomień tekstowych — żeby ważny komunikat od razu rzucał się w oczy.',
-    defaults: { enabled: true, fg: '#ffffff', bg: '#10111c', bgAlpha: 0.8, border: '#7c5cff', font: '"Segoe UI",system-ui,sans-serif', size: 14, bold: true, shadow: false, styleGame: false,
-      gameSelectors: '.big-messages .message\n.ingame-alert\n.small-info' },
+    desc: 'Powiadomienia panelu to zwykłe komunikaty gry (żółty tekst na dole). Po włączeniu tego dodatku zmieniasz wygląd WSZYSTKICH komunikatów — panelu i gry: kolor, czcionkę, rozmiar, tło i ramkę.',
+    defaults: { enabled: false, fg: '#ffe066', warn: '#ffb547', bad: '#ff6b6b', bg: '#10111c', bgAlpha: 0, frame: false, glow: '#ffb547', font: 'Arial,"Segoe UI",sans-serif', size: 14, bold: true, shadow: false, bottom: 140, styleGame: false,
+      gameSelectors: '.big-messages .message' },
     settings: [
-      { group: 'Wygląd', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
-      { group: 'Wygląd', key: 'bg', type: 'color', label: 'Kolor tła', live: () => apply() },
-      { group: 'Wygląd', key: 'bgAlpha', type: 'range', label: 'Krycie tła', min: 0, max: 1, step: 0.05, live: () => apply() },
-      { group: 'Wygląd', key: 'border', type: 'color', label: 'Kolor obramowania / poświaty', live: () => apply() },
-      { group: 'Wygląd', key: 'font', type: 'select', label: 'Czcionka', options: FONTS },
-      { group: 'Wygląd', key: 'size', type: 'number', label: 'Rozmiar (px)', min: 9, max: 32 },
-      { group: 'Wygląd', key: 'bold', type: 'bool', label: 'Pogrubienie' },
-      { group: 'Wygląd', key: 'shadow', type: 'bool', label: 'Poświata' },
-      { group: 'Komunikaty gry', key: 'styleGame', type: 'bool', label: 'Stosuj też do komunikatów gry' },
-      { group: 'Komunikaty gry', key: 'gameSelectors', type: 'textarea', label: 'Selektory CSS komunikatów gry (po jednym w linii)', hint: 'Jeśli gra zmieni wygląd, sprawdź klasę komunikatu (F12 → wskaż element) i wpisz ją tutaj.' },
+      { group: 'Kolory', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
+      { group: 'Kolory', key: 'glow', type: 'color', label: 'Ramka / poświata', live: () => apply() },
+      { group: 'Tekst', key: 'font', type: 'select', label: 'Czcionka', options: FONTS },
+      { group: 'Tekst', key: 'size', type: 'range', label: 'Rozmiar (px)', min: 10, max: 32, live: () => apply() },
+      { group: 'Tekst', key: 'bold', type: 'bool', label: 'Pogrubienie' },
+      { group: 'Tekst', key: 'shadow', type: 'bool', label: 'Kolorowa poświata' },
+      { group: 'Tło', key: 'bg', type: 'color', label: 'Kolor tła', live: () => apply() },
+      { group: 'Tło', key: 'bgAlpha', type: 'range', label: 'Krycie tła (0 = bez tła)', min: 0, max: 1, step: 0.05, live: () => apply() },
+      { group: 'Tło', key: 'frame', type: 'bool', label: 'Ramka' },
+      { group: 'Zaawansowane', key: 'gameSelectors', type: 'textarea', label: 'Selektor komunikatów gry', hint: 'Zostaw domyślny (.big-messages .message). Zmień tylko, jeśli gra zmieni wygląd komunikatów.' },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-btns' },
-        el('button', { class: 'mp-btn pri', onclick: () => toast('Tak wygląda powiadomienie — Hey WakeUP!', 'info') }, 'Podgląd'),
-        el('button', { class: 'mp-btn', onclick: () => toast('Przykładowe ostrzeżenie', 'warn') }, 'Podgląd ostrzeżenia')));
+        el('button', { class: 'mp-btn pri', onclick: () => toast('Tak wygląda powiadomienie', 'info') }, 'Podgląd'),
+        el('button', { class: 'mp-btn', onclick: () => toast('Bratan: zablokowano atak', 'bad') }, 'Drugi przykład')));
     },
     init(c) { cfg = c; apply(); },
     onToggle() { apply(); },
@@ -89,35 +95,46 @@
 })();
 
 /* ───────── MiniChat ─────────
- * Zmniejsza okno czatu: szerokość, wysokość, czcionka, przezroczystość, zwijanie pod klawisz.
+ * Zmienia tylko wysokość okna czatu.
  */
 (() => {
-  let cfg, collapsed = false;
+  let cfg, found = '';
+  function detect() {
+    $$('[data-mp-chat]').forEach((n) => n.removeAttribute('data-mp-chat'));
+    const sel = (cfg.selector || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
+    let target = null;
+    if (sel) { try { target = $$(sel).find(isVisible) || null; } catch {} }
+    if (target) {
+      target.setAttribute('data-mp-chat', '');
+      found = (typeof target.className === 'string' ? '.' + target.className.trim().split(/\s+/).join('.') : target.tagName.toLowerCase());
+    } else found = '';
+    return target;
+  }
   function apply() {
     let st = document.getElementById('mp-minichat-css');
     if (!st) { st = el('style', { id: 'mp-minichat-css' }); document.head.appendChild(st); }
-    if (!cfg.enabled) { st.textContent = ''; return; }
-    const sel = (cfg.selector || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-    if (!sel) { st.textContent = ''; return; }
-    st.textContent = `
-      ${sel}{width:${cfg.width}px!important;max-width:${cfg.width}px!important;${collapsed ? 'height:28px!important;overflow:hidden!important;' : `height:${cfg.height}px!important;max-height:${cfg.height}px!important;`}opacity:${cfg.opacity}!important;font-size:${cfg.font}px!important;transition:opacity .2s}
-      ${sel}:hover{opacity:1!important}
-      ${sel} *{font-size:${cfg.font}px!important}`;
+    if (!cfg.enabled || !detect()) { st.textContent = ''; return; }
+    st.textContent = `[data-mp-chat]{height:${cfg.height}px!important;max-height:${cfg.height}px!important;min-height:0!important}`;
   }
   defineAddon({
     id: 'minichat', name: 'MiniChat', icon: 'minichat', color: ['#5b8cff', '#3a5bd9'],
-    desc: 'Zmniejsza okno czatu według Twoich preferencji. Po najechaniu myszką czat wraca do pełnej widoczności.',
-    defaults: { width: 320, height: 160, opacity: 0.75, font: 11, key: '', selector: '.chat-tpl\n.chat-window\n#chat' },
-    keys: [{ key: 'key', label: 'zwiń/rozwiń czat', fn: () => { collapsed = !collapsed; apply(); } }],
+    desc: 'Ustawia wysokość okna czatu.',
+    defaults: { height: 160, selector: '.new-chat-window' },
     settings: [
-      { key: 'width', type: 'range', label: 'Szerokość (px)', min: 180, max: 700, step: 10, live: () => apply() },
-      { key: 'height', type: 'range', label: 'Wysokość (px)', min: 60, max: 600, step: 10, live: () => apply() },
-      { key: 'opacity', type: 'range', label: 'Przezroczystość', min: 0.2, max: 1, step: 0.05, live: () => apply() },
-      { key: 'font', type: 'range', label: 'Czcionka (px)', min: 8, max: 16, step: 1, live: () => apply() },
-      { key: 'key', type: 'key', label: 'Klawisz: zwiń/rozwiń' },
-      { key: 'selector', type: 'textarea', label: 'Selektor okna czatu', hint: 'Jeśli czat się nie zmienia: F12 → wskaż okno czatu → wpisz jego klasę (np. .chat-tpl).' },
+      { key: 'height', type: 'range', label: 'Wysokość czatu (px)', min: 60, max: 700, step: 10, live: () => apply() },
+      { key: 'selector', type: 'text', label: 'Selektor okna czatu', hint: 'Domyślnie .new-chat-window — zmień tylko, jeśli gra zmieni wygląd czatu.' },
     ],
-    init(c) { cfg = c; apply(); },
+    render(box) {
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Okno czatu'),
+        el('div', { class: found ? 'mp-mono mp-okc' : 'mp-warnc' }, found || 'Nie znaleziono — otwórz czat w grze i kliknij „Wykryj ponownie".'),
+        el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { apply(); ui.renderMain(); } }, 'Wykryj ponownie'))));
+    },
+    init(c) {
+      cfg = c;
+      if (cfg.selector === '.chat-tpl\n.chat-window\n#chat' || cfg.selector === '') cfg.selector = '.new-chat-window';
+      apply();
+      setInterval(() => { if (cfg.enabled && !document.querySelector('[data-mp-chat]')) apply(); }, 2000);
+    },
     onToggle() { apply(); },
     onChange() { apply(); },
   });
