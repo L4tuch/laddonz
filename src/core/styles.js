@@ -107,6 +107,9 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-wk-msg.gra{color:#ffe500;font:700 24px/1.3 Arial,sans-serif;text-shadow:2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000}
 .mp-wk-name{padding:5px 8px;font-size:12px;font-weight:600;text-align:center}
 
+.mp-target{position:fixed;z-index:2147482995;display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;cursor:pointer;font-size:12.5px;border:1px solid rgba(255,70,90,.6)!important;box-shadow:0 0 14px rgba(255,70,90,.35)!important;color:#fff}
+.mp-target .mp-ico{color:#ff6b7f}
+
 /* pasek skrótów — minimalistyczny */
 #mp-qbar{position:fixed;z-index:2147482998;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 3px;border-radius:12px;width:30px;background:rgba(10,11,18,.38)!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.07)!important;box-shadow:none!important;opacity:.75;transition:opacity .15s}
 #mp-qbar:hover{opacity:1}
