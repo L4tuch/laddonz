@@ -101,8 +101,6 @@
         el('span', { class: 'n', title: p.clanName ? `${p.nick} [${p.clanName}]` : p.nick }, `${p.nick} `, el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, `(${p.lvl}${cfg.minimal ? p.prof : ''})`)),
         cls ? el('span', { class: 'tag ' + cls }, cfg.minimal ? tl[0].toUpperCase() : tl) : null,
         el('span', { class: 'mp-dim', style: { fontSize: '11px', width: '30px', textAlign: 'right' } }, p.d.toFixed(0)));
-      row.addEventListener('mouseenter', (e) => MP.pokazEq && MP.pokazEq.show(p.id, e.clientX + 16, e.clientY));
-      row.addEventListener('mouseleave', () => MP.pokazEq && MP.pokazEq.hide());
       listBox.appendChild(row);
       if (openId === p.id) listBox.appendChild(card(p));
     }

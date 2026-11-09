@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.5.2
+// @version      1.5.3
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -2459,8 +2459,6 @@ function parseProtection(data) {
         el('span', { class: 'n', title: p.clanName ? `${p.nick} [${p.clanName}]` : p.nick }, `${p.nick} `, el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, `(${p.lvl}${cfg.minimal ? p.prof : ''})`)),
         cls ? el('span', { class: 'tag ' + cls }, cfg.minimal ? tl[0].toUpperCase() : tl) : null,
         el('span', { class: 'mp-dim', style: { fontSize: '11px', width: '30px', textAlign: 'right' } }, p.d.toFixed(0)));
-      row.addEventListener('mouseenter', (e) => MP.pokazEq && MP.pokazEq.show(p.id, e.clientX + 16, e.clientY));
-      row.addEventListener('mouseleave', () => MP.pokazEq && MP.pokazEq.hide());
       listBox.appendChild(row);
       if (openId === p.id) listBox.appendChild(card(p));
     }
@@ -2783,10 +2781,13 @@ MP.itemDeco = itemDeco;
         const ids = $$('[class*="item-id-"]', w).map((n) => { const m = String(n.className).match(/item-id-(\d+)-showeq/); return m ? Number(m[1]) : null; }).filter(Boolean);
         items = ids.map((iid) => { let it = null; try { it = E().items.getItemById(iid); } catch {} return it ? game.normItem(it) : null; }).filter(Boolean);
         const close = w.querySelector('.close-button, [class*="close-button"], .close, [class*="close"]');
-        if (close) close.click(); else w.remove();
+        if (close) close.click();
+        // gdyby okno gry nie zamknęło się kliknięciem — usuwamy je, żeby nigdy nie wyskoczyło na ekran
+        for (let i = 0; i < 10 && w.isConnected; i++) await sleep(50);
+        if (w.isConnected) w.remove();
       }
     } catch (e) { console.warn('[laddonz] showEq', e); }
-    finally { setTimeout(() => hideCss.remove(), 150); }
+    finally { hideCss.remove(); }
     return items;
   }
 
@@ -2846,45 +2847,82 @@ MP.itemDeco = itemDeco;
    * Dodatkowo hak na onhover gracza, jeśli gra go wywołuje.
    */
   function watchHover() {
-    let mx = 0, my = 0, shift = false, mapShown = false;
-    document.addEventListener('mousemove', (e) => {
-      mx = e.clientX; my = e.clientY; shift = e.shiftKey;
-      if (tip && tip.style.display === 'block' && mapShown) place(mx + 18, my + 14);
-    }, true);
-    const fromMap = (id) => {
-      if (!cfg.enabled || !cfg.mapHover) return;
-      if (cfg.needShift && !shift) return;
-      mapShown = true;
+    let mx = 0, my = 0, shift = false, src = null;   // src: 'map' | 'list' | null — skąd pokazany podgląd
+    const follow = () => { if (tip && tip.style.display === 'block' && src) place(mx + 18, my + 14); };
+    const want = (id, from) => {
+      if (!cfg.enabled) return;
+      if (from === 'map' && (!cfg.mapHover || (cfg.needShift && !shift))) return;
+      if (from === 'list' && !cfg.listHover) return;
+      src = from;
       show(id, mx + 18, my + 14);
     };
-    const check = () => {
-      if (!cfg.enabled || !cfg.mapHover) return;
-      if (document.querySelector('.mp-prow:hover, .mp-pcard:hover')) return;   // obsługuje lista
-      const tipSel = (cfg.tipSelector || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-      const t = tipSel && $$(tipSel).find((n) => isVisible(n) && !n.closest('.mp-glass'));
-      const txt = t ? t.textContent.toLowerCase() : '';
-      const p = txt && game.others().find((o) => o.nick && txt.includes(o.nick.toLowerCase()));
-      if (p) fromMap(p.id);
-      else if (mapShown) { mapShown = false; hide(); }
+    const stop = (from) => { if (src === from) { src = null; hide(); } };
+
+    /* MAPA: gra pokazuje przy kursorze dymek z nickiem (.tip-wrapper.normal-tip).
+       Liczy się tylko dymek widoczny TUŻ PRZY kursorze — gdy zjedziesz z gracza, dymek znika
+       albo zostaje w starym miejscu, więc podgląd chowamy. */
+    const mapCheck = () => {
+      if (!cfg.enabled || !cfg.mapHover || src === 'list') return;
+      const tipSel = (cfg.tipSelector || '').split('\n').map((x) => x.trim()).filter(Boolean).join(',');
+      let p = null;
+      if (tipSel) {
+        for (const n of $$(tipSel)) {
+          if (n.closest('.mp-glass') || !isVisible(n)) continue;
+          const r = n.getBoundingClientRect();
+          const dx = Math.max(r.left - mx, 0, mx - r.right), dy = Math.max(r.top - my, 0, my - r.bottom);
+          if (Math.hypot(dx, dy) > 90) continue;                       // dymek nie przy kursorze
+          const txt = (n.textContent || '').toLowerCase();
+          p = game.others().find((o) => o.nick && txt.includes(o.nick.toLowerCase()));
+          if (p) break;
+        }
+      }
+      if (p) want(p.id, 'map'); else stop('map');
     };
-    new MutationObserver(debounce(check, 60)).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
-    setInterval(check, 400);
+
+    /* LISTA GRACZY W GRZE („Kto tu jest" gry) i lista laddonz: najechanie na wiersz → podgląd, zjechanie → koniec */
+    const listRow = (t) => t && t.closest && t.closest('.one-other, .tw-list-item, .mp-prow');
+    const nickFromRow = (row) => {
+      if (row.dataset && row.dataset.pid) return game.otherById(row.dataset.pid);
+      const txt = (row.textContent || '').toLowerCase();
+      return game.others().filter((o) => o.nick && txt.includes(o.nick.toLowerCase())).sort((a, b) => b.nick.length - a.nick.length)[0] || null;
+    };
+    document.addEventListener('mouseover', (e) => {
+      const row = listRow(e.target);
+      if (!row) return;
+      const p = nickFromRow(row);
+      if (p) want(p.id, 'list');
+    }, true);
+    document.addEventListener('mouseout', (e) => {
+      const row = listRow(e.target);
+      if (!row) return;
+      if (e.relatedTarget && row.contains(e.relatedTarget)) return;      // nadal w tym samym wierszu
+      stop('list');
+    }, true);
+
+    let raf = 0;
+    document.addEventListener('mousemove', (e) => {
+      mx = e.clientX; my = e.clientY; shift = e.shiftKey;
+      follow();
+      if (!raf) raf = requestAnimationFrame(() => { raf = 0; mapCheck(); });
+    }, true);
+    document.addEventListener('mouseleave', () => { stop('map'); stop('list'); });
+    new MutationObserver(debounce(mapCheck, 40)).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
   }
 
   MP.pokazEq = {
-    show: (id, x, y) => (cfg.enabled && cfg.listHover ? show(id, x, y) : null),
+    show: () => {},   // lista laddonz obsługiwana przez watchHover (mouseover/mouseout)
     showForce: (id, x, y) => { show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', hide, { once: true, capture: true }), 50); },
     hide,
   };
 
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
-    desc: 'Po najechaniu na gracza (na mapie albo w „Kto tu jest?") pokazuje jego ekwipunek, a na dole podsumowanie bonusów legendarnych.',
+    desc: 'Po najechaniu na gracza — na mapie albo na liście graczy (w grze i w laddonz) — pokazuje jego ekwipunek i podsumowanie bonusów legendarnych. Gdy zjedziesz kursorem z gracza, podgląd znika.',
     defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, cacheSec: 120, tipSelector: '.tip-wrapper.normal-tip' },
     notes: () => [{ type: 'info', text: 'Podgląd korzysta z tej samej funkcji co „Pokaż ekwipunek" w grze, więc pierwszy podgląd danego gracza trwa tyle, ile odpowiedź serwera. Kolejne przez 2 minuty są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
-      { key: 'listHover', type: 'bool', label: 'Najechanie na gracza w „Kto tu jest?"' },
+      { key: 'listHover', type: 'bool', label: 'Najechanie na gracza na liście graczy (w grze i w laddonz)' },
       { key: 'needShift', type: 'bool', label: 'Na mapie tylko z wciśniętym Shift' },
       { key: 'cacheSec', type: 'number', label: 'Pamiętaj wynik przez (s)', min: 10, max: 1800 },
       { key: 'tipSelector', type: 'text', label: 'Selektor dymka gracza w grze', hint: 'Domyślnie .tip-wrapper.normal-tip' },
@@ -3277,5 +3315,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.5.2";
+MP.version = "1.5.3";
 })();
