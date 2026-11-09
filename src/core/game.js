@@ -208,7 +208,7 @@ const game = {
   /** Ścieżka do ikon przedmiotów. */
   iconUrl(icon) {
     if (!icon) return '';
-    if (/^https?:/.test(icon)) return icon;
+    if (/^(https?:|data:)/.test(icon)) return icon;
     const base = (W.CFG && (W.CFG.a_ipath || W.CFG.r_ipath || W.CFG.ipath)) || 'https://micc.garmory-cdn.cloud/obrazki/itemy/';
     return base.replace(/\/?$/, '/') + icon.replace(/^\//, '');
   },

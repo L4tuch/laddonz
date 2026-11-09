@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.5.3
+// @version      1.5.4
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -394,7 +394,7 @@ const game = {
   /** Ścieżka do ikon przedmiotów. */
   iconUrl(icon) {
     if (!icon) return '';
-    if (/^https?:/.test(icon)) return icon;
+    if (/^(https?:|data:)/.test(icon)) return icon;
     const base = (W.CFG && (W.CFG.a_ipath || W.CFG.r_ipath || W.CFG.ipath)) || 'https://micc.garmory-cdn.cloud/obrazki/itemy/';
     return base.replace(/\/?$/, '/') + icon.replace(/^\//, '');
   },
@@ -2712,7 +2712,7 @@ MP.itemDeco = itemDeco;
     const cur = cfg.byId[id] || '';
     const towns = ['Ithan', 'Torneg', 'Werbin', 'Eder', 'Karka-han', 'Nithal', 'Tuzmer', 'Thuzal', 'Mythar', 'Port Tuzmer'];
     const isTp = it && (it.stats.teleport || /telepor|kamie[nń]|zw[oó]j/i.test(it.name));
-    const head = it ? el('div', { class: 'mp-itemhead' }, it.icon ? el('img', { src: game.iconUrl(it.icon), alt: '' }) : null,
+    const head = it ? el('div', { class: 'mp-itemhead' }, it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
       el('div', null, el('b', null, it.name), el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, cur ? 'Obecny podpis: ' + cur : 'Bez podpisu'))) : null;
     const v = await promptBox({
       title: 'Podpisz przedmiot', head, label: 'Krótki podpis, widoczny na przedmiocie w ekwipunku (do 14 znaków):',
@@ -2761,13 +2761,34 @@ MP.itemDeco = itemDeco;
 
   function hide() { hoverId = null; wanted = null; if (tip) tip.style.display = 'none'; }
 
+  /** Szuka w danych gry obiektów przedmiotów (mają id + name + stat/icon), do 3 poziomów w głąb. */
+  function collectItems(obj, out, depth = 0) {
+    if (!obj || typeof obj !== 'object' || depth > 3) return;
+    if ((obj.id || obj.id === 0) && obj.name && (obj.stat !== undefined || obj.icon)) { out[String(obj.id)] = obj; return; }
+    for (const v of Object.values(obj)) if (v && typeof v === 'object') collectItems(v, out, depth + 1);
+  }
+  /** Rzadkość z elementu DOM (data-item-type np. „t-uniupg") — zapas, gdy brak danych przedmiotu. */
+  function rarityFromEl(n) {
+    const t = (n.getAttribute('data-item-type') || '') + ' ' + (n.querySelector('.highlight') ? n.querySelector('.highlight').className : '');
+    if (/leg/i.test(t)) return 'legendary';
+    if (/art/i.test(t)) return 'artefact';
+    if (/her/i.test(t)) return 'heroic';
+    if (/upg/i.test(t) && !/uni/i.test(t)) return 'upgraded';
+    if (/uni/i.test(t)) return 'unique';
+    return 'common';
+  }
+
   async function fetchRaw(id) {
     const raw = game.otherRaw(id);
     if (!raw || typeof raw.showEq !== 'function') return null;
     const hideCss = el('style', null, '.showeq-window{visibility:hidden!important;pointer-events:none!important}');
     const already = $$('.showeq-window');
     document.head.appendChild(hideCss);
+    const seen = {};
+    const off = bus.on('data', (d) => collectItems(d, seen));      // odpowiedź serwera z przedmiotami gracza
     let items = null;
+    const dbg = { id, ids: [], fromStore: 0, fromData: 0, fromDom: 0 };
+    try { const M = E().showEqManager; dbg.mgr = M ? Object.keys(M).slice(0, 30) : null; } catch {}
     try {
       raw.showEq();
       const t0 = now();
@@ -2775,19 +2796,45 @@ MP.itemDeco = itemDeco;
       while (now() - t0 < 3000) {
         await sleep(60);
         w = $$('.showeq-window').find((n) => !already.includes(n) && n.querySelector('[class*="-showeq"]'));
-        if (w) { await sleep(80); break; }
+        if (w) break;
       }
       if (w) {
-        const ids = $$('[class*="item-id-"]', w).map((n) => { const m = String(n.className).match(/item-id-(\d+)-showeq/); return m ? Number(m[1]) : null; }).filter(Boolean);
-        items = ids.map((iid) => { let it = null; try { it = E().items.getItemById(iid); } catch {} return it ? game.normItem(it) : null; }).filter(Boolean);
+        const els = $$('[class*="item-id-"]', w).filter((n) => /item-id-\d+-showeq/.test(String(n.className)));
+        const ids = els.map((n) => Number(String(n.className).match(/item-id-(\d+)-showeq/)[1]));
+        dbg.ids = ids;
+        // dane przedmiotów mogą dojść chwilę po narysowaniu okna — czekamy do ~0,6 s
+        const lookup = (iid) => {
+          let it = null;
+          try { const I = E().items; it = I.getItemById(iid) || I.getItemById(String(iid)) || I.getItemById(iid + '-showeq'); } catch {}
+          if (it) { dbg.fromStore++; return it; }
+          if (seen[String(iid)]) { dbg.fromData++; return seen[String(iid)]; }
+          return null;
+        };
+        let found = [];
+        for (let i = 0; i < 6; i++) {
+          dbg.fromStore = dbg.fromData = 0;
+          found = ids.map(lookup);
+          if (found.every(Boolean)) break;
+          await sleep(100);
+        }
+        items = ids.map((iid, i) => {
+          if (found[i]) return game.normItem(found[i]);
+          // zapas: tylko to, co widać w oknie — rzadkość i ikonka skopiowana z płótna gry
+          dbg.fromDom++;
+          const n = els[i];
+          let img = '';
+          try { const c = n.querySelector('canvas.icon, canvas'); if (c) img = c.toDataURL(); } catch {}
+          return { id: iid, name: (n.getAttribute('data-name') || ''), icon: img, rarity: rarityFromEl(n), legbon: null, stats: {} };
+        });
         const close = w.querySelector('.close-button, [class*="close-button"], .close, [class*="close"]');
         if (close) close.click();
         // gdyby okno gry nie zamknęło się kliknięciem — usuwamy je, żeby nigdy nie wyskoczyło na ekran
         for (let i = 0; i < 10 && w.isConnected; i++) await sleep(50);
         if (w.isConnected) w.remove();
-      }
-    } catch (e) { console.warn('[laddonz] showEq', e); }
-    finally { hideCss.remove(); }
+      } else dbg.noWindow = true;
+    } catch (e) { console.warn('[laddonz] showEq', e); dbg.error = String(e); }
+    finally { off(); hideCss.remove(); }
+    MP.pokazEq.lastDebug = dbg;
     return items;
   }
 
@@ -2823,7 +2870,7 @@ MP.itemDeco = itemDeco;
     if (!items) { tip.appendChild(el('div', { class: 'mp-warnc' }, 'Nie udało się pobrać — spróbuj za chwilę.')); return; }
     if (!items.length) { tip.appendChild(el('div', { class: 'mp-dim' }, 'Brak przedmiotów.')); return; }
     const grid = el('div', { class: 'mp-eqgrid' }, items.slice(0, 18).map((it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: `${it.name} (${it.rarity})` },
-      el('img', { src: game.iconUrl(it.icon), alt: '' }), it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon)) : null)));
+      el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }), it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon)) : null)));
     const sum = {};
     items.forEach((i) => { if (i.legbon) sum[i.legbon] = (sum[i.legbon] || 0) + 1; });
     tip.append(grid, el('div', { style: { fontSize: '12px' } },
@@ -3315,5 +3362,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.5.3";
+MP.version = "1.5.4";
 })();
