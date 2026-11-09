@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.2.0
+// @version      1.3.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Napad, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -362,7 +362,15 @@ const game = {
       const b = E().battle;
       if (b) {
         // UWAGA: w NI „show" to funkcja (pokazująca okno), a nie flaga — nie wolno jej sprawdzać jako wartości.
-        if (typeof b.isBattleShow === 'function') return !!b.isBattleShow();
+        // walka trwa = okno walki widoczne i walka jeszcze się nie skończyła
+        // (po zakończeniu okno walki zostaje otwarte, a „po walce" ma działać od razu)
+        if (typeof b.isBattleShow === 'function') {
+          if (!b.isBattleShow()) return false;
+          if (typeof b.getEndBattle === 'function' && b.getEndBattle()) return false;
+          if (typeof b.getEndBattleForMe === 'function' && b.getEndBattleForMe()) return false;
+          if (b.endBattleForMe === true) return false;
+          return true;
+        }
         if (typeof b.getShow === 'function') return !!b.getShow();
         if (typeof b.isShow === 'function') return !!b.isShow();
         if (typeof b.show === 'boolean') return b.show;
@@ -952,6 +960,37 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-dim{color:var(--mp-dim)}
 .mp-okc{color:var(--mp-ok)}.mp-badc{color:var(--mp-bad)}.mp-warnc{color:var(--mp-warn)}
 
+/* Hey WakeUP! — podglądy stylów */
+.mp-wk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.mp-wk-prev{cursor:pointer;border-radius:12px;border:1px solid rgba(255,255,255,.1);overflow:hidden;background:rgba(0,0,0,.2)}
+.mp-wk-prev:hover{border-color:rgba(255,255,255,.3)}
+.mp-wk-prev.on{border-color:var(--mp-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--mp-accent) 45%,transparent)}
+.mp-wk-stage{height:62px;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,#4a3f52 0 10px,#43394b 10px 20px);overflow:hidden;padding:0 4px}
+.mp-wk-msg{white-space:nowrap;transform:scale(.62);transform-origin:center}
+.mp-wk-msg.gra{color:#ffe500;font:700 24px/1.3 Arial,sans-serif;text-shadow:2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000}
+.mp-wk-name{padding:5px 8px;font-size:12px;font-weight:600;text-align:center}
+
+/* pasek skrótów — minimalistyczny */
+#mp-qbar{position:fixed;z-index:2147482998;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 3px;border-radius:12px;width:30px;background:rgba(10,11,18,.38)!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.07)!important;box-shadow:none!important;opacity:.75;transition:opacity .15s}
+#mp-qbar:hover{opacity:1}
+.mp-qhandle{width:100%;display:flex;justify-content:center;color:rgba(255,255,255,.3);cursor:move;padding:0 0 2px}
+.mp-qhandle:hover{color:#fff}
+.mp-qtile{position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:7px;cursor:pointer;color:rgba(255,255,255,.88);transition:background .12s,color .12s}
+.mp-qtile:hover{background:rgba(255,255,255,.12);color:#fff}
+.mp-qtile.off{color:rgba(255,255,255,.28)}
+.mp-qtile.sel{background:color-mix(in srgb,var(--mp-accent) 35%,transparent);color:#fff}
+.mp-qdot{position:absolute;left:-2px;top:50%;width:3px;height:12px;margin-top:-6px;border-radius:2px;background:var(--mp-accent)}
+.mp-qtile:hover::after{content:attr(data-name);position:absolute;right:calc(100% + 8px);top:50%;transform:translateY(-50%);white-space:nowrap;padding:3px 8px;border-radius:7px;background:rgba(10,11,18,.9);border:1px solid rgba(255,255,255,.1);font:500 11.5px/1.3 "Segoe UI",system-ui,sans-serif;color:#fff;pointer-events:none}
+.mp-qmore{margin-top:2px;border-top:1px solid rgba(255,255,255,.08);border-radius:0;color:rgba(255,255,255,.5)}
+#mp-qpop{position:fixed;z-index:2147482999;width:360px;max-height:78vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;animation:mpIn .14s ease-out}
+#mp-qpop .mp-head{cursor:default;padding:9px 10px;gap:8px}
+.mp-qbody{overflow-y:auto;overflow-x:hidden;padding:10px 12px 12px;margin:0 3px 4px 0;overscroll-behavior:contain}
+.mp-qbody .mp-card{padding:9px 11px}
+.mp-qbody .mp-field{gap:8px}
+.mp-qbody .mp-in.txt{width:150px}
+.mp-qbody select.mp-in{max-width:175px}
+.mp-qbody .mp-field .lb{min-width:0}
+
 /* pływające okna */
 .mp-win{position:fixed;z-index:2147482990;border-radius:16px;min-width:260px;display:flex;flex-direction:column;overflow:hidden}
 .mp-win .mp-head{padding:9px 10px}
@@ -1230,7 +1269,13 @@ const menus = {
   setLast(type, id) { this.last = { type, id: Number(id), t: now() }; },
 
   start() {
-    // 1) prawy klik na przedmiocie w DOM
+    // 1) prawy klik na przedmiocie w DOM (gra może otwierać menu już na mousedown — łapiemy oba)
+    document.addEventListener('mousedown', (e) => {
+      if (e.button !== 2) return;
+      const it = e.target.closest && e.target.closest('.item[class*="item-id-"], [data-item-id]');
+      const id = it && game.itemIdFromEl(it);
+      if (id) this.setLast('item', id);
+    }, true);
     document.addEventListener('contextmenu', (e) => {
       const it = e.target.closest && e.target.closest('.item[class*="item-id-"], [data-item-id]');
       if (it) {
@@ -1504,7 +1549,7 @@ const ui = {
   subtitle() {
     const h = game.hero();
     const g = config.data.global;
-    const parts = [h ? `${h.nick} (${h.lvl})` : 'gra nie wykryta'];
+    const parts = [`v${MP.version}`, h ? `${h.nick} (${h.lvl})` : 'gra nie wykryta'];
     if (g.dryRun) parts.push('TRYB PRÓBNY');
     return parts.join(' · ');
   },
@@ -1535,17 +1580,19 @@ const ui = {
   },
 
   async toggleAddon(a, v, sw) {
+    const resetSw = () => { if (sw && sw.querySelector) sw.querySelector('input').checked = !v; };
     if (v && a.risk === 'destructive' && !addons.cfg(a.id)._ack) {
       const ok = await confirmBox({
         title: `Włączyć „${a.name}"?`, danger: true, okText: 'Rozumiem, włącz', countdown: 3,
         html: 'Ten dodatek może <b>usuwać lub zużywać przedmioty</b>. Komendy niszczące są zablokowane, dopóki nie zweryfikujesz ich w zakładce <b>Diagnostyka</b>, a przed każdą operacją zobaczysz listę przedmiotów do potwierdzenia.',
       });
-      if (!ok) { sw.querySelector('input').checked = false; return; }
+      if (!ok) { resetSw(); return false; }
       addons.cfg(a.id)._ack = true;
     }
     addons.setEnabled(a.id, v);
-    this._drawSide && this._drawSide();
-    if (this.sel === a.id) this.renderMain();
+    if (this.panel) { this._drawSide && this._drawSide(); if (this.sel === a.id && this.tab === 'addons') this.renderMain(); }
+    bus.emit('quickbar');
+    return true;
   },
 
   renderMain() {
@@ -1560,34 +1607,37 @@ const ui = {
   },
 
   /* ───── zakładka: dodatek ───── */
-  renderAddon() {
-    const a = addons.byId[this.sel];
+  renderAddon(M = this.main, id = this.sel, rerender = () => this.renderMain(), compact = false) {
+    const a = addons.byId[id];
     if (!a) return;
     const cfg = addons.cfg(a.id);
-    const M = this.main;
-    M.appendChild(el('div', { class: 'mp-h' },
-      el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 26)),
-      el('div', { style: { flex: 1 } },
-        el('h2', null, a.name, ' ',
-          a.risk === 'auto' ? el('span', { class: 'mp-badge auto' }, icon('warn', 11), 'automat') : null,
-          a.risk === 'destructive' ? el('span', { class: 'mp-badge destr' }, icon('warn', 11), 'usuwa/zużywa') : null),
-        el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
-      switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, M.querySelector('.mp-h .mp-sw')))));
-    M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
+    if (!compact) {
+      M.appendChild(el('div', { class: 'mp-h' },
+        el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 26)),
+        el('div', { style: { flex: 1 } },
+          el('h2', null, a.name, ' ',
+            a.risk === 'auto' ? el('span', { class: 'mp-badge auto' }, icon('warn', 11), 'automat') : null,
+            a.risk === 'destructive' ? el('span', { class: 'mp-badge destr' }, icon('warn', 11), 'usuwa/zużywa') : null),
+          el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
+        switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, M.querySelector('.mp-h .mp-sw')))));
+      M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
+    }
     if (a.notes) a.notes(cfg).forEach((n) => n && M.appendChild(note(n.type, n.text)));
+    let renderBox = null;
+    if (a.render && a.renderFirst) { renderBox = el('div'); M.appendChild(renderBox); }
     if (a.settings && a.settings.length) {
       const groups = {};
       for (const s of a.settings) (groups[s.group || 'Ustawienia'] = groups[s.group || 'Ustawienia'] || []).push(s);
       for (const [g, arr] of Object.entries(groups)) {
         const card = el('div', { class: 'mp-card' }, el('h3', null, g));
-        arr.forEach((s) => { if (!s.show || s.show(cfg)) card.appendChild(field(s, cfg, () => { config.save(); a.onChange && a.onChange(s.key, cfg); if (s.rerender) this.renderMain(); })); });
+        arr.forEach((s) => { if (!s.show || s.show(cfg)) card.appendChild(field(s, cfg, () => { config.save(); a.onChange && a.onChange(s.key, cfg); if (s.rerender) rerender(); })); });
         M.appendChild(card);
       }
     }
     if (a.render) {
-      const box = el('div');
-      M.appendChild(box);
-      try { a.render(box, cfg, () => this.renderMain()); } catch (e) { box.appendChild(note('bad', 'Błąd widoku: ' + e.message)); }
+      const box = renderBox || el('div');
+      if (!renderBox) M.appendChild(box);
+      try { a.render(box, cfg, rerender); } catch (e) { box.appendChild(note('bad', 'Błąd widoku: ' + e.message)); }
     }
   },
 
@@ -1685,6 +1735,19 @@ const ui = {
     const card = el('div', { class: 'mp-card' }, el('h3', null, 'Ogólne'));
     S.forEach((s) => card.appendChild(field(s, g, () => { save(); if (s.key === 'dryRun') this.renderAll(); })));
     M.appendChild(card);
+
+    // pasek skrótów
+    const q = (g.quickbar = g.quickbar || { show: true, hidden: [], pos: null });
+    const qc = el('div', { class: 'mp-card' }, el('h3', null, 'Pasek skrótów (przy ekwipunku)'),
+      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj pasek skrótów', el('small', null, 'Lewy klik na ikonce = ustawienia dodatku, prawy klik = włącz/wyłącz.')), switchEl(q.show, (v) => { q.show = v; config.save(); quickbar.draw(); })),
+      el('div', { class: 'mp-chips', style: { marginTop: '8px' } }, addons.list.map((a) => {
+        const on = !(q.hidden || []).includes(a.id);
+        const b = el('button', { class: 'mp-pf' + (on ? ' on' : '') }, a.name);
+        b.onclick = () => { q.hidden = q.hidden || []; const i = q.hidden.indexOf(a.id); if (i >= 0) q.hidden.splice(i, 1); else q.hidden.push(a.id); config.save(); b.classList.toggle('on'); quickbar.draw(); };
+        return b;
+      })),
+      el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { q.pos = null; config.save(); quickbar.place(); } }, 'Przywróć położenie paska')));
+    M.appendChild(qc);
 
     const conf = keys.conflicts();
     if (conf.length) M.appendChild(note('warn', 'Konflikt skrótów: ' + conf.map(([a, b, k]) => `${k}: „${a}" i „${b}"`).join('; ')));
@@ -1804,6 +1867,123 @@ MP.ui = ui;
 MP.field = field;
 MP.note = note;
 
+// ═══ src/core/quickbar.js ═══
+/* ───────────────────────── quickbar.js ─────────────────────────
+ * Pasek skrótów dodatków (domyślnie po prawej, przy ramce obok ekwipunku).
+ *   • lewy klik  → szybkie okno ustawień tego dodatku
+ *   • prawy klik → włącz / wyłącz dodatek
+ * Pasek przeciągasz za uchwyt u góry. Które dodatki są na pasku — zakładka Ogólne.
+ */
+const quickbar = {
+  bar: null,
+  pop: null,
+  popId: null,
+
+  start() {
+    bus.on('quickbar', () => this.draw());
+    bus.on('addon:toggle', () => this.draw());
+    this.draw();
+    // gra potrafi przebudować interfejs (zmiana rozdzielczości) — pilnujemy, żeby pasek był w ekranie
+    window.addEventListener('resize', debounce(() => this.place(), 200));
+    // klik poza oknem szybkich ustawień je zamyka
+    document.addEventListener('mousedown', (e) => {
+      if (!this.pop) return;
+      if (this.pop.contains(e.target) || (this.bar && this.bar.contains(e.target)) || (e.target.closest && e.target.closest('.mp-modal-bg'))) return;
+      this.closePop();
+    }, true);
+  },
+
+  enabledList() {
+    const q = config.data.global.quickbar || {};
+    return addons.list.filter((a) => !(q.hidden || []).includes(a.id));
+  },
+
+  defaultPos() {
+    // spróbuj przykleić się do lewej krawędzi prawej kolumny interfejsu (okolice ekwipunku)
+    const cands = ['.right-column', '.right-main-column', '.interface-layer .right', '.bags-navigation', '.inventory-layer', '.right-container'];
+    for (const s of cands) {
+      const n = document.querySelector(s);
+      if (n && isVisible(n)) { const r = n.getBoundingClientRect(); return { x: Math.max(0, r.left - 34), y: Math.max(60, r.top + 40) }; }
+    }
+    return { x: innerWidth - 40, y: Math.round(innerHeight * 0.25) };
+  },
+
+  place() {
+    if (!this.bar) return;
+    const p = (config.data.global.quickbar || {}).pos || this.defaultPos();
+    this.bar.style.left = clamp(p.x, 0, innerWidth - 44) + 'px';
+    this.bar.style.top = clamp(p.y, 0, innerHeight - 80) + 'px';
+  },
+
+  draw() {
+    const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, hidden: [], pos: null });
+    if (!q.show) { this.bar && this.bar.remove(); this.bar = null; return; }
+    if (!this.bar) {
+      this.bar = el('div', { id: 'mp-qbar', class: 'mp-glass' });
+      document.body.appendChild(this.bar);
+      this.place();
+    }
+    this.bar.innerHTML = '';
+    const handle = el('div', { class: 'mp-qhandle', title: 'Przeciągnij, żeby przesunąć pasek' }, icon('drag', 12));
+    this.bar.appendChild(handle);
+    makeDraggable(this.bar, handle, (pos) => { q.pos = pos; config.save(); });
+    for (const a of this.enabledList()) {
+      const on = addons.on(a.id);
+      const t = el('div', { class: 'mp-qtile' + (on ? '' : ' off') + (this.popId === a.id ? ' sel' : ''), 'data-name': `${a.name} — ${on ? 'włączony' : 'wyłączony'}` },
+        icon(a.icon, 15),
+        on ? el('span', { class: 'mp-qdot' }) : null);
+      t.addEventListener('click', (e) => { e.stopPropagation(); this.openPop(a.id, t); });
+      t.addEventListener('contextmenu', async (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const v = !addons.on(a.id);
+        const ok = await ui.toggleAddon(a, v, null);
+        if (ok !== false) toast(`${a.name}: ${v ? 'włączony' : 'wyłączony'}`);
+        if (this.popId === a.id) this.openPop(a.id, null, true);
+      });
+      this.bar.appendChild(t);
+    }
+    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Pełny panel laddonz', onclick: () => ui.toggle() }, icon('logo', 15)));
+  },
+
+  openPop(id, anchor, refresh) {
+    if (!refresh && this.popId === id && this.pop) { this.closePop(); return; }
+    const a = addons.byId[id];
+    const cfg = addons.cfg(id);
+    this.popId = id;
+    if (!this.pop) {
+      this.pop = el('div', { id: 'mp-qpop', class: 'mp-glass' });
+      document.body.appendChild(this.pop);
+    }
+    const P = this.pop;
+    const st = P.querySelector('.mp-qbody')?.scrollTop || 0;
+    P.innerHTML = '';
+    const sw = switchEl(cfg.enabled, async (v) => { const ok = await ui.toggleAddon(a, v, sw); if (ok !== false) this.openPop(id, null, true); });
+    const head = el('div', { class: 'mp-head' },
+      el('div', { class: 'mp-tile', style: { width: '30px', height: '30px', borderRadius: '9px', background: grad(a.color) } }, icon(a.icon, 17)),
+      el('div', { style: { flex: 1, minWidth: 0 } }, el('div', { class: 'mp-title', style: { fontSize: '14px' } }, a.name), el('div', { class: 'mp-sub' }, cfg.enabled ? 'włączony' : 'wyłączony')),
+      sw,
+      el('button', { class: 'mp-x', title: 'Otwórz w pełnym panelu', onclick: () => { this.closePop(); ui.open(id); } }, icon('grid', 15)),
+      el('button', { class: 'mp-x', title: 'Zamknij', onclick: () => this.closePop() }, icon('close', 16)));
+    const body = el('div', { class: 'mp-qbody' });
+    P.append(head, body);
+    ui.renderAddon(body, id, () => this.openPop(id, null, true), true);
+    body.scrollTop = st;
+    // pozycja: obok paska, po stronie, gdzie jest miejsce
+    if (this.bar) {
+      const r = this.bar.getBoundingClientRect();
+      const w = 360;
+      const left = r.left > w + 20 ? r.left - w - 8 : r.right + 8;
+      P.style.left = left + 'px';
+      P.style.top = clamp(anchor ? anchor.getBoundingClientRect().top - 20 : r.top, 8, innerHeight - 200) + 'px';
+    }
+    this.draw();
+  },
+
+  closePop() { this.pop && this.pop.remove(); this.pop = null; this.popId = null; this.draw(); },
+};
+
+MP.quickbar = quickbar;
+
 // ═══ src/addons/_shared.js ═══
 /* Wspólne pomocniki dla dodatków. */
 const nickIn = (list, nick) => Array.isArray(list) && list.some((n) => String(n).toLowerCase() === String(nick || '').toLowerCase());
@@ -1875,12 +2055,13 @@ function parseProtection(data) {
       return false;
     }
     S.last = t;
-    // zestaw
-    if (cfg.switchSet && cfg.setId) {
+    // zestaw zależny od profesji atakowanego (0 = nie zmieniaj)
+    if (cfg.switchSet) {
+      const setId = Number((cfg.setByProf || {})[p.prof]) || 0;
       const single = enemies().length === 1;
-      if ((!cfg.setOnlySingleEnemy || single) && !(S.lastSet.id === cfg.setId && t - S.lastSet.t < 15000)) {
-        S.lastSet = { id: cfg.setId, t };
-        net.send('eqSet', { id: cfg.setId }, { src: 'Napad', urgent: true });
+      if (setId && (!cfg.setOnlySingleEnemy || single) && !(S.lastSet.id === setId && t - S.lastSet.t < 15000)) {
+        S.lastSet = { id: setId, t };
+        net.send('eqSet', { id: setId }, { src: 'Napad', urgent: true });
       }
     }
     const r = await net.send('attackPlayer', { id: p.id }, {
@@ -1905,37 +2086,53 @@ function parseProtection(data) {
     attack(c[0], 'key');
   }
 
-  /* ── tryb AUTO ── */
+  /* ── tryb AUTO: włączony w ustawieniach = działa od razu ── */
   function setAuto(on) {
-    S.auto = !!on && cfg.enabled && cfg.autoMode;
+    S.auto = !!on && cfg.enabled;
     clearInterval(S.timer);
     if (S.auto) S.timer = setInterval(autoTick, 250);
     indicator();
   }
   function autoTick() {
-    if (!S.auto || !game.ready() || game.inBattle()) return;
+    if (!S.auto || !game.ready()) return;
     const t = now();
+    const all = candidates(cfg.autoRange, true);
+    S.target = all[0] || null;
+    indicator();
+    if (game.inBattle()) return;
     // ten sam cel nie częściej niż co 3 s (gdy atak się nie udał, nie męczymy serwera)
-    const c = candidates(cfg.autoRange, true).filter((p) => !(S.autoTried[p.id] > t - 3000));
+    const c = all.filter((p) => !(S.autoTried[p.id] > t - 3000));
     if (c.length && t - S.last >= Math.max(500, cfg.minInterval)) { S.autoTried[c[0].id] = t; attack(c[0], 'auto'); }
   }
+  /** Wskaźnik: że AUTO działa + kto jest teraz celem w zasięgu. */
   function indicator() {
     let n = document.getElementById('mp-napad-ind');
     if (!S.auto || !cfg.showIndicator) { n && n.remove(); return; }
     if (!n) {
-      const p = store.get('win:napad-ind', { x: innerWidth - 230, y: 70 });
-      n = el('div', { id: 'mp-napad-ind', class: 'mp-glass', title: 'Kliknij, żeby wyłączyć', style: { position: 'fixed', zIndex: 2147482995, left: p.x + 'px', top: p.y + 'px', padding: '7px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: '1px solid rgba(255,93,122,.55)', boxShadow: '0 0 18px rgba(255,93,122,.35)' } },
-        el('div', { class: 'mp-tile', style: { width: '24px', height: '24px', borderRadius: '7px', background: grad(['#ff5d7a', '#b8325a']) } }, icon('napad', 14)),
-        el('div', null, el('div', { style: { fontWeight: 800, fontSize: '12px', letterSpacing: '.5px' } }, 'NAPAD AUTO'), el('div', { class: 'mp-badc', style: { fontSize: '11px', fontWeight: 700 } }, '● WŁĄCZONY')));
+      const p = store.get('win:napad-ind', { x: innerWidth - 250, y: 70 });
+      n = el('div', { id: 'mp-napad-ind', class: 'mp-glass', title: 'Kliknij, żeby wyłączyć AUTO', style: { position: 'fixed', zIndex: 2147482995, left: p.x + 'px', top: p.y + 'px', padding: '7px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '9px', cursor: 'pointer', border: '1px solid rgba(255,93,122,.55)', boxShadow: '0 0 18px rgba(255,93,122,.35)', minWidth: '190px' } });
       const moved = makeDraggable(n, n, (pos) => store.set('win:napad-ind', pos));
-      n.addEventListener('click', () => { if (!moved()) { setAuto(false); toast('Napad AUTO wyłączony', 'ok'); } });
+      n.addEventListener('click', () => { if (!moved()) { cfg.autoMode = false; config.save(); setAuto(false); toast('Napad AUTO wyłączony'); if (ui.panel) ui.renderMain(); } });
       document.body.appendChild(n);
     }
+    const h = game.hero();
+    const tg = S.target;
+    const sig = tg ? tg.id + ':' + tg.x + ':' + tg.y : '-';
+    if (n.dataset.sig === sig) return;
+    n.dataset.sig = sig;
+    n.innerHTML = '';
+    n.append(el('div', { class: 'mp-tile', style: { width: '26px', height: '26px', borderRadius: '8px', background: grad(['#ff5d7a', '#b8325a']) } }, icon('napad', 15)),
+      el('div', null,
+        el('div', { style: { fontWeight: 800, fontSize: '12px', letterSpacing: '.5px' } }, 'NAPAD AUTO ', el('span', { class: 'mp-badc', style: { fontSize: '11px' } }, '● WŁĄCZONY')),
+        el('div', { style: { fontSize: '11.5px', marginTop: '1px' } }, tg
+          ? el('span', null, '🎯 ', el('b', { class: 'mp-badc' }, tg.nick), ` (${tg.lvl}${tg.prof}) · ${h ? game.dist(h, tg).toFixed(1) : '?'} kr.`)
+          : el('span', { class: 'mp-dim' }, 'brak celu w zasięgu ' + cfg.autoRange + ' kr.'))));
   }
   function toggleAuto() {
-    if (!cfg.autoMode) { toast('Najpierw włącz „Tryb AUTO" w ustawieniach Napadu', 'warn'); return; }
-    setAuto(!S.auto);
+    cfg.autoMode = !cfg.autoMode; config.save();
+    setAuto(cfg.autoMode);
     toast(S.auto ? 'Napad AUTO: WŁĄCZONY' : 'Napad AUTO: wyłączony', S.auto ? 'bad' : 'ok');
+    if (ui.panel) ui.renderMain();
   }
 
   defineAddon({
@@ -1944,7 +2141,7 @@ function parseProtection(data) {
     defaults: {
       keyAttack: '', range: 2, minInterval: 1000, targetMode: 'enemies', lvlMin: 0, lvlMax: 0,
       targetList: [], neverList: [], skipProtected: true, menuEntry: true,
-      switchSet: false, setId: 1, setOnlySingleEnemy: true,
+      switchSet: false, setByProf: { w: 0, p: 0, b: 0, m: 0, t: 0, h: 0 }, setOnlySingleEnemy: true,
       autoMode: false, autoKey: '', autoRange: 2, autoOnlyList: false, showIndicator: true,
     },
     keys: [
@@ -1953,7 +2150,7 @@ function parseProtection(data) {
     ],
     notes: (c) => [
       c.switchSet && !net.cmd('eqSet').t ? { type: 'warn', text: 'Zmiana zestawu wymaga podsłuchania komendy: przełącz zestaw ręcznie w grze, potem Diagnostyka → Podsłuch → „Zmiana zestawu".' } : null,
-      c.autoMode ? { type: 'bad', text: 'Tryb AUTO atakuje bez Twojego kliknięcia — to automatyzacja, za którą najłatwiej o bana. Używasz na własne ryzyko. Gdy jest aktywny, na ekranie widać czerwony wskaźnik „NAPAD AUTO".' } : null,
+      c.autoMode ? { type: 'bad', text: 'Tryb AUTO atakuje bez Twojego kliknięcia — to automatyzacja, za którą najłatwiej o bana. Używasz na własne ryzyko. Gdy działa, na ekranie widać czerwony wskaźnik „NAPAD AUTO" z aktualnym celem (klik = wyłącz).' } : null,
     ],
     settings: [
       { group: 'Atak pod klawisz', key: 'keyAttack', type: 'key', label: 'Klawisz ataku', hint: 'Jedno naciśnięcie = jedna próba ataku na najbliższy cel.' },
@@ -1967,19 +2164,24 @@ function parseProtection(data) {
       { group: 'Cele', key: 'neverList', type: 'list', label: 'Nigdy nie atakuj', placeholder: 'nick + Enter' },
       { group: 'Cele', key: 'skipProtected', type: 'bool', label: 'Nie marnuj ataków na graczy z ochroną', hint: 'Po komunikacie o ochronie panel czeka, aż minie.' },
       { group: 'Zestaw', key: 'switchSet', type: 'bool', label: 'Przełącz zestaw przed atakiem', rerender: true },
-      { group: 'Zestaw', key: 'setId', type: 'number', label: 'Numer zestawu', min: 1, max: 10, show: (c) => c.switchSet },
+      { group: 'Zestaw', key: 'setByProf', type: 'custom', show: (c) => c.switchSet, render: (c, save) => {
+        const grid = el('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 14px', padding: '6px 0' } });
+        for (const [k, name] of Object.entries(game.PROF_NAMES)) {
+          const sel = el('select', { class: 'mp-in' }, [[0, 'nie zmieniaj'], ...[1, 2, 3, 4, 5, 6].map((n) => [n, 'Zestaw ' + n])].map(([v, l]) => { const o = el('option', { value: v }, l); if (Number(c.setByProf[k]) === v) o.selected = true; return o; }));
+          sel.onchange = () => { c.setByProf[k] = Number(sel.value); save(); };
+          grid.appendChild(el('label', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' } }, el('span', null, name), sel));
+        }
+        return el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } }, el('div', { class: 'lb' }, 'Zestaw na profesję atakowanego'), grid);
+      } },
       { group: 'Zestaw', key: 'setOnlySingleEnemy', type: 'bool', label: 'Tylko gdy na mapie jest 1 wróg', hint: 'Na ustawkach zestaw się nie zmienia.', show: (c) => c.switchSet },
-      { group: 'Tryb AUTO', key: 'autoMode', type: 'bool', auto: true, label: 'Tryb AUTO dostępny', rerender: true, danger: true, countdown: 3,
-        confirm: 'Tryb AUTO sam atakuje graczy, którzy wejdą w zasięg. To automatyzacja i może skończyć się banem. Włączasz go potem klawiszem lub w tym panelu, a działanie sygnalizuje czerwony wskaźnik na ekranie.' },
-      { group: 'Tryb AUTO', key: 'autoKey', type: 'key', label: 'Klawisz: włącz/wyłącz AUTO', show: (c) => c.autoMode },
+      { group: 'Tryb AUTO', key: 'autoMode', type: 'bool', auto: true, label: 'Tryb AUTO — atakuj graczy wchodzących w zasięg', rerender: true, danger: true, countdown: 3,
+        confirm: 'Tryb AUTO sam atakuje graczy, którzy wejdą w zasięg (według filtrów z sekcji „Cele"). To automatyzacja i może skończyć się banem. Działanie sygnalizuje czerwony wskaźnik z aktualnym celem.' },
+      { group: 'Tryb AUTO', key: 'autoKey', type: 'key', label: 'Klawisz: włącz/wyłącz AUTO' },
       { group: 'Tryb AUTO', key: 'autoRange', type: 'number', label: 'Zasięg AUTO (kratki)', min: 1, max: 30, show: (c) => c.autoMode },
       { group: 'Tryb AUTO', key: 'autoOnlyList', type: 'bool', label: 'AUTO tylko na graczy z listy celów', hint: 'Wyłączone = każdy pasujący do filtrów „Cele".', show: (c) => c.autoMode },
       { group: 'Tryb AUTO', key: 'showIndicator', type: 'bool', label: 'Pokazuj wskaźnik „NAPAD AUTO"', show: (c) => c.autoMode },
     ],
-    render(box, c, rerender) {
-      if (!c.autoMode) return;
-      box.appendChild(el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn ' + (S.auto ? 'bad' : 'pri'), onclick: () => { toggleAuto(); rerender(); } }, S.auto ? 'Wyłącz AUTO teraz' : 'Włącz AUTO teraz')));
-    },
+
     init(c) {
       cfg = c;
       menus.add('player', (id) => {
@@ -1990,41 +2192,53 @@ function parseProtection(data) {
       });
       bus.on('map:change', () => { S.protectedUntil = {}; S.backoff = {}; });
       MP.napad = { attack, candidates: (r) => candidates(r ?? cfg.range, false) };
+      if (cfg.enabled && cfg.autoMode) setTimeout(() => setAuto(true), 1500);
     },
-    onToggle(on) { if (!on) setAuto(false); },
-    onChange(k) { if (k === 'autoMode' && !cfg.autoMode) setAuto(false); if (k === 'showIndicator') indicator(); },
+    onToggle(on) { setAuto(on && cfg.autoMode); },
+    onChange(k) { if (k === 'autoMode') setAuto(cfg.autoMode); if (k === 'showIndicator') { const n = document.getElementById('mp-napad-ind'); n && n.remove(); indicator(); } },
   });
 })();
 
 // ═══ src/addons/wakeup_bratan_minichat.js ═══
 /* ───────── Hey WakeUP! ─────────
- * Kolory i czcionki powiadomień tekstowych (powiadomienia panelu + wskazane elementy gry).
+ * Style komunikatów gry (duży żółty napis na środku ekranu — .big-messages .message).
+ * Panel też pokazuje swoje powiadomienia jako komunikaty gry, więc styl działa na wszystko.
+ * Do wyboru gotowe style z podglądem albo „Własny" (kolory, czcionka, rozmiar, tło, ramka).
  */
 (() => {
   let cfg;
-  const FONTS = [['Arial,"Segoe UI",sans-serif', 'Jak w grze (Arial)'], ['"Segoe UI",system-ui,sans-serif', 'Systemowa'], ['Georgia,serif', 'Georgia (szeryfowa)'], ['"Trebuchet MS",sans-serif', 'Trebuchet'], ['Verdana,sans-serif', 'Verdana'], ['Consolas,monospace', 'Consolas (mono)'], ['"Comic Sans MS",cursive', 'Comic Sans'], ['Impact,sans-serif', 'Impact']];
+  const FONTS = [['Arial,"Segoe UI",sans-serif', 'Arial (jak w grze)'], ['"Segoe UI",system-ui,sans-serif', 'Systemowa'], ['Georgia,serif', 'Georgia (szeryfowa)'], ['"Trebuchet MS",sans-serif', 'Trebuchet'], ['Verdana,sans-serif', 'Verdana'], ['Consolas,monospace', 'Consolas (mono)'], ['Impact,sans-serif', 'Impact']];
+  const OUTLINE = '2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000';
 
-  /** Gdy dodatek jest wyłączony — powiadomienia wyglądają jak komunikaty gry (żółty tekst na dole). */
+  // Gotowe style. „gra" = brak zmian (oryginalny wygląd).
+  const PRESETS = {
+    gra:      { name: 'Domyślny (gra)', css: null },
+    mini:     { name: 'Minimalny', css: 'color:#fff!important;font:600 16px/1.3 "Segoe UI",system-ui,sans-serif!important;text-shadow:0 1px 3px rgba(0,0,0,.9)!important;letter-spacing:.2px!important' },
+    szklo:    { name: 'Szkło', css: 'color:#fff!important;font:600 16px/1.3 "Segoe UI",system-ui,sans-serif!important;text-shadow:none!important;background:rgba(16,17,28,.6)!important;-webkit-backdrop-filter:blur(10px)!important;backdrop-filter:blur(10px)!important;border:1px solid rgba(255,255,255,.18)!important;border-radius:14px!important;padding:8px 18px!important;display:table!important;margin:4px auto!important;box-shadow:0 8px 24px rgba(0,0,0,.35)!important' },
+    neon:     { name: 'Neon', css: 'color:#e9fbff!important;font:700 20px/1.3 "Segoe UI",system-ui,sans-serif!important;text-shadow:0 0 6px #22d3ee,0 0 14px #22d3ee,0 0 28px #0891b2!important;letter-spacing:.5px!important' },
+    alarm:    { name: 'Alarm', css: 'color:#fff!important;font:800 22px/1.3 Arial,sans-serif!important;text-shadow:0 1px 2px #000!important;background:linear-gradient(90deg,rgba(185,28,28,.0),rgba(185,28,28,.85) 15%,rgba(185,28,28,.85) 85%,rgba(185,28,28,0))!important;padding:6px 60px!important;display:table!important;margin:4px auto!important;text-transform:uppercase!important;letter-spacing:1px!important' },
+    pasek:    { name: 'Ciemny pasek', css: 'color:#ffd84a!important;font:700 17px/1.3 Arial,sans-serif!important;text-shadow:none!important;background:rgba(0,0,0,.72)!important;padding:6px 40px!important;display:table!important;margin:4px auto!important;border-top:1px solid rgba(255,216,74,.5)!important;border-bottom:1px solid rgba(255,216,74,.5)!important' },
+    pergamin: { name: 'Pergamin', css: 'color:#3b2410!important;font:700 18px/1.3 Georgia,serif!important;text-shadow:none!important;background:linear-gradient(#f3e3b8,#e2c88c)!important;border:2px solid #8a6230!important;border-radius:6px!important;padding:6px 18px!important;display:table!important;margin:4px auto!important;box-shadow:0 4px 14px rgba(0,0,0,.45)!important' },
+    duzy:     { name: 'Bardzo duży', css: `color:#ffe500!important;font:900 34px/1.25 Arial,sans-serif!important;text-shadow:${OUTLINE},0 0 12px rgba(0,0,0,.6)!important` },
+    wlasny:   { name: 'Własny', css: null },
+  };
+
+  function customCss() {
+    const box = cfg.bgAlpha > 0 || cfg.frame;
+    return `color:${cfg.fg}!important;font-family:${cfg.font}!important;font-size:${cfg.size}px!important;font-weight:${cfg.bold ? 700 : 400}!important;` +
+      `text-shadow:${cfg.outline ? OUTLINE : 'none'}${cfg.shadow ? `,0 0 10px ${cfg.glow},0 0 20px ${cfg.glow}` : ''}!important;` +
+      (box ? `background:${hexA(cfg.bg, cfg.bgAlpha)}!important;padding:5px 16px!important;border-radius:${cfg.radius}px!important;display:table!important;margin:4px auto!important;${cfg.frame ? `border:1px solid ${cfg.glow}!important;` : ''}` : '');
+  }
+  function cssFor(id) { return id === 'wlasny' ? customCss() : (PRESETS[id] && PRESETS[id].css); }
+
   function apply() {
-    const R = document.documentElement.style;
-    const on = cfg && cfg.enabled;
-    const set = (k, v) => (on ? R.setProperty(k, v) : R.removeProperty(k));
-    set('--mp-toast-fg', cfg.fg);
-    set('--mp-toast-warn', cfg.warn);
-    set('--mp-toast-bad', cfg.bad);
-    set('--mp-toast-bg', hexA(cfg.bg, cfg.bgAlpha));
-    set('--mp-toast-pad', cfg.bgAlpha > 0 || cfg.frame ? '5px 12px' : '1px 8px');
-    set('--mp-toast-border', cfg.frame ? `1px solid ${cfg.glow}` : '0 solid transparent');
-    set('--mp-toast-font', cfg.font);
-    set('--mp-toast-size', cfg.size + 'px');
-    set('--mp-toast-weight', cfg.bold ? '700' : '400');
-    set('--mp-toast-shadow', cfg.shadow ? `0 0 8px ${cfg.glow},0 0 3px #000,1px 1px 1px #000` : '0 0 3px #000,1px 1px 1px #000,-1px -1px 1px #000');
-    set('--mp-toast-bottom', cfg.bottom + 'px');
     let st = document.getElementById('mp-wakeup-css');
     if (!st) { st = el('style', { id: 'mp-wakeup-css' }); document.head.appendChild(st); }
     const sel = (cfg.gameSelectors || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-    const box = cfg.bgAlpha > 0 || cfg.frame;
-    st.textContent = on && sel ? `${sel}{color:${cfg.fg}!important;font-family:${cfg.font}!important;font-size:${cfg.size}px!important;font-weight:${cfg.bold ? 700 : 400}!important;${cfg.shadow ? `text-shadow:0 0 8px ${cfg.glow},0 0 3px #000,1px 1px 1px #000!important;` : ''}${box ? `background:${hexA(cfg.bg, cfg.bgAlpha)}!important;padding:4px 12px!important;border-radius:8px!important;display:inline-block!important;${cfg.frame ? `border:1px solid ${cfg.glow}!important;` : ''}` : ''}}` : '';
+    const css = cfg.enabled && cssFor(cfg.style);
+    // podglądy w panelu zawsze aktualne
+    const prev = Object.keys(PRESETS).map((k) => { const c = cssFor(k); return c ? `.mp-wk-prev.wk-${k} .mp-wk-msg{${c}}` : ''; }).join('\n');
+    st.textContent = (css && sel ? `${sel}{${css}}\n` : '') + prev;
   }
   function hexA(hex, a) {
     const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex || '');
@@ -2033,28 +2247,36 @@ function parseProtection(data) {
   }
 
   defineAddon({
-    id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'],
-    desc: 'Powiadomienia panelu to zwykłe komunikaty gry (żółty tekst na dole). Po włączeniu tego dodatku zmieniasz wygląd WSZYSTKICH komunikatów — panelu i gry: kolor, czcionkę, rozmiar, tło i ramkę.',
-    defaults: { enabled: false, fg: '#ffe066', warn: '#ffb547', bad: '#ff6b6b', bg: '#10111c', bgAlpha: 0, frame: false, glow: '#ffb547', font: 'Arial,"Segoe UI",sans-serif', size: 14, bold: true, shadow: false, bottom: 140, styleGame: false,
-      gameSelectors: '.big-messages .message' },
+    id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'], renderFirst: true,
+    desc: 'Zmienia wygląd komunikatów gry (duży żółty napis na środku ekranu) — także tych wysyłanych przez panel. Wybierz gotowy styl albo ułóż własny.',
+    defaults: { enabled: false, style: 'mini', fg: '#ffe500', glow: '#ffb547', bg: '#10111c', bgAlpha: 0, frame: false, radius: 10, font: 'Arial,"Segoe UI",sans-serif', size: 24, bold: true, outline: true, shadow: false, gameSelectors: '.big-messages .message' },
     settings: [
-      { group: 'Kolory', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
-      { group: 'Kolory', key: 'glow', type: 'color', label: 'Ramka / poświata', live: () => apply() },
-      { group: 'Tekst', key: 'font', type: 'select', label: 'Czcionka', options: FONTS },
-      { group: 'Tekst', key: 'size', type: 'range', label: 'Rozmiar (px)', min: 10, max: 32, live: () => apply() },
-      { group: 'Tekst', key: 'bold', type: 'bool', label: 'Pogrubienie' },
-      { group: 'Tekst', key: 'shadow', type: 'bool', label: 'Kolorowa poświata' },
-      { group: 'Tło', key: 'bg', type: 'color', label: 'Kolor tła', live: () => apply() },
-      { group: 'Tło', key: 'bgAlpha', type: 'range', label: 'Krycie tła (0 = bez tła)', min: 0, max: 1, step: 0.05, live: () => apply() },
-      { group: 'Tło', key: 'frame', type: 'bool', label: 'Ramka' },
-      { group: 'Zaawansowane', key: 'gameSelectors', type: 'textarea', label: 'Selektor komunikatów gry', hint: 'Zostaw domyślny (.big-messages .message). Zmień tylko, jeśli gra zmieni wygląd komunikatów.' },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'font', type: 'select', label: 'Czcionka', options: FONTS },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'size', type: 'range', label: 'Rozmiar (px)', min: 10, max: 40, live: () => apply() },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'bold', type: 'bool', label: 'Pogrubienie' },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'outline', type: 'bool', label: 'Czarny obrys (jak w grze)' },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'shadow', type: 'bool', label: 'Kolorowa poświata' },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'glow', type: 'color', label: 'Kolor poświaty / ramki', live: () => apply() },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'bg', type: 'color', label: 'Kolor tła', live: () => apply() },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'bgAlpha', type: 'range', label: 'Krycie tła (0 = bez tła)', min: 0, max: 1, step: 0.05, live: () => apply() },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'frame', type: 'bool', label: 'Ramka' },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'radius', type: 'range', label: 'Zaokrąglenie (px)', min: 0, max: 24, live: () => apply() },
+      { group: 'Zaawansowane', key: 'gameSelectors', type: 'text', label: 'Selektor komunikatów gry', hint: 'Domyślnie .big-messages .message' },
     ],
-    render(box) {
-      box.appendChild(el('div', { class: 'mp-btns' },
-        el('button', { class: 'mp-btn pri', onclick: () => toast('Tak wygląda powiadomienie', 'info') }, 'Podgląd'),
-        el('button', { class: 'mp-btn', onclick: () => toast('Bratan: zablokowano atak', 'bad') }, 'Drugi przykład')));
+    render(box, c, rerender) {
+      const grid = el('div', { class: 'mp-wk-grid' });
+      for (const [k, p] of Object.entries(PRESETS)) {
+        const card = el('div', { class: 'mp-wk-prev wk-' + k + (c.style === k ? ' on' : ''), onclick: () => { c.style = k; config.save(); apply(); rerender(); } },
+          el('div', { class: 'mp-wk-stage' }, el('span', { class: 'mp-wk-msg' + (k === 'gra' ? ' gra' : '') }, k === 'wlasny' ? 'Twój styl' : 'Komunikat')),
+          el('div', { class: 'mp-wk-name' }, p.name));
+        grid.appendChild(card);
+      }
+      box.prepend(el('div', { class: 'mp-card' }, el('h3', null, 'Styl komunikatów'), grid,
+        el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn pri', onclick: () => toast('Tak wygląda komunikat — Hey WakeUP!') }, 'Pokaż w grze'))));
+      if (!c.enabled) box.prepend(MP.note('info', 'Dodatek jest wyłączony — komunikaty mają wygląd z gry. Włącz go, żeby zastosować wybrany styl.'));
     },
-    init(c) { cfg = c; apply(); },
+    init(c) { cfg = c; if (!c._v13) { c._v13 = true; c.style = c.style || 'mini'; c.size = 24; c.fg = '#ffe500'; config.save(); } apply(); },
     onToggle() { apply(); },
     onChange() { apply(); },
   });
@@ -2539,131 +2761,147 @@ MP.itemDeco = itemDeco;
 })();
 
 /* ───────── Pokaż EQ ─────────
- * Po najechaniu na gracza (na mapie lub w „Kto tu jest?") pokazuje jego ekwipunek i podsumowanie bonusów legendarnych.
+ * Najechanie na gracza (na mapie albo w „Kto tu jest?") → jego ekwipunek + podsumowanie bonusów legendarnych.
+ * Dane pobieramy tą samą funkcją co „Pokaż ekwipunek" w grze (okno gry jest na ten czas niewidoczne).
  */
 (() => {
-  let cfg, cache = {}, tip = null, pending = null, lastReq = 0, hoverId = null;
+  let cfg, cache = {}, tip = null, hoverId = null, lastReq = 0;
+  let busy = false, wanted = null;       // jeśli w trakcie pobierania najedziesz na innego gracza — pobierzemy jego zaraz potem
 
-  function hide() { hoverId = null; tip && (tip.style.display = 'none'); }
+  function hide() { hoverId = null; wanted = null; if (tip) tip.style.display = 'none'; }
 
-  /**
-   * Pobranie EQ gracza tak samo, jak robi to gra po kliknięciu „Pokaż ekwipunek":
-   * wywołujemy funkcję gry showEq(), okno gry jest na ten czas niewidoczne, odczytujemy z niego
-   * przedmioty i zamykamy je. (Sprawdzone diagnostyką: okno .showeq-window, przedmioty .item-id-<id>-showeq)
-   */
-  let busy = false;
-  async function fetchEq(id) {
-    const c = cache[id];
-    if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
-    if (busy || now() - lastReq < 1200) return null;   // nie spamujemy serwera
+  async function fetchRaw(id) {
     const raw = game.otherRaw(id);
     if (!raw || typeof raw.showEq !== 'function') return null;
-    busy = true; lastReq = now();
     const hideCss = el('style', null, '.showeq-window{visibility:hidden!important;pointer-events:none!important}');
-    const already = $$('.showeq-window').filter(isVisible);
+    const already = $$('.showeq-window');
     document.head.appendChild(hideCss);
     let items = null;
     try {
       raw.showEq();
       const t0 = now();
       let w = null;
-      while (now() - t0 < 2500) {
-        await sleep(100);
+      while (now() - t0 < 3000) {
+        await sleep(60);
         w = $$('.showeq-window').find((n) => !already.includes(n) && n.querySelector('[class*="-showeq"]'));
-        if (w) { await sleep(150); break; }
+        if (w) { await sleep(80); break; }
       }
       if (w) {
         const ids = $$('[class*="item-id-"]', w).map((n) => { const m = String(n.className).match(/item-id-(\d+)-showeq/); return m ? Number(m[1]) : null; }).filter(Boolean);
-        items = ids.map((iid) => {
-          let it = null;
-          try { it = E().items.getItemById(iid); } catch {}
-          return it ? game.normItem(it) : null;
-        }).filter(Boolean);
+        items = ids.map((iid) => { let it = null; try { it = E().items.getItemById(iid); } catch {} return it ? game.normItem(it) : null; }).filter(Boolean);
         const close = w.querySelector('.close-button, [class*="close-button"], .close, [class*="close"]');
-        if (close) close.click(); else w.style.display = 'none';
+        if (close) close.click(); else w.remove();
       }
     } catch (e) { console.warn('[laddonz] showEq', e); }
-    finally { setTimeout(() => hideCss.remove(), 200); busy = false; }
-    if (items) cache[id] = { t: now(), items };
+    finally { setTimeout(() => hideCss.remove(), 150); }
     return items;
   }
 
-  async function show(id, x, y, force) {
-    if (!cfg.enabled && !force) return;
-    hoverId = id;
-    const p = game.otherById(id);
-    if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass' }); document.body.appendChild(tip); }
-    tip.style.display = 'block';
+  async function fetchEq(id) {
+    const c = cache[id];
+    if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
+    if (busy) { wanted = id; return 'wait'; }
+    const gap = 700 - (now() - lastReq);            // nie częściej niż ~1,5 zapytania na sekundę
+    if (gap > 0) await sleep(gap);
+    if (hoverId !== id) return 'stale';
+    busy = true; lastReq = now();
+    let items = null;
+    try { items = await fetchRaw(id); } finally { busy = false; }
+    if (items) cache[id] = { t: now(), items };
+    if (wanted && wanted !== id && hoverId === wanted) { const w = wanted; wanted = null; setTimeout(() => render(w), 0); }
+    return items;
+  }
+
+  function place(x, y) {
     tip.style.left = clamp(x, 4, innerWidth - 300) + 'px';
-    tip.style.top = clamp(y, 4, innerHeight - 260) + 'px';
+    tip.style.top = clamp(y, 4, innerHeight - 280) + 'px';
+  }
+
+  async function render(id) {
+    const p = game.otherById(id);
     tip.innerHTML = '';
-    tip.appendChild(el('div', { style: { fontWeight: 700 } }, p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id));
-    tip.appendChild(el('div', { class: 'mp-dim' }, 'Wczytuję ekwipunek…'));
+    tip.appendChild(el('div', { style: { fontWeight: 700 } }, p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id, p && p.clanName ? el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, ` [${p.clanName}]`) : null));
+    const loading = el('div', { class: 'mp-dim' }, 'Wczytuję ekwipunek…');
+    tip.appendChild(loading);
     const items = await fetchEq(id);
-    if (hoverId !== id) return;
-    tip.lastChild.remove();
+    if (hoverId !== id || items === 'wait' || items === 'stale') return;
+    loading.remove();
     if (!items) { tip.appendChild(el('div', { class: 'mp-warnc' }, 'Nie udało się pobrać — spróbuj za chwilę.')); return; }
-    if (!items.length) { tip.appendChild(el('div', { class: 'mp-dim' }, 'Brak danych o przedmiotach.')); return; }
+    if (!items.length) { tip.appendChild(el('div', { class: 'mp-dim' }, 'Brak przedmiotów.')); return; }
     const grid = el('div', { class: 'mp-eqgrid' }, items.slice(0, 18).map((it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: `${it.name} (${it.rarity})` },
       el('img', { src: game.iconUrl(it.icon), alt: '' }), it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon)) : null)));
     const sum = {};
     items.forEach((i) => { if (i.legbon) sum[i.legbon] = (sum[i.legbon] || 0) + 1; });
-    const leg = items.filter((i) => i.rarity === 'legendary').length;
     tip.append(grid, el('div', { style: { fontSize: '12px' } },
-      el('div', null, `Legendy: `, el('b', null, String(leg)), ` · Heroiki: `, el('b', null, String(items.filter((i) => i.rarity === 'heroic').length))),
-      Object.keys(sum).length ? el('div', { style: { marginTop: '4px' } }, Object.entries(sum).map(([k, n]) => el('span', { class: 'mp-chip', style: { marginRight: '4px', padding: '2px 8px' } }, `${MP.legAbbr(k)} ×${n}`))) : el('div', { class: 'mp-dim' }, 'Brak bonusów legendarnych')));
+      el('div', null, 'Legendy: ', el('b', null, String(items.filter((i) => i.rarity === 'legendary').length)), ' · Heroiki: ', el('b', null, String(items.filter((i) => i.rarity === 'heroic').length))),
+      Object.keys(sum).length ? el('div', { style: { marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px' } }, Object.entries(sum).map(([k, n]) => el('span', { class: 'mp-chip', style: { padding: '2px 8px' }, title: MP.legName(k) }, `${MP.legAbbr(k)} ×${n}`))) : el('div', { class: 'mp-dim' }, 'Brak bonusów legendarnych')));
+  }
+
+  function show(id, x, y, force) {
+    if (!cfg.enabled && !force) return;
+    if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass' }); document.body.appendChild(tip); }
+    place(x, y);
+    tip.style.display = 'block';
+    if (hoverId === id) return;          // ten sam gracz — tylko przesuwamy
+    hoverId = id;
+    render(id);
   }
 
   /*
-   * Najechanie na gracza NA MAPIE — dwa sposoby naraz:
-   *  1) hak w prototypie gracza (funkcje tip/hover gry) → zdarzenie player:hover,
-   *  2) zapas: dymek gry z nickiem (selektor w ustawieniach).
+   * Mapa: gra pokazuje własny dymek z nickiem gracza (.tip-wrapper.normal-tip — sprawdzone diagnostyką).
+   * Gdy dymek z nickiem się pojawi → pokazujemy EQ; gdy zniknie albo zmieni się gracz → chowamy/podmieniamy.
+   * Dodatkowo hak na onhover gracza, jeśli gra go wywołuje.
    */
   function watchHover() {
-    let mx = 0, my = 0, shift = false, shownAt = null, hoverT = 0;
+    let mx = 0, my = 0, shift = false, mapShown = false;
     document.addEventListener('mousemove', (e) => {
       mx = e.clientX; my = e.clientY; shift = e.shiftKey;
-      // chowamy podgląd z mapy, gdy kursor odjedzie
-      if (shownAt && Math.hypot(mx - shownAt.x, my - shownAt.y) > 60 && now() - hoverT > 350 && !document.querySelector('.mp-prow:hover')) { shownAt = null; hide(); }
+      if (tip && tip.style.display === 'block' && mapShown) place(mx + 18, my + 14);
     }, true);
-    let pend = null;
-    const want = (id) => {
+    const fromMap = (id) => {
       if (!cfg.enabled || !cfg.mapHover) return;
       if (cfg.needShift && !shift) return;
-      hoverT = now();
-      if (hoverId === id) return;
-      clearTimeout(pend);
-      pend = setTimeout(() => { shownAt = { x: mx, y: my }; show(id, mx + 18, my + 10); }, Number(cfg.delay) || 400);
+      mapShown = true;
+      show(id, mx + 18, my + 14);
     };
-    bus.on('player:hover', (id) => want(id));
-    const check = debounce(() => {
-      if (!cfg.enabled || !cfg.mapHover || menus.hoverHooked) return;
-      const tipSel = cfg.tipSelector.split('\n').map((s) => s.trim()).filter(Boolean).join(',');
+    const check = () => {
+      if (!cfg.enabled || !cfg.mapHover) return;
+      if (document.querySelector('.mp-prow:hover, .mp-pcard:hover')) return;   // obsługuje lista
+      const tipSel = (cfg.tipSelector || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
       const t = tipSel && $$(tipSel).find((n) => isVisible(n) && !n.closest('.mp-glass'));
-      if (!t) return;
-      const txt = t.textContent.toLowerCase();
-      const p = game.others().find((o) => o.nick && txt.includes(o.nick.toLowerCase()));
-      if (p) want(p.id);
-    }, 120);
-    new MutationObserver(check).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+      const txt = t ? t.textContent.toLowerCase() : '';
+      const p = txt && game.others().find((o) => o.nick && txt.includes(o.nick.toLowerCase()));
+      if (p) fromMap(p.id);
+      else if (mapShown) { mapShown = false; hide(); }
+    };
+    new MutationObserver(debounce(check, 60)).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+    setInterval(check, 400);
   }
 
-  MP.pokazEq = { show: (id, x, y) => (cfg.enabled && cfg.listHover ? show(id, x, y) : null), showForce: (id, x, y) => { show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', hide, { once: true, capture: true }), 50); }, hide };
+  MP.pokazEq = {
+    show: (id, x, y) => (cfg.enabled && cfg.listHover ? show(id, x, y) : null),
+    showForce: (id, x, y) => { show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', hide, { once: true, capture: true }), 50); },
+    hide,
+  };
 
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
-    desc: 'Po najechaniu na gracza pokazuje jego ekwipunek, a na dole podsumowanie bonusów legendarnych.',
-    defaults: { mapHover: true, listHover: true, needShift: true, delay: 450, cacheSec: 120, tipSelector: '.tip-wrapper.normal-tip' },
-    notes: () => [{ type: 'info', text: 'Podgląd korzysta z tej samej funkcji co „Pokaż ekwipunek" w grze. Każdy podgląd to jedno zapytanie do serwera, dlatego na mapie domyślnie trzeba trzymać Shift, a wynik jest pamiętany przez 2 minuty.' }],
+    desc: 'Po najechaniu na gracza (na mapie albo w „Kto tu jest?") pokazuje jego ekwipunek, a na dole podsumowanie bonusów legendarnych.',
+    defaults: { enabled: true, mapHover: true, listHover: true, needShift: false, cacheSec: 120, tipSelector: '.tip-wrapper.normal-tip' },
+    notes: () => [{ type: 'info', text: 'Podgląd korzysta z tej samej funkcji co „Pokaż ekwipunek" w grze, więc pierwszy podgląd danego gracza trwa tyle, ile odpowiedź serwera. Kolejne przez 2 minuty są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
       { key: 'listHover', type: 'bool', label: 'Najechanie na gracza w „Kto tu jest?"' },
-      { key: 'needShift', type: 'bool', label: 'Tylko z wciśniętym Shift (mapa)' },
-      { key: 'delay', type: 'number', label: 'Opóźnienie (ms)', min: 150, max: 3000 },
+      { key: 'needShift', type: 'bool', label: 'Na mapie tylko z wciśniętym Shift' },
       { key: 'cacheSec', type: 'number', label: 'Pamiętaj wynik przez (s)', min: 10, max: 1800 },
-      { key: 'tipSelector', type: 'textarea', label: 'Selektor dymka gracza w grze' },
+      { key: 'tipSelector', type: 'text', label: 'Selektor dymka gracza w grze', hint: 'Domyślnie .tip-wrapper.normal-tip' },
     ],
-    init(c) { cfg = c; watchHover(); },
+    init(c) {
+      cfg = c;
+      // migracja ustawień z wcześniejszych wersji
+      if (!c._v12) { c._v12 = true; c.needShift = false; c.tipSelector = '.tip-wrapper.normal-tip'; config.save(); }
+      watchHover();
+    },
     onToggle(on) { if (!on) hide(); },
   });
 })();
@@ -2877,7 +3115,7 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'szybka', name: 'Szybka rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'], risk: 'auto',
     desc: 'Prawy klik na przedmiocie → „Użyj po walce" (teleporty, mikstury, przywołania…). Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".',
-    defaults: { key: '', auto: false, queue: [], partySelector: '.party-icon\n.party-button\n.widget-button.party\n[class*="party-widget"]' },
+    defaults: { key: '', auto: true, queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     keys: [{ key: 'key', label: 'wykonaj kolejkę', fn: () => runQueue('key') }],
     notes: () => [{ type: 'info', text: 'Bez trybu automatycznego kolejka czeka na Twój klawisz — wtedy to nadal Twoje kliknięcie. Jeśli menu na ikonie grupy się nie pokazuje, wpisz jej klasę (F12) w „Selektor ikony grupy".' }],
     settings: [
@@ -2903,6 +3141,7 @@ MP.itemDeco = itemDeco;
       });
       itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: '⏱', title: 'Szybka rączka: użyj po walce' } : null));
       bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => runQueue('auto'), rnd(500, 900)); });
+      if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
       hookPartyIcon();
       setTimeout(indicator, 1500);
     },
@@ -3037,6 +3276,7 @@ MP.itemDeco = itemDeco;
   addons.initAll();
   itemDeco.start();
   ui.start();
+  quickbar.start();
   console.log(`%c[laddonz] v${MP.version} gotowy — ${addons.list.length} dodatków. Panel: ${config.data.global.panelKey}`, 'color:#7c5cff;font-weight:bold');
   if (!store.get('welcomed', false)) {
     store.set('welcomed', true);
@@ -3044,5 +3284,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.2.0";
+MP.version = "1.3.1";
 })();

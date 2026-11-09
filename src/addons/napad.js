@@ -36,12 +36,13 @@
       return false;
     }
     S.last = t;
-    // zestaw
-    if (cfg.switchSet && cfg.setId) {
+    // zestaw zależny od profesji atakowanego (0 = nie zmieniaj)
+    if (cfg.switchSet) {
+      const setId = Number((cfg.setByProf || {})[p.prof]) || 0;
       const single = enemies().length === 1;
-      if ((!cfg.setOnlySingleEnemy || single) && !(S.lastSet.id === cfg.setId && t - S.lastSet.t < 15000)) {
-        S.lastSet = { id: cfg.setId, t };
-        net.send('eqSet', { id: cfg.setId }, { src: 'Napad', urgent: true });
+      if (setId && (!cfg.setOnlySingleEnemy || single) && !(S.lastSet.id === setId && t - S.lastSet.t < 15000)) {
+        S.lastSet = { id: setId, t };
+        net.send('eqSet', { id: setId }, { src: 'Napad', urgent: true });
       }
     }
     const r = await net.send('attackPlayer', { id: p.id }, {
@@ -66,37 +67,53 @@
     attack(c[0], 'key');
   }
 
-  /* ── tryb AUTO ── */
+  /* ── tryb AUTO: włączony w ustawieniach = działa od razu ── */
   function setAuto(on) {
-    S.auto = !!on && cfg.enabled && cfg.autoMode;
+    S.auto = !!on && cfg.enabled;
     clearInterval(S.timer);
     if (S.auto) S.timer = setInterval(autoTick, 250);
     indicator();
   }
   function autoTick() {
-    if (!S.auto || !game.ready() || game.inBattle()) return;
+    if (!S.auto || !game.ready()) return;
     const t = now();
+    const all = candidates(cfg.autoRange, true);
+    S.target = all[0] || null;
+    indicator();
+    if (game.inBattle()) return;
     // ten sam cel nie częściej niż co 3 s (gdy atak się nie udał, nie męczymy serwera)
-    const c = candidates(cfg.autoRange, true).filter((p) => !(S.autoTried[p.id] > t - 3000));
+    const c = all.filter((p) => !(S.autoTried[p.id] > t - 3000));
     if (c.length && t - S.last >= Math.max(500, cfg.minInterval)) { S.autoTried[c[0].id] = t; attack(c[0], 'auto'); }
   }
+  /** Wskaźnik: że AUTO działa + kto jest teraz celem w zasięgu. */
   function indicator() {
     let n = document.getElementById('mp-napad-ind');
     if (!S.auto || !cfg.showIndicator) { n && n.remove(); return; }
     if (!n) {
-      const p = store.get('win:napad-ind', { x: innerWidth - 230, y: 70 });
-      n = el('div', { id: 'mp-napad-ind', class: 'mp-glass', title: 'Kliknij, żeby wyłączyć', style: { position: 'fixed', zIndex: 2147482995, left: p.x + 'px', top: p.y + 'px', padding: '7px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', border: '1px solid rgba(255,93,122,.55)', boxShadow: '0 0 18px rgba(255,93,122,.35)' } },
-        el('div', { class: 'mp-tile', style: { width: '24px', height: '24px', borderRadius: '7px', background: grad(['#ff5d7a', '#b8325a']) } }, icon('napad', 14)),
-        el('div', null, el('div', { style: { fontWeight: 800, fontSize: '12px', letterSpacing: '.5px' } }, 'NAPAD AUTO'), el('div', { class: 'mp-badc', style: { fontSize: '11px', fontWeight: 700 } }, '● WŁĄCZONY')));
+      const p = store.get('win:napad-ind', { x: innerWidth - 250, y: 70 });
+      n = el('div', { id: 'mp-napad-ind', class: 'mp-glass', title: 'Kliknij, żeby wyłączyć AUTO', style: { position: 'fixed', zIndex: 2147482995, left: p.x + 'px', top: p.y + 'px', padding: '7px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '9px', cursor: 'pointer', border: '1px solid rgba(255,93,122,.55)', boxShadow: '0 0 18px rgba(255,93,122,.35)', minWidth: '190px' } });
       const moved = makeDraggable(n, n, (pos) => store.set('win:napad-ind', pos));
-      n.addEventListener('click', () => { if (!moved()) { setAuto(false); toast('Napad AUTO wyłączony', 'ok'); } });
+      n.addEventListener('click', () => { if (!moved()) { cfg.autoMode = false; config.save(); setAuto(false); toast('Napad AUTO wyłączony'); if (ui.panel) ui.renderMain(); } });
       document.body.appendChild(n);
     }
+    const h = game.hero();
+    const tg = S.target;
+    const sig = tg ? tg.id + ':' + tg.x + ':' + tg.y : '-';
+    if (n.dataset.sig === sig) return;
+    n.dataset.sig = sig;
+    n.innerHTML = '';
+    n.append(el('div', { class: 'mp-tile', style: { width: '26px', height: '26px', borderRadius: '8px', background: grad(['#ff5d7a', '#b8325a']) } }, icon('napad', 15)),
+      el('div', null,
+        el('div', { style: { fontWeight: 800, fontSize: '12px', letterSpacing: '.5px' } }, 'NAPAD AUTO ', el('span', { class: 'mp-badc', style: { fontSize: '11px' } }, '● WŁĄCZONY')),
+        el('div', { style: { fontSize: '11.5px', marginTop: '1px' } }, tg
+          ? el('span', null, '🎯 ', el('b', { class: 'mp-badc' }, tg.nick), ` (${tg.lvl}${tg.prof}) · ${h ? game.dist(h, tg).toFixed(1) : '?'} kr.`)
+          : el('span', { class: 'mp-dim' }, 'brak celu w zasięgu ' + cfg.autoRange + ' kr.'))));
   }
   function toggleAuto() {
-    if (!cfg.autoMode) { toast('Najpierw włącz „Tryb AUTO" w ustawieniach Napadu', 'warn'); return; }
-    setAuto(!S.auto);
+    cfg.autoMode = !cfg.autoMode; config.save();
+    setAuto(cfg.autoMode);
     toast(S.auto ? 'Napad AUTO: WŁĄCZONY' : 'Napad AUTO: wyłączony', S.auto ? 'bad' : 'ok');
+    if (ui.panel) ui.renderMain();
   }
 
   defineAddon({
@@ -105,7 +122,7 @@
     defaults: {
       keyAttack: '', range: 2, minInterval: 1000, targetMode: 'enemies', lvlMin: 0, lvlMax: 0,
       targetList: [], neverList: [], skipProtected: true, menuEntry: true,
-      switchSet: false, setId: 1, setOnlySingleEnemy: true,
+      switchSet: false, setByProf: { w: 0, p: 0, b: 0, m: 0, t: 0, h: 0 }, setOnlySingleEnemy: true,
       autoMode: false, autoKey: '', autoRange: 2, autoOnlyList: false, showIndicator: true,
     },
     keys: [
@@ -114,7 +131,7 @@
     ],
     notes: (c) => [
       c.switchSet && !net.cmd('eqSet').t ? { type: 'warn', text: 'Zmiana zestawu wymaga podsłuchania komendy: przełącz zestaw ręcznie w grze, potem Diagnostyka → Podsłuch → „Zmiana zestawu".' } : null,
-      c.autoMode ? { type: 'bad', text: 'Tryb AUTO atakuje bez Twojego kliknięcia — to automatyzacja, za którą najłatwiej o bana. Używasz na własne ryzyko. Gdy jest aktywny, na ekranie widać czerwony wskaźnik „NAPAD AUTO".' } : null,
+      c.autoMode ? { type: 'bad', text: 'Tryb AUTO atakuje bez Twojego kliknięcia — to automatyzacja, za którą najłatwiej o bana. Używasz na własne ryzyko. Gdy działa, na ekranie widać czerwony wskaźnik „NAPAD AUTO" z aktualnym celem (klik = wyłącz).' } : null,
     ],
     settings: [
       { group: 'Atak pod klawisz', key: 'keyAttack', type: 'key', label: 'Klawisz ataku', hint: 'Jedno naciśnięcie = jedna próba ataku na najbliższy cel.' },
@@ -128,19 +145,24 @@
       { group: 'Cele', key: 'neverList', type: 'list', label: 'Nigdy nie atakuj', placeholder: 'nick + Enter' },
       { group: 'Cele', key: 'skipProtected', type: 'bool', label: 'Nie marnuj ataków na graczy z ochroną', hint: 'Po komunikacie o ochronie panel czeka, aż minie.' },
       { group: 'Zestaw', key: 'switchSet', type: 'bool', label: 'Przełącz zestaw przed atakiem', rerender: true },
-      { group: 'Zestaw', key: 'setId', type: 'number', label: 'Numer zestawu', min: 1, max: 10, show: (c) => c.switchSet },
+      { group: 'Zestaw', key: 'setByProf', type: 'custom', show: (c) => c.switchSet, render: (c, save) => {
+        const grid = el('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 14px', padding: '6px 0' } });
+        for (const [k, name] of Object.entries(game.PROF_NAMES)) {
+          const sel = el('select', { class: 'mp-in' }, [[0, 'nie zmieniaj'], ...[1, 2, 3, 4, 5, 6].map((n) => [n, 'Zestaw ' + n])].map(([v, l]) => { const o = el('option', { value: v }, l); if (Number(c.setByProf[k]) === v) o.selected = true; return o; }));
+          sel.onchange = () => { c.setByProf[k] = Number(sel.value); save(); };
+          grid.appendChild(el('label', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' } }, el('span', null, name), sel));
+        }
+        return el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } }, el('div', { class: 'lb' }, 'Zestaw na profesję atakowanego'), grid);
+      } },
       { group: 'Zestaw', key: 'setOnlySingleEnemy', type: 'bool', label: 'Tylko gdy na mapie jest 1 wróg', hint: 'Na ustawkach zestaw się nie zmienia.', show: (c) => c.switchSet },
-      { group: 'Tryb AUTO', key: 'autoMode', type: 'bool', auto: true, label: 'Tryb AUTO dostępny', rerender: true, danger: true, countdown: 3,
-        confirm: 'Tryb AUTO sam atakuje graczy, którzy wejdą w zasięg. To automatyzacja i może skończyć się banem. Włączasz go potem klawiszem lub w tym panelu, a działanie sygnalizuje czerwony wskaźnik na ekranie.' },
-      { group: 'Tryb AUTO', key: 'autoKey', type: 'key', label: 'Klawisz: włącz/wyłącz AUTO', show: (c) => c.autoMode },
+      { group: 'Tryb AUTO', key: 'autoMode', type: 'bool', auto: true, label: 'Tryb AUTO — atakuj graczy wchodzących w zasięg', rerender: true, danger: true, countdown: 3,
+        confirm: 'Tryb AUTO sam atakuje graczy, którzy wejdą w zasięg (według filtrów z sekcji „Cele"). To automatyzacja i może skończyć się banem. Działanie sygnalizuje czerwony wskaźnik z aktualnym celem.' },
+      { group: 'Tryb AUTO', key: 'autoKey', type: 'key', label: 'Klawisz: włącz/wyłącz AUTO' },
       { group: 'Tryb AUTO', key: 'autoRange', type: 'number', label: 'Zasięg AUTO (kratki)', min: 1, max: 30, show: (c) => c.autoMode },
       { group: 'Tryb AUTO', key: 'autoOnlyList', type: 'bool', label: 'AUTO tylko na graczy z listy celów', hint: 'Wyłączone = każdy pasujący do filtrów „Cele".', show: (c) => c.autoMode },
       { group: 'Tryb AUTO', key: 'showIndicator', type: 'bool', label: 'Pokazuj wskaźnik „NAPAD AUTO"', show: (c) => c.autoMode },
     ],
-    render(box, c, rerender) {
-      if (!c.autoMode) return;
-      box.appendChild(el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn ' + (S.auto ? 'bad' : 'pri'), onclick: () => { toggleAuto(); rerender(); } }, S.auto ? 'Wyłącz AUTO teraz' : 'Włącz AUTO teraz')));
-    },
+
     init(c) {
       cfg = c;
       menus.add('player', (id) => {
@@ -151,8 +173,9 @@
       });
       bus.on('map:change', () => { S.protectedUntil = {}; S.backoff = {}; });
       MP.napad = { attack, candidates: (r) => candidates(r ?? cfg.range, false) };
+      if (cfg.enabled && cfg.autoMode) setTimeout(() => setAuto(true), 1500);
     },
-    onToggle(on) { if (!on) setAuto(false); },
-    onChange(k) { if (k === 'autoMode' && !cfg.autoMode) setAuto(false); if (k === 'showIndicator') indicator(); },
+    onToggle(on) { setAuto(on && cfg.autoMode); },
+    onChange(k) { if (k === 'autoMode') setAuto(cfg.autoMode); if (k === 'showIndicator') { const n = document.getElementById('mp-napad-ind'); n && n.remove(); indicator(); } },
   });
 })();

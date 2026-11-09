@@ -25,6 +25,7 @@ const ORDER = [
   'src/core/addons.js',
   'src/core/menus.js',
   'src/core/ui.js',
+  'src/core/quickbar.js',
   'src/addons/_shared.js',
   'src/addons/napad.js',
   'src/addons/wakeup_bratan_minichat.js',

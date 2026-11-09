@@ -141,131 +141,147 @@ MP.itemDeco = itemDeco;
 })();
 
 /* ───────── Pokaż EQ ─────────
- * Po najechaniu na gracza (na mapie lub w „Kto tu jest?") pokazuje jego ekwipunek i podsumowanie bonusów legendarnych.
+ * Najechanie na gracza (na mapie albo w „Kto tu jest?") → jego ekwipunek + podsumowanie bonusów legendarnych.
+ * Dane pobieramy tą samą funkcją co „Pokaż ekwipunek" w grze (okno gry jest na ten czas niewidoczne).
  */
 (() => {
-  let cfg, cache = {}, tip = null, pending = null, lastReq = 0, hoverId = null;
+  let cfg, cache = {}, tip = null, hoverId = null, lastReq = 0;
+  let busy = false, wanted = null;       // jeśli w trakcie pobierania najedziesz na innego gracza — pobierzemy jego zaraz potem
 
-  function hide() { hoverId = null; tip && (tip.style.display = 'none'); }
+  function hide() { hoverId = null; wanted = null; if (tip) tip.style.display = 'none'; }
 
-  /**
-   * Pobranie EQ gracza tak samo, jak robi to gra po kliknięciu „Pokaż ekwipunek":
-   * wywołujemy funkcję gry showEq(), okno gry jest na ten czas niewidoczne, odczytujemy z niego
-   * przedmioty i zamykamy je. (Sprawdzone diagnostyką: okno .showeq-window, przedmioty .item-id-<id>-showeq)
-   */
-  let busy = false;
-  async function fetchEq(id) {
-    const c = cache[id];
-    if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
-    if (busy || now() - lastReq < 1200) return null;   // nie spamujemy serwera
+  async function fetchRaw(id) {
     const raw = game.otherRaw(id);
     if (!raw || typeof raw.showEq !== 'function') return null;
-    busy = true; lastReq = now();
     const hideCss = el('style', null, '.showeq-window{visibility:hidden!important;pointer-events:none!important}');
-    const already = $$('.showeq-window').filter(isVisible);
+    const already = $$('.showeq-window');
     document.head.appendChild(hideCss);
     let items = null;
     try {
       raw.showEq();
       const t0 = now();
       let w = null;
-      while (now() - t0 < 2500) {
-        await sleep(100);
+      while (now() - t0 < 3000) {
+        await sleep(60);
         w = $$('.showeq-window').find((n) => !already.includes(n) && n.querySelector('[class*="-showeq"]'));
-        if (w) { await sleep(150); break; }
+        if (w) { await sleep(80); break; }
       }
       if (w) {
         const ids = $$('[class*="item-id-"]', w).map((n) => { const m = String(n.className).match(/item-id-(\d+)-showeq/); return m ? Number(m[1]) : null; }).filter(Boolean);
-        items = ids.map((iid) => {
-          let it = null;
-          try { it = E().items.getItemById(iid); } catch {}
-          return it ? game.normItem(it) : null;
-        }).filter(Boolean);
+        items = ids.map((iid) => { let it = null; try { it = E().items.getItemById(iid); } catch {} return it ? game.normItem(it) : null; }).filter(Boolean);
         const close = w.querySelector('.close-button, [class*="close-button"], .close, [class*="close"]');
-        if (close) close.click(); else w.style.display = 'none';
+        if (close) close.click(); else w.remove();
       }
     } catch (e) { console.warn('[laddonz] showEq', e); }
-    finally { setTimeout(() => hideCss.remove(), 200); busy = false; }
-    if (items) cache[id] = { t: now(), items };
+    finally { setTimeout(() => hideCss.remove(), 150); }
     return items;
   }
 
-  async function show(id, x, y, force) {
-    if (!cfg.enabled && !force) return;
-    hoverId = id;
-    const p = game.otherById(id);
-    if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass' }); document.body.appendChild(tip); }
-    tip.style.display = 'block';
+  async function fetchEq(id) {
+    const c = cache[id];
+    if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
+    if (busy) { wanted = id; return 'wait'; }
+    const gap = 700 - (now() - lastReq);            // nie częściej niż ~1,5 zapytania na sekundę
+    if (gap > 0) await sleep(gap);
+    if (hoverId !== id) return 'stale';
+    busy = true; lastReq = now();
+    let items = null;
+    try { items = await fetchRaw(id); } finally { busy = false; }
+    if (items) cache[id] = { t: now(), items };
+    if (wanted && wanted !== id && hoverId === wanted) { const w = wanted; wanted = null; setTimeout(() => render(w), 0); }
+    return items;
+  }
+
+  function place(x, y) {
     tip.style.left = clamp(x, 4, innerWidth - 300) + 'px';
-    tip.style.top = clamp(y, 4, innerHeight - 260) + 'px';
+    tip.style.top = clamp(y, 4, innerHeight - 280) + 'px';
+  }
+
+  async function render(id) {
+    const p = game.otherById(id);
     tip.innerHTML = '';
-    tip.appendChild(el('div', { style: { fontWeight: 700 } }, p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id));
-    tip.appendChild(el('div', { class: 'mp-dim' }, 'Wczytuję ekwipunek…'));
+    tip.appendChild(el('div', { style: { fontWeight: 700 } }, p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id, p && p.clanName ? el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, ` [${p.clanName}]`) : null));
+    const loading = el('div', { class: 'mp-dim' }, 'Wczytuję ekwipunek…');
+    tip.appendChild(loading);
     const items = await fetchEq(id);
-    if (hoverId !== id) return;
-    tip.lastChild.remove();
+    if (hoverId !== id || items === 'wait' || items === 'stale') return;
+    loading.remove();
     if (!items) { tip.appendChild(el('div', { class: 'mp-warnc' }, 'Nie udało się pobrać — spróbuj za chwilę.')); return; }
-    if (!items.length) { tip.appendChild(el('div', { class: 'mp-dim' }, 'Brak danych o przedmiotach.')); return; }
+    if (!items.length) { tip.appendChild(el('div', { class: 'mp-dim' }, 'Brak przedmiotów.')); return; }
     const grid = el('div', { class: 'mp-eqgrid' }, items.slice(0, 18).map((it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: `${it.name} (${it.rarity})` },
       el('img', { src: game.iconUrl(it.icon), alt: '' }), it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon)) : null)));
     const sum = {};
     items.forEach((i) => { if (i.legbon) sum[i.legbon] = (sum[i.legbon] || 0) + 1; });
-    const leg = items.filter((i) => i.rarity === 'legendary').length;
     tip.append(grid, el('div', { style: { fontSize: '12px' } },
-      el('div', null, `Legendy: `, el('b', null, String(leg)), ` · Heroiki: `, el('b', null, String(items.filter((i) => i.rarity === 'heroic').length))),
-      Object.keys(sum).length ? el('div', { style: { marginTop: '4px' } }, Object.entries(sum).map(([k, n]) => el('span', { class: 'mp-chip', style: { marginRight: '4px', padding: '2px 8px' } }, `${MP.legAbbr(k)} ×${n}`))) : el('div', { class: 'mp-dim' }, 'Brak bonusów legendarnych')));
+      el('div', null, 'Legendy: ', el('b', null, String(items.filter((i) => i.rarity === 'legendary').length)), ' · Heroiki: ', el('b', null, String(items.filter((i) => i.rarity === 'heroic').length))),
+      Object.keys(sum).length ? el('div', { style: { marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px' } }, Object.entries(sum).map(([k, n]) => el('span', { class: 'mp-chip', style: { padding: '2px 8px' }, title: MP.legName(k) }, `${MP.legAbbr(k)} ×${n}`))) : el('div', { class: 'mp-dim' }, 'Brak bonusów legendarnych')));
+  }
+
+  function show(id, x, y, force) {
+    if (!cfg.enabled && !force) return;
+    if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass' }); document.body.appendChild(tip); }
+    place(x, y);
+    tip.style.display = 'block';
+    if (hoverId === id) return;          // ten sam gracz — tylko przesuwamy
+    hoverId = id;
+    render(id);
   }
 
   /*
-   * Najechanie na gracza NA MAPIE — dwa sposoby naraz:
-   *  1) hak w prototypie gracza (funkcje tip/hover gry) → zdarzenie player:hover,
-   *  2) zapas: dymek gry z nickiem (selektor w ustawieniach).
+   * Mapa: gra pokazuje własny dymek z nickiem gracza (.tip-wrapper.normal-tip — sprawdzone diagnostyką).
+   * Gdy dymek z nickiem się pojawi → pokazujemy EQ; gdy zniknie albo zmieni się gracz → chowamy/podmieniamy.
+   * Dodatkowo hak na onhover gracza, jeśli gra go wywołuje.
    */
   function watchHover() {
-    let mx = 0, my = 0, shift = false, shownAt = null, hoverT = 0;
+    let mx = 0, my = 0, shift = false, mapShown = false;
     document.addEventListener('mousemove', (e) => {
       mx = e.clientX; my = e.clientY; shift = e.shiftKey;
-      // chowamy podgląd z mapy, gdy kursor odjedzie
-      if (shownAt && Math.hypot(mx - shownAt.x, my - shownAt.y) > 60 && now() - hoverT > 350 && !document.querySelector('.mp-prow:hover')) { shownAt = null; hide(); }
+      if (tip && tip.style.display === 'block' && mapShown) place(mx + 18, my + 14);
     }, true);
-    let pend = null;
-    const want = (id) => {
+    const fromMap = (id) => {
       if (!cfg.enabled || !cfg.mapHover) return;
       if (cfg.needShift && !shift) return;
-      hoverT = now();
-      if (hoverId === id) return;
-      clearTimeout(pend);
-      pend = setTimeout(() => { shownAt = { x: mx, y: my }; show(id, mx + 18, my + 10); }, Number(cfg.delay) || 400);
+      mapShown = true;
+      show(id, mx + 18, my + 14);
     };
-    bus.on('player:hover', (id) => want(id));
-    const check = debounce(() => {
-      if (!cfg.enabled || !cfg.mapHover || menus.hoverHooked) return;
-      const tipSel = cfg.tipSelector.split('\n').map((s) => s.trim()).filter(Boolean).join(',');
+    const check = () => {
+      if (!cfg.enabled || !cfg.mapHover) return;
+      if (document.querySelector('.mp-prow:hover, .mp-pcard:hover')) return;   // obsługuje lista
+      const tipSel = (cfg.tipSelector || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
       const t = tipSel && $$(tipSel).find((n) => isVisible(n) && !n.closest('.mp-glass'));
-      if (!t) return;
-      const txt = t.textContent.toLowerCase();
-      const p = game.others().find((o) => o.nick && txt.includes(o.nick.toLowerCase()));
-      if (p) want(p.id);
-    }, 120);
-    new MutationObserver(check).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+      const txt = t ? t.textContent.toLowerCase() : '';
+      const p = txt && game.others().find((o) => o.nick && txt.includes(o.nick.toLowerCase()));
+      if (p) fromMap(p.id);
+      else if (mapShown) { mapShown = false; hide(); }
+    };
+    new MutationObserver(debounce(check, 60)).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+    setInterval(check, 400);
   }
 
-  MP.pokazEq = { show: (id, x, y) => (cfg.enabled && cfg.listHover ? show(id, x, y) : null), showForce: (id, x, y) => { show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', hide, { once: true, capture: true }), 50); }, hide };
+  MP.pokazEq = {
+    show: (id, x, y) => (cfg.enabled && cfg.listHover ? show(id, x, y) : null),
+    showForce: (id, x, y) => { show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', hide, { once: true, capture: true }), 50); },
+    hide,
+  };
 
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
-    desc: 'Po najechaniu na gracza pokazuje jego ekwipunek, a na dole podsumowanie bonusów legendarnych.',
-    defaults: { mapHover: true, listHover: true, needShift: true, delay: 450, cacheSec: 120, tipSelector: '.tip-wrapper.normal-tip' },
-    notes: () => [{ type: 'info', text: 'Podgląd korzysta z tej samej funkcji co „Pokaż ekwipunek" w grze. Każdy podgląd to jedno zapytanie do serwera, dlatego na mapie domyślnie trzeba trzymać Shift, a wynik jest pamiętany przez 2 minuty.' }],
+    desc: 'Po najechaniu na gracza (na mapie albo w „Kto tu jest?") pokazuje jego ekwipunek, a na dole podsumowanie bonusów legendarnych.',
+    defaults: { enabled: true, mapHover: true, listHover: true, needShift: false, cacheSec: 120, tipSelector: '.tip-wrapper.normal-tip' },
+    notes: () => [{ type: 'info', text: 'Podgląd korzysta z tej samej funkcji co „Pokaż ekwipunek" w grze, więc pierwszy podgląd danego gracza trwa tyle, ile odpowiedź serwera. Kolejne przez 2 minuty są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
       { key: 'listHover', type: 'bool', label: 'Najechanie na gracza w „Kto tu jest?"' },
-      { key: 'needShift', type: 'bool', label: 'Tylko z wciśniętym Shift (mapa)' },
-      { key: 'delay', type: 'number', label: 'Opóźnienie (ms)', min: 150, max: 3000 },
+      { key: 'needShift', type: 'bool', label: 'Na mapie tylko z wciśniętym Shift' },
       { key: 'cacheSec', type: 'number', label: 'Pamiętaj wynik przez (s)', min: 10, max: 1800 },
-      { key: 'tipSelector', type: 'textarea', label: 'Selektor dymka gracza w grze' },
+      { key: 'tipSelector', type: 'text', label: 'Selektor dymka gracza w grze', hint: 'Domyślnie .tip-wrapper.normal-tip' },
     ],
-    init(c) { cfg = c; watchHover(); },
+    init(c) {
+      cfg = c;
+      // migracja ustawień z wcześniejszych wersji
+      if (!c._v12) { c._v12 = true; c.needShift = false; c.tipSelector = '.tip-wrapper.normal-tip'; config.save(); }
+      watchHover();
+    },
     onToggle(on) { if (!on) hide(); },
   });
 })();

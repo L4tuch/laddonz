@@ -1,31 +1,42 @@
 /* ───────── Hey WakeUP! ─────────
- * Kolory i czcionki powiadomień tekstowych (powiadomienia panelu + wskazane elementy gry).
+ * Style komunikatów gry (duży żółty napis na środku ekranu — .big-messages .message).
+ * Panel też pokazuje swoje powiadomienia jako komunikaty gry, więc styl działa na wszystko.
+ * Do wyboru gotowe style z podglądem albo „Własny" (kolory, czcionka, rozmiar, tło, ramka).
  */
 (() => {
   let cfg;
-  const FONTS = [['Arial,"Segoe UI",sans-serif', 'Jak w grze (Arial)'], ['"Segoe UI",system-ui,sans-serif', 'Systemowa'], ['Georgia,serif', 'Georgia (szeryfowa)'], ['"Trebuchet MS",sans-serif', 'Trebuchet'], ['Verdana,sans-serif', 'Verdana'], ['Consolas,monospace', 'Consolas (mono)'], ['"Comic Sans MS",cursive', 'Comic Sans'], ['Impact,sans-serif', 'Impact']];
+  const FONTS = [['Arial,"Segoe UI",sans-serif', 'Arial (jak w grze)'], ['"Segoe UI",system-ui,sans-serif', 'Systemowa'], ['Georgia,serif', 'Georgia (szeryfowa)'], ['"Trebuchet MS",sans-serif', 'Trebuchet'], ['Verdana,sans-serif', 'Verdana'], ['Consolas,monospace', 'Consolas (mono)'], ['Impact,sans-serif', 'Impact']];
+  const OUTLINE = '2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000';
 
-  /** Gdy dodatek jest wyłączony — powiadomienia wyglądają jak komunikaty gry (żółty tekst na dole). */
+  // Gotowe style. „gra" = brak zmian (oryginalny wygląd).
+  const PRESETS = {
+    gra:      { name: 'Domyślny (gra)', css: null },
+    mini:     { name: 'Minimalny', css: 'color:#fff!important;font:600 16px/1.3 "Segoe UI",system-ui,sans-serif!important;text-shadow:0 1px 3px rgba(0,0,0,.9)!important;letter-spacing:.2px!important' },
+    szklo:    { name: 'Szkło', css: 'color:#fff!important;font:600 16px/1.3 "Segoe UI",system-ui,sans-serif!important;text-shadow:none!important;background:rgba(16,17,28,.6)!important;-webkit-backdrop-filter:blur(10px)!important;backdrop-filter:blur(10px)!important;border:1px solid rgba(255,255,255,.18)!important;border-radius:14px!important;padding:8px 18px!important;display:table!important;margin:4px auto!important;box-shadow:0 8px 24px rgba(0,0,0,.35)!important' },
+    neon:     { name: 'Neon', css: 'color:#e9fbff!important;font:700 20px/1.3 "Segoe UI",system-ui,sans-serif!important;text-shadow:0 0 6px #22d3ee,0 0 14px #22d3ee,0 0 28px #0891b2!important;letter-spacing:.5px!important' },
+    alarm:    { name: 'Alarm', css: 'color:#fff!important;font:800 22px/1.3 Arial,sans-serif!important;text-shadow:0 1px 2px #000!important;background:linear-gradient(90deg,rgba(185,28,28,.0),rgba(185,28,28,.85) 15%,rgba(185,28,28,.85) 85%,rgba(185,28,28,0))!important;padding:6px 60px!important;display:table!important;margin:4px auto!important;text-transform:uppercase!important;letter-spacing:1px!important' },
+    pasek:    { name: 'Ciemny pasek', css: 'color:#ffd84a!important;font:700 17px/1.3 Arial,sans-serif!important;text-shadow:none!important;background:rgba(0,0,0,.72)!important;padding:6px 40px!important;display:table!important;margin:4px auto!important;border-top:1px solid rgba(255,216,74,.5)!important;border-bottom:1px solid rgba(255,216,74,.5)!important' },
+    pergamin: { name: 'Pergamin', css: 'color:#3b2410!important;font:700 18px/1.3 Georgia,serif!important;text-shadow:none!important;background:linear-gradient(#f3e3b8,#e2c88c)!important;border:2px solid #8a6230!important;border-radius:6px!important;padding:6px 18px!important;display:table!important;margin:4px auto!important;box-shadow:0 4px 14px rgba(0,0,0,.45)!important' },
+    duzy:     { name: 'Bardzo duży', css: `color:#ffe500!important;font:900 34px/1.25 Arial,sans-serif!important;text-shadow:${OUTLINE},0 0 12px rgba(0,0,0,.6)!important` },
+    wlasny:   { name: 'Własny', css: null },
+  };
+
+  function customCss() {
+    const box = cfg.bgAlpha > 0 || cfg.frame;
+    return `color:${cfg.fg}!important;font-family:${cfg.font}!important;font-size:${cfg.size}px!important;font-weight:${cfg.bold ? 700 : 400}!important;` +
+      `text-shadow:${cfg.outline ? OUTLINE : 'none'}${cfg.shadow ? `,0 0 10px ${cfg.glow},0 0 20px ${cfg.glow}` : ''}!important;` +
+      (box ? `background:${hexA(cfg.bg, cfg.bgAlpha)}!important;padding:5px 16px!important;border-radius:${cfg.radius}px!important;display:table!important;margin:4px auto!important;${cfg.frame ? `border:1px solid ${cfg.glow}!important;` : ''}` : '');
+  }
+  function cssFor(id) { return id === 'wlasny' ? customCss() : (PRESETS[id] && PRESETS[id].css); }
+
   function apply() {
-    const R = document.documentElement.style;
-    const on = cfg && cfg.enabled;
-    const set = (k, v) => (on ? R.setProperty(k, v) : R.removeProperty(k));
-    set('--mp-toast-fg', cfg.fg);
-    set('--mp-toast-warn', cfg.warn);
-    set('--mp-toast-bad', cfg.bad);
-    set('--mp-toast-bg', hexA(cfg.bg, cfg.bgAlpha));
-    set('--mp-toast-pad', cfg.bgAlpha > 0 || cfg.frame ? '5px 12px' : '1px 8px');
-    set('--mp-toast-border', cfg.frame ? `1px solid ${cfg.glow}` : '0 solid transparent');
-    set('--mp-toast-font', cfg.font);
-    set('--mp-toast-size', cfg.size + 'px');
-    set('--mp-toast-weight', cfg.bold ? '700' : '400');
-    set('--mp-toast-shadow', cfg.shadow ? `0 0 8px ${cfg.glow},0 0 3px #000,1px 1px 1px #000` : '0 0 3px #000,1px 1px 1px #000,-1px -1px 1px #000');
-    set('--mp-toast-bottom', cfg.bottom + 'px');
     let st = document.getElementById('mp-wakeup-css');
     if (!st) { st = el('style', { id: 'mp-wakeup-css' }); document.head.appendChild(st); }
     const sel = (cfg.gameSelectors || '').split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-    const box = cfg.bgAlpha > 0 || cfg.frame;
-    st.textContent = on && sel ? `${sel}{color:${cfg.fg}!important;font-family:${cfg.font}!important;font-size:${cfg.size}px!important;font-weight:${cfg.bold ? 700 : 400}!important;${cfg.shadow ? `text-shadow:0 0 8px ${cfg.glow},0 0 3px #000,1px 1px 1px #000!important;` : ''}${box ? `background:${hexA(cfg.bg, cfg.bgAlpha)}!important;padding:4px 12px!important;border-radius:8px!important;display:inline-block!important;${cfg.frame ? `border:1px solid ${cfg.glow}!important;` : ''}` : ''}}` : '';
+    const css = cfg.enabled && cssFor(cfg.style);
+    // podglądy w panelu zawsze aktualne
+    const prev = Object.keys(PRESETS).map((k) => { const c = cssFor(k); return c ? `.mp-wk-prev.wk-${k} .mp-wk-msg{${c}}` : ''; }).join('\n');
+    st.textContent = (css && sel ? `${sel}{${css}}\n` : '') + prev;
   }
   function hexA(hex, a) {
     const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex || '');
@@ -34,28 +45,36 @@
   }
 
   defineAddon({
-    id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'],
-    desc: 'Powiadomienia panelu to zwykłe komunikaty gry (żółty tekst na dole). Po włączeniu tego dodatku zmieniasz wygląd WSZYSTKICH komunikatów — panelu i gry: kolor, czcionkę, rozmiar, tło i ramkę.',
-    defaults: { enabled: false, fg: '#ffe066', warn: '#ffb547', bad: '#ff6b6b', bg: '#10111c', bgAlpha: 0, frame: false, glow: '#ffb547', font: 'Arial,"Segoe UI",sans-serif', size: 14, bold: true, shadow: false, bottom: 140, styleGame: false,
-      gameSelectors: '.big-messages .message' },
+    id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'], renderFirst: true,
+    desc: 'Zmienia wygląd komunikatów gry (duży żółty napis na środku ekranu) — także tych wysyłanych przez panel. Wybierz gotowy styl albo ułóż własny.',
+    defaults: { enabled: false, style: 'mini', fg: '#ffe500', glow: '#ffb547', bg: '#10111c', bgAlpha: 0, frame: false, radius: 10, font: 'Arial,"Segoe UI",sans-serif', size: 24, bold: true, outline: true, shadow: false, gameSelectors: '.big-messages .message' },
     settings: [
-      { group: 'Kolory', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
-      { group: 'Kolory', key: 'glow', type: 'color', label: 'Ramka / poświata', live: () => apply() },
-      { group: 'Tekst', key: 'font', type: 'select', label: 'Czcionka', options: FONTS },
-      { group: 'Tekst', key: 'size', type: 'range', label: 'Rozmiar (px)', min: 10, max: 32, live: () => apply() },
-      { group: 'Tekst', key: 'bold', type: 'bool', label: 'Pogrubienie' },
-      { group: 'Tekst', key: 'shadow', type: 'bool', label: 'Kolorowa poświata' },
-      { group: 'Tło', key: 'bg', type: 'color', label: 'Kolor tła', live: () => apply() },
-      { group: 'Tło', key: 'bgAlpha', type: 'range', label: 'Krycie tła (0 = bez tła)', min: 0, max: 1, step: 0.05, live: () => apply() },
-      { group: 'Tło', key: 'frame', type: 'bool', label: 'Ramka' },
-      { group: 'Zaawansowane', key: 'gameSelectors', type: 'textarea', label: 'Selektor komunikatów gry', hint: 'Zostaw domyślny (.big-messages .message). Zmień tylko, jeśli gra zmieni wygląd komunikatów.' },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'font', type: 'select', label: 'Czcionka', options: FONTS },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'size', type: 'range', label: 'Rozmiar (px)', min: 10, max: 40, live: () => apply() },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'bold', type: 'bool', label: 'Pogrubienie' },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'outline', type: 'bool', label: 'Czarny obrys (jak w grze)' },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'shadow', type: 'bool', label: 'Kolorowa poświata' },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'glow', type: 'color', label: 'Kolor poświaty / ramki', live: () => apply() },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'bg', type: 'color', label: 'Kolor tła', live: () => apply() },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'bgAlpha', type: 'range', label: 'Krycie tła (0 = bez tła)', min: 0, max: 1, step: 0.05, live: () => apply() },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'frame', type: 'bool', label: 'Ramka' },
+      { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'radius', type: 'range', label: 'Zaokrąglenie (px)', min: 0, max: 24, live: () => apply() },
+      { group: 'Zaawansowane', key: 'gameSelectors', type: 'text', label: 'Selektor komunikatów gry', hint: 'Domyślnie .big-messages .message' },
     ],
-    render(box) {
-      box.appendChild(el('div', { class: 'mp-btns' },
-        el('button', { class: 'mp-btn pri', onclick: () => toast('Tak wygląda powiadomienie', 'info') }, 'Podgląd'),
-        el('button', { class: 'mp-btn', onclick: () => toast('Bratan: zablokowano atak', 'bad') }, 'Drugi przykład')));
+    render(box, c, rerender) {
+      const grid = el('div', { class: 'mp-wk-grid' });
+      for (const [k, p] of Object.entries(PRESETS)) {
+        const card = el('div', { class: 'mp-wk-prev wk-' + k + (c.style === k ? ' on' : ''), onclick: () => { c.style = k; config.save(); apply(); rerender(); } },
+          el('div', { class: 'mp-wk-stage' }, el('span', { class: 'mp-wk-msg' + (k === 'gra' ? ' gra' : '') }, k === 'wlasny' ? 'Twój styl' : 'Komunikat')),
+          el('div', { class: 'mp-wk-name' }, p.name));
+        grid.appendChild(card);
+      }
+      box.prepend(el('div', { class: 'mp-card' }, el('h3', null, 'Styl komunikatów'), grid,
+        el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn pri', onclick: () => toast('Tak wygląda komunikat — Hey WakeUP!') }, 'Pokaż w grze'))));
+      if (!c.enabled) box.prepend(MP.note('info', 'Dodatek jest wyłączony — komunikaty mają wygląd z gry. Włącz go, żeby zastosować wybrany styl.'));
     },
-    init(c) { cfg = c; apply(); },
+    init(c) { cfg = c; if (!c._v13) { c._v13 = true; c.style = c.style || 'mini'; c.size = 24; c.fg = '#ffe500'; config.save(); } apply(); },
     onToggle() { apply(); },
     onChange() { apply(); },
   });

@@ -176,7 +176,15 @@ const game = {
       const b = E().battle;
       if (b) {
         // UWAGA: w NI „show" to funkcja (pokazująca okno), a nie flaga — nie wolno jej sprawdzać jako wartości.
-        if (typeof b.isBattleShow === 'function') return !!b.isBattleShow();
+        // walka trwa = okno walki widoczne i walka jeszcze się nie skończyła
+        // (po zakończeniu okno walki zostaje otwarte, a „po walce" ma działać od razu)
+        if (typeof b.isBattleShow === 'function') {
+          if (!b.isBattleShow()) return false;
+          if (typeof b.getEndBattle === 'function' && b.getEndBattle()) return false;
+          if (typeof b.getEndBattleForMe === 'function' && b.getEndBattleForMe()) return false;
+          if (b.endBattleForMe === true) return false;
+          return true;
+        }
         if (typeof b.getShow === 'function') return !!b.getShow();
         if (typeof b.isShow === 'function') return !!b.isShow();
         if (typeof b.show === 'boolean') return b.show;

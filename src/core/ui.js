@@ -94,7 +94,7 @@ const ui = {
   subtitle() {
     const h = game.hero();
     const g = config.data.global;
-    const parts = [h ? `${h.nick} (${h.lvl})` : 'gra nie wykryta'];
+    const parts = [`v${MP.version}`, h ? `${h.nick} (${h.lvl})` : 'gra nie wykryta'];
     if (g.dryRun) parts.push('TRYB PRÓBNY');
     return parts.join(' · ');
   },
@@ -125,17 +125,19 @@ const ui = {
   },
 
   async toggleAddon(a, v, sw) {
+    const resetSw = () => { if (sw && sw.querySelector) sw.querySelector('input').checked = !v; };
     if (v && a.risk === 'destructive' && !addons.cfg(a.id)._ack) {
       const ok = await confirmBox({
         title: `Włączyć „${a.name}"?`, danger: true, okText: 'Rozumiem, włącz', countdown: 3,
         html: 'Ten dodatek może <b>usuwać lub zużywać przedmioty</b>. Komendy niszczące są zablokowane, dopóki nie zweryfikujesz ich w zakładce <b>Diagnostyka</b>, a przed każdą operacją zobaczysz listę przedmiotów do potwierdzenia.',
       });
-      if (!ok) { sw.querySelector('input').checked = false; return; }
+      if (!ok) { resetSw(); return false; }
       addons.cfg(a.id)._ack = true;
     }
     addons.setEnabled(a.id, v);
-    this._drawSide && this._drawSide();
-    if (this.sel === a.id) this.renderMain();
+    if (this.panel) { this._drawSide && this._drawSide(); if (this.sel === a.id && this.tab === 'addons') this.renderMain(); }
+    bus.emit('quickbar');
+    return true;
   },
 
   renderMain() {
@@ -150,34 +152,37 @@ const ui = {
   },
 
   /* ───── zakładka: dodatek ───── */
-  renderAddon() {
-    const a = addons.byId[this.sel];
+  renderAddon(M = this.main, id = this.sel, rerender = () => this.renderMain(), compact = false) {
+    const a = addons.byId[id];
     if (!a) return;
     const cfg = addons.cfg(a.id);
-    const M = this.main;
-    M.appendChild(el('div', { class: 'mp-h' },
-      el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 26)),
-      el('div', { style: { flex: 1 } },
-        el('h2', null, a.name, ' ',
-          a.risk === 'auto' ? el('span', { class: 'mp-badge auto' }, icon('warn', 11), 'automat') : null,
-          a.risk === 'destructive' ? el('span', { class: 'mp-badge destr' }, icon('warn', 11), 'usuwa/zużywa') : null),
-        el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
-      switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, M.querySelector('.mp-h .mp-sw')))));
-    M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
+    if (!compact) {
+      M.appendChild(el('div', { class: 'mp-h' },
+        el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 26)),
+        el('div', { style: { flex: 1 } },
+          el('h2', null, a.name, ' ',
+            a.risk === 'auto' ? el('span', { class: 'mp-badge auto' }, icon('warn', 11), 'automat') : null,
+            a.risk === 'destructive' ? el('span', { class: 'mp-badge destr' }, icon('warn', 11), 'usuwa/zużywa') : null),
+          el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
+        switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, M.querySelector('.mp-h .mp-sw')))));
+      M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
+    }
     if (a.notes) a.notes(cfg).forEach((n) => n && M.appendChild(note(n.type, n.text)));
+    let renderBox = null;
+    if (a.render && a.renderFirst) { renderBox = el('div'); M.appendChild(renderBox); }
     if (a.settings && a.settings.length) {
       const groups = {};
       for (const s of a.settings) (groups[s.group || 'Ustawienia'] = groups[s.group || 'Ustawienia'] || []).push(s);
       for (const [g, arr] of Object.entries(groups)) {
         const card = el('div', { class: 'mp-card' }, el('h3', null, g));
-        arr.forEach((s) => { if (!s.show || s.show(cfg)) card.appendChild(field(s, cfg, () => { config.save(); a.onChange && a.onChange(s.key, cfg); if (s.rerender) this.renderMain(); })); });
+        arr.forEach((s) => { if (!s.show || s.show(cfg)) card.appendChild(field(s, cfg, () => { config.save(); a.onChange && a.onChange(s.key, cfg); if (s.rerender) rerender(); })); });
         M.appendChild(card);
       }
     }
     if (a.render) {
-      const box = el('div');
-      M.appendChild(box);
-      try { a.render(box, cfg, () => this.renderMain()); } catch (e) { box.appendChild(note('bad', 'Błąd widoku: ' + e.message)); }
+      const box = renderBox || el('div');
+      if (!renderBox) M.appendChild(box);
+      try { a.render(box, cfg, rerender); } catch (e) { box.appendChild(note('bad', 'Błąd widoku: ' + e.message)); }
     }
   },
 
@@ -275,6 +280,19 @@ const ui = {
     const card = el('div', { class: 'mp-card' }, el('h3', null, 'Ogólne'));
     S.forEach((s) => card.appendChild(field(s, g, () => { save(); if (s.key === 'dryRun') this.renderAll(); })));
     M.appendChild(card);
+
+    // pasek skrótów
+    const q = (g.quickbar = g.quickbar || { show: true, hidden: [], pos: null });
+    const qc = el('div', { class: 'mp-card' }, el('h3', null, 'Pasek skrótów (przy ekwipunku)'),
+      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj pasek skrótów', el('small', null, 'Lewy klik na ikonce = ustawienia dodatku, prawy klik = włącz/wyłącz.')), switchEl(q.show, (v) => { q.show = v; config.save(); quickbar.draw(); })),
+      el('div', { class: 'mp-chips', style: { marginTop: '8px' } }, addons.list.map((a) => {
+        const on = !(q.hidden || []).includes(a.id);
+        const b = el('button', { class: 'mp-pf' + (on ? ' on' : '') }, a.name);
+        b.onclick = () => { q.hidden = q.hidden || []; const i = q.hidden.indexOf(a.id); if (i >= 0) q.hidden.splice(i, 1); else q.hidden.push(a.id); config.save(); b.classList.toggle('on'); quickbar.draw(); };
+        return b;
+      })),
+      el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { q.pos = null; config.save(); quickbar.place(); } }, 'Przywróć położenie paska')));
+    M.appendChild(qc);
 
     const conf = keys.conflicts();
     if (conf.length) M.appendChild(note('warn', 'Konflikt skrótów: ' + conf.map(([a, b, k]) => `${k}: „${a}" i „${b}"`).join('; ')));

@@ -23,6 +23,7 @@
   addons.initAll();
   itemDeco.start();
   ui.start();
+  quickbar.start();
   console.log(`%c[laddonz] v${MP.version} gotowy — ${addons.list.length} dodatków. Panel: ${config.data.global.panelKey}`, 'color:#7c5cff;font-weight:bold');
   if (!store.get('welcomed', false)) {
     store.set('welcomed', true);

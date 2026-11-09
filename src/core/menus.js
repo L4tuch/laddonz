@@ -27,7 +27,13 @@ const menus = {
   setLast(type, id) { this.last = { type, id: Number(id), t: now() }; },
 
   start() {
-    // 1) prawy klik na przedmiocie w DOM
+    // 1) prawy klik na przedmiocie w DOM (gra może otwierać menu już na mousedown — łapiemy oba)
+    document.addEventListener('mousedown', (e) => {
+      if (e.button !== 2) return;
+      const it = e.target.closest && e.target.closest('.item[class*="item-id-"], [data-item-id]');
+      const id = it && game.itemIdFromEl(it);
+      if (id) this.setLast('item', id);
+    }, true);
     document.addEventListener('contextmenu', (e) => {
       const it = e.target.closest && e.target.closest('.item[class*="item-id-"], [data-item-id]');
       if (it) {

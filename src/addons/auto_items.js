@@ -206,7 +206,7 @@
   defineAddon({
     id: 'szybka', name: 'Szybka rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'], risk: 'auto',
     desc: 'Prawy klik na przedmiocie → „Użyj po walce" (teleporty, mikstury, przywołania…). Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".',
-    defaults: { key: '', auto: false, queue: [], partySelector: '.party-icon\n.party-button\n.widget-button.party\n[class*="party-widget"]' },
+    defaults: { key: '', auto: true, queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     keys: [{ key: 'key', label: 'wykonaj kolejkę', fn: () => runQueue('key') }],
     notes: () => [{ type: 'info', text: 'Bez trybu automatycznego kolejka czeka na Twój klawisz — wtedy to nadal Twoje kliknięcie. Jeśli menu na ikonie grupy się nie pokazuje, wpisz jej klasę (F12) w „Selektor ikony grupy".' }],
     settings: [
@@ -232,6 +232,7 @@
       });
       itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: '⏱', title: 'Szybka rączka: użyj po walce' } : null));
       bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => runQueue('auto'), rnd(500, 900)); });
+      if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
       hookPartyIcon();
       setTimeout(indicator, 1500);
     },

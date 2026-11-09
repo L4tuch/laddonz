@@ -7,12 +7,13 @@
   .item{width:36px;height:36px;background:#2a2018;border:1px solid #5a4630;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;text-align:center}
   .chat-tpl{position:absolute;left:10px;bottom:10px;width:460px;height:240px;background:rgba(0,0,0,.6);border:1px solid #444;padding:6px;font-size:13px}
   .party-icon{position:absolute;left:10px;top:10px;width:40px;height:40px;background:#6b5233;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .big-messages .message{color:#ffe500;font:700 26px Arial,sans-serif;text-shadow:2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000;margin:4px 0}
   .loot-wnd{position:absolute;left:50%;top:40%;padding:10px;background:rgba(40,30,20,.9);border:2px solid #6b5233;display:flex;gap:10px}
 </style></head>
 <body>
 <div class="map"></div>
 <div class="party-icon">G</div>
-<div class="big-messages" style="position:absolute;bottom:120px;left:0;right:0;text-align:center"></div>
+<div class="big-messages" style="position:absolute;top:40%;left:0;right:0;text-align:center;pointer-events:none"></div>
 <div class="new-chat-window chat-tpl">[Czat] Ktoś: siema<br>[Klan] Bratanek: lecimy na e2</div>
 <div class="eq" id="eq"></div>
 <div class="loot-wnd" id="loot"><div class="item item-id-900">łup</div><div class="item item-id-901">łup</div></div>
@@ -57,7 +58,7 @@
     others: { check: () => OTH, getById: (id) => OTH[id] },
     items: { fetchLocationItems: () => Object.values(ITEMS), getItemById: (id) => ITEMS[id] },
     party: { getMembers: () => [1, 102, 103] },
-    battle: { _s: false, isBattleShow(){ return this._s; }, show(){} },
+    battle: { _s: false, _end: false, isBattleShow(){ return this._s; }, getEndBattle(){ return this._end; }, show(){} },
     interface: { showPopupMenu(menu){ window.LAST_MENU = menu; } },
     communication: { parseJSON(d){ return d; } },
   };
