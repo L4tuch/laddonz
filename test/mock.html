@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>Makieta gry — laddonz</title>
+<style>
+  body{margin:0;height:100vh;background:radial-gradient(circle at 30% 30%,#3b5d3a,#1d2b1c 70%);font-family:sans-serif;color:#fff;overflow:hidden}
+  .map{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(0,0,0,.08) 31px 32px),repeating-linear-gradient(90deg,transparent 0 31px,rgba(0,0,0,.08) 31px 32px)}
+  .eq{position:absolute;right:20px;bottom:20px;display:grid;grid-template-columns:repeat(6,36px);gap:4px;padding:8px;background:rgba(40,30,20,.85);border:2px solid #6b5233;border-radius:6px}
+  .item{width:36px;height:36px;background:#2a2018;border:1px solid #5a4630;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;text-align:center}
+  .chat-tpl{position:absolute;left:10px;bottom:10px;width:460px;height:240px;background:rgba(0,0,0,.6);border:1px solid #444;padding:6px;font-size:13px}
+  .party-icon{position:absolute;left:10px;top:10px;width:40px;height:40px;background:#6b5233;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .loot-wnd{position:absolute;left:50%;top:40%;padding:10px;background:rgba(40,30,20,.9);border:2px solid #6b5233;display:flex;gap:10px}
+</style></head>
+<body>
+<div class="map"></div>
+<div class="party-icon">G</div>
+<div class="chat-tpl">[Czat] Ktoś: siema<br>[Klan] Bratanek: lecimy na e2</div>
+<div class="eq" id="eq"></div>
+<div class="loot-wnd" id="loot"><div class="item item-id-900">łup</div><div class="item item-id-901">łup</div></div>
+<script>
+  window.SENT = [];
+  const now = Math.floor(Date.now()/1000);
+  const mkItem = (id,name,cl,st,stat) => ({id,name,cl,st,loc:'g',icon:'',stat});
+  const ITEMS = {
+    1: mkItem(1,'Miecz Bohatera',1,1,'rarity=legendary;legbon=verycrit;lvl=80'),
+    2: mkItem(2,'Hełm Odwagi',9,2,'rarity=legendary;legbon=lastheal;lvl=80'),
+    3: mkItem(3,'Zbroja Strażnika',8,3,'rarity=heroic;lvl=75'),
+    10: mkItem(10,'Kamień teleportacyjny',16,0,'teleport=1,10,15,Ithan'),
+    11: mkItem(11,'Stary pierścień',12,0,'rarity=common;lvl=40'),
+    12: mkItem(12,'Unikatowe buty',10,0,'rarity=unique;lvl=60'),
+    13: mkItem(13,'Heroiczna tarcza',14,0,'rarity=heroic;lvl=70'),
+    14: mkItem(14,'Przeterminowany talizman',22,0,'rarity=common;expires='+(now-3600)),
+    15: mkItem(15,'Legendarny pas',13,0,'rarity=legendary;legbon=curse'),
+    16: mkItem(16,'Mikstura życia',16,0,'leczy=5000'),
+  };
+  function Other(d){ this.d=d; }
+  Other.prototype.createMenu = function(){ Engine.interface.showPopupMenu([['Atakuj '+this.d.nick, ()=>{}], ['Rozmawiaj', ()=>{}]], {}); };
+  const OTH = {
+    101: new Other({id:101,nick:'Wrogus',lvl:82,prof:'w',x:11,y:10,relation:'en',clan:{id:7,name:'Złe Chłopaki'}}),
+    102: new Other({id:102,nick:'Bratanek',lvl:80,prof:'m',x:10,y:11,relation:'cl',clan:{id:5,name:'Moi'}}),
+    103: new Other({id:103,nick:'Kumpel',lvl:79,prof:'t',x:12,y:10,relation:'fr'}),
+    104: new Other({id:104,nick:'Obcy',lvl:85,prof:'h',x:20,y:20,relation:''}),
+    105: new Other({id:105,nick:'Sojusznik',lvl:81,prof:'p',x:9,y:9,relation:'cl-fr'}),
+  };
+  window.Engine = {
+    hero: { d: { id: 1, nick: 'Tester', lvl: 80, x: 10, y: 10, prof: 'b', clan: { id: 5 } } },
+    map: { d: { id: 33, name: 'Ithan', pvp: 2 } },
+    others: { check: () => OTH },
+    items: { fetchLocationItems: () => Object.values(ITEMS), getItemById: (id) => ITEMS[id] },
+    party: { getMembers: () => [1, 102, 103] },
+    battle: { show: false },
+    interface: { showPopupMenu(menu){ window.LAST_MENU = menu; } },
+    communication: { parseJSON(d){ return d; } },
+  };
+  window._g = function(task, cb){
+    SENT.push(task);
+    let resp = {};
+    if (/fight&a=attack&id=104/.test(task)) resp = { w: 'Gracz jest pod ochroną jeszcze 30 s' };
+    Engine.communication.parseJSON(resp);
+    cb && cb(resp);
+  };
+  const eq = document.getElementById('eq');
+  Object.values(ITEMS).forEach(i => { const d = document.createElement('div'); d.className = 'item item-id-' + i.id; d.textContent = i.name.split(' ')[0]; eq.appendChild(d); });
+</script>
+</body></html>
