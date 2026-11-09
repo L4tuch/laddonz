@@ -55,6 +55,7 @@ const menus = {
       this.hookPopup();
       if (++n > 40) clearInterval(tick);
     }, 1500);
+    this.hookOthers();
     setInterval(() => this.hookOthers(), 1000);
     this.domFallback();
   },

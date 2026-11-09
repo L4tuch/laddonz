@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.5.0
+// @version      1.5.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Napad, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1302,6 +1302,7 @@ const menus = {
       this.hookPopup();
       if (++n > 40) clearInterval(tick);
     }, 1500);
+    this.hookOthers();
     setInterval(() => this.hookOthers(), 1000);
     this.domFallback();
   },
@@ -2186,6 +2187,8 @@ function parseProtection(data) {
       // klawisz działa niezależnie od włączenia dodatku
       keys.bind({ label: 'Napad: namierz najbliższego', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
       menus.add('player', (id) => {
+        // namierzony gracz → zamiast „Napad" jest „Przerwij napad" (cofa polecenie ataku)
+        if (S.lock && S.lock.id === Number(id)) return [{ label: 'Przerwij napad', fn: () => unlock(`Napad: przerwano atak na ${S.lock ? S.lock.nick : 'cel'}`) }];
         const p = game.otherById(id);
         if (!p || !allowed(p)) return [];
         return [{ label: 'Napad', fn: () => lockOn(game.otherById(id) || p) }];
@@ -3283,5 +3286,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.5.0";
+MP.version = "1.5.1";
 })();

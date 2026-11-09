@@ -149,6 +149,8 @@
       // klawisz działa niezależnie od włączenia dodatku
       keys.bind({ label: 'Napad: namierz najbliższego', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
       menus.add('player', (id) => {
+        // namierzony gracz → zamiast „Napad" jest „Przerwij napad" (cofa polecenie ataku)
+        if (S.lock && S.lock.id === Number(id)) return [{ label: 'Przerwij napad', fn: () => unlock(`Napad: przerwano atak na ${S.lock ? S.lock.nick : 'cel'}`) }];
         const p = game.otherById(id);
         if (!p || !allowed(p)) return [];
         return [{ label: 'Napad', fn: () => lockOn(game.otherById(id) || p) }];
