@@ -188,6 +188,16 @@ ${[[32, 64], [128, 160], [160, 32], [64, 128]].map(([x, y]) => `<circle cx='${x}
     return (texCache[key] = { url: svg(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'>${body}</svg>`), w, h });
   }
 
+  /** Pomarańczowy pasek gry (#e29533, odcień ~33°) → kolor paska stylu; szary (zużyty) zostaje szary. */
+  const xpFilter = (t) => {
+    const hex = (t.xp || [t.a2, t.a1])[1].replace('#', '');
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.substr(i, 2), 16) / 255);
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, l = (mx + mn) / 2;
+    let h = 0; if (d) h = mx === r ? 60 * (((g - b) / d) % 6) : mx === g ? 60 * ((b - r) / d + 2) : 60 * ((r - g) / d + 4);
+    if (h < 0) h += 360;
+    let rot = Math.round(h - 33); if (rot > 180) rot -= 360; if (rot < -180) rot += 360;
+    return `hue-rotate(${rot}deg) saturate(1.15) brightness(${(0.9 + l * 0.3).toFixed(2)})`;
+  };
   /** Filtr przebarwiający szare, metalowe grafiki gry (kula HP, obramowania pasków doświadczenia) na metal stylu. */
   const metalFilter = (t, hud) => {
     const h = t.m[1].replace('#', ''); const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255);
@@ -249,7 +259,9 @@ ${IL} .bottom.positioner > .bg{background:${railH(t, false)} 0 0 / 96px 5px repe
 /* metal wokół kuli HP, ramki pasków doświadczenia i wskaźników — ten sam rysunek, barwa metalu stylu */
 .bottom-panel .bottom-panel-graphic, .bottom-panel .hp-indicator-wrapper > .glass, .bottom-panel .exp-progress > .overlay, .bottom-panel .pointer-exp-graphic, .bottom-panel .pointer-ttl-graphic{filter:${metalFilter(t)}!important}
 .mt-hud-bg{filter:${metalFilter(t, true)}!important}
-.bottom-panel .exp-progress .progress > .inner{background:linear-gradient(#0b0b0d 0%, ${(t.xp || [t.a2, t.a1])[0]} 22%, ${(t.xp || [t.a2, t.a1])[1]} 50%, ${(t.xp || [t.a2, t.a1])[0]} 70%, #0b0b0d 100%)!important}
+/* paski doświadczenia i wyczerpania: przebarwiamy pomarańcz gry filtrem, NIE podmieniamy tła —
+   dzięki temu stany gry (np. szary pasek zużytego wyczerpania) zostają czytelne */
+.bottom-panel .exp-progress .progress > .inner{filter:${xpFilter(t)}}
 .skill-usable-slot[class*="interface-element-one-item-slot"]{background-color:${t.bg0}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 0 6px rgba(0,0,0,.6)!important}
 /* ozdoby wokół HP, panel szybkich umiejętności i HUD na górze — grafiki gry bez zmian (żadnych prostokątów wokół) */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:2147480000;box-shadow:inset 0 0 38px ${t.edge}}
