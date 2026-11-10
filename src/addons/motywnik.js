@@ -112,20 +112,22 @@ ${emblem(t, 11, 14, 4)}${emblem(t, 109, 14, 4)}
 <rect width='96' height='5' fill='url(#rh)'/><rect y='${flip ? 0 : 4.4}' width='96' height='.6' fill='#000' opacity='.6'/>${t.orn === 'star' ? `<circle cx='48' cy='2.5' r='1.1' fill='${t.star}'/>` : `<circle cx='48' cy='2.5' r='1.2' fill='url(#mr)' stroke='${m3}' stroke-width='.4'/>`}</svg>`);
   };
   /** Filtr przebarwiający szare, metalowe grafiki gry (kula HP, obramowania pasków doświadczenia) na metal stylu. */
-  const metalFilter = (t) => {
+  const metalFilter = (t, hud) => {
     const h = t.m[1].replace('#', ''); const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255);
     const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
     const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
     let hue = 0;
     if (d) hue = mx === r ? 60 * (((g - b) / d) % 6) : mx === g ? 60 * ((b - r) / d + 2) : 60 * ((r - g) / d + 4);
     if (hue < 0) hue += 360;
-    if (s < 0.12) return 'grayscale(1) brightness(1.08) contrast(1.05)';
-    return `grayscale(1) sepia(1) hue-rotate(${Math.round(hue - 38)}deg) saturate(${(1 + s * 1.6).toFixed(2)}) brightness(${(0.85 + l * 0.45).toFixed(2)})`;
+    if (s < 0.12) return hud ? 'grayscale(1) brightness(.62) contrast(1.15)' : 'grayscale(1) brightness(.85) contrast(1.08)';
+    return `grayscale(1) sepia(1) hue-rotate(${Math.round(hue - 38)}deg) saturate(${(1 + s * 1.6).toFixed(2)}) brightness(${((hud ? 0.68 : 0.85) + l * (hud ? 0.3 : 0.45)).toFixed(2)})`;
   };
   // powierzchnia panelu: boczne pasy 11 px (gui/middle_graphics.png 0 11 fill)
-  const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='60' height='60' fill='${raised ? t.bg0 : t.bg1}'/></svg>`);
+  const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' preserveAspectRatio='none'><defs><linearGradient id='s' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${raised ? t.bg1 : t.bg2}'/><stop offset='.35' stop-color='${raised ? t.bg0 : t.bg1}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect width='60' height='60' fill='url(#s)'/></svg>`);
   // pasek / nagłówek tabeli: boczne pasy 20 px (quest_bar.png, table_header.png 0 20 fill)
-  const bar = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40'><defs>${strip(t)}<linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect width='80' height='40' fill='${t.bg1}'/></svg>`);
+  // metalowa płyta (nagłówki tabel, paski na dole okien — zamiast drewna): jednolita w poziomie, więc pasuje do każdego cięcia
+  const plate = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40' preserveAspectRatio='none'><defs><linearGradient id='p' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='.5' stop-color='${t.bg1}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient><linearGradient id='h' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.m[0]}' stop-opacity='.26'/><stop offset='.5' stop-color='${t.m[1]}' stop-opacity='.1'/><stop offset='1' stop-color='${t.m[2]}' stop-opacity='.2'/></linearGradient></defs><rect width='80' height='40' fill='url(#p)'/><rect width='80' height='40' fill='url(#h)'/><rect width='80' height='1' fill='${t.m[1]}' opacity='.55'/><rect y='39' width='80' height='1' fill='${t.m[2]}'/></svg>`);
+  const bar = (t) => plate(t);
   // karta/etykieta: pas 5 px (width-card-button.png 5 fill)
   const card = (t, active) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><defs><linearGradient id='c' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg1}'/></linearGradient></defs><rect x='.5' y='.5' width='39' height='39' rx='3' fill='url(#c)' stroke='${t.line}'/>${active ? `<rect x='4' y='37' width='32' height='1.5' rx='.75' fill='${t.a1}' opacity='.8'/>` : ''}</svg>`);
 
@@ -163,7 +165,8 @@ ${IL} .left-column.main-column > .border, ${IL} .right-column.main-column > .bor
 ${IL} .top.positioner > .bg{background:${railH(t, true)} 0 100% / 96px 5px repeat-x, linear-gradient(${t.bg1},${t.bg0})!important}
 ${IL} .bottom.positioner > .bg{background:${railH(t, false)} 0 0 / 96px 5px repeat-x, linear-gradient(${t.bg0},${t.bg1})!important}
 /* metal wokół kuli HP, ramki pasków doświadczenia i wskaźników — ten sam rysunek, barwa metalu stylu */
-.bottom-panel .bottom-panel-graphic, .bottom-panel .hp-indicator-wrapper > .glass, .bottom-panel .exp-progress > .overlay, .bottom-panel .pointer-exp-graphic, .bottom-panel .pointer-ttl-graphic, .mt-hud-bg{filter:${metalFilter(t)}!important}
+.bottom-panel .bottom-panel-graphic, .bottom-panel .hp-indicator-wrapper > .glass, .bottom-panel .exp-progress > .overlay, .bottom-panel .pointer-exp-graphic, .bottom-panel .pointer-ttl-graphic{filter:${metalFilter(t)}!important}
+.mt-hud-bg{filter:${metalFilter(t, true)}!important}
 .bottom-panel .exp-progress .progress > .inner{background:linear-gradient(#0b0b0d 0%, ${t.a2} 22%, ${t.a1} 50%, ${t.a2} 70%, #0b0b0d 100%)!important}
 .skill-usable-slot[class*="interface-element-one-item-slot"]{background-color:${t.bg0}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 0 6px rgba(0,0,0,.6)!important}
 /* ozdoby wokół HP, panel szybkich umiejętności i HUD na górze — grafiki gry bez zmian (żadnych prostokątów wokół) */
@@ -201,6 +204,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .interface-element-active-card-background-stretch, .interface-element-active-card-border-image{border-image-source:${card(t, true)}!important}
 .interface-element-green-box-background{background:linear-gradient(90deg,${t.bg0},${t.bg2} 12%,${t.bg2} 88%,${t.bg0})!important;box-shadow:inset 0 0 0 1px ${t.line}!important}
 .c-window:not(.transparent) > .content{background:radial-gradient(ellipse 70% 140px at 50% 0, ${t.glow}, transparent 70%), linear-gradient(${t.bg2}, ${t.bg1} 140px)!important;background-color:${t.bg1}!important}
+
+/* — drewniane nagłówki tabel i belki gry → metalowa płyta w kolorach stylu — */
+.mt-plate{background-image:${plate(t)}!important;background-size:100% 100%!important;background-position:0 0!important;background-repeat:no-repeat!important;background-color:${t.bg1}!important;color:${t.text}!important;text-shadow:0 1px 1px #000!important}
+.mt-plate-bi{border-image-source:${plate(t)}!important}
+.mt-plate *, .mt-plate-bi ~ *{color:${t.text}}
 
 /* — zakładki — */
 .tabs-nav .card{background:linear-gradient(${t.bg1},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
@@ -265,6 +273,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
    * Ujednolicenie jak w projekcie graficznym: szare tła, szare ramki i szare/białe napisy gry dostają kolory stylu
    * (te same odcienie wszędzie). Kolorowe napisy (rzadkość, wartości, ostrzeżenia) zostają bez zmian.
    */
+  const WOOD = /wood|drewn|header|deska|belka|plank/i;
   function fixText(root) {
     if (!active()) return;
     const list = root === document.body ? $$(SCOPE).flatMap((w) => [w, ...$$('*', w)]) : (root.closest && root.closest(SCOPE) ? [root, ...$$('*', root)] : $$(SCOPE, root).flatMap((w) => [w, ...$$('*', w)]));
@@ -281,6 +290,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         }
       }
       if (n.matches(OWN) || n.matches(SCOPE)) continue;
+      // drewno (nagłówki tabel, belki) → metalowa płyta
+      if (WOOD.test(cs.backgroundImage)) n.classList.add('mt-plate');
+      if (WOOD.test(cs.borderImageSource)) n.classList.add('mt-plate-bi');
       // ramka
       if (parseFloat(cs.borderTopWidth) + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderBottomWidth) + parseFloat(cs.borderRightWidth) > 0 && cs.borderImageSource === 'none') {
         const t = tone(cs.borderTopColor) || tone(cs.borderLeftColor);
@@ -322,7 +334,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
   function stop() {
     if (mo) { mo.disconnect(); mo = null; }
-    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
+    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
   }
   const active = () => !!(cfg && cfg.enabled && THEMES[cfg.theme] && !THEMES[cfg.theme].none);
 
@@ -345,7 +357,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function hudLayer(on) {
     for (const hud of $$('.hud-container')) {
       let lay = hud.querySelector(':scope > .mt-hud-bg');
-      if (!on) { if (lay) lay.remove(); hud.classList.remove('mt-hud'); hud.style.removeProperty('background-image'); continue; }
+      if (!on) { if (lay) lay.remove(); const ic = hud.querySelector(':scope > .mt-hud-ico'); if (ic) ic.remove(); hud.classList.remove('mt-hud'); hud.style.removeProperty('background-image'); continue; }
       if (!lay) {
         const cs = getComputedStyle(hud);
         if (cs.backgroundImage === 'none') continue;
@@ -354,6 +366,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         if (cs.position === 'static') hud.style.position = 'relative';
         hud.style.isolation = 'isolate';
         hud.prepend(lay);
+        // ikony złota i smoczych łusek zostają w oryginalnych kolorach: niezabarwiona kopia grafiki tylko w ich miejscu
+        const ico = el('div', { class: 'mt-hud-ico' });
+        Object.assign(ico.style, { position: 'absolute', inset: '0', zIndex: '-1', pointerEvents: 'none', backgroundImage: cs.backgroundImage, backgroundPosition: cs.backgroundPosition, backgroundRepeat: cs.backgroundRepeat, backgroundSize: cs.backgroundSize });
+        const circ = (x, y, r) => `M${x - r},${y}a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0`;
+        const g = hud.querySelector('.gold-btn'), c = hud.querySelector('.credits-btn');
+        const parts = [];
+        if (g) parts.push(circ(g.offsetLeft - 15, g.offsetTop + 10.5, 12.5));
+        if (c) parts.push(circ(c.offsetLeft - 11, c.offsetTop + 10.5, 12.5));
+        if (parts.length) { ico.style.clipPath = `path('${parts.join(' ')}')`; lay.after(ico); }
       }
       hud.classList.add('mt-hud');
       hud.style.setProperty('background-image', 'none', 'important');
