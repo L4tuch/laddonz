@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.9.5
+// @version      1.9.6
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -4240,10 +4240,18 @@ MP.itemDeco = itemDeco;
       return true;
     });
   }
-  /** Przydział: każdy składnik do pierwszego celu, któremu pasuje. */
+  /** Składniki odrzucone przez grę dla danego przedmiotu (np. „Poziom przedmiotu jest zbyt niski!"). */
+  function markRejected(target, ids) {
+    const r = (cfg.rej = cfg.rej || {});
+    const l = new Set((r[target] || []).concat(ids));
+    r[target] = [...l].slice(-300);
+    config.save();
+  }
+  const isRejected = (target, id) => !!(cfg.rej && cfg.rej[target] && cfg.rej[target].includes(Number(id)));
+  /** Przydział: każdy składnik do pierwszego celu, któremu pasuje (i którego gra nie odrzuciła). */
   function plan() {
     const out = slots().map((s) => ({ s, target: game.itemById(s.id), list: [] }));
-    for (const i of candidates()) { const o = out.find((o) => o.target && fits(i, o.s)); if (o) o.list.push(i); }
+    for (const i of candidates()) { const o = out.find((o) => o.target && fits(i, o.s) && !isRejected(o.target.id, i.id)); if (o) o.list.push(i); }
     return out.filter((o) => o.target && o.list.length);
   }
 
@@ -4263,6 +4271,20 @@ MP.itemDeco = itemDeco;
       if (i >= 0) { slots().splice(i, 1); config.save(); toast(`Ulepszarka: „${o.target.name}" osiągnął maksymalny poziom — usunięty z listy`, 'ok'); rr(); }
     }
   };
+  /*
+   * Komunikaty gry o odrzuconych składnikach („Poziom przedmiotu jest zbyt niski!") — w trakcie pracy Ulepszarki
+   * chowamy je; Ulepszarka sama pomija takie składniki.
+   */
+  const NOISE = /poziom przedmiotu jest zbyt niski|nie mo[żz]e by[ćc] u[żz]yty|nie nadaje si[ęe]/i;
+  let hushUntil = 0;
+  new MutationObserver((muts) => {
+    if (now() > hushUntil) return;
+    for (const m of muts) for (const n of m.addedNodes) {
+      if (n.nodeType !== 1 || n.closest('.mp-glass')) continue;
+      if (NOISE.test(n.textContent || '') && (n.textContent || '').length < 120) n.style.setProperty('display', 'none', 'important');
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+
   async function run(src, limit = 0) {
     if (running) return;
     if (game.inBattle()) { toast('Ulepszarka: najpierw skończ walkę', 'warn'); return; }
@@ -4272,6 +4294,7 @@ MP.itemDeco = itemDeco;
     if (!c.t || !c.verified) { toast('Ulepszarka: ulepsz raz ręcznie w oknie rzemiosła — wtedy się nauczy', 'warn'); return; }
     if (cfg.usages && cfg.usages.day === new Date().toDateString() && cfg.usages.limit && cfg.usages.count >= cfg.usages.limit) { toast('Ulepszarka: wykorzystano dzisiejszy limit ulepszeń', 'warn'); return; }
     running = true;
+    hushUntil = now() + 120000;
     try {
       // serwer przyjmuje ulepszanie tylko przy otwartym Rzemiośle (bez tego wyrzuca) — otwieramy jak gra, a jak się nie da, nic nie wysyłamy
       if (!(await ensureCraft())) { toast('Ulepszarka: nie udało się otworzyć Rzemiosło → Ulepszanie', 'warn'); return 'nocraft'; }
@@ -4289,6 +4312,7 @@ MP.itemDeco = itemDeco;
     } finally {
       running = false;
       await sleep(400);
+      setTimeout(() => { hushUntil = 0; }, 1500);
       closeCraft();                   // okno rzemiosła zawsze zamykamy po ulepszaniu
       dropMaxed();
       rr();
@@ -4313,13 +4337,14 @@ MP.itemDeco = itemDeco;
         // składnik próbny: przedmiot z ekwipunku w torbie o poziomie co najmniej takim jak ulepszany (niższy gra odrzuca)
         const tl = lvlOf(it);
         const probe = game.bag()
-          .filter((i) => typeOf(i.cl) && ['common', 'unique', 'heroic'].includes(i.rarity) && !targetIds().has(i.id) && !(MP.podpis && MP.podpis.isSigned(i.id)) && lvlOf(i) >= tl)
+          .filter((i) => typeOf(i.cl) && ['common', 'unique', 'heroic'].includes(i.rarity) && !targetIds().has(i.id) && !(MP.podpis && MP.podpis.isSigned(i.id)) && lvlOf(i) >= tl && !isRejected(it.id, i.id))
           .sort((a, b) => lvlOf(a) - lvlOf(b))[0];
         if (!probe) continue;
         const r = await net.send('enhancePreview', { item: it.id, ingredients: probe.id }, { src: 'Ulepszarka' });
         const steps = (store.get('up:last', {}) || {}).steps || [];
         steps.push({ a: 'check', item: it.id, lvl: enhLevel(it), probeLvl: lvlOf(probe), resp: short(r.data) }); store.set('up:last', { t: new Date().toISOString(), steps: steps.slice(-20) });
         if (r.data && (r.data.t === 'stop' || r.data.t === 'reload')) return;
+        try { const pv = r.data && r.data.enhancement && r.data.enhancement.progress_preview; if (pv && Array.isArray(pv.ingredients) && !pv.ingredients.map(Number).includes(probe.id)) markRejected(it.id, [probe.id]); } catch {}
         if (isMaxedResp(r.data)) { learnMax(it); removeMaxed(it.id, it.name); }
         else maxResp({ target: it })(r.data || {});   // zapis postępu
         await sleep(250);
@@ -4354,21 +4379,33 @@ MP.itemDeco = itemDeco;
           steps.push({ a: 'preview', item: o.target.id, n: part.length, ok: rp.ok, err: rp.error, resp: short(rp.data) }); saveSteps();
           if (isMaxedResp(rp.data)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }   // przedmiot już na maksimum — sam znika z listy
           if (!rp.ok || badResp(rp.data)) { failed = true; break outer; }
+          // podgląd gry zwraca listę składników, które PRZYJMUJE (np. bez tych o za niskim poziomie) — wysyłamy tylko je,
+          // a odrzucone zapamiętujemy, żeby więcej ich nie proponować do tego przedmiotu
+          const pv = rp.data && rp.data.enhancement && rp.data.enhancement.progress_preview;
+          let useIds = part.map((i) => i.id);
+          if (pv && Array.isArray(pv.ingredients)) {
+            const acc = new Set(pv.ingredients.map(Number));
+            const rej = useIds.filter((id) => !acc.has(id));
+            if (rej.length) markRejected(o.target.id, rej);
+            useIds = useIds.filter((id) => acc.has(id));
+          }
+          if (!useIds.length) continue;
+          const okIds = useIds.join(',');
           await sleep(350);
           ask.arm();
-          const r = await net.send('enhance', { item: o.target.id, ingredients: ids }, { src: 'Ulepszarka', onResponse: maxResp(o) });
+          const r = await net.send('enhance', { item: o.target.id, ingredients: okIds }, { src: 'Ulepszarka', onResponse: maxResp(o) });
           steps.push({ a: 'progress', item: o.target.id, n: part.length, ok: r.ok, err: r.error, resp: short(r.data) }); saveSteps();
           if (isMaxedResp(r.data)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }
           if (!r.ok || badResp(r.data)) { failed = true; break outer; }
-          let gone = await waitGone(part.map((i) => i.id), 3500);
+          let gone = await waitGone(useIds, 3500);
           if (!gone) {
             // gra zadała pytanie (w odpowiedzi jest numer pytania), a okienka nie udało się kliknąć — odpowiadamy „Tak" tak jak gra po kliknięciu
             const m = String(short(r.data) || '').match(/\b(100\d{4})\b/);
             if (m) {
-              await net.send('enhanceAnswer', { item: o.target.id, ingredients: ids, q: m[1] }, { src: 'Ulepszarka', onResponse: maxResp(o) });
+              await net.send('enhanceAnswer', { item: o.target.id, ingredients: okIds, q: m[1] }, { src: 'Ulepszarka', onResponse: maxResp(o) });
               steps.push({ a: 'answer', q: m[1] }); saveSteps();
             }
-            gone = await waitGone(part.map((i) => i.id), 5000);
+            gone = await waitGone(useIds, 5000);
           }
           steps.push({ a: 'gone', n: gone }); saveSteps();
           if (!gone) { failed = true; break outer; }
@@ -4724,5 +4761,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.9.5";
+MP.version = "1.9.6";
 })();
