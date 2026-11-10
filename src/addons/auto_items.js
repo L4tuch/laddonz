@@ -394,7 +394,7 @@
     let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
     if (/maksymaln|max(imum)? ?(lvl|level|poziom)/i.test(txt)) {
       const i = slots().findIndex((s) => Number(s.id) === o.target.id);
-      if (i >= 0) { slots().splice(i, 1); config.save(); toast(`Ulepszarka: „${o.target.name}" jest już maksymalnie ulepszony — usunięto z listy`, 'ok'); rr(); }
+      if (i >= 0) { slots().splice(i, 1); config.save(); toast(`Ulepszarka: „${o.target.name}" osiągnął maksymalny poziom — usunięty z listy`, 'ok'); rr(); }
     }
   };
   async function run(src, limit = 0) {
@@ -426,7 +426,6 @@
     let n = 0, failed = false;
     const steps = [];
     const saveSteps = () => store.set('up:last', { t: new Date().toISOString(), steps: steps.slice(-20) });
-    store.set('up:inflight', now());         // gdyby gra wyrzuciła w trakcie — po powrocie wiemy o tym
     try {
       outer: for (const o of p) {
         // każdy składnik sprawdzony jeszcze raz tuż przed wysłaniem
@@ -437,24 +436,26 @@
           // dokładnie tak jak gra: najpierw podgląd, potem ulepszenie; na pytanie gry „Tak" klika Ulepszarka
           const rp = await net.send('enhancePreview', { item: o.target.id, ingredients: ids }, { src: 'Ulepszarka' });
           steps.push({ a: 'preview', item: o.target.id, n: part.length, ok: rp.ok, err: rp.error, resp: short(rp.data) }); saveSteps();
-          if (!rp.ok || badResp(rp.data)) { failed = true; if (badResp(rp.data)) { cfg.autoPaused = true; config.save(); } break outer; }
+          if (isMaxedResp(rp.data)) { removeMaxed(o.target.id, o.target.name); continue outer; }   // przedmiot już na maksimum — sam znika z listy
+          if (!rp.ok || badResp(rp.data)) { failed = true; break outer; }
           await sleep(350);
           ask.arm();
           const r = await net.send('enhance', { item: o.target.id, ingredients: ids }, { src: 'Ulepszarka', onResponse: maxResp(o) });
           steps.push({ a: 'progress', item: o.target.id, n: part.length, ok: r.ok, err: r.error, resp: short(r.data) }); saveSteps();
-          if (!r.ok || badResp(r.data)) { failed = true; if (badResp(r.data)) { cfg.autoPaused = true; config.save(); } break outer; }
+          if (isMaxedResp(r.data)) { removeMaxed(o.target.id, o.target.name); continue outer; }
+          if (!r.ok || badResp(r.data)) { failed = true; break outer; }
           const gone = await waitGone(part.map((i) => i.id), 6000);
           steps.push({ a: 'gone', n: gone }); saveSteps();
           if (!gone) { failed = true; break outer; }
           n += gone;
           const sl = slots().find((x) => Number(x.id) === o.target.id);
-          if (!sl || (sl.prog && sl.prog.lvl >= MAX_LVL)) break;   // przedmiot osiągnął maksimum — następny cel
+          if (sl && sl.prog && sl.prog.lvl >= MAX_LVL) { removeMaxed(o.target.id, o.target.name); continue outer; }   // osiągnął maksimum — sam znika z listy
+          if (!sl) continue outer;
           await sleep(600);
         }
       }
     } finally {
       ask.disarm();
-      store.del('up:inflight');
       running = false;
       if (cfg.closeCraft) closeCraft();
       dropMaxed();
@@ -465,6 +466,24 @@
     }
   }
   /** Odpowiedź serwera z błędem (np. „Błąd wewnętrzny", t:stop) → przerywamy natychmiast. */
+  /** Odpowiedź gry „przedmiot ma już maksymalny poziom" (błąd albo poziom w podglądzie). */
+  const isMaxedResp = (d) => {
+    if (!d) return false;
+    try {
+      const e = d.enhancement, pr = e && (e.progress_preview || e.progressing);
+      if (pr && Number(pr.upgradeLevel) >= MAX_LVL) return true;
+      const msg = [d.e, d.w, d.alert, d.m].filter((x) => typeof x === 'string').join(' ');
+      return /maks|maximum|najwy[żz]sz|osi[aą]gn[ąa][łl]\w* (ju[żz] )?(maks|najwy)|nie (mo[żz]na|da si[ęe]) (ju[żz] )?(bardziej )?ulepsz/i.test(msg);
+    } catch { return false; }
+  };
+  function removeMaxed(id, name) {
+    const i = slots().findIndex((s) => Number(s.id) === Number(id));
+    if (i < 0) return;
+    slots().splice(i, 1); config.save();
+    toast(`Ulepszarka: „${name}" osiągnął maksymalny poziom — usunięty z listy`, 'ok');
+    net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `„${name}" maksymalnie ulepszony — usunięty z listy` });
+    rr();
+  }
   const badResp = (d) => !!d && (d.t === 'stop' || d.t === 'reload' || (d.e && d.e !== 'ok'));
   const short = (d) => { try { const s = JSON.stringify(d); return s && s.length > 300 ? s.slice(0, 300) + '…' : s; } catch { return '?'; } };
   async function waitGone(ids, ms) {
@@ -539,7 +558,7 @@
       const it = game.itemById(s.id);
       if (it && isMaxed(it)) {
         slots().splice(i, 1); changed = true;
-        toast(`Ulepszarka: „${s.name}" jest już maksymalnie ulepszony — usunięto z listy`, 'ok');
+        toast(`Ulepszarka: „${s.name}" osiągnął maksymalny poziom — usunięty z listy`, 'ok');
         net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `„${s.name}" maksymalnie ulepszony — usunięty z listy` });
       }
     }
@@ -554,7 +573,7 @@
   let freeBlockSig = '', freeNag = 0;
   const bagSig = () => game.bag().map((i) => i.id).join(',');
   async function freeWatch() {
-    if (!cfg || !cfg.enabled || running || cfg.autoPaused || !(Number(cfg.freeAt) > 0) || !slots().length) return;
+    if (!cfg || !cfg.enabled || running || !(Number(cfg.freeAt) > 0) || !slots().length) return;
     if (game.inBattle() || document.querySelector('.mp-modal-bg')) return;
     const free = game.freeBagSlots();
     if (free == null || free > Number(cfg.freeAt)) { freeBlockSig = ''; return; }
@@ -694,18 +713,14 @@
       } else {
         box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));
       }
-      if (cfg.autoPaused) box.appendChild(el('div', { class: 'mp-card' }, el('div', { class: 'mp-warnc' }, 'Poprzednie ulepszanie zostało przerwane (np. gra wyrzuciła). Ulepszanie przy pełnej torbie jest wstrzymane.'),
-        el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { cfg.autoPaused = false; config.save(); rr(); } }, 'Wznów'), el('button', { class: 'mp-btn', onclick: report }, 'Kopiuj raport'))));
       if (cfg.usages && cfg.usages.limit && cfg.usages.day === new Date().toDateString()) box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, `Dzisiejsze ulepszenia: ${cfg.usages.count} / ${cfg.usages.limit}`));
       if (Number(cfg.freeAt) > 0) {
         const f = game.freeBagSlots();
-        box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, f == null ? 'Nie udało się odczytać wolnych miejsc w torbie — kliknij „Kopiuj raport" i wklej w rozmowie.' : `Wolne miejsca w torbie teraz: ${f} · ulepszę przy ${cfg.freeAt} lub mniej`));
+        box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, f == null ? 'Nie udało się odczytać wolnych miejsc w torbie.' : `Wolne miejsca w torbie teraz: ${f} · ulepszę przy ${cfg.freeAt} lub mniej`));
       }
       box.appendChild(el('div', { class: 'mp-btns' },
         slots().length ? el('button', { class: 'mp-btn pri', onclick: () => run() }, cfg.key ? `Ulepsz teraz (${cfg.key})` : 'Ulepsz teraz') : null,
-        slots().length ? el('button', { class: 'mp-btn', title: 'Ulepsza tylko jednym składnikiem — do bezpiecznego sprawdzenia, czy działa', onclick: () => run('test', 1) }, 'Próba: 1 składnik') : null,
-        el('button', { class: 'mp-btn', title: 'Gdy ulepszanie nie działa — skopiuj i wklej w rozmowie', onclick: report }, 'Kopiuj raport'),
-        (config.data.commands || {}).enhance ? el('button', { class: 'mp-btn', title: 'Wróć do wbudowanej komendy ulepszania', onclick: () => { net.resetCmd('enhance'); rr(); } }, 'Przywróć domyślne') : null));
+        null));
     },
     init(c) {
       cfg = c;
@@ -720,7 +735,7 @@
       { const u = new Set(); slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => !u.has(t)); sl.types.forEach((t) => u.add(t)); }); }   // typ składników tylko u jednego przedmiotu
       watchPointer();
       // wyrzuciło z gry w trakcie ulepszania? — automatyczne ulepszanie wstrzymane, dopóki go nie wznowisz
-      { const inf = store.get('up:inflight', 0); if (inf && now() - inf < 15 * 60000) { cfg.autoPaused = true; config.save(); } store.del('up:inflight'); }
+      store.del('up:inflight'); if (cfg.autoPaused) { delete cfg.autoPaused; config.save(); }
       // stara komenda z dopisaną odpowiedzią (powodowała wyrzucenie) — usuwamy
       try { const own = (config.data.commands || {}).enhance; if (own && /answer\d+=/.test(own.t || '')) net.resetCmd('enhance'); } catch {}
       setInterval(() => { if (cfg.enabled && !running) dropMaxed(); }, 5000);
