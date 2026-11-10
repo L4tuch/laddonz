@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.4.7
+// @version      3.4.9
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1151,10 +1151,14 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 @keyframes mpLgSweep{0%{background-position:-150% 0}60%,100%{background-position:250% 0}}
 .mp-lg-hl.disco{--lgc:#ff4fd8}.mp-lg-hl.disco::before{background:conic-gradient(from var(--mpa),#ff2bd6,#ffe600,#7cff4f,#00e5ff,#a35bff,#ff2bd6);animation-duration:1.2s}
 .mp-lg-hl.wlasny::before{background:conic-gradient(from var(--mpa),transparent,var(--lgc) 20%,#fff 25%,var(--lgc) 30%,transparent 50%,var(--lgc) 70%,#fff 75%,var(--lgc) 80%,transparent)}
-.c-window.mp-lg-win, .mp-lg-win{animation:mpLgWin 1.3s ease-in-out infinite}
-.mp-lg-win.thor{animation:mpLgWinThor 1.6s infinite}
+.c-window.mp-lg-win{animation:mpLgWin 1.4s ease-in-out infinite}
+.c-window.mp-lg-win.r-thor{animation:mpLgWinThor 2.3s infinite}
+.c-window.mp-lg-win.r-disco{animation:mpLgWinDisco 2.2s linear infinite}
+.c-window.mp-lg-win.r-smoke{animation:mpLgWinSmoke 3s ease-in-out infinite}
+@keyframes mpLgWinDisco{0%{filter:drop-shadow(0 0 10px #ff2bd6)}25%{filter:drop-shadow(0 0 10px #00e5ff)}50%{filter:drop-shadow(0 0 10px #ffe600)}75%{filter:drop-shadow(0 0 10px #7cff4f)}100%{filter:drop-shadow(0 0 10px #ff2bd6)}}
+@keyframes mpLgWinSmoke{0%,100%{filter:drop-shadow(0 0 6px #000) drop-shadow(0 0 8px rgba(255,42,26,.6))}50%{filter:drop-shadow(0 0 12px #000) drop-shadow(0 0 16px #ff2a1a)}}
 @keyframes mpLgWin{0%,100%{filter:drop-shadow(0 0 6px var(--lgc))}50%{filter:drop-shadow(0 0 18px var(--lgc))}}
-@keyframes mpLgWinThor{0%,100%{filter:drop-shadow(0 0 6px #4f9dff)}7%{filter:drop-shadow(0 0 22px #cfe8ff)}10%{filter:drop-shadow(0 0 4px #4f9dff)}13%{filter:drop-shadow(0 0 16px #9fd0ff)}}
+@keyframes mpLgWinThor{0%,100%{filter:drop-shadow(0 0 7px #4f9dff)}31%{filter:drop-shadow(0 0 22px #cfe8ff)}34%{filter:drop-shadow(0 0 5px #4f9dff)}37%{filter:drop-shadow(0 0 16px #9fd0ff)}}
 .mp-lg-fake{position:fixed!important;left:50%!important;top:46%!important;transform:translate(-50%,-50%);z-index:900!important;pointer-events:none!important}
 .mp-lg-fake:not(.mp-lg-fake-tpl){box-sizing:border-box;min-width:300px;border-style:solid;border-width:32px 20px;display:block!important}
 .c-window.mp-lg-fake:not(.mp-lg-fake-tpl) > .content{position:relative!important;inset:auto!important;padding:4px 0 8px;background-color:rgb(24,16,12)}
@@ -6656,6 +6660,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const slot = it.parentElement && it.parentElement !== card ? it.parentElement : it;
     // blask pola w kolorze stylu
     slot.classList.add('mp-lg-glow'); slot.style.setProperty('--lgg', spec.glow);
+    // opcja: całe okno łupów świeci kolorem pola z legendą (dopóki okno jest otwarte)
+    const w = it.closest('.c-window');
+    if (w) {
+      w.classList.remove('mp-lg-win', 'r-thor', 'r-smoke', 'r-kasyno', 'r-disco', 'r-wlasny');
+      if (cfg.winGlow) { w.classList.add('mp-lg-win', 'r-' + spec.ring); w.style.setProperty('--lgc', spec.glow); }
+    }
     // efekt na samym przedmiocie
     FX_CLASSES.forEach((c) => it.classList.remove(c));
     it.classList.add('mp-lg-fx-' + spec.item); it.style.setProperty('--lgg', spec.glow);
@@ -6720,7 +6730,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     if (run.cap) run.cap.remove();
     (run.pops || []).forEach((b) => b.remove());
     $$('.item[data-mp-lg] > *').forEach((x) => { if (x.style.opacity === '0') x.style.opacity = ''; });
-    if (run.win) run.win.classList.remove('mp-lg-win', 'thor', 'smoke', 'kasyno', 'disco', 'wlasny');
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
     if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
     try { run.stopSnd && run.stopSnd(); } catch {}
@@ -7181,7 +7190,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     desc: 'Gdy w łupie trafi się przedmiot legendarny — efekt na cały ekran z dźwiękiem: Thor, Smoke, Kasyno, Disco albo Twój własny. Każdy styl ma wbudowany dźwięk i może mieć Twój plik dźwiękowy. Przycisk „Test" pokazuje efekt od razu.',
     defaults: { enabled: false, style: 'thor', volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
-    notes: () => [{ type: 'info', text: 'Wymaga włączonej opcji gry <b>Podświetlenie okna łupów</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy). Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
+    notes: () => [{ type: 'info', text: 'Działa samodzielnie — <b>nie wymaga</b> opcji gry „Podświetlenie okna łupów”. Najlepiej ją <b>wyłączyć</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy), żeby efekty gry i dodatku nie nakładały się na siebie. Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
     render(box, c, rerender) {
       // style
       const grid = el('div', { class: 'mp-lg-grid' });
@@ -7198,6 +7207,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Okno łupu zostaje takie jak w grze — wyróżnione jest tylko okienko z legendą, w kolorach wybranego stylu. Wyróżnienie mieści się w okienku, więc kilka legend obok siebie nie nachodzi na siebie.'),
         el('div', { class: 'mp-btns' }, HL.map(([v, l]) => el('button', { class: 'mp-upchip' + ((c.hlMode || 'ring') === v ? ' on' : ''), onclick: () => { c.hlMode = v; config.save(); rerender(); } }, l))),
         el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
+          el('button', { class: 'mp-upchip' + (c.winGlow ? ' on' : ''), title: 'Całe okno łupów świeci tym samym kolorem co pole z legendą.', onclick: () => { c.winGlow = !c.winGlow; config.save(); rerender(); } }, c.winGlow ? 'Świecące okno łupów — włączone' : 'Świecące okno łupów'),
           el('button', { class: 'mp-upchip' + (c.checkHeroic ? ' on' : ''), title: 'Na czas sprawdzania: efekt odpala się też na heroikach z prawdziwego łupu. Potem wyłącz.', onclick: () => { c.checkHeroic = !c.checkHeroic; config.save(); rerender(); } }, c.checkHeroic ? 'Tryb sprawdzania: heroiki jak legendy — WŁĄCZONY' : 'Tryb sprawdzania (heroiki jak legendy)'),
           el('button', { class: 'mp-upchip' + (c.names !== false ? ' on' : ''), onclick: () => { c.names = c.names === false; config.save(); rerender(); } }, c.names !== false ? 'Napis pod oknem: „Zdobyłeś: …" — włączony' : 'Napis pod oknem: wyłączony')),
         el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, `Test pokazuje 1–3 legendy. Szablony przedmiotów z gry do testu: legendy ${((store.get('legenda:itemTpl', {}).legendary) || []).length + store.get('legenda:legTpl', []).length}, pozostałe ${['heroic', 'unique', 'common'].reduce((a, k) => a + (((store.get('legenda:itemTpl', {})[k]) || []).length), 0)}. Zbierają się same z gry (przedmioty z czatu, podgląd EQ innych graczy, łupy drużyny) — bez Twojego ekwipunku.`)));
@@ -7689,5 +7699,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.4.7";
+MP.version = "3.4.9";
 })();

@@ -145,10 +145,14 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 @keyframes mpLgSweep{0%{background-position:-150% 0}60%,100%{background-position:250% 0}}
 .mp-lg-hl.disco{--lgc:#ff4fd8}.mp-lg-hl.disco::before{background:conic-gradient(from var(--mpa),#ff2bd6,#ffe600,#7cff4f,#00e5ff,#a35bff,#ff2bd6);animation-duration:1.2s}
 .mp-lg-hl.wlasny::before{background:conic-gradient(from var(--mpa),transparent,var(--lgc) 20%,#fff 25%,var(--lgc) 30%,transparent 50%,var(--lgc) 70%,#fff 75%,var(--lgc) 80%,transparent)}
-.c-window.mp-lg-win, .mp-lg-win{animation:mpLgWin 1.3s ease-in-out infinite}
-.mp-lg-win.thor{animation:mpLgWinThor 1.6s infinite}
+.c-window.mp-lg-win{animation:mpLgWin 1.4s ease-in-out infinite}
+.c-window.mp-lg-win.r-thor{animation:mpLgWinThor 2.3s infinite}
+.c-window.mp-lg-win.r-disco{animation:mpLgWinDisco 2.2s linear infinite}
+.c-window.mp-lg-win.r-smoke{animation:mpLgWinSmoke 3s ease-in-out infinite}
+@keyframes mpLgWinDisco{0%{filter:drop-shadow(0 0 10px #ff2bd6)}25%{filter:drop-shadow(0 0 10px #00e5ff)}50%{filter:drop-shadow(0 0 10px #ffe600)}75%{filter:drop-shadow(0 0 10px #7cff4f)}100%{filter:drop-shadow(0 0 10px #ff2bd6)}}
+@keyframes mpLgWinSmoke{0%,100%{filter:drop-shadow(0 0 6px #000) drop-shadow(0 0 8px rgba(255,42,26,.6))}50%{filter:drop-shadow(0 0 12px #000) drop-shadow(0 0 16px #ff2a1a)}}
 @keyframes mpLgWin{0%,100%{filter:drop-shadow(0 0 6px var(--lgc))}50%{filter:drop-shadow(0 0 18px var(--lgc))}}
-@keyframes mpLgWinThor{0%,100%{filter:drop-shadow(0 0 6px #4f9dff)}7%{filter:drop-shadow(0 0 22px #cfe8ff)}10%{filter:drop-shadow(0 0 4px #4f9dff)}13%{filter:drop-shadow(0 0 16px #9fd0ff)}}
+@keyframes mpLgWinThor{0%,100%{filter:drop-shadow(0 0 7px #4f9dff)}31%{filter:drop-shadow(0 0 22px #cfe8ff)}34%{filter:drop-shadow(0 0 5px #4f9dff)}37%{filter:drop-shadow(0 0 16px #9fd0ff)}}
 .mp-lg-fake{position:fixed!important;left:50%!important;top:46%!important;transform:translate(-50%,-50%);z-index:900!important;pointer-events:none!important}
 .mp-lg-fake:not(.mp-lg-fake-tpl){box-sizing:border-box;min-width:300px;border-style:solid;border-width:32px 20px;display:block!important}
 .c-window.mp-lg-fake:not(.mp-lg-fake-tpl) > .content{position:relative!important;inset:auto!important;padding:4px 0 8px;background-color:rgb(24,16,12)}

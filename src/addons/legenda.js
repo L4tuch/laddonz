@@ -685,6 +685,12 @@
     const slot = it.parentElement && it.parentElement !== card ? it.parentElement : it;
     // blask pola w kolorze stylu
     slot.classList.add('mp-lg-glow'); slot.style.setProperty('--lgg', spec.glow);
+    // opcja: całe okno łupów świeci kolorem pola z legendą (dopóki okno jest otwarte)
+    const w = it.closest('.c-window');
+    if (w) {
+      w.classList.remove('mp-lg-win', 'r-thor', 'r-smoke', 'r-kasyno', 'r-disco', 'r-wlasny');
+      if (cfg.winGlow) { w.classList.add('mp-lg-win', 'r-' + spec.ring); w.style.setProperty('--lgc', spec.glow); }
+    }
     // efekt na samym przedmiocie
     FX_CLASSES.forEach((c) => it.classList.remove(c));
     it.classList.add('mp-lg-fx-' + spec.item); it.style.setProperty('--lgg', spec.glow);
@@ -749,7 +755,6 @@
     if (run.cap) run.cap.remove();
     (run.pops || []).forEach((b) => b.remove());
     $$('.item[data-mp-lg] > *').forEach((x) => { if (x.style.opacity === '0') x.style.opacity = ''; });
-    if (run.win) run.win.classList.remove('mp-lg-win', 'thor', 'smoke', 'kasyno', 'disco', 'wlasny');
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
     if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
     try { run.stopSnd && run.stopSnd(); } catch {}
@@ -1210,7 +1215,7 @@
     desc: 'Gdy w łupie trafi się przedmiot legendarny — efekt na cały ekran z dźwiękiem: Thor, Smoke, Kasyno, Disco albo Twój własny. Każdy styl ma wbudowany dźwięk i może mieć Twój plik dźwiękowy. Przycisk „Test" pokazuje efekt od razu.',
     defaults: { enabled: false, style: 'thor', volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
-    notes: () => [{ type: 'info', text: 'Wymaga włączonej opcji gry <b>Podświetlenie okna łupów</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy). Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
+    notes: () => [{ type: 'info', text: 'Działa samodzielnie — <b>nie wymaga</b> opcji gry „Podświetlenie okna łupów”. Najlepiej ją <b>wyłączyć</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy), żeby efekty gry i dodatku nie nakładały się na siebie. Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
     render(box, c, rerender) {
       // style
       const grid = el('div', { class: 'mp-lg-grid' });
@@ -1227,6 +1232,7 @@
         el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Okno łupu zostaje takie jak w grze — wyróżnione jest tylko okienko z legendą, w kolorach wybranego stylu. Wyróżnienie mieści się w okienku, więc kilka legend obok siebie nie nachodzi na siebie.'),
         el('div', { class: 'mp-btns' }, HL.map(([v, l]) => el('button', { class: 'mp-upchip' + ((c.hlMode || 'ring') === v ? ' on' : ''), onclick: () => { c.hlMode = v; config.save(); rerender(); } }, l))),
         el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
+          el('button', { class: 'mp-upchip' + (c.winGlow ? ' on' : ''), title: 'Całe okno łupów świeci tym samym kolorem co pole z legendą.', onclick: () => { c.winGlow = !c.winGlow; config.save(); rerender(); } }, c.winGlow ? 'Świecące okno łupów — włączone' : 'Świecące okno łupów'),
           el('button', { class: 'mp-upchip' + (c.checkHeroic ? ' on' : ''), title: 'Na czas sprawdzania: efekt odpala się też na heroikach z prawdziwego łupu. Potem wyłącz.', onclick: () => { c.checkHeroic = !c.checkHeroic; config.save(); rerender(); } }, c.checkHeroic ? 'Tryb sprawdzania: heroiki jak legendy — WŁĄCZONY' : 'Tryb sprawdzania (heroiki jak legendy)'),
           el('button', { class: 'mp-upchip' + (c.names !== false ? ' on' : ''), onclick: () => { c.names = c.names === false; config.save(); rerender(); } }, c.names !== false ? 'Napis pod oknem: „Zdobyłeś: …" — włączony' : 'Napis pod oknem: wyłączony')),
         el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, `Test pokazuje 1–3 legendy. Szablony przedmiotów z gry do testu: legendy ${((store.get('legenda:itemTpl', {}).legendary) || []).length + store.get('legenda:legTpl', []).length}, pozostałe ${['heroic', 'unique', 'common'].reduce((a, k) => a + (((store.get('legenda:itemTpl', {})[k]) || []).length), 0)}. Zbierają się same z gry (przedmioty z czatu, podgląd EQ innych graczy, łupy drużyny) — bez Twojego ekwipunku.`)));
