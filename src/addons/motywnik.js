@@ -18,16 +18,57 @@
   const inW = (sel) => WIN.split(',').flatMap((w) => sel.split(',').map((x) => w.trim() + ' ' + x.trim())).join(', ');
 
   /*
-   * Trzy proste, stonowane style:
-   *   Klasyczny  — wygląd gry bez zmian,
-   *   Ciemny     — czarno‑grafitowy interfejs, bez jaskrawych kolorów i poświat,
-   *   Nowoczesny — klasyczny wygląd gry, ale z czytelniejszą czcionką i pogłębionymi kolorami.
+   * Pięć stylów całego interfejsu. Poza „Domyślnym" zmieniają WSZYSTKO: ramy i panele gry (lewa/prawa kolumna,
+   * górny i dolny pasek, tła pod ekwipunkiem i torbami), okna, nagłówki, przyciski, menu prawego przycisku,
+   * dymki, czat i pola tekstowe. Mapa, postacie i ikonki przedmiotów zostają bez zmian.
+   *
+   * Panele gry to obrazki-tekstury bez wspólnej klasy — Motywnik sam je znajduje (.mt-skin: duże tła-obrazki,
+   * .mt-frame: ozdobne ramki) i podmienia na teksturę stylu. Jasne tła z ciemnym tekstem (pergamin) zostawia.
    */
+  const svg = (s) => `url("data:image/svg+xml,${encodeURIComponent(s)}")`;
+  const noise = (op) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 ${op} 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>`);
+  /** Ozdobny narożnik (filigran) w kolorze c — używany na 4 rogach okien. */
+  const corner = (c, flip) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='34' height='34' viewBox='0 0 34 34'><g fill='none' stroke='${c}' stroke-width='1.6' transform='${flip}'><path d='M2 32V8q0-6 6-6h24'/><path d='M6 32V12q0-6 6-6h20' opacity='.55'/><path d='M2 14q8 0 10-6' /><circle cx='12' cy='12' r='2.2' fill='${c}'/></g></svg>`);
+  const corners = (c) => [
+    `${corner(c, '')} left top no-repeat`,
+    `${corner(c, 'translate(34 0) scale(-1 1)')} right top no-repeat`,
+    `${corner(c, 'translate(0 34) scale(1 -1)')} left bottom no-repeat`,
+    `${corner(c, 'translate(34 34) scale(-1 -1)')} right bottom no-repeat`,
+  ];
+  /** Pęknięcia z prześwitującą lawą (powtarzalna tekstura). */
+  const lava = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><defs><filter id='g'><feGaussianBlur stdDeviation='2.2'/></filter></defs><g fill='none' stroke-linecap='round'><g stroke='#ff4d00' stroke-width='4' opacity='.55' filter='url(#g)'><path d='M-5 40 L40 62 L70 50 L118 88 L160 80 L210 120 L265 110'/><path d='M30 260 L52 210 L90 196 L104 150 L140 132'/><path d='M180 -5 L170 40 L196 70 L188 110'/></g><g stroke='#ffb347' stroke-width='1.3' opacity='.85'><path d='M-5 40 L40 62 L70 50 L118 88 L160 80 L210 120 L265 110'/><path d='M30 260 L52 210 L90 196 L104 150 L140 132'/><path d='M180 -5 L170 40 L196 70 L188 110'/></g></g></svg>`);
+
   const THEMES = {
-    klasyczny: { name: 'Klasyczny', desc: 'Wygląd gry bez zmian.', none: true },
-    ciemny: { name: 'Ciemny', desc: 'Czerń i grafit, spokojne szarości, bez poświat.', css: darkCss },
-    nowoczesny: { name: 'Nowoczesny', desc: 'Klasyczny wygląd z czytelniejszą czcionką i głębszymi kolorami.', css: modernCss, fonts: ['Roboto:wght@400;500;700'] },
+    domyslny: { name: 'Domyślny', desc: 'Wygląd gry bez żadnych zmian.', none: true },
+    obsydian: {
+      name: 'Obsydian', desc: 'Czerń i stal, srebrne ozdobne narożniki.',
+      panel: `${noise(0.06)}, linear-gradient(160deg,#17181b,#0c0d0f)`, panelC: '#0f1012',
+      win: '12,13,15', border: '#4a4d55', border2: '#2a2c31', orn: '#9aa0ab', text: '#dfe2e7', head: '#f2f4f7', accent: '#c9ced8',
+      btn: 'linear-gradient(#2d3036,#1b1d21)', btnHover: 'linear-gradient(#3a3e46,#24272c)', btnText: '#eef0f3', btnBorder: '#5a5e68', glow: 'rgba(170,180,200,.18)',
+    },
+    wulkan: {
+      name: 'Wulkan', desc: 'Bazalt z prześwitującą lawą, brązowe okucia.',
+      panel: `${lava}, ${noise(0.07)}, radial-gradient(ellipse at 30% 120%,rgba(255,80,0,.18),transparent 60%), linear-gradient(160deg,#1a0f0b,#0b0605)`, panelC: '#120a08',
+      win: '18,10,8', border: '#7a3417', border2: '#3a1a0e', orn: '#d0702a', text: '#f1dccb', head: '#ffb070', accent: '#ff8a3d',
+      btn: 'linear-gradient(#3a1a10,#1f0d08)', btnHover: 'linear-gradient(#5a2412,#2c120a)', btnText: '#ffe2c8', btnBorder: '#a4471d', glow: 'rgba(255,100,20,.35)',
+      lavaGlow: true,
+    },
+    krolewski: {
+      name: 'Królewski', desc: 'Głęboka czerń z granatem i złotym filigranem.',
+      panel: `${noise(0.05)}, radial-gradient(ellipse at 50% -20%,rgba(212,175,55,.08),transparent 60%), linear-gradient(160deg,#121522,#0a0b12)`, panelC: '#0d0f18',
+      win: '12,13,22', border: '#8c7232', border2: '#2e2a1c', orn: '#d4af37', text: '#efe6cf', head: '#f5d77a', accent: '#e8c35a',
+      btn: 'linear-gradient(#262038,#15121f)', btnHover: 'linear-gradient(#352c4d,#1d1829)', btnText: '#f8e7b5', btnBorder: '#9c7f36', glow: 'rgba(212,175,55,.25)',
+    },
+    nowoczesny: {
+      name: 'Nowoczesny', desc: 'Żywe kolory, szkło i gradientowe przyciski.',
+      panel: `${noise(0.04)}, radial-gradient(ellipse at 0% 0%,rgba(99,102,241,.22),transparent 55%), radial-gradient(ellipse at 100% 100%,rgba(6,182,212,.18),transparent 55%), linear-gradient(160deg,#141a2e,#0b0f1c)`, panelC: '#0f1424',
+      win: '16,21,38', border: 'rgba(139,140,255,.45)', border2: 'rgba(255,255,255,.08)', orn: null, text: '#e8ebf5', head: '#ffffff', accent: '#8b8cff',
+      btn: 'linear-gradient(135deg,#6366f1,#06b6d4)', btnHover: 'linear-gradient(135deg,#7c7ff7,#22d3ee)', btnText: '#ffffff', btnBorder: 'transparent', glow: 'rgba(99,102,241,.45)',
+      radius: 10, glass: true, font: '"Inter", "Segoe UI", system-ui, sans-serif', fonts: ['Inter:wght@400;500;600;700'],
+    },
   };
+  // zgodność ze starszymi nazwami
+  const ALIAS = { klasyczny: 'domyslny', gra: 'domyslny', ciemny: 'obsydian', mroczny: 'obsydian', fantasy: 'wulkan', lod: 'obsydian', neon: 'nowoczesny', pergamin: 'domyslny' };
 
   function loadFonts(t) {
     if (!t || !t.fonts) { if (fontEl) fontEl.remove(); fontEl = null; return; }
@@ -38,51 +79,73 @@
     document.head.appendChild(fontEl);
   }
 
-  function darkCss() {
-    const btn = 'background:linear-gradient(#2b2b2f,#1d1d20)!important;color:#ececec!important;border:1px solid #47474d!important;border-image:none!important;border-radius:3px!important;text-shadow:0 1px 1px #000!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)!important';
-    const btnHover = 'background:linear-gradient(#36363b,#26262a)!important;border-color:#5c5c63!important';
+  function themeCss(t) {
+    if (!t || t.none) return '';
+    const r = t.radius || 3, rs = Math.min(r, 8);
+    const f = t.font ? `font-family:${t.font}!important;` : '';
+    const blur = t.glass ? 'backdrop-filter:blur(12px) saturate(150%);-webkit-backdrop-filter:blur(12px) saturate(150%);' : '';
+    const winBg = [...(t.orn ? corners(t.orn) : []), `${noise(0.05)}`, `linear-gradient(rgba(${t.win},.97),rgba(${t.win},.97))`].join(', ');
+    const btn = `background:${t.btn}!important;color:${t.btnText}!important;border:1px solid ${t.btnBorder}!important;border-image:none!important;border-radius:${rs}px!important;text-shadow:0 1px 1px rgba(0,0,0,.85)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 3px rgba(0,0,0,.5)!important;${f}transition:background .12s,box-shadow .12s`;
+    const btnH = `background:${t.btnHover}!important;box-shadow:0 0 10px ${t.glow},inset 0 1px 0 rgba(255,255,255,.12)!important`;
     return `
-/* Motywnik — Ciemny */
-${WIN}{background-color:rgba(14,14,16,.97)!important;color:#dcdcdc!important;border-radius:4px!important;box-shadow:0 0 0 1px #2e2e33,0 8px 24px rgba(0,0,0,.6)!important}
-.border-window{border-image:none!important;border:1px solid #333338!important}
-${inW('[class*="content"]')}{color:#dcdcdc!important}
-${HEAD}{color:#f0f0f0!important;text-shadow:0 1px 1px #000!important}
-${inW('[class*="header"]')}{background:linear-gradient(#1f1f23,#161618)!important;border-bottom:1px solid #2e2e33!important}
+/* Motywnik — ${t.name} */
+@keyframes mtLava{0%,100%{box-shadow:0 0 0 1px ${t.border},0 10px 28px rgba(0,0,0,.6),0 0 14px rgba(255,90,10,.18)}50%{box-shadow:0 0 0 1px ${t.border},0 10px 28px rgba(0,0,0,.6),0 0 26px rgba(255,110,20,.38)}}
+/* panele i ramy gry */
+.mt-skin{background:${t.panel}!important;background-color:${t.panelC}!important;background-size:auto!important;background-repeat:repeat!important}
+.mt-frame{border-image:none!important;border-color:${t.border}!important;border-style:solid!important;box-shadow:inset 0 0 0 1px ${t.border2},0 0 10px rgba(0,0,0,.5)!important}
+/* okna */
+${WIN}{background:${winBg}!important;color:${t.text}!important;border-radius:${r}px!important;box-shadow:0 0 0 1px ${t.border},0 10px 28px rgba(0,0,0,.6),0 0 14px ${t.glow}!important;${blur}${f}}
+.border-window{border-image:none!important;border:1px solid ${t.border}!important}
+${t.lavaGlow ? `${WIN}{animation:mtLava 4s ease-in-out infinite}` : ''}
+${inW('[class*="content"]')}{color:${t.text}}
+${HEAD}{color:${t.head}!important;text-shadow:0 1px 2px #000${t.lavaGlow ? ',0 0 8px rgba(255,120,30,.6)' : ''}!important;letter-spacing:.03em;${f}}
+${inW('[class*="header"]')}{background:linear-gradient(rgba(255,255,255,.05),rgba(0,0,0,.15))!important;border-bottom:1px solid ${t.border}!important}
+/* przyciski z napisem i menu prawego przycisku */
 .mt-btn{${btn}}
-.mt-btn:hover{${btnHover}}
-.mt-menu{background:#141416!important;border:1px solid #38383e!important;border-image:none!important;border-radius:4px!important;box-shadow:0 8px 22px rgba(0,0,0,.65)!important;padding:3px!important}
+.mt-btn:hover{${btnH}}
+.mt-menu{background:rgba(${t.win},.98)!important;border:1px solid ${t.border}!important;border-image:none!important;border-radius:${rs + 2}px!important;box-shadow:0 8px 24px rgba(0,0,0,.65),0 0 12px ${t.glow}!important;padding:4px!important;${blur}}
 .mt-mi{${btn};margin:2px 0!important}
-.mt-mi:hover{${btnHover}}
-#mp-ctx{background:#141416!important;border:1px solid #38383e!important}
+.mt-mi:hover{${btnH}}
+#mp-ctx{background:rgba(${t.win},.98)!important;border:1px solid ${t.border}!important}
 #mp-ctx .mp-ctx-item{${btn}}
-#mp-ctx .mp-ctx-item:hover{${btnHover}}
-#mp-ctx .mp-ctx-title{background:transparent!important;color:#f0f0f0!important;border-bottom:1px solid #2e2e33!important}
-${TIP}{background:rgba(12,12,14,.97)!important;border:1px solid #38383e!important;border-image:none!important;border-radius:4px!important;color:#e0e0e0!important;box-shadow:0 6px 18px rgba(0,0,0,.6)!important}
-${CHAT}{background:rgba(10,10,12,.88)!important}
-${inW('input, textarea, select')}, ${CHAT} input, ${CHAT} textarea{background:#0e0e10!important;color:#e6e6e6!important;border:1px solid #3a3a40!important;border-radius:3px!important}
-${inW('[class*="tab"][class*="active"], [class*="card"][class*="active"]')}{color:#fff!important;box-shadow:inset 0 -2px 0 #8a8a92!important}
-${inW('::-webkit-scrollbar')}, ${CHAT} ::-webkit-scrollbar{width:8px;height:8px}
-${inW('::-webkit-scrollbar-thumb')}, ${CHAT} ::-webkit-scrollbar-thumb{background:#3a3a40;border-radius:8px}
-${inW('::-webkit-scrollbar-track')}, ${CHAT} ::-webkit-scrollbar-track{background:transparent}
+#mp-ctx .mp-ctx-item:hover{${btnH}}
+#mp-ctx .mp-ctx-title{background:transparent!important;color:${t.head}!important;border-bottom:1px solid ${t.border}!important}
+/* dymki, czat, pola, zakładki, przewijanie */
+${TIP}{background:${[...(t.orn ? [] : []), `linear-gradient(rgba(${t.win},.97),rgba(${t.win},.97))`].join(',')}!important;border:1px solid ${t.border}!important;border-image:none!important;border-radius:${rs}px!important;color:${t.text}!important;box-shadow:0 6px 18px rgba(0,0,0,.6),0 0 10px ${t.glow}!important;${blur}${f}}
+${CHAT}{background:rgba(${t.win},.85)!important;${f}}
+${inW('input, textarea, select')}, ${CHAT} input, ${CHAT} textarea{background:rgba(0,0,0,.45)!important;color:${t.text}!important;border:1px solid ${t.border}!important;border-radius:${rs}px!important}
+${inW('[class*="tab"][class*="active"], [class*="card"][class*="active"]')}{color:${t.accent}!important;box-shadow:inset 0 -2px 0 ${t.accent}!important}
+::-webkit-scrollbar-thumb{background:${t.border}!important;border-radius:8px}
+${t.font ? `${WIN}, ${TIP}, ${CHAT}{-webkit-font-smoothing:antialiased}` : ''}
 `;
   }
 
-  function modernCss() {
-    const font = '"Roboto", "Segoe UI", Arial, sans-serif';
-    return `
-/* Motywnik — Nowoczesny: klasyczny wygląd, lepsza czcionka i głębia kolorów */
-${WIN}, ${TIP}, ${CHAT}, .mt-btn, .mt-menu, .mt-mi, .big-messages .message{font-family:${font}!important;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
-${WIN}, ${TIP}, [class*="widget-button"]{filter:contrast(1.06) saturate(1.15)}
-${HEAD}{font-weight:700!important;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.85)!important}
-.mt-btn, .mt-mi{font-weight:500!important;letter-spacing:.01em;text-shadow:0 1px 1px rgba(0,0,0,.7)!important}
-${TIP}{box-shadow:0 6px 18px rgba(0,0,0,.5)!important}
-${WIN}{box-shadow:0 10px 28px rgba(0,0,0,.45)!important}
-${CHAT}{font-size:13px}
-.big-messages .message{font-weight:700!important;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6)!important}
-`;
+  /* ── szukanie paneli i ram gry (tła-obrazki) ── */
+  const NO_SKIN = /itemy|items?\/|outfit|postac|npc|mob|pet|chowan|portret|avatar|face|emotk|emoji|smile|icons?\/|ikon|maps?\/|obrazki\/mapy|ad[sv]?\//i;
+  function lum(rgb) { const m = String(rgb).match(/(\d+)\D+(\d+)\D+(\d+)/); if (!m) return 1; return (0.299 * m[1] + 0.587 * m[2] + 0.114 * m[3]) / 255; }
+  function skinScan(root) {
+    if (!cfg || !cfg.enabled || !THEMES[cfg.theme] || THEMES[cfg.theme].none) return;
+    const all = root === document.body ? $$('body *') : [root, ...$$('*', root)];
+    for (const n of all) {
+      if (n.classList.contains('mt-skin') || n.closest('.mp-glass, #mp-qbar, #mp-qpop, .mp-modal-bg, #mp-ctx, #mp-eqtip, .mp-toast, .item, canvas')) continue;
+      if (/^(CANVAS|IMG|svg|VIDEO|INPUT|TEXTAREA)$/i.test(n.tagName)) continue;
+      if (n.matches(WIN + ', ' + TIP + ', ' + CHAT + ', .mt-btn, .mt-menu, .mt-mi')) continue;   // te stylujemy osobno
+      const cls = String(n.className || '');
+      if (/item|widget-button|skill-icon|icon/i.test(cls)) continue;
+      const cs = getComputedStyle(n);
+      const r = n.getBoundingClientRect();
+      if (r.width < 14 || r.height < 14) continue;
+      if (cs.borderImageSource && cs.borderImageSource !== 'none' && r.width > 50 && r.height > 30) n.classList.add('mt-frame');
+      const bg = cs.backgroundImage;
+      if (!bg || bg === 'none' || /gradient/.test(bg) && !/url\(/.test(bg)) continue;
+      if (NO_SKIN.test(bg) || /data:image\/svg\+xml/.test(bg)) continue;   // obrazki postaci/przedmiotów i nasze własne tła
+      const big = r.width * r.height > 9000 || (r.width > 220 && r.height >= 14) || (r.height > 220 && r.width >= 14);
+      if (!big) continue;
+      if (n.querySelector('canvas') && r.width > 400 && r.height > 300) continue;        // kontener mapy
+      if (lum(cs.color) < 0.35) continue;                                                 // jasne tło z ciemnym tekstem (pergamin)
+      n.classList.add('mt-skin');
+    }
   }
-
-  function themeCss(t) { return !t || t.none || !t.css ? '' : t.css(); }
 
   /* ── oznaczanie przycisków z napisem i menu gry ── */
   const BTN_SEL = 'button, .button, [class*="button"], [class*="btn"]';
@@ -102,7 +165,7 @@ ${CHAT}{font-size:13px}
     for (const n of list) if (!n.classList.contains('mt-btn') && isTextButton(n)) n.classList.add('mt-btn');
   }
   function tagMenu(labels) {
-    if (!cfg || !cfg.enabled || !labels || !labels.length) return;
+    if (!cfg || !cfg.enabled || !labels || !labels.length || !THEMES[cfg.theme] || THEMES[cfg.theme].none) return;
     setTimeout(() => {
       const leaves = labels.map((l) => $$('body *').find((n) => !n.children.length && (n.textContent || '').trim() === String(l).trim() && isVisible(n) && !n.closest('.mp-glass, #mp-ctx'))).filter(Boolean);
       if (!leaves.length) return;
@@ -113,30 +176,41 @@ ${CHAT}{font-size:13px}
       if (box && box !== document.body) { box.classList.add('mt-menu'); rows.forEach((r) => r.classList.add('mt-mi')); }
     }, 0);
   }
+  let skinQueue = new Set(), skinT = null;
   function startTagging() {
     if (mo) return;
     tag(document.body);
-    mo = new MutationObserver((muts) => { for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) tag(n); });
+    skinScan(document.body);
+    mo = new MutationObserver((muts) => {
+      for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1 && !n.closest('.mp-glass')) { tag(n); skinQueue.add(n); }
+      if (skinQueue.size && !skinT) skinT = setTimeout(() => { skinT = null; const q = [...skinQueue]; skinQueue.clear(); q.forEach((n) => n.isConnected && skinScan(n)); }, 250);
+    });
     mo.observe(document.body, { childList: true, subtree: true });
+    // gra ładuje część grafik później — pełne przejście jeszcze kilka razy
+    [1500, 4000, 9000].forEach((ms) => setTimeout(() => skinScan(document.body), ms));
   }
   function stopTagging() {
     if (mo) { mo.disconnect(); mo = null; }
     $$('.mt-btn').forEach((n) => n.classList.remove('mt-btn'));
     $$('.mt-menu').forEach((n) => n.classList.remove('mt-menu'));
     $$('.mt-mi').forEach((n) => n.classList.remove('mt-mi'));
+    $$('.mt-skin').forEach((n) => n.classList.remove('mt-skin'));
+    $$('.mt-frame').forEach((n) => n.classList.remove('mt-frame'));
   }
 
   function apply() {
     if (!styleEl) { styleEl = el('style', { id: 'mp-motywnik' }); document.head.appendChild(styleEl); }
     const on = cfg && cfg.enabled;
-    const t = on ? THEMES[cfg.theme] || THEMES.klasyczny : null;
+    if (cfg && ALIAS[cfg.theme]) { cfg.theme = ALIAS[cfg.theme]; config.save(); }
+    const t = on ? THEMES[cfg.theme] || THEMES.domyslny : null;
     loadFonts(on ? t : null);
     if (!on) { styleEl.textContent = ''; stopTagging(); return; }
     let css = themeCss(t);
     const own = (cfg.custom || []).find((x) => x.id === cfg.customOn);
     if (own) css += `\n/* Własny styl: ${own.name} */\n${own.css}`;
     styleEl.textContent = css;
-    if (t && !t.none) startTagging(); else stopTagging();
+    stopTagging();
+    if (t && !t.none) startTagging();
   }
 
   /* ── własne style ── */
@@ -167,16 +241,25 @@ ${CHAT}{font-size:13px}
     document.body.appendChild(a); a.click(); a.remove();
   }
 
-  /** Mini-podgląd stylu: okno z nagłówkiem, tekstem i przyciskiem. */
+  /** Mini-podgląd stylu: kawałek panelu gry z oknem, nagłówkiem i przyciskiem. */
   function preview(k) {
-    const w = el('div', { class: 'mp-mt-win ' + k }, el('i', null, 'Grupa'), el('span', null, 'Habiachi (41p)'), el('em', null, 'Rozwiąż grupę'));
-    return el('div', { class: 'mp-mt-stage' }, w);
+    const t = THEMES[k];
+    if (t.none) return el('div', { class: 'mp-mt-stage dom' }, el('div', { class: 'mp-mt-win domyslny' }, el('i', null, 'Grupa'), el('span', null, 'Habiachi (41p)'), el('em', null, 'Rozwiąż grupę')));
+    const st = el('div', { class: 'mp-mt-stage' });
+    st.style.background = t.panel; st.style.backgroundColor = t.panelC;
+    const w = el('div', { class: 'mp-mt-win' }, el('i', null, 'Grupa'), el('span', null, 'Habiachi (41p)'), el('em', null, 'Rozwiąż grupę'));
+    w.style.background = [...(t.orn ? corners(t.orn).map((x) => x.replace(/ no-repeat$/, ' / 16px 16px no-repeat')) : []), `linear-gradient(rgba(${t.win},.97),rgba(${t.win},.97))`].join(', ');
+    Object.assign(w.style, { border: `1px solid ${t.border}`, color: t.text, boxShadow: `0 0 10px ${t.glow}`, borderRadius: Math.min(t.radius || 3, 8) + 'px', fontFamily: t.font || 'Arial,sans-serif' });
+    Object.assign(w.querySelector('i').style, { color: t.head });
+    Object.assign(w.querySelector('em').style, { background: t.btn, color: t.btnText, border: `1px solid ${t.btnBorder}`, borderRadius: Math.min(t.radius || 3, 6) + 'px' });
+    st.appendChild(w);
+    return st;
   }
 
   defineAddon({
     id: 'motywnik', name: 'Motywnik', icon: 'motywnik', color: ['#ff7ad9', '#7c5cff'], renderFirst: true,
-    desc: 'Wygląd interfejsu gry: Klasyczny (bez zmian), Ciemny (czerń i grafit) albo Nowoczesny (klasyczny z lepszą czcionką i głębszymi kolorami). Możesz też wgrać własne style CSS. Mapa i postacie zostają bez zmian.',
-    defaults: { theme: 'klasyczny', custom: [], customOn: null },
+    desc: 'Wygląd całego interfejsu gry: ramy i panele, paski, okna, przyciski, menu, dymki i czat. Style: Domyślny (bez zmian), Obsydian, Wulkan, Królewski, Nowoczesny + własne style CSS. Mapa, postacie i ikonki przedmiotów zostają bez zmian.',
+    defaults: { theme: 'domyslny', custom: [], customOn: null },
     settings: [],
     render(box, c, rerender) {
       const grid = el('div', { class: 'mp-mt-grid' });
@@ -200,7 +283,7 @@ ${CHAT}{font-size:13px}
           el('button', { class: 'mp-btn bad', onclick: async () => { if (await MP.confirmBox({ title: `Usunąć „${s.name}"?`, okText: 'Usuń', danger: true })) { c.custom = c.custom.filter((x) => x.id !== s.id); if (c.customOn === s.id) c.customOn = null; config.save(); apply(); rerender(); } } }, 'Usuń')));
       });
       const ownCard = el('div', { class: 'mp-card' }, el('h3', null, 'Własne style'),
-        (c.custom || []).length ? list : el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Wklej CSS poniżej albo wczytaj plik .css. Własny styl działa razem z wybranym stylem (wybierz Klasyczny, żeby był jedyny).'),
+        (c.custom || []).length ? list : el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Wklej CSS poniżej albo wczytaj plik .css. Własny styl działa razem z wybranym stylem (wybierz Domyślny, żeby był jedyny).'),
         ta,
         el('div', { class: 'mp-btns' },
           el('button', { class: 'mp-btn', title: 'Pokaż na 8 sekund bez zapisywania', onclick: () => { if (!styleEl) apply(); styleEl.textContent += '\n' + ta.value; toast('Motywnik: podgląd przez 8 sekund'); setTimeout(() => apply(), 8000); } }, 'Podgląd'),
@@ -216,7 +299,7 @@ ${CHAT}{font-size:13px}
     },
     init(c) {
       cfg = c;
-      if (!c._v24) { c._v24 = true; if (!THEMES[c.theme]) c.theme = 'klasyczny'; ['bright', 'sat', 'alpha', 'radius', 'fonts'].forEach((k) => delete c[k]); config.save(); }
+      if (!c._v25) { c._v25 = true; c.theme = ALIAS[c.theme] || (THEMES[c.theme] ? c.theme : 'domyslny'); ['bright', 'sat', 'alpha', 'radius', 'fonts'].forEach((k) => delete c[k]); config.save(); }
       bus.on('popup:shown', (labels) => tagMenu(labels));
       apply();
       MP.motywnik = { apply, THEMES };
