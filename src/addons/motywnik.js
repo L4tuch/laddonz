@@ -131,7 +131,7 @@ ${emblem(t, 20, 49, 3.2)}${emblem(t, 322, 49, 3.2)}
     let hue = 0;
     if (d) hue = mx === r ? 60 * (((g - b) / d) % 6) : mx === g ? 60 * ((b - r) / d + 2) : 60 * ((r - g) / d + 4);
     if (hue < 0) hue += 360;
-    if (s < 0.12) return hud ? 'grayscale(1) brightness(.62) contrast(1.15)' : 'grayscale(1) brightness(.85) contrast(1.08)';
+    if (s < 0.12) return hud ? 'grayscale(1) brightness(.68) contrast(1.12)' : 'grayscale(1) brightness(.85) contrast(1.08)';
     return `grayscale(1) sepia(1) hue-rotate(${Math.round(hue - 38)}deg) saturate(${(1 + s * 1.6).toFixed(2)}) brightness(${((hud ? 0.68 : 0.85) + l * (hud ? 0.3 : 0.45)).toFixed(2)})`;
   };
   // powierzchnia panelu: boczne pasy 11 px (gui/middle_graphics.png 0 11 fill)
@@ -178,7 +178,7 @@ ${IL} .top.positioner > .bg{background:${railH(t, true)} 0 100% / 96px 5px repea
 ${IL} .bottom.positioner > .bg{background:${railH(t, false)} 0 0 / 96px 5px repeat-x, linear-gradient(${t.bg0},${t.bg1})!important}
 /* metal wokół kuli HP, ramki pasków doświadczenia i wskaźników — ten sam rysunek, barwa metalu stylu */
 .bottom-panel .bottom-panel-graphic, .bottom-panel .hp-indicator-wrapper > .glass, .bottom-panel .exp-progress > .overlay, .bottom-panel .pointer-exp-graphic, .bottom-panel .pointer-ttl-graphic{filter:${metalFilter(t)}!important}
-.mt-hud-bg{background:${hudSvg(t)} 0 0 / 100% 100% no-repeat!important;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6)) drop-shadow(0 0 8px ${t.glow})!important}
+.mt-hud-bg{filter:${metalFilter(t, true)}!important}
 .bottom-panel .exp-progress .progress > .inner{background:linear-gradient(#0b0b0d 0%, ${t.a2} 22%, ${t.a1} 50%, ${t.a2} 70%, #0b0b0d 100%)!important}
 .skill-usable-slot[class*="interface-element-one-item-slot"]{background-color:${t.bg0}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 0 6px rgba(0,0,0,.6)!important}
 /* ozdoby wokół HP, panel szybkich umiejętności i HUD na górze — grafiki gry bez zmian (żadnych prostokątów wokół) */
@@ -214,7 +214,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .interface-element-bottom-bar-background-stretch, [class*="interface-element-header-1"]{border-image-source:${bar(t)}!important}
 [class*="interface-element-header-3"], .opt-header{background:linear-gradient(${t.bg2},${t.bg1})!important;color:${t.text}!important;box-shadow:inset 0 -1px 0 ${t.line}!important}
 .interface-element-active-card-background-stretch, .interface-element-active-card-border-image{border-image-source:${card(t, true)}!important}
-.interface-element-green-box-background{background:linear-gradient(90deg,${t.bg0},${t.bg2} 12%,${t.bg2} 88%,${t.bg0})!important;box-shadow:inset 0 0 0 1px ${t.line}!important}
+.interface-element-green-box-background{background:radial-gradient(ellipse 80% 70% at 50% 0, ${t.glow}, transparent 75%), linear-gradient(${t.bg2},${t.bg0})!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 1px 0 ${t.m[0]}26!important}
 .c-window:not(.transparent) > .content{background:radial-gradient(ellipse 70% 140px at 50% 0, ${t.glow}, transparent 70%), linear-gradient(${t.bg2}, ${t.bg1} 140px)!important;background-color:${t.bg1}!important}
 
 /* — drewniane nagłówki tabel i belki gry → metalowa płyta w kolorach stylu — */
@@ -229,8 +229,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window .table-header-wrapper{box-shadow:inset 0 -1px 0 ${t.m[2]}!important}
 
 /* — zakładki — */
-.tabs-nav .card{background:linear-gradient(${t.bg1},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
-.tabs-nav .card.active{background:linear-gradient(${t.bg2},${t.bg1})!important;color:${t.text}!important;box-shadow:inset 0 0 0 1px ${t.line},inset 0 -2px 0 ${t.a1},0 0 10px ${t.glow}!important}
+.tabs-nav .card{background:linear-gradient(${t.bg2},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 1px 0 ${t.m[0]}1f!important;text-shadow:0 1px 1px #000!important}
+.tabs-nav .card:hover{color:${t.text}!important;box-shadow:inset 0 0 0 1px ${t.line},inset 0 1px 0 ${t.m[0]}2e!important}
+.tabs-nav .card.active{background:linear-gradient(${t.bg2},${t.bg1})!important;color:${t.text}!important;box-shadow:inset 0 0 0 1px ${t.a1}99,inset 0 1px 0 ${t.m[0]}33,inset 0 0 12px ${t.glow}!important}
+/* środek kart i przycisków list: bez dodatkowych teł (żadnych jaśniejszych prostokątów w środku) */
+.tabs-nav .card :is(.mt-b0,.mt-b1,.mt-b2,.mt-bov), .tabs-nav .card .bck, .tabs-nav .card .bck-wrapper{background-color:transparent!important;background-image:none!important;box-shadow:none!important}
+/* drewniana przegroda między kolumnami → metalowa listwa */
+.c-window .interface-element-vertical-wood, .c-window .divide-wood{background:${railV(t)} center top / 10px 96px repeat-y!important;border-image:none!important}
 
 /* — przyciski gry (zielone / fioletowe / czerwone / niebieskie) — */
 .button.green, .button.small.green{${btnMain}}
@@ -322,8 +327,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         if (t && t.a > 0.02 && t.s < 0.2) {
           if (t.a < 0.5) n.classList.add('mt-bov');
           else if (t.l < 0.09) n.classList.add('mt-b0');
-          else if (t.l < 0.2) n.classList.add('mt-b1');
-          else n.classList.add('mt-b2');
+          else n.classList.add('mt-b1');
         }
       }
     }
