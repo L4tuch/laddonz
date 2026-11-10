@@ -339,6 +339,7 @@ function copyReport() {
       bledyStrony: store.get('errlog', []),
       ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,
       pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
+      szybka: MP.szybka ? MP.szybka.debug() : null,
     };
   } catch (e) { r.blad = String(e); }
   const txt = JSON.stringify(r, null, 1);

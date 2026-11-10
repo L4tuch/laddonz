@@ -8,7 +8,22 @@
 (() => {
   const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
   const RETRY_MS = 600;       // jak często ponawiać atak na namierzony cel w zasięgu
-  const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, lock: null, timer: null };
+  const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, lock: null, timer: null, said: {} };
+  /** Komunikat o danym graczu najwyżej raz na `ms` (żeby nie zasypać ekranu przy ponawianiu). */
+  const say = (key, msg, ms = 15000, type = 'warn') => { const t = now(); if (S.said[key] > t) return; S.said[key] = t + ms; toast(msg, type); };
+  /** Tekst odpowiedzi serwera (ostrzeżenie/komunikat), jeśli jest. */
+  function respText(d) {
+    if (!d) return '';
+    const out = [];
+    const walk = (v, depth) => {
+      if (depth > 3 || v == null) return;
+      if (typeof v === 'string') { if (/[a-ząćęłńóśźż]{3}/i.test(v) && v.length < 200 && v !== 'ok') out.push(v); return; }
+      if (Array.isArray(v)) v.forEach((x) => walk(x, depth + 1));
+      else if (typeof v === 'object') for (const k of ['w', 'alert', 'msg', 'm', 'e', 'message', 'text', 'info']) if (k in v) walk(v[k], depth + 1);
+    };
+    walk(d, 0);
+    return out.join(' ').replace(/<[^>]+>/g, '').trim();
+  }
   let cfg;
 
   const dist = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
@@ -27,17 +42,22 @@
     const r = await net.send('attackPlayer', { id: p.id }, {
       src: 'Dobijarka',
       onResponse: (data) => {
-        // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko
+        // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
-        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na/i.test(txt)) {
+        const said = respText(data);
+        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) {
           S.refused[p.id] = now() + 30000;
+          say('ref' + p.id, `Dobijarka: ${p.nick} — ${said || 'nie zgadza się na walkę'}`, 30000);
           return;   // cel zostaje zapamiętany — spróbujemy znowu za 30 s
         }
         const sec = parseProtection(data);
         if (sec) {
           S.protectedUntil[p.id] = now() + sec * 1000;
-          if (S.lock && S.lock.id === p.id) toast(`Dobijarka: ${p.nick} ma ochronę jeszcze ${sec} s — zaatakuję, gdy minie`);
+          say('prot' + p.id, `Dobijarka: ${p.nick} ma ochronę jeszcze ${sec} s — zaatakuję, gdy minie`, sec * 1000);
+          return;
         }
+        // każdy inny komunikat gry przy ataku (np. „Nie możesz atakować na tej mapie") — pokazujemy
+        if (said && !game.inBattle()) say('msg' + p.id + said, `Dobijarka: ${p.nick} — ${said}`, 20000);
       },
     });
     return r.ok;
@@ -97,6 +117,7 @@
       const p = lockedPlayer();
       if (!p && !cfg.remember) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
+      if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Dobijarka: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
       if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now())) { attack(p); return; }
       if (p) return;              // cel jest na mapie, ale daleko — czekamy
       // celu nie ma na mapie — w międzyczasie (gdy włączona) atakuje innych w zasięgu
@@ -104,6 +125,7 @@
     // 2) dodatek włączony → każdy w zasięgu
     if (!cfg.enabled) return;
     const t = now();
+    for (const p of game.others()) if (dist(h, p) <= RANGE && inLvl(p) && !allowed(p)) say('br' + p.id, `Dobijarka: pomijam ${p.nick} — chroniony przez Bratana`, 120000, 'info');
     const c = game.others()
       .filter((p) => dist(h, p) <= RANGE && inLvl(p) && allowed(p) && !(S.tried[p.id] > t - 2500) && !(S.refused[p.id] > t))
       .sort((a, b) => dist(h, a) - dist(h, b));

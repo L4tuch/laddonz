@@ -164,7 +164,43 @@
  */
 (() => {
   let cfg;
-  const S = { disbandArmed: false };
+  const S = { disbandArmed: false, set: null };
+
+  /*
+   * Zmiana zestawu po walce: w trakcie walki kliknięcie numeru zestawu przy ekwipunku nie zmienia go od razu
+   * (gra i tak nie pozwala) — zapamiętujemy wybór i zaraz po walce klikamy ten numer za Ciebie.
+   */
+  const SET_ANC = '[class*="set"], [class*="zestaw"], [class*="Set"]';
+  function setButtonFrom(t) {
+    if (!t || !t.closest || t.closest('.mp-glass, #mp-qbar, #mp-qpop')) return null;
+    let btn = t;
+    for (let i = 0; i < 3 && btn && !/^\s*\d\s*$/.test(btn.textContent || ''); i++) btn = btn.parentElement;
+    if (!btn || !/^\s*\d\s*$/.test(btn.textContent || '')) return null;
+    if (!btn.closest(SET_ANC)) return null;
+    return { el: btn, num: (btn.textContent || '').trim(), cls: String(btn.className || '') };
+  }
+  function findSetEl(s) {
+    if (s.el && s.el.isConnected) return s.el;
+    const sel = s.cls ? '.' + s.cls.trim().split(/\s+/).filter((c) => !/^mp-/.test(c)).join('.') : null;
+    const cands = sel ? $$(sel) : $$(SET_ANC + ' *');
+    return cands.find((n) => (n.textContent || '').trim() === s.num) || null;
+  }
+  function markSet(on) {
+    $$('.mp-setq').forEach((n) => n.classList.remove('mp-setq'));
+    if (on && S.set) { const e = findSetEl(S.set); if (e) e.classList.add('mp-setq'); }
+  }
+  function hookSets() {
+    document.addEventListener('click', (e) => {
+      if (!cfg.enabled) return;
+      const b = setButtonFrom(e.target);
+      S.lastClick = b ? b.cls : (e.target && String(e.target.className || '')).slice(0, 80);
+      if (!b || !game.inBattle()) return;
+      e.preventDefault(); e.stopPropagation();
+      if (S.set && S.set.num === b.num) { S.set = null; markSet(false); toast('Szybka Rączka: anulowano zmianę zestawu po walce'); return; }
+      S.set = b; markSet(true);
+      toast(`Szybka Rączka: po walce zmienię zestaw na ${b.num}`);
+    }, true);
+  }
 
   function queued(id) { return cfg.queue.find((q) => q.id === Number(id)); }
   function toggleQueue(id) {
@@ -190,6 +226,13 @@
     try {
       // najpierw rozwiązanie grupy (nie zmienia mapy), potem przedmioty — teleporty na końcu
       if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka', urgent: true }); }
+      // zmiana zestawu — kliknięcie numeru zestawu tak jak gracz (przed użyciem przedmiotów)
+      if (S.set) {
+        const s = S.set; S.set = null; markSet(false);
+        let el2 = null;
+        for (let t = 0; t < 10 && !(el2 = findSetEl(s)); t++) await sleep(100);
+        if (el2) { el2.click(); await sleep(250); } else toast('Szybka Rączka: nie znalazłam przycisku zestawu ' + s.num, 'warn');
+      }
       const items = cfg.queue.slice().sort((a, b) => a.tp - b.tp);
       for (const q of items) {
         cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
@@ -229,7 +272,7 @@
 
   defineAddon({
     id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
-    desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".',
+    desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". W trakcie walki kliknij numer zestawu przy ekwipunku — zestaw zmieni się zaraz po walce (ponowne kliknięcie anuluje).',
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
       { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
@@ -252,7 +295,9 @@
       });
       itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka Rączka: zostanie użyty po walce' } : null));
       // od razu po zakończeniu walki
-      bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0)) runQueue(); });
+      hookSets();
+      MP.szybka = { debug: () => ({ zestawWKolejce: S.set && { num: S.set.num, cls: S.set.cls }, ostatniKlik: S.lastClick }) };
+      bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0) + (S.set ? 1 : 0)) runQueue(); });
       if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
       hookPartyIcon();
     },

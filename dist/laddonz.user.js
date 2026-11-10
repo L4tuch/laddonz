@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      2.0.0
+// @version      2.0.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1080,6 +1080,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-btn[disabled]{opacity:.45;pointer-events:none}
 .mp-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .mp-upslot{padding:10px}
+.mp-setq{outline:2px solid var(--mp-accent)!important;outline-offset:1px;border-radius:3px;box-shadow:0 0 8px var(--mp-accent)!important}
 .mp-rar{display:inline-block;font-size:10.5px;padding:0 6px;border-radius:6px;margin-left:4px;background:rgba(255,255,255,.1)}
 .mp-rar.unique{background:#c9a21a33;color:#ffd75e}.mp-rar.heroic{background:#2f7bff33;color:#7fb2ff}.mp-rar.legendary{background:#ff7a1a33;color:#ffa45e}.mp-rar.upgraded{background:#c94cff33;color:#e19bff}.mp-rar.common{color:#ddd}
 .mp-upbar{height:4px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:5px;overflow:hidden}.mp-upbar i{display:block;height:100%;background:var(--mp-accent)}
@@ -2108,6 +2109,7 @@ function copyReport() {
       bledyStrony: store.get('errlog', []),
       ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,
       pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
+      szybka: MP.szybka ? MP.szybka.debug() : null,
     };
   } catch (e) { r.blad = String(e); }
   const txt = JSON.stringify(r, null, 1);
@@ -2387,7 +2389,22 @@ function parseProtection(data) {
 (() => {
   const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
   const RETRY_MS = 600;       // jak często ponawiać atak na namierzony cel w zasięgu
-  const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, lock: null, timer: null };
+  const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, lock: null, timer: null, said: {} };
+  /** Komunikat o danym graczu najwyżej raz na `ms` (żeby nie zasypać ekranu przy ponawianiu). */
+  const say = (key, msg, ms = 15000, type = 'warn') => { const t = now(); if (S.said[key] > t) return; S.said[key] = t + ms; toast(msg, type); };
+  /** Tekst odpowiedzi serwera (ostrzeżenie/komunikat), jeśli jest. */
+  function respText(d) {
+    if (!d) return '';
+    const out = [];
+    const walk = (v, depth) => {
+      if (depth > 3 || v == null) return;
+      if (typeof v === 'string') { if (/[a-ząćęłńóśźż]{3}/i.test(v) && v.length < 200 && v !== 'ok') out.push(v); return; }
+      if (Array.isArray(v)) v.forEach((x) => walk(x, depth + 1));
+      else if (typeof v === 'object') for (const k of ['w', 'alert', 'msg', 'm', 'e', 'message', 'text', 'info']) if (k in v) walk(v[k], depth + 1);
+    };
+    walk(d, 0);
+    return out.join(' ').replace(/<[^>]+>/g, '').trim();
+  }
   let cfg;
 
   const dist = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
@@ -2406,17 +2423,22 @@ function parseProtection(data) {
     const r = await net.send('attackPlayer', { id: p.id }, {
       src: 'Dobijarka',
       onResponse: (data) => {
-        // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko
+        // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
-        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na/i.test(txt)) {
+        const said = respText(data);
+        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) {
           S.refused[p.id] = now() + 30000;
+          say('ref' + p.id, `Dobijarka: ${p.nick} — ${said || 'nie zgadza się na walkę'}`, 30000);
           return;   // cel zostaje zapamiętany — spróbujemy znowu za 30 s
         }
         const sec = parseProtection(data);
         if (sec) {
           S.protectedUntil[p.id] = now() + sec * 1000;
-          if (S.lock && S.lock.id === p.id) toast(`Dobijarka: ${p.nick} ma ochronę jeszcze ${sec} s — zaatakuję, gdy minie`);
+          say('prot' + p.id, `Dobijarka: ${p.nick} ma ochronę jeszcze ${sec} s — zaatakuję, gdy minie`, sec * 1000);
+          return;
         }
+        // każdy inny komunikat gry przy ataku (np. „Nie możesz atakować na tej mapie") — pokazujemy
+        if (said && !game.inBattle()) say('msg' + p.id + said, `Dobijarka: ${p.nick} — ${said}`, 20000);
       },
     });
     return r.ok;
@@ -2476,6 +2498,7 @@ function parseProtection(data) {
       const p = lockedPlayer();
       if (!p && !cfg.remember) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
+      if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Dobijarka: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
       if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now())) { attack(p); return; }
       if (p) return;              // cel jest na mapie, ale daleko — czekamy
       // celu nie ma na mapie — w międzyczasie (gdy włączona) atakuje innych w zasięgu
@@ -2483,6 +2506,7 @@ function parseProtection(data) {
     // 2) dodatek włączony → każdy w zasięgu
     if (!cfg.enabled) return;
     const t = now();
+    for (const p of game.others()) if (dist(h, p) <= RANGE && inLvl(p) && !allowed(p)) say('br' + p.id, `Dobijarka: pomijam ${p.nick} — chroniony przez Bratana`, 120000, 'info');
     const c = game.others()
       .filter((p) => dist(h, p) <= RANGE && inLvl(p) && allowed(p) && !(S.tried[p.id] > t - 2500) && !(S.refused[p.id] > t))
       .sort((a, b) => dist(h, a) - dist(h, b));
@@ -4036,7 +4060,43 @@ MP.itemDeco = itemDeco;
  */
 (() => {
   let cfg;
-  const S = { disbandArmed: false };
+  const S = { disbandArmed: false, set: null };
+
+  /*
+   * Zmiana zestawu po walce: w trakcie walki kliknięcie numeru zestawu przy ekwipunku nie zmienia go od razu
+   * (gra i tak nie pozwala) — zapamiętujemy wybór i zaraz po walce klikamy ten numer za Ciebie.
+   */
+  const SET_ANC = '[class*="set"], [class*="zestaw"], [class*="Set"]';
+  function setButtonFrom(t) {
+    if (!t || !t.closest || t.closest('.mp-glass, #mp-qbar, #mp-qpop')) return null;
+    let btn = t;
+    for (let i = 0; i < 3 && btn && !/^\s*\d\s*$/.test(btn.textContent || ''); i++) btn = btn.parentElement;
+    if (!btn || !/^\s*\d\s*$/.test(btn.textContent || '')) return null;
+    if (!btn.closest(SET_ANC)) return null;
+    return { el: btn, num: (btn.textContent || '').trim(), cls: String(btn.className || '') };
+  }
+  function findSetEl(s) {
+    if (s.el && s.el.isConnected) return s.el;
+    const sel = s.cls ? '.' + s.cls.trim().split(/\s+/).filter((c) => !/^mp-/.test(c)).join('.') : null;
+    const cands = sel ? $$(sel) : $$(SET_ANC + ' *');
+    return cands.find((n) => (n.textContent || '').trim() === s.num) || null;
+  }
+  function markSet(on) {
+    $$('.mp-setq').forEach((n) => n.classList.remove('mp-setq'));
+    if (on && S.set) { const e = findSetEl(S.set); if (e) e.classList.add('mp-setq'); }
+  }
+  function hookSets() {
+    document.addEventListener('click', (e) => {
+      if (!cfg.enabled) return;
+      const b = setButtonFrom(e.target);
+      S.lastClick = b ? b.cls : (e.target && String(e.target.className || '')).slice(0, 80);
+      if (!b || !game.inBattle()) return;
+      e.preventDefault(); e.stopPropagation();
+      if (S.set && S.set.num === b.num) { S.set = null; markSet(false); toast('Szybka Rączka: anulowano zmianę zestawu po walce'); return; }
+      S.set = b; markSet(true);
+      toast(`Szybka Rączka: po walce zmienię zestaw na ${b.num}`);
+    }, true);
+  }
 
   function queued(id) { return cfg.queue.find((q) => q.id === Number(id)); }
   function toggleQueue(id) {
@@ -4062,6 +4122,13 @@ MP.itemDeco = itemDeco;
     try {
       // najpierw rozwiązanie grupy (nie zmienia mapy), potem przedmioty — teleporty na końcu
       if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka', urgent: true }); }
+      // zmiana zestawu — kliknięcie numeru zestawu tak jak gracz (przed użyciem przedmiotów)
+      if (S.set) {
+        const s = S.set; S.set = null; markSet(false);
+        let el2 = null;
+        for (let t = 0; t < 10 && !(el2 = findSetEl(s)); t++) await sleep(100);
+        if (el2) { el2.click(); await sleep(250); } else toast('Szybka Rączka: nie znalazłam przycisku zestawu ' + s.num, 'warn');
+      }
       const items = cfg.queue.slice().sort((a, b) => a.tp - b.tp);
       for (const q of items) {
         cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
@@ -4101,7 +4168,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
-    desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".',
+    desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". W trakcie walki kliknij numer zestawu przy ekwipunku — zestaw zmieni się zaraz po walce (ponowne kliknięcie anuluje).',
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
       { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
@@ -4124,7 +4191,9 @@ MP.itemDeco = itemDeco;
       });
       itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka Rączka: zostanie użyty po walce' } : null));
       // od razu po zakończeniu walki
-      bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0)) runQueue(); });
+      hookSets();
+      MP.szybka = { debug: () => ({ zestawWKolejce: S.set && { num: S.set.num, cls: S.set.cls }, ostatniKlik: S.lastClick }) };
+      bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0) + (S.set ? 1 : 0)) runQueue(); });
       if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
       hookPartyIcon();
     },
@@ -4824,5 +4893,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "2.0.0";
+MP.version = "2.0.1";
 })();
