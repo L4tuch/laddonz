@@ -25,6 +25,19 @@
     if (p.isEnemyTagged) return true;
     return !!cfg.neutral;                                     // brak relacji — „random"
   }
+  /** Komunikat gry w wybranym kolorze (tylko ten komunikat, inne zostają bez zmian). */
+  function notify(text) {
+    toast(text, 'warn', 5000);
+    const paint = () => {
+      const n = $$('.big-messages .message, .message, .mp-toast').reverse().find((x) => (x.textContent || '').trim() === text && !x.__mpWr);
+      if (!n) return false;
+      n.__mpWr = true;
+      n.style.setProperty('color', cfg.color || '#ff4b3e', 'important');
+      $$('*', n).forEach((c) => c.style.setProperty('color', cfg.color || '#ff4b3e', 'important'));
+      return true;
+    };
+    if (!paint()) { requestAnimationFrame(() => { if (!paint()) setTimeout(paint, 60); }); }
+  }
   function tick() {
     if (!cfg.enabled || !game.ready()) return;
     const m = game.mapInfo();
@@ -42,25 +55,27 @@
       told.set(p.id, t);
       fresh.push(p);
     }
-    fresh.slice(0, 5).forEach((p) => toast(`Wróg na mapie: ${p.nick}${cfg.showLvl ? ` (${p.lvl}${p.prof || ''})` : ''}`, 'warn', 5000));
-    if (fresh.length > 5) toast(`Wrogów na mapie: jeszcze ${fresh.length - 5}`, 'warn', 5000);
+    fresh.slice(0, 5).forEach((p) => notify(`Wróg na mapie: ${p.nick}${cfg.showLvl ? ` (${p.lvl}${p.prof || ''})` : ''}${p.clanName ? ` [${p.clanName}]` : ''}`));
+    if (fresh.length > 5) notify(`Wrogów na mapie: jeszcze ${fresh.length - 5}`);
   }
 
   defineAddon({
     id: 'wrogowie', name: 'Wrogowie na mapie', icon: 'wrogowie', color: ['#ff6a5c', '#c0392b'],
-    desc: 'Na czerwonych mapach pokazuje komunikat „Wróg na mapie: Nick", gdy pojawi się wróg. Znajomi, klan, sojusznicy, grupa i gracze z listy Bratana nigdy nie są zgłaszani.',
-    defaults: { personal: true, enemyClans: true, neutral: false, showLvl: false, pvpCodes: [2] },
+    desc: 'Na czerwonych mapach pokazuje komunikat „Wróg na mapie: Nick [Klan]", gdy pojawi się wróg. Znajomi, klan, sojusznicy, grupa i gracze z listy Bratana nigdy nie są zgłaszani.',
+    defaults: { personal: true, enemyClans: true, neutral: false, showLvl: false, pvpCodes: [2], color: '#ff4b3e' },
     settings: [
       { key: 'enemyClans', type: 'bool', label: 'Wrogie klany' },
       { key: 'personal', type: 'bool', label: 'Gracze oznaczeni jako wrogowie' },
       { key: 'neutral', type: 'bool', label: 'Gracze neutralni (bez relacji) też jako wrogowie' },
       { key: 'showLvl', type: 'bool', label: 'Pokazuj poziom i profesję przy nicku' },
+      { key: 'color', type: 'color', label: 'Kolor czcionki powiadomienia' },
     ],
     init(c) {
       cfg = c;
       timer = setInterval(tick, 1000);
       MP.wrogowie = { debug: () => ({ mapa: game.mapInfo(), czerwona: isRed() }) };
     },
+    onChange(k) { if (k === 'color') notify('Wróg na mapie: Przykład [Wrogi Klan]'); },
     onToggle(on) { if (on) { seen.clear(); told.clear(); mapId = 0; } },
   });
 })();

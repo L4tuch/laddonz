@@ -206,6 +206,7 @@ MP.itemDeco = itemDeco;
  */
 (() => {
   let cfg, cache = {}, tip = null, hoverId = null, lastReq = 0;
+  let forced = false;
   let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null, lastGrid = null, lastAnchorRect = null;
   const seenItems = new Map();      // dane przedmiotów/szablonów, które przeszły przez grę (id → obiekt, 'tpl:<nr>' → obiekt)
 
@@ -418,10 +419,13 @@ MP.itemDeco = itemDeco;
       } else dbg.noWindow = true;
     } catch (e) { console.warn('[L4Tools] showEq', e); dbg.error = String(e); }
     finally { off(); }
-    // zamykanie okna gry w tle — nie każemy czekać na podgląd
+    // zamykanie okna gry w tle — nie każemy czekać na podgląd.
+    // Okno gry zostaje ukryte, dopóki NAPRAWDĘ się nie zamknie (wcześniej czasem zostawało na środku ekranu:
+    // gdy serwer odpowiadał po czasie albo zamknięcie się nie udało).
     const userOpened = userEqClick >= t0 - 150;
-    if (w && !userOpened) closeGameWindow(w).finally(() => { hideCss.remove(); if (activeHide === hideCss) activeHide = null; });
-    else { hideCss.remove(); if (activeHide === hideCss) activeHide = null; }
+    const release = () => { hideCss.remove(); if (activeHide === hideCss) activeHide = null; };
+    if (userOpened) release();
+    else keepHiddenUntilClosed(w, hideCss, t0, release);
     MP.pokazEq.lastDebug = dbg;
     return items;
   }
@@ -430,8 +434,34 @@ MP.itemDeco = itemDeco;
   async function closeGameWindow(w) {
     for (const c of $$('.close-button, [class*="close-button"], .close, [class*="close"]', w)) {
       try { c.click(); } catch {}
-      for (let i = 0; i < 6; i++) { if (!shown(w)) return; await sleep(25); }
+      for (let i = 0; i < 6; i++) { if (!shown(w)) return true; await sleep(25); }
     }
+    // zapas: Escape (gra zamyka nim okna)
+    try { for (const t of [w, document]) t.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true })); } catch {}
+    for (let i = 0; i < 8; i++) { if (!shown(w)) return true; await sleep(25); }
+    return !shown(w);
+  }
+  /**
+   * Trzyma okno podglądu gry niewidoczne, aż się zamknie. Łapie też okno, które pojawi się PO czasie
+   * (wolna odpowiedź serwera). Twoje własne „Pokaż ekwipunek" zdejmuje ukrycie od razu.
+   */
+  function keepHiddenUntilClosed(w, hideCss, t0, release) {
+    const until = now() + 8000;
+    let closing = false;
+    const iv = setInterval(async () => {
+      if (userEqClick >= t0 - 150 || !hideCss.isConnected) { clearInterval(iv); release(); return; }
+      const win = (w && shown(w)) ? w : $$('.showeq-window').find((n) => shown(n));
+      if (!win) {
+        // okno zamknięte — chwilę jeszcze czekamy na ewentualne spóźnione otwarcie
+        if (now() > until || (w && now() - t0 > 1500)) { clearInterval(iv); release(); }
+        return;
+      }
+      if (closing) return;
+      closing = true;
+      await closeGameWindow(win);
+      closing = false;
+      if (now() > until + 7000) { clearInterval(iv); release(); }   // ostateczność
+    }, 120);
   }
 
   async function fetchEq(id) {
@@ -617,7 +647,7 @@ MP.itemDeco = itemDeco;
   }
 
   function watchHover() {
-    let mx = 0, my = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
+    let mx = 0, my = 0, rmx = 0, rmy = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
     const want = (id, from, anc) => {
       if (!cfg.enabled) return;
       if (from === 'map' && (!cfg.mapHover || (cfg.needShift && !shift))) return;
@@ -676,11 +706,23 @@ MP.itemDeco = itemDeco;
 
     let raf = 0;
     document.addEventListener('mousemove', (e) => {
-      mx = e.clientX; my = e.clientY; shift = e.shiftKey;
+      mx = e.clientX; my = e.clientY; rmx = mx; rmy = my; shift = e.shiftKey;
       if (!raf) raf = requestAnimationFrame(() => { raf = 0; mapCheck(); });
     }, true);
     document.addEventListener('mouseleave', () => { stop('map'); stop('list'); });
     new MutationObserver(debounce(mapCheck, 30)).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+
+    /* strażnik: podgląd nie może „zawisnąć" — gdy kursor nie jest już nad graczem, chowamy */
+    let lostSince = 0;
+    setInterval(() => {
+      if (!tip || tip.style.display === 'none' || forced) { lostSince = 0; return; }
+      let ok = false;
+      if (src === 'list') { const at = document.elementFromPoint(rmx, rmy); ok = !!(at && (listRow(at) || at.closest('#mp-eqtip'))); }
+      else if (src === 'map') ok = !!(tipNode && tipNode.isConnected && isVisible(tipNode));
+      if (ok) { lostSince = 0; return; }
+      if (!lostSince) lostSince = now();
+      else if (now() - lostSince > 500) { lostSince = 0; src = null; hide(); }
+    }, 250);
 
     /* zwykłe „Pokaż ekwipunek" z menu gry działa niezależnie: gdy go klikniesz, nie chowamy ani nie zamykamy okna gry */
     document.addEventListener('click', (e) => {
@@ -694,7 +736,7 @@ MP.itemDeco = itemDeco;
   }
 
   MP.pokazEq = {
-    showForce: (id, x, y) => { show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', hide, { once: true, capture: true }), 50); },
+    showForce: (id, x, y) => { forced = true; show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', () => { forced = false; hide(); }, { once: true, capture: true }), 50); },
     hide,
   };
 

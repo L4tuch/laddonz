@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      2.1.0
+// @version      2.1.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -3402,6 +3402,7 @@ MP.itemDeco = itemDeco;
  */
 (() => {
   let cfg, cache = {}, tip = null, hoverId = null, lastReq = 0;
+  let forced = false;
   let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null, lastGrid = null, lastAnchorRect = null;
   const seenItems = new Map();      // dane przedmiotów/szablonów, które przeszły przez grę (id → obiekt, 'tpl:<nr>' → obiekt)
 
@@ -3614,10 +3615,13 @@ MP.itemDeco = itemDeco;
       } else dbg.noWindow = true;
     } catch (e) { console.warn('[L4Tools] showEq', e); dbg.error = String(e); }
     finally { off(); }
-    // zamykanie okna gry w tle — nie każemy czekać na podgląd
+    // zamykanie okna gry w tle — nie każemy czekać na podgląd.
+    // Okno gry zostaje ukryte, dopóki NAPRAWDĘ się nie zamknie (wcześniej czasem zostawało na środku ekranu:
+    // gdy serwer odpowiadał po czasie albo zamknięcie się nie udało).
     const userOpened = userEqClick >= t0 - 150;
-    if (w && !userOpened) closeGameWindow(w).finally(() => { hideCss.remove(); if (activeHide === hideCss) activeHide = null; });
-    else { hideCss.remove(); if (activeHide === hideCss) activeHide = null; }
+    const release = () => { hideCss.remove(); if (activeHide === hideCss) activeHide = null; };
+    if (userOpened) release();
+    else keepHiddenUntilClosed(w, hideCss, t0, release);
     MP.pokazEq.lastDebug = dbg;
     return items;
   }
@@ -3626,8 +3630,34 @@ MP.itemDeco = itemDeco;
   async function closeGameWindow(w) {
     for (const c of $$('.close-button, [class*="close-button"], .close, [class*="close"]', w)) {
       try { c.click(); } catch {}
-      for (let i = 0; i < 6; i++) { if (!shown(w)) return; await sleep(25); }
+      for (let i = 0; i < 6; i++) { if (!shown(w)) return true; await sleep(25); }
     }
+    // zapas: Escape (gra zamyka nim okna)
+    try { for (const t of [w, document]) t.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true })); } catch {}
+    for (let i = 0; i < 8; i++) { if (!shown(w)) return true; await sleep(25); }
+    return !shown(w);
+  }
+  /**
+   * Trzyma okno podglądu gry niewidoczne, aż się zamknie. Łapie też okno, które pojawi się PO czasie
+   * (wolna odpowiedź serwera). Twoje własne „Pokaż ekwipunek" zdejmuje ukrycie od razu.
+   */
+  function keepHiddenUntilClosed(w, hideCss, t0, release) {
+    const until = now() + 8000;
+    let closing = false;
+    const iv = setInterval(async () => {
+      if (userEqClick >= t0 - 150 || !hideCss.isConnected) { clearInterval(iv); release(); return; }
+      const win = (w && shown(w)) ? w : $$('.showeq-window').find((n) => shown(n));
+      if (!win) {
+        // okno zamknięte — chwilę jeszcze czekamy na ewentualne spóźnione otwarcie
+        if (now() > until || (w && now() - t0 > 1500)) { clearInterval(iv); release(); }
+        return;
+      }
+      if (closing) return;
+      closing = true;
+      await closeGameWindow(win);
+      closing = false;
+      if (now() > until + 7000) { clearInterval(iv); release(); }   // ostateczność
+    }, 120);
   }
 
   async function fetchEq(id) {
@@ -3813,7 +3843,7 @@ MP.itemDeco = itemDeco;
   }
 
   function watchHover() {
-    let mx = 0, my = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
+    let mx = 0, my = 0, rmx = 0, rmy = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
     const want = (id, from, anc) => {
       if (!cfg.enabled) return;
       if (from === 'map' && (!cfg.mapHover || (cfg.needShift && !shift))) return;
@@ -3872,11 +3902,23 @@ MP.itemDeco = itemDeco;
 
     let raf = 0;
     document.addEventListener('mousemove', (e) => {
-      mx = e.clientX; my = e.clientY; shift = e.shiftKey;
+      mx = e.clientX; my = e.clientY; rmx = mx; rmy = my; shift = e.shiftKey;
       if (!raf) raf = requestAnimationFrame(() => { raf = 0; mapCheck(); });
     }, true);
     document.addEventListener('mouseleave', () => { stop('map'); stop('list'); });
     new MutationObserver(debounce(mapCheck, 30)).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+
+    /* strażnik: podgląd nie może „zawisnąć" — gdy kursor nie jest już nad graczem, chowamy */
+    let lostSince = 0;
+    setInterval(() => {
+      if (!tip || tip.style.display === 'none' || forced) { lostSince = 0; return; }
+      let ok = false;
+      if (src === 'list') { const at = document.elementFromPoint(rmx, rmy); ok = !!(at && (listRow(at) || at.closest('#mp-eqtip'))); }
+      else if (src === 'map') ok = !!(tipNode && tipNode.isConnected && isVisible(tipNode));
+      if (ok) { lostSince = 0; return; }
+      if (!lostSince) lostSince = now();
+      else if (now() - lostSince > 500) { lostSince = 0; src = null; hide(); }
+    }, 250);
 
     /* zwykłe „Pokaż ekwipunek" z menu gry działa niezależnie: gdy go klikniesz, nie chowamy ani nie zamykamy okna gry */
     document.addEventListener('click', (e) => {
@@ -3890,7 +3932,7 @@ MP.itemDeco = itemDeco;
   }
 
   MP.pokazEq = {
-    showForce: (id, x, y) => { show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', hide, { once: true, capture: true }), 50); },
+    showForce: (id, x, y) => { forced = true; show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', () => { forced = false; hide(); }, { once: true, capture: true }), 50); },
     hide,
   };
 
@@ -5029,6 +5071,19 @@ MP.itemDeco = itemDeco;
     if (p.isEnemyTagged) return true;
     return !!cfg.neutral;                                     // brak relacji — „random"
   }
+  /** Komunikat gry w wybranym kolorze (tylko ten komunikat, inne zostają bez zmian). */
+  function notify(text) {
+    toast(text, 'warn', 5000);
+    const paint = () => {
+      const n = $$('.big-messages .message, .message, .mp-toast').reverse().find((x) => (x.textContent || '').trim() === text && !x.__mpWr);
+      if (!n) return false;
+      n.__mpWr = true;
+      n.style.setProperty('color', cfg.color || '#ff4b3e', 'important');
+      $$('*', n).forEach((c) => c.style.setProperty('color', cfg.color || '#ff4b3e', 'important'));
+      return true;
+    };
+    if (!paint()) { requestAnimationFrame(() => { if (!paint()) setTimeout(paint, 60); }); }
+  }
   function tick() {
     if (!cfg.enabled || !game.ready()) return;
     const m = game.mapInfo();
@@ -5046,25 +5101,27 @@ MP.itemDeco = itemDeco;
       told.set(p.id, t);
       fresh.push(p);
     }
-    fresh.slice(0, 5).forEach((p) => toast(`Wróg na mapie: ${p.nick}${cfg.showLvl ? ` (${p.lvl}${p.prof || ''})` : ''}`, 'warn', 5000));
-    if (fresh.length > 5) toast(`Wrogów na mapie: jeszcze ${fresh.length - 5}`, 'warn', 5000);
+    fresh.slice(0, 5).forEach((p) => notify(`Wróg na mapie: ${p.nick}${cfg.showLvl ? ` (${p.lvl}${p.prof || ''})` : ''}${p.clanName ? ` [${p.clanName}]` : ''}`));
+    if (fresh.length > 5) notify(`Wrogów na mapie: jeszcze ${fresh.length - 5}`);
   }
 
   defineAddon({
     id: 'wrogowie', name: 'Wrogowie na mapie', icon: 'wrogowie', color: ['#ff6a5c', '#c0392b'],
-    desc: 'Na czerwonych mapach pokazuje komunikat „Wróg na mapie: Nick", gdy pojawi się wróg. Znajomi, klan, sojusznicy, grupa i gracze z listy Bratana nigdy nie są zgłaszani.',
-    defaults: { personal: true, enemyClans: true, neutral: false, showLvl: false, pvpCodes: [2] },
+    desc: 'Na czerwonych mapach pokazuje komunikat „Wróg na mapie: Nick [Klan]", gdy pojawi się wróg. Znajomi, klan, sojusznicy, grupa i gracze z listy Bratana nigdy nie są zgłaszani.',
+    defaults: { personal: true, enemyClans: true, neutral: false, showLvl: false, pvpCodes: [2], color: '#ff4b3e' },
     settings: [
       { key: 'enemyClans', type: 'bool', label: 'Wrogie klany' },
       { key: 'personal', type: 'bool', label: 'Gracze oznaczeni jako wrogowie' },
       { key: 'neutral', type: 'bool', label: 'Gracze neutralni (bez relacji) też jako wrogowie' },
       { key: 'showLvl', type: 'bool', label: 'Pokazuj poziom i profesję przy nicku' },
+      { key: 'color', type: 'color', label: 'Kolor czcionki powiadomienia' },
     ],
     init(c) {
       cfg = c;
       timer = setInterval(tick, 1000);
       MP.wrogowie = { debug: () => ({ mapa: game.mapInfo(), czerwona: isRed() }) };
     },
+    onChange(k) { if (k === 'color') notify('Wróg na mapie: Przykład [Wrogi Klan]'); },
     onToggle(on) { if (on) { seen.clear(); told.clear(); mapId = 0; } },
   });
 })();
@@ -5123,5 +5180,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "2.1.0";
+MP.version = "2.1.1";
 })();
