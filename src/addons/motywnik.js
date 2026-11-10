@@ -437,6 +437,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
   /* menu gry pod prawym przyciskiem (.popup-menu): ramka i każda pozycja w kolorach stylu */
   /* okno łupu: rozpoznawane po nagłówku „Łup…" — dostaje spokojniejszy, gładki wygląd */
+  const sized = new WeakSet();
   function tagLoot() {
     if (!active()) return;
     for (const w of $$('.c-window')) {
@@ -455,6 +456,19 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
           n = p;
         }
         if (n !== it) { n.classList.add('mt-lcard'); cards.add(n); if (it.parentElement !== n) it.parentElement.classList.add('mt-lslot'); }
+      }
+      // wymiary jak w klasycznym wyglądzie: mierzymy okienka bez stylu motywu i — jeśli coś się różni — przywracamy je
+      if (cards.size && !sized.has(w)) {
+        sized.add(w);
+        const list = [...cards];
+        styleEl.disabled = true;
+        const base = list.map((n) => n.getBoundingClientRect());
+        styleEl.disabled = false;
+        list.forEach((n, i) => {
+          const r = n.getBoundingClientRect();
+          if (Math.abs(r.width - base[i].width) > 1) { n.style.boxSizing = 'border-box'; n.style.width = base[i].width + 'px'; }
+          if (Math.abs(r.height - base[i].height) > 1) { n.style.boxSizing = 'border-box'; n.style.height = base[i].height + 'px'; }
+        });
       }
       // reszta teł w środku okna znika — zostaje jedno, spójne tło okna (żadnych pasów po bokach)
       for (const n of $$('*', c)) {

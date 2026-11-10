@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.3.4
+// @version      3.3.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1155,11 +1155,12 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-win.thor{animation:mpLgWinThor 1.6s infinite}
 @keyframes mpLgWin{0%,100%{filter:drop-shadow(0 0 6px var(--lgc))}50%{filter:drop-shadow(0 0 18px var(--lgc))}}
 @keyframes mpLgWinThor{0%,100%{filter:drop-shadow(0 0 6px #4f9dff)}7%{filter:drop-shadow(0 0 22px #cfe8ff)}10%{filter:drop-shadow(0 0 4px #4f9dff)}13%{filter:drop-shadow(0 0 16px #9fd0ff)}}
-.mp-lg-fake{position:fixed!important;left:50%!important;top:46%!important;transform:translate(-50%,-50%);z-index:900!important;pointer-events:none!important;box-sizing:border-box;min-width:300px;border-style:solid;border-width:32px 20px;display:block!important}
-.c-window.mp-lg-fake > .content{position:relative!important;inset:auto!important;padding:4px 0 8px;background-color:rgb(24,16,12)}
-.mp-lg-fake .header-label-positioner{position:absolute;left:0;right:0;top:-28px;display:flex;justify-content:center}
-.mp-lg-fake .header-label{position:relative;padding:4px 26px;min-width:60px;text-align:center;color:#e6d6bf}
-.mp-lg-fake .close-button-corner-decor{position:absolute;right:-20px;top:-32px;width:51px;height:52px}
+.mp-lg-fake{position:fixed!important;left:50%!important;top:46%!important;transform:translate(-50%,-50%);z-index:900!important;pointer-events:none!important}
+.mp-lg-fake:not(.mp-lg-fake-tpl){box-sizing:border-box;min-width:300px;border-style:solid;border-width:32px 20px;display:block!important}
+.c-window.mp-lg-fake:not(.mp-lg-fake-tpl) > .content{position:relative!important;inset:auto!important;padding:4px 0 8px;background-color:rgb(24,16,12)}
+.mp-lg-fake:not(.mp-lg-fake-tpl) .header-label-positioner{position:absolute;left:0;right:0;top:-28px;display:flex;justify-content:center}
+.mp-lg-fake:not(.mp-lg-fake-tpl) .header-label{position:relative;padding:4px 26px;min-width:60px;text-align:center;color:#e6d6bf}
+.mp-lg-fake:not(.mp-lg-fake-tpl) .close-button-corner-decor{position:absolute;right:-20px;top:-32px;width:51px;height:52px}
 .mp-lg-fake-b{display:flex;gap:6px;justify-content:center;padding:6px}
 .mp-lg-fake-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 6px 6px;border:1px solid #6b2a1a;background:#3a1a10;width:64px;box-sizing:border-box}
 .mp-lg-fake-slot{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background-color:#281d15;box-shadow:inset 0 0 0 1px #000}
@@ -2249,6 +2250,7 @@ function copyReport() {
       pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
       szybka: MP.szybka ? MP.szybka.debug() : null,
       wrogowie: MP.wrogowie ? MP.wrogowie.debug() : null,
+      oknoLupow: MP.legenda && MP.legenda.debug ? MP.legenda.debug() : null,
       klasyUI: (() => { const c = new Map(); document.querySelectorAll('body *').forEach((n) => { if (typeof n.className !== 'string' || n.closest('.mp-glass')) return; n.className.split(/\s+/).forEach((k) => k && !/^mp-|^mt-/.test(k) && c.set(k, (c.get(k) || 0) + 1)); }); return [...c].sort((a, b) => b[1] - a[1]).slice(0, 300).map(([k]) => k); })(),
     };
   } catch (e) { r.blad = String(e); }
@@ -5700,6 +5702,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
   /* menu gry pod prawym przyciskiem (.popup-menu): ramka i każda pozycja w kolorach stylu */
   /* okno łupu: rozpoznawane po nagłówku „Łup…" — dostaje spokojniejszy, gładki wygląd */
+  const sized = new WeakSet();
   function tagLoot() {
     if (!active()) return;
     for (const w of $$('.c-window')) {
@@ -5718,6 +5721,19 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
           n = p;
         }
         if (n !== it) { n.classList.add('mt-lcard'); cards.add(n); if (it.parentElement !== n) it.parentElement.classList.add('mt-lslot'); }
+      }
+      // wymiary jak w klasycznym wyglądzie: mierzymy okienka bez stylu motywu i — jeśli coś się różni — przywracamy je
+      if (cards.size && !sized.has(w)) {
+        sized.add(w);
+        const list = [...cards];
+        styleEl.disabled = true;
+        const base = list.map((n) => n.getBoundingClientRect());
+        styleEl.disabled = false;
+        list.forEach((n, i) => {
+          const r = n.getBoundingClientRect();
+          if (Math.abs(r.width - base[i].width) > 1) { n.style.boxSizing = 'border-box'; n.style.width = base[i].width + 'px'; }
+          if (Math.abs(r.height - base[i].height) > 1) { n.style.boxSizing = 'border-box'; n.style.height = base[i].height + 'px'; }
+        });
       }
       // reszta teł w środku okna znika — zostaje jedno, spójne tło okna (żadnych pasów po bokach)
       for (const n of $$('*', c)) {
@@ -6620,6 +6636,53 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
   /** Okno łupów do testu — zbudowane z tych samych elementów co okno gry, więc wygląda jak ono (także w Motywniku). */
   function fakeLoot() {
+    const tpl = store.get('legenda:lootTpl', null);
+    if (tpl && tpl.html) try { const f = fakeFromTpl(tpl); if (f) return f; } catch (e) { console.warn('[L4Tools] wzór okna łupów', e); }
+    return fakeBuilt();
+  }
+  function randomRars() {
+    const n = 2 + Math.floor(Math.random() * 3);
+    const rars = Array.from({ length: n }, () => ['common', 'common', 'unique', 'heroic', 'legendary'][Math.floor(Math.random() * 5)]);
+    if (!rars.includes('legendary')) rars[Math.floor(Math.random() * n)] = 'legendary';
+    return rars;
+  }
+  function testItem(r, bag) {
+    const pool = bag[r];
+    let it;
+    if (pool && pool.length) it = cloneItem(pool[Math.floor(Math.random() * pool.length)]);
+    else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1] } });
+    it.title = RAR[r][0];
+    if (r === 'legendary') it.dataset.mpLg = '1'; else delete it.dataset.mpLg;
+    return it;
+  }
+  /** Okno łupów z zapamiętanego wzoru gry: te same elementy i klasy, tylko inne przedmioty. */
+  function fakeFromTpl(tpl) {
+    const box = document.createElement('div'); box.innerHTML = tpl.html;
+    const f = box.firstElementChild; if (!f) return null;
+    const proto = f.querySelector('[data-mp-card]'); if (!proto) return null;
+    const holder = proto.parentElement;
+    $$('[data-mp-card]', f).forEach((c) => c.remove());
+    // inne okienka przedmiotów z wzoru (gdy było ich kilka) też wylatują
+    $$('.item', holder).forEach((x) => { let n = x; while (n.parentElement && n.parentElement !== holder) n = n.parentElement; n.remove(); });
+    const bag = bagByRarity();
+    for (const r of randomRars()) {
+      const card = proto.cloneNode(true); card.removeAttribute('data-mp-card');
+      card.querySelectorAll('.mp-lg-hl, .mp-lg-pop').forEach((x) => x.remove());
+      card.classList.remove('mt-lcard');
+      const old = card.querySelector('.item');
+      const it = testItem(r, bag);
+      if (old) { it.style.cssText = old.style.cssText; old.replaceWith(it); }
+      holder.appendChild(card);
+    }
+    f.querySelectorAll('.mp-lg-hl').forEach((x) => x.remove());
+    [f, ...f.querySelectorAll('[class*="mt-"]')].forEach((n) => [...n.classList].forEach((c) => { if (/^mt-/.test(c)) n.classList.remove(c); }));
+    f.classList.add('mp-lg-fake', 'mp-lg-fake-tpl');
+    f.style.left = f.style.top = ''; f.style.transform = '';
+    const par = tpl.parent && document.querySelector('.' + tpl.parent.trim().split(/\s+/).join('.'));
+    (par || document.querySelector('.alerts-layer') || document.body).appendChild(f);
+    return f;
+  }
+  function fakeBuilt() {
     const n = 3 + Math.floor(Math.random() * 3);
     const rars = Array.from({ length: n }, () => ['common', 'common', 'unique', 'heroic', 'legendary'][Math.floor(Math.random() * 5)]);
     if (!rars.includes('legendary')) rars[Math.floor(Math.random() * n)] = 'legendary';
@@ -6751,7 +6814,30 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     try { const raw = id && E() && E().items && E().items.getItemById && E().items.getItemById(id); if (raw && /rarity=legendary/.test(String(raw.stat || ''))) return true; } catch {}
     return false;
   }
+  /*
+   * Wzór okna łupów: gdy w grze pojawi się prawdziwe okno łupów, zapamiętujemy jego budowę (bez przedmiotów).
+   * Test buduje okno z tego wzoru — wygląda wtedy dokładnie jak okno gry (w każdym motywie i wymiarach).
+   */
+  let tplAt = 0;
+  function captureTpl(w) {
+    if (now() - tplAt < 60000 || w.closest('.mp-lg-fake')) return;
+    const items = $$('.item', w); if (!items.length) return;
+    tplAt = now();
+    try {
+      const card = cardOf(items[0]);
+      card.setAttribute('data-mp-card', '1');
+      const html = w.outerHTML;
+      card.removeAttribute('data-mp-card');
+      const r = w.getBoundingClientRect(), cr = card.getBoundingClientRect();
+      const mt = MP.motywnik && MP.motywnik.current && MP.motywnik.current();
+      const motyw = mt ? mt.name : 'Domyślny';
+      const sizes = Object.assign({}, store.get('legenda:lootSizes', {}), { [motyw]: { okno: [Math.round(r.width), Math.round(r.height)], okienko: [Math.round(cr.width), Math.round(cr.height)], n: items.length } });
+      store.set('legenda:lootSizes', sizes);
+      if (html.length < 120000) store.set('legenda:lootTpl', { html, parent: String((w.parentElement && w.parentElement.className) || ''), t: now() });
+    } catch {}
+  }
   function scanDom() {
+    for (const w of lootWindows()) captureTpl(w);
     if (!cfg.enabled) return;
     for (const w of lootWindows()) for (const it of $$('.item', w)) {
       if (it.dataset.mpLg) { if (!it.querySelector(':scope > .mp-lg-hl')) markItem(it); continue; }
@@ -6943,7 +7029,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       bus.on('data', onData);
       const scan = debounce(scanDom, 80);
       new MutationObserver(() => { if (cfg.enabled) scan(); }).observe(document.body, { childList: true, subtree: true });
-      MP.legenda = { play, stop: stopFx, STYLES, SOUND };
+      MP.legenda = { play, stop: stopFx, STYLES, SOUND, debug: () => { const t = store.get('legenda:lootTpl', null); return { rozmiary: store.get('legenda:lootSizes', {}), wzor: t ? t.html.slice(0, 9000) : null, rodzic: t && t.parent }; } };
     },
     onToggle(on) { if (!on) stopFx(); },
   });
@@ -7324,5 +7410,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.3.4";
+MP.version = "3.3.5";
 })();

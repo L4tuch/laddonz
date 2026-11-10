@@ -149,11 +149,12 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-win.thor{animation:mpLgWinThor 1.6s infinite}
 @keyframes mpLgWin{0%,100%{filter:drop-shadow(0 0 6px var(--lgc))}50%{filter:drop-shadow(0 0 18px var(--lgc))}}
 @keyframes mpLgWinThor{0%,100%{filter:drop-shadow(0 0 6px #4f9dff)}7%{filter:drop-shadow(0 0 22px #cfe8ff)}10%{filter:drop-shadow(0 0 4px #4f9dff)}13%{filter:drop-shadow(0 0 16px #9fd0ff)}}
-.mp-lg-fake{position:fixed!important;left:50%!important;top:46%!important;transform:translate(-50%,-50%);z-index:900!important;pointer-events:none!important;box-sizing:border-box;min-width:300px;border-style:solid;border-width:32px 20px;display:block!important}
-.c-window.mp-lg-fake > .content{position:relative!important;inset:auto!important;padding:4px 0 8px;background-color:rgb(24,16,12)}
-.mp-lg-fake .header-label-positioner{position:absolute;left:0;right:0;top:-28px;display:flex;justify-content:center}
-.mp-lg-fake .header-label{position:relative;padding:4px 26px;min-width:60px;text-align:center;color:#e6d6bf}
-.mp-lg-fake .close-button-corner-decor{position:absolute;right:-20px;top:-32px;width:51px;height:52px}
+.mp-lg-fake{position:fixed!important;left:50%!important;top:46%!important;transform:translate(-50%,-50%);z-index:900!important;pointer-events:none!important}
+.mp-lg-fake:not(.mp-lg-fake-tpl){box-sizing:border-box;min-width:300px;border-style:solid;border-width:32px 20px;display:block!important}
+.c-window.mp-lg-fake:not(.mp-lg-fake-tpl) > .content{position:relative!important;inset:auto!important;padding:4px 0 8px;background-color:rgb(24,16,12)}
+.mp-lg-fake:not(.mp-lg-fake-tpl) .header-label-positioner{position:absolute;left:0;right:0;top:-28px;display:flex;justify-content:center}
+.mp-lg-fake:not(.mp-lg-fake-tpl) .header-label{position:relative;padding:4px 26px;min-width:60px;text-align:center;color:#e6d6bf}
+.mp-lg-fake:not(.mp-lg-fake-tpl) .close-button-corner-decor{position:absolute;right:-20px;top:-32px;width:51px;height:52px}
 .mp-lg-fake-b{display:flex;gap:6px;justify-content:center;padding:6px}
 .mp-lg-fake-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 6px 6px;border:1px solid #6b2a1a;background:#3a1a10;width:64px;box-sizing:border-box}
 .mp-lg-fake-slot{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background-color:#281d15;box-shadow:inset 0 0 0 1px #000}
