@@ -183,11 +183,14 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 /* styl jak dymek gry: ciemne tło, szara ramka, wyśrodkowany nagłówek */
 #mp-eqtip.gamey{background:rgba(12,12,12,.93)!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:2px solid #5d5d5d!important;border-radius:3px;box-shadow:0 0 0 1px #000,0 4px 14px rgba(0,0,0,.6)!important;padding:6px 8px;font:12px/1.35 Arial,sans-serif;color:#e8e8e8;width:auto;min-width:200px}
 #mp-eqtip.gamey .mp-eqhead{display:none}
-.mp-eq-on .tip-wrapper.normal-tip:not(.mp-clone){clip-path:inset(0 0 100% 0)!important}
+.mp-eq-on .tip-wrapper.normal-tip{clip-path:inset(0 0 100% 0)!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+.mp-eq-on .tip-wrapper.normal-tip *{visibility:hidden!important}
 #mp-eqtip .mp-clone{text-align:center;position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:none!important;border:0!important;box-shadow:none!important;background:transparent!important;margin:0 0 4px!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;clip-path:none!important;max-width:none!important;width:auto!important;pointer-events:none!important}
 #mp-eqtip.gamey{max-width:360px}
 #mp-eqtip .mp-clone *{max-width:100%!important;position:static!important}
-#mp-eqtip .mp-eqhead2{text-align:center;margin-bottom:4px}
+#mp-eqtip .mp-eqhead2{text-align:center;margin-bottom:4px;line-height:1.35}
+#mp-eqtip .mp-eqhead2 .rank{color:#ff9a2e}
+#mp-eqtip .mp-eqhead2 .loot{text-align:right;color:#f2c94c;font-size:11px}
 #mp-eqtip .mp-eqhead2 .nick{border:1px solid #444;padding:1px 8px;font-weight:700}
 #mp-eqtip .mp-eqhead2 .clan{color:#d9c27a;margin-top:2px}
 #mp-eqtip .mp-eqbody{display:flex;align-items:center;justify-content:center;gap:10px;border-top:1px solid #3c3c3c;padding-top:6px}

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.6.1
+// @version      1.6.2
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -227,6 +227,18 @@ function legbonOf(it, st) {
   let v = st.legbon;
   try { if (!v && typeof it.issetLegbonStat === 'function' && it.issetLegbonStat()) v = it.getLegbonStat(); } catch {}
   if (v && typeof v === 'object') v = v.name || v.type || v[0] || Object.values(v)[0];
+  if (!v && String(st.rarity) === 'legendary') {
+    // brak kodu w statystykach — nazwa bonusu z opisu przedmiotu (tooltip gry)
+    try {
+      const f = it.getTipContent || it.getTipData;
+      if (typeof f === 'function') {
+        let t = f.call(it); if (t && typeof t === 'object') t = JSON.stringify(t);
+        const txt = String(t || '').replace(/<[^>]+>/g, ' ');
+        const m = txt.match(/(Cios bardzo krytyczny|Dotyk anioła|Klątwa|Oślepienie|Ostatni ratunek|Krytyczna osłona|Fasada opieki|Płomienne oczyszczenie|Krwawa udręka|Przeszywająca skuteczność)/i);
+        if (m) v = m[1];
+      }
+    } catch {}
+  }
   return v ? String(v).split(/[,|]/)[0].trim() : null;
 }
 
@@ -1059,11 +1071,14 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 /* styl jak dymek gry: ciemne tło, szara ramka, wyśrodkowany nagłówek */
 #mp-eqtip.gamey{background:rgba(12,12,12,.93)!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:2px solid #5d5d5d!important;border-radius:3px;box-shadow:0 0 0 1px #000,0 4px 14px rgba(0,0,0,.6)!important;padding:6px 8px;font:12px/1.35 Arial,sans-serif;color:#e8e8e8;width:auto;min-width:200px}
 #mp-eqtip.gamey .mp-eqhead{display:none}
-.mp-eq-on .tip-wrapper.normal-tip:not(.mp-clone){clip-path:inset(0 0 100% 0)!important}
+.mp-eq-on .tip-wrapper.normal-tip{clip-path:inset(0 0 100% 0)!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+.mp-eq-on .tip-wrapper.normal-tip *{visibility:hidden!important}
 #mp-eqtip .mp-clone{text-align:center;position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:none!important;border:0!important;box-shadow:none!important;background:transparent!important;margin:0 0 4px!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;clip-path:none!important;max-width:none!important;width:auto!important;pointer-events:none!important}
 #mp-eqtip.gamey{max-width:360px}
 #mp-eqtip .mp-clone *{max-width:100%!important;position:static!important}
-#mp-eqtip .mp-eqhead2{text-align:center;margin-bottom:4px}
+#mp-eqtip .mp-eqhead2{text-align:center;margin-bottom:4px;line-height:1.35}
+#mp-eqtip .mp-eqhead2 .rank{color:#ff9a2e}
+#mp-eqtip .mp-eqhead2 .loot{text-align:right;color:#f2c94c;font-size:11px}
 #mp-eqtip .mp-eqhead2 .nick{border:1px solid #444;padding:1px 8px;font-weight:700}
 #mp-eqtip .mp-eqhead2 .clan{color:#d9c27a;margin-top:2px}
 #mp-eqtip .mp-eqbody{display:flex;align-items:center;justify-content:center;gap:10px;border-top:1px solid #3c3c3c;padding-top:6px}
@@ -2221,6 +2236,8 @@ function parseProtection(data) {
     // 1) namierzony cel — pamiętany, dopóki sam go nie zmienisz/przerwiesz; atak, gdy będzie w zasięgu
     if (S.lock) {
       const p = lockedPlayer();
+      if (!p && !cfg.remember) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
+      if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
       if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now())) { attack(p); return; }
       if (p) return;              // cel jest na mapie, ale daleko — czekamy
       // celu nie ma na mapie — w międzyczasie (gdy włączona) atakuje innych w zasięgu
@@ -2240,15 +2257,24 @@ function parseProtection(data) {
    */
   const mark = {
     id: null,
+    raw: null,
     set(id) {
       this.clear(true);
       this.id = id;
       const raw = game.otherRaw(id);
+      this.raw = raw;
       try { if (raw && typeof raw.addColorMark === 'function') raw.addColorMark('#ff0000', 'laddonz'); } catch {}
       this.ind();
     },
+    /** Podświetlenie pilnowane cały czas — gra tworzy nowy obiekt gracza po jego powrocie na mapę. */
+    ensure(id) {
+      const raw = game.otherRaw(id);
+      if (!raw) return;
+      if (raw !== this.raw || this.id !== id) this.set(id);
+    },
     clear(silent) {
-      const raw = this.id && game.otherRaw(this.id);
+      const raw = this.raw || (this.id && game.otherRaw(this.id));
+      this.raw = null;
       try { if (raw && typeof raw.removeColorMark === 'function') raw.removeColorMark('laddonz'); } catch {}
       this.id = null;
       if (!silent) this.ind();
@@ -2261,12 +2287,13 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'napad', name: 'Dobijarka', icon: 'napad', color: ['#ff5d7a', '#b8325a'], risk: 'auto',
-    desc: 'Włączona: atakuje każdego gracza, który wejdzie w zasięg (w podanym zakresie poziomów). Klawisz działa zawsze — namierza najbliższego gracza i atakuje go, gdy tylko będzie w zasięgu. Cel jest pamiętany (także gdy zniknie z mapy lub odświeżysz grę), dopóki nie wybierzesz innego albo nie przerwiesz. To samo robi opcja „Dobij" w menu gracza; „Przerwij dobijanie" cofa polecenie. Kogo nie atakować, ustawiasz w Bratanie.',
-    defaults: { enabled: false, keyAttack: '', lvlMin: 0, lvlMax: 500, target: null },
+    desc: 'Włączona: atakuje każdego gracza, który wejdzie w zasięg (w podanym zakresie poziomów). Klawisz działa zawsze — namierza najbliższego gracza i atakuje go, gdy tylko będzie w zasięgu. Opcjonalnie zapamiętuje cel po jego zniknięciu, dopóki nie wybierzesz innego albo nie przerwiesz. To samo robi opcja „Dobij" w menu gracza; „Przerwij dobijanie" cofa polecenie. Kogo nie atakować, ustawiasz w Bratanie.',
+    defaults: { enabled: false, keyAttack: '', lvlMin: 0, lvlMax: 500, target: null, remember: true },
     notes: () => [{ type: 'warn', text: 'Włączona Dobijarka atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
     settings: [
       { key: 'lvlMin', type: 'number', label: 'Atakuj od poziomu', min: 0, max: 500, hint: 'Dotyczy ataku na każdego w zasięgu.' },
       { key: 'lvlMax', type: 'number', label: 'Atakuj do poziomu', min: 0, max: 500 },
+      { key: 'remember', type: 'bool', label: 'Zapamiętuj cel po jego zniknięciu', hint: 'Cel zostaje (z podświetleniem) także po zniknięciu z mapy, zmianie mapy i odświeżeniu gry — aż wybierzesz inny albo przerwiesz. Wyłączone: namierzenie znika razem z celem.' },
       { key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Działa także przy wyłączonym dodatku. Ponowne naciśnięcie = następny najbliższy. Przerwanie: prawy klik na celu → „Przerwij dobijanie".' },
     ],
     render(box, c, rerender) {
@@ -2289,9 +2316,9 @@ function parseProtection(data) {
         if (!p || !allowed(p)) return [];
         return [{ label: 'Dobij', fn: () => lockOn(game.otherById(id) || p) }];
       });
-      bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; });
+      bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; if (!cfg.remember) unlock(); });
       // przywróć zapamiętany cel
-      if (cfg.target && cfg.target.nick) S.lock = { id: Number(cfg.target.id), nick: cfg.target.nick, t: now() };
+      if (cfg.remember && cfg.target && cfg.target.nick) S.lock = { id: Number(cfg.target.id), nick: cfg.target.nick, t: now() };
       MP.napad = { attack: (p) => lockOn(p), lockOn, unlock };
       ensureLoop();
     },
@@ -2723,7 +2750,8 @@ const itemDeco = {
     for (const node of game.itemEls()) {
       const id = game.itemIdFromEl(node);
       if (!id) continue;
-      const it = game.itemById(id);
+      // przedmioty z okna „Ekwipunek Postaci" innego gracza — dane z szablonów gry (Pokaż EQ)
+      const it = /-showeq/.test(String(node.className)) ? (MP.eqLookup ? MP.eqLookup(node) : null) : game.itemById(id);
       const want = [];
       for (const p of this.painters) { try { const r = p(node, it, id); if (r) want.push(...[].concat(r)); } catch {} }
       const have = Array.from(node.querySelectorAll(':scope > .mp-ibadge:not(.chance)'));
@@ -2746,53 +2774,77 @@ const itemDeco = {
 MP.itemDeco = itemDeco;
 
 /* ───────── Jaki To Bon ─────────
- * Skrót nazwy bonusu legendarnego w prawym górnym rogu przedmiotu (OR, CBK, …).
+ * Skrót bonusu legendarnego w prawym górnym rogu przedmiotu: na Twoim EQ, w oknie „Ekwipunek Postaci" z gry
+ * i w podglądzie Pokaż EQ. Bonus rozpoznawany po kodzie z danych przedmiotu albo po nazwie z opisu przedmiotu.
  */
 (() => {
   let cfg;
-  // Kody legbon → skrót. Kody pochodzą z danych gry (statystyka „legbon"); jeśli jakiś się nie zgadza,
-  // popraw go w panelu — lista „Kody na Twoich przedmiotach" pokazuje, co faktycznie masz założone.
-  const DEFAULT_MAP = {
-    verycrit: 'CBK', lastheal: 'OR', holytouch: 'DA', curse: 'KL', pushback: 'OD', critred: 'KO', dmgred: 'FO', cleanse: 'PO', cleansing: 'PO', glare: 'OŚ',
-  };
-  const NAMES = { verycrit: 'Cios bardzo krytyczny', lastheal: 'Ostatni ratunek', holytouch: 'Dotyk anioła', curse: 'Klątwa', pushback: 'Odrzucenie', critred: 'Krytyczna osłona', dmgred: 'Fizyczna osłona', cleanse: 'Płomienne oczyszczenie', cleansing: 'Płomienne oczyszczenie', glare: 'Oślepienie' };
-
-  function abbr(code) {
-    if (cfg.map && cfg.map[code]) return cfg.map[code];
-    if (/^cle/i.test(code)) return 'PO';            // Płomienne oczyszczenie (różne warianty kodu)
-    return code.slice(0, 3).toUpperCase();
+  // Aktualna lista 10 bonusów legendarnych. „re" dopasowuje różne warianty kodów, „name" — nazwę z opisu przedmiotu.
+  const BONUSES = [
+    { id: 'CBK', name: 'Cios bardzo krytyczny',     re: /^(verycrit|very_?crit|critical_?strike)/i },
+    { id: 'DA',  name: 'Dotyk anioła',              re: /^(holytouch|holy|angel)/i },
+    { id: 'KL',  name: 'Klątwa',                    re: /^(curse)/i },
+    { id: 'OŚ',  name: 'Oślepienie',                re: /^(glare|blind)/i },
+    { id: 'OR',  name: 'Ostatni ratunek',           re: /^(lastheal|last_?heal|last_?resort)/i },
+    { id: 'KO',  name: 'Krytyczna osłona',          re: /^(critred|crit_?red|critical_?shield)/i },
+    { id: 'FO',  name: 'Fasada opieki',             re: /^(facade|fasad|care|guard|protect|dmgred)/i },
+    { id: 'PO',  name: 'Płomienne oczyszczenie',    re: /^(cle|flame|purif)/i },
+    { id: 'KU',  name: 'Krwawa udręka',             re: /^(blood|anguish|torment|bleed|agony)/i },
+    { id: 'PS',  name: 'Przeszywająca skuteczność', re: /^(pun|pierc|penetr)/i },
+  ];
+  const norm = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ł/g, 'l');
+  /** kod/nazwa → bonus z listy (albo null) */
+  function bonusOf(codeOrName) {
+    if (!codeOrName) return null;
+    const c = String(codeOrName).trim();
+    return BONUSES.find((b) => b.re.test(c)) || BONUSES.find((b) => norm(c).includes(norm(b.name))) || null;
   }
-  MP.legAbbr = (code) => (cfg ? abbr(code) : code);
-  MP.legName = (code) => NAMES[code] || (/^cle/i.test(code) ? 'Płomienne oczyszczenie' : code);
+  /** Bonus z opisu (tooltipu) przedmiotu gry — gdy kod nie pasuje do żadnego wzorca. */
+  function bonusFromTip(raw) {
+    try {
+      const f = raw && (raw.getTipContent || raw.getTipData);
+      if (typeof f !== 'function') return null;
+      let t = f.call(raw);
+      if (t && typeof t === 'object') t = JSON.stringify(t);
+      const txt = norm(String(t || '').replace(/<[^>]+>/g, ' '));
+      return BONUSES.find((b) => txt.includes(norm(b.name))) || null;
+    } catch { return null; }
+  }
+  const seenCodes = new Set();
+  function abbr(code, raw) {
+    const b = bonusOf(code) || bonusFromTip(raw);
+    if (code) seenCodes.add(String(code));
+    if (!b) return String(code || '?').slice(0, 3).toUpperCase();
+    return (cfg && cfg.abbr && cfg.abbr[b.id]) || b.id;
+  }
+  MP.legAbbr = (code, raw) => abbr(code, raw);
+  MP.legName = (code) => { const b = bonusOf(code); return b ? b.name : String(code); };
+  MP.legKey = (code) => { const b = bonusOf(code); return b ? b.id : String(code); };
 
   defineAddon({
     id: 'jakibon', name: 'Jaki To Bon', icon: 'jakibon', color: ['#ff9a3c', '#d4561c'],
-    desc: 'Dodaje do założonych przedmiotów legendarnych skrót bonusu w prawym górnym rogu (OR — Ostatni ratunek, CBK — Cios bardzo krytyczny itd.).',
-    defaults: { enabled: false, allItems: false, map: DEFAULT_MAP },
+    desc: 'Dodaje do przedmiotów legendarnych skrót bonusu w prawym górnym rogu (OR — Ostatni ratunek, CBK — Cios bardzo krytyczny, FO — Fasada opieki…). Działa na Twoim ekwipunku, w oknie „Ekwipunek Postaci" z gry i w podglądzie Pokaż EQ.',
+    defaults: { enabled: false, allItems: false, abbr: {} },
     settings: [{ key: 'allItems', type: 'bool', label: 'Pokazuj też na przedmiotach w torbach', hint: 'Domyślnie tylko założone.' }],
-    render(box, c, rerender) {
+    render(box) {
       const tb = el('tbody');
-      Object.entries(c.map).forEach(([code, ab]) => {
-        const i = el('input', { class: 'mp-in', value: ab, style: { width: '70px' } });
-        i.onchange = () => { c.map[code] = i.value.trim() || code; config.save(); bus.emit('deco'); };
-        tb.appendChild(el('tr', null, el('td', { class: 'mp-mono' }, code), el('td', null, NAMES[code] || el('span', { class: 'mp-dim' }, '?')), el('td', null, i),
-          el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.map[code]; config.save(); rerender(); } }, '×'))));
-      });
-      const nc = el('input', { class: 'mp-in', placeholder: 'kod (np. verycrit)', style: { width: '140px' } });
-      const na = el('input', { class: 'mp-in', placeholder: 'skrót', style: { width: '70px' } });
-      const mine = [...new Set(game.heroItems().map((i) => i.legbon).filter(Boolean))];
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Skróty bonusów'),
-        el('table', { class: 'mp-table' }, el('thead', null, el('tr', null, el('th', null, 'Kod'), el('th', null, 'Nazwa'), el('th', null, 'Skrót'), el('th'))), tb),
-        el('div', { class: 'mp-btns' }, nc, na, el('button', { class: 'mp-btn', onclick: () => { if (nc.value.trim()) { c.map[nc.value.trim()] = na.value.trim() || nc.value.trim().slice(0, 3).toUpperCase(); config.save(); rerender(); } } }, 'Dodaj')),
-        el('div', { class: 'mp-dim', style: { marginTop: '8px' } }, 'Kody na Twoich przedmiotach: ', mine.length ? el('span', { class: 'mp-mono' }, mine.join(', ')) : 'brak legend lub gra nie wczytana')));
+      for (const b of BONUSES) {
+        const i = el('input', { class: 'mp-in', value: (cfg.abbr && cfg.abbr[b.id]) || b.id, style: { width: '70px' } });
+        i.onchange = () => { cfg.abbr = cfg.abbr || {}; cfg.abbr[b.id] = i.value.trim() || b.id; config.save(); bus.emit('deco'); };
+        tb.appendChild(el('tr', null, el('td', null, b.name), el('td', null, i)));
+      }
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Skróty bonusów legendarnych'),
+        el('table', { class: 'mp-table' }, el('thead', null, el('tr', null, el('th', null, 'Bonus'), el('th', null, 'Skrót'))), tb),
+        seenCodes.size ? el('div', { class: 'mp-dim', style: { marginTop: '8px', fontSize: '11.5px' } }, 'Kody widziane w grze: ', el('span', { class: 'mp-mono' }, [...seenCodes].join(', '))) : null));
     },
     init(c) {
       cfg = c;
-      if (!c._v16) { c._v16 = true; c.map = c.map || {}; if (c.map.resgain === 'PO') delete c.map.resgain; c.map.cleanse = 'PO'; c.map.cleansing = 'PO'; c.map.dmgred = c.map.dmgred || 'FO'; config.save(); }
+      if (!c._v17) { c._v17 = true; delete c.map; c.abbr = c.abbr || {}; config.save(); }
       itemDeco.add((node, it) => {
         if (!cfg.enabled || !it || !it.legbon) return null;
-        if (!cfg.allItems && !(it.st > 0)) return null;
-        return { cls: 'bon', text: abbr(it.legbon), title: MP.legName(it.legbon) };
+        const other = /-showeq/.test(String(node.className));
+        if (!cfg.allItems && !other && !(it.st > 0)) return null;
+        return { cls: 'bon', text: abbr(it.legbon, it.raw), title: MP.legName(it.legbon) };
       });
     },
     onToggle() { bus.emit('deco'); },
@@ -2977,6 +3029,37 @@ MP.itemDeco = itemDeco;
     return 'common';
   }
 
+  /** Szuka danych przedmiotu z okna EQ innego gracza na wiele sposobów. */
+  const WAYS = [
+    ['store', (iid) => { const I = E().items; return I.getItemById(iid) || I.getItemById(String(iid)) || I.getItemById(iid + '-showeq'); }],
+    ['hook', (iid) => seenItems.get(String(iid))],
+    ['data', (iid, tpl, n, seen) => seen && seen[String(iid)]],
+    ['jq', (iid, tpl, n) => fromJq(n)],
+    ['cont', (iid) => fromContainers(iid)],
+    ['tplHook', (iid, tpl, n, seen) => tpl && (seenItems.get('tpl:' + tpl) || (seen && seen['tpl:' + tpl]))],
+    ['tplApi', (iid, tpl) => fromTplApi(tpl)],
+    ['tplCont', (iid, tpl) => tpl && fromContainers(tpl)],
+  ];
+  function lookupRaw(iid, tpl, n, seen, dbg) {
+    for (const [name, f] of WAYS) {
+      try { const r = f(iid, tpl, n, seen); if (r && (r.name || r.stat !== undefined)) { if (dbg) dbg.src[name] = (dbg.src[name] || 0) + 1; return r; } } catch {}
+    }
+    return null;
+  }
+  /** Dla Jaki To Bon: przedmiot z okna „Ekwipunek Postaci" gry (element .item-id-X-showeq). */
+  const nodeCache = new Map();
+  MP.eqLookup = (n) => {
+    const m = String(n.className).match(/item-id-(\d+)-showeq/); if (!m) return null;
+    const iid = Number(m[1]);
+    const c = nodeCache.get(iid); if (c && now() - c.t < 60000) return c.it;
+    hookItemFlow();
+    const tpl = Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0;
+    const r = lookupRaw(iid, tpl, n);
+    const it = r ? Object.assign(game.normItem(r), { id: iid }) : null;
+    if (it) nodeCache.set(iid, { t: now(), it });
+    return it;
+  };
+
   const shown = (n) => n && n.isConnected && getComputedStyle(n).display !== 'none' && n.getBoundingClientRect().width > 0;
   const sigOf = (n) => $$('[class*="-showeq"]', n).map((x) => x.className).join('|');
 
@@ -3008,20 +3091,7 @@ MP.itemDeco = itemDeco;
         const tpls = els.map((n) => Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0);
         dbg.ids = ids; dbg.tpls = tpls;
         const rects = els.map((n) => n.getBoundingClientRect());
-        const ways = [
-          ['store', (iid) => { const I = E().items; return I.getItemById(iid) || I.getItemById(String(iid)) || I.getItemById(iid + '-showeq'); }],
-          ['hook', (iid) => seenItems.get(String(iid))],
-          ['data', (iid) => seen[String(iid)]],
-          ['jq', (iid, tpl, n) => fromJq(n)],
-          ['cont', (iid) => fromContainers(iid)],
-          ['tplHook', (iid, tpl) => tpl && (seenItems.get('tpl:' + tpl) || seen['tpl:' + tpl])],
-          ['tplApi', (iid, tpl) => fromTplApi(tpl)],
-          ['tplCont', (iid, tpl) => tpl && fromContainers(tpl)],
-        ];
-        const lookup = (i) => {
-          for (const [name, f] of ways) { try { const r = f(ids[i], tpls[i], els[i]); if (r && (r.name || r.stat !== undefined)) { dbg.src[name] = (dbg.src[name] || 0) + 1; return r; } } catch {} }
-          return null;
-        };
+        const lookup = (i) => lookupRaw(ids[i], tpls[i], els[i], seen, dbg);
         let found = els.map((n, i) => lookup(i));
         if (!found.every(Boolean)) { await sleep(120); dbg.src = {}; found = els.map((n, i) => lookup(i)); }
         items = ids.map((iid, i) => {
@@ -3090,24 +3160,38 @@ MP.itemDeco = itemDeco;
     return box;
   }
 
+  /** Linie tekstu dymka gry (działa też, gdy dymek jest już ukryty — nie używa innerText). */
+  function tipLines(root) {
+    const BLOCK = /^(DIV|P|LI|UL|TABLE|TR|TD|SECTION|HEADER|H\d)$/;
+    const blocks = [...root.querySelectorAll('*')].filter((n) => BLOCK.test(n.tagName) && ![...n.children].some((c) => BLOCK.test(c.tagName)));
+    const top = blocks.filter((n) => !blocks.some((o) => o !== n && o.contains(n)));
+    let lines = top.map((n) => (n.textContent || '').replace(/\s+/g, ' ').trim());
+    if (!lines.filter(Boolean).length) lines = String(root.innerHTML).replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').split('\n');
+    return lines.map((x) => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  }
+
   function headerEl(id) {
-    if (anchor && anchor.isConnected) {
-      const c = el('div', { class: anchor.className + ' mp-clone' });
-      c.innerHTML = anchor.innerHTML;
-      // tylko tekst z dymka — bez obrazków/płócien (postać rysujemy sami) i bez sztywnych rozmiarów
-      c.querySelectorAll('canvas, img, video, svg, [class*="outfit"], [class*="avatar"], [class*="canvas"]').forEach((n) => n.remove());
-      c.querySelectorAll('[style]').forEach((n) => { n.style.width = ''; n.style.height = ''; n.style.minWidth = ''; n.style.minHeight = ''; n.style.position = ''; });
-      return c;
-    }
     const p = game.otherById(id);
-    return el('div', { class: 'mp-eqhead2' }, el('div', { class: 'nick' }, p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id), p && p.clanName ? el('div', { class: 'clan' }, p.clanName) : null);
+    let lines = [];
+    if (anchor && anchor.isConnected) lines = tipLines(anchor);
+    const nickRe = p ? new RegExp('^' + p.nick.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(', 'i') : null;
+    const ni = nickRe ? lines.findIndex((l) => nickRe.test(l)) : -1;
+    const before = ni > 0 ? lines.slice(0, ni) : [];
+    const after = ni >= 0 ? lines.slice(ni + 1) : [];
+    const loot = after.filter((l) => /^loot/i.test(l));
+    const rest = after.filter((l) => !/^loot/i.test(l));
+    return el('div', { class: 'mp-eqhead2' },
+      before.map((l) => el('div', { class: 'rank' }, l)),
+      el('div', { class: 'nick' }, ni >= 0 ? lines[ni] : (p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id)),
+      (rest.length ? rest : (p && p.clanName ? [p.clanName] : [])).map((l) => el('div', { class: 'clan' }, l)),
+      loot.map((l) => el('div', { class: 'loot' }, l)));
   }
 
   function place(x, y) {
     if (!tip) return;
     if (anchor && anchor.isConnected) {
       const r = anchor.getBoundingClientRect();
-      tip.style.minWidth = Math.min(320, Math.round(r.width)) + 'px';
+      tip.style.minWidth = Math.min(260, Math.round(r.width)) + 'px';
       const h = tip.offsetHeight || 200, wd = tip.offsetWidth || r.width;
       tip.style.left = clamp(r.left, 4, innerWidth - wd - 4) + 'px';
       tip.style.top = clamp(r.top, 4, Math.max(4, innerHeight - h - 4)) + 'px';
@@ -3122,7 +3206,7 @@ MP.itemDeco = itemDeco;
   function layoutGrid(items) {
     const cell = (it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
       it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
-      it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon)) : null);
+      it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null);
     const withPos = items.filter((i) => i.pos && i.pos.w);
     if (withPos.length !== items.length || !items.length) return el('div', { class: 'mp-eqgrid' }, items.map(cell));
     const minX = Math.min(...withPos.map((i) => i.pos.x)), minY = Math.min(...withPos.map((i) => i.pos.y));
@@ -3150,13 +3234,13 @@ MP.itemDeco = itemDeco;
 
   function summaryEl(items) {
     const sum = {};
-    items.forEach((i) => { if (i.legbon) sum[i.legbon] = (sum[i.legbon] || 0) + 1; });
+    items.forEach((i) => { if (!i.legbon) return; const k = MP.legKey(i.legbon); sum[k] = sum[k] || { n: 0, code: i.legbon, raw: i.raw }; sum[k].n++; });
     const leg = items.filter((i) => i.rarity === 'legendary').length, her = items.filter((i) => i.rarity === 'heroic').length;
     const known = items.every((i) => i.name);
     return el('div', { class: 'mp-eqsum' },
       el('div', null, 'Legendy: ', el('b', null, String(leg)), ' · Heroiki: ', el('b', null, String(her))),
       Object.keys(sum).length
-        ? el('div', { class: 'mp-eqbons' }, Object.entries(sum).map(([k, n]) => el('span', { class: 'mp-chip', title: MP.legName(k) }, `${MP.legAbbr(k)} ×${n}`)))
+        ? el('div', { class: 'mp-eqbons' }, Object.values(sum).map((x) => el('span', { class: 'mp-chip', title: MP.legName(x.code) }, `${MP.legAbbr(x.code, x.raw)} ×${x.n}`)))
         : el('div', { class: 'mp-dim' }, known ? 'Brak bonusów legendarnych' : 'Bonusy: brak danych z gry'));
   }
 
@@ -3213,8 +3297,10 @@ MP.itemDeco = itemDeco;
           const r = n.getBoundingClientRect();
           const dx = Math.max(r.left - mx, 0, mx - r.right), dy = Math.max(r.top - my, 0, my - r.bottom);
           if (Math.hypot(dx, dy) > 90) continue;
+          // tylko dymek GRACZA: „Nick (poziom…)" — nie dymek przedmiotu z „Właściciel: Nick"
+          if (n.querySelector('[class*="item"]') || /t_item/.test(n.getAttribute('data-tip-type') || '')) continue;
           const txt = (n.textContent || '').toLowerCase();
-          p = game.others().filter((o) => o.nick && txt.includes(o.nick.toLowerCase())).sort((a, b) => b.nick.length - a.nick.length)[0] || null;
+          p = game.others().filter((o) => o.nick && new RegExp(o.nick.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(\\d').test(txt)).sort((a, b) => b.nick.length - a.nick.length)[0] || null;
           if (p) { tipNode = n; break; }
         }
       }
@@ -3666,5 +3752,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.6.1";
+MP.version = "1.6.2";
 })();

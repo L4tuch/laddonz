@@ -41,6 +41,18 @@ function legbonOf(it, st) {
   let v = st.legbon;
   try { if (!v && typeof it.issetLegbonStat === 'function' && it.issetLegbonStat()) v = it.getLegbonStat(); } catch {}
   if (v && typeof v === 'object') v = v.name || v.type || v[0] || Object.values(v)[0];
+  if (!v && String(st.rarity) === 'legendary') {
+    // brak kodu w statystykach — nazwa bonusu z opisu przedmiotu (tooltip gry)
+    try {
+      const f = it.getTipContent || it.getTipData;
+      if (typeof f === 'function') {
+        let t = f.call(it); if (t && typeof t === 'object') t = JSON.stringify(t);
+        const txt = String(t || '').replace(/<[^>]+>/g, ' ');
+        const m = txt.match(/(Cios bardzo krytyczny|Dotyk anioła|Klątwa|Oślepienie|Ostatni ratunek|Krytyczna osłona|Fasada opieki|Płomienne oczyszczenie|Krwawa udręka|Przeszywająca skuteczność)/i);
+        if (m) v = m[1];
+      }
+    } catch {}
+  }
   return v ? String(v).split(/[,|]/)[0].trim() : null;
 }
 

@@ -95,6 +95,8 @@
     // 1) namierzony cel — pamiętany, dopóki sam go nie zmienisz/przerwiesz; atak, gdy będzie w zasięgu
     if (S.lock) {
       const p = lockedPlayer();
+      if (!p && !cfg.remember) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
+      if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
       if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now())) { attack(p); return; }
       if (p) return;              // cel jest na mapie, ale daleko — czekamy
       // celu nie ma na mapie — w międzyczasie (gdy włączona) atakuje innych w zasięgu
@@ -114,15 +116,24 @@
    */
   const mark = {
     id: null,
+    raw: null,
     set(id) {
       this.clear(true);
       this.id = id;
       const raw = game.otherRaw(id);
+      this.raw = raw;
       try { if (raw && typeof raw.addColorMark === 'function') raw.addColorMark('#ff0000', 'laddonz'); } catch {}
       this.ind();
     },
+    /** Podświetlenie pilnowane cały czas — gra tworzy nowy obiekt gracza po jego powrocie na mapę. */
+    ensure(id) {
+      const raw = game.otherRaw(id);
+      if (!raw) return;
+      if (raw !== this.raw || this.id !== id) this.set(id);
+    },
     clear(silent) {
-      const raw = this.id && game.otherRaw(this.id);
+      const raw = this.raw || (this.id && game.otherRaw(this.id));
+      this.raw = null;
       try { if (raw && typeof raw.removeColorMark === 'function') raw.removeColorMark('laddonz'); } catch {}
       this.id = null;
       if (!silent) this.ind();
@@ -135,12 +146,13 @@
 
   defineAddon({
     id: 'napad', name: 'Dobijarka', icon: 'napad', color: ['#ff5d7a', '#b8325a'], risk: 'auto',
-    desc: 'Włączona: atakuje każdego gracza, który wejdzie w zasięg (w podanym zakresie poziomów). Klawisz działa zawsze — namierza najbliższego gracza i atakuje go, gdy tylko będzie w zasięgu. Cel jest pamiętany (także gdy zniknie z mapy lub odświeżysz grę), dopóki nie wybierzesz innego albo nie przerwiesz. To samo robi opcja „Dobij" w menu gracza; „Przerwij dobijanie" cofa polecenie. Kogo nie atakować, ustawiasz w Bratanie.',
-    defaults: { enabled: false, keyAttack: '', lvlMin: 0, lvlMax: 500, target: null },
+    desc: 'Włączona: atakuje każdego gracza, który wejdzie w zasięg (w podanym zakresie poziomów). Klawisz działa zawsze — namierza najbliższego gracza i atakuje go, gdy tylko będzie w zasięgu. Opcjonalnie zapamiętuje cel po jego zniknięciu, dopóki nie wybierzesz innego albo nie przerwiesz. To samo robi opcja „Dobij" w menu gracza; „Przerwij dobijanie" cofa polecenie. Kogo nie atakować, ustawiasz w Bratanie.',
+    defaults: { enabled: false, keyAttack: '', lvlMin: 0, lvlMax: 500, target: null, remember: true },
     notes: () => [{ type: 'warn', text: 'Włączona Dobijarka atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
     settings: [
       { key: 'lvlMin', type: 'number', label: 'Atakuj od poziomu', min: 0, max: 500, hint: 'Dotyczy ataku na każdego w zasięgu.' },
       { key: 'lvlMax', type: 'number', label: 'Atakuj do poziomu', min: 0, max: 500 },
+      { key: 'remember', type: 'bool', label: 'Zapamiętuj cel po jego zniknięciu', hint: 'Cel zostaje (z podświetleniem) także po zniknięciu z mapy, zmianie mapy i odświeżeniu gry — aż wybierzesz inny albo przerwiesz. Wyłączone: namierzenie znika razem z celem.' },
       { key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Działa także przy wyłączonym dodatku. Ponowne naciśnięcie = następny najbliższy. Przerwanie: prawy klik na celu → „Przerwij dobijanie".' },
     ],
     render(box, c, rerender) {
@@ -163,9 +175,9 @@
         if (!p || !allowed(p)) return [];
         return [{ label: 'Dobij', fn: () => lockOn(game.otherById(id) || p) }];
       });
-      bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; });
+      bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; if (!cfg.remember) unlock(); });
       // przywróć zapamiętany cel
-      if (cfg.target && cfg.target.nick) S.lock = { id: Number(cfg.target.id), nick: cfg.target.nick, t: now() };
+      if (cfg.remember && cfg.target && cfg.target.nick) S.lock = { id: Number(cfg.target.id), nick: cfg.target.nick, t: now() };
       MP.napad = { attack: (p) => lockOn(p), lockOn, unlock };
       ensureLoop();
     },
