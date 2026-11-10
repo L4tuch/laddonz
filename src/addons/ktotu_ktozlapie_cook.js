@@ -36,7 +36,7 @@
     const b = win.body; b.innerHTML = '';
     const f = cfg.filter;
     const save = () => { config.save(); drawList(); };
-    const modeBtn = el('button', { class: 'mp-mini', title: cfg.minimal ? 'Pokaż filtry' : 'Tryb minimalny (sama lista)', onclick: () => { cfg.minimal = !cfg.minimal; config.save(); open(); } }, cfg.minimal ? '⚙ filtry' : '▭ minimalny');
+    const modeBtn = el('button', { class: 'mp-mini', title: cfg.minimal ? 'Pokaż filtry' : 'Tryb minimalny (sama lista)', onclick: () => { cfg.minimal = !cfg.minimal; config.save(); open(); } }, cfg.minimal ? 'Filtry' : 'Minimalny');
     countEl = el('span', { class: 'mp-dim', style: { fontSize: '11.5px', flex: 1 } });
     b.appendChild(el('div', { style: { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' } }, countEl, modeBtn));
     if (!cfg.minimal) {
@@ -83,7 +83,7 @@
         !isFriendly(p) ? btn('Dobij', 'napad', () => MP.napad.attack(game.otherById(p.id) || p, 'key')) : null,
         btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
         !p.isFriend ? btn('Znajomy', 'ktotu', () => net.send('friendAdd', { id: p.id, nick: p.nick }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Wysłano zaproszenie do znajomych: ${p.nick}`, 'ok', 1500)), 'Dodaj do znajomych') : null,
-        btn(isProt ? 'Bratan ✓' : 'Bratan', 'bratan', () => togList(bcfg, 'nicks', p.nick, isProt), isProt ? 'Usuń z ochrony Bratana' : 'Chroń przed atakiem (Bratan)'),
+        btn(isProt ? 'Bratan (chroniony)' : 'Bratan', 'bratan', () => togList(bcfg, 'nicks', p.nick, isProt), isProt ? 'Usuń z ochrony Bratana' : 'Chroń przed atakiem (Bratan)'),
                 btn('Kopiuj', null, () => { try { navigator.clipboard.writeText(p.nick); toast('Skopiowano nick', 'ok', 1200); } catch {} })));
   }
 
@@ -180,8 +180,8 @@
 })();
 
 /* ───────── Let's Cook Together ─────────
- * Zaproszenia do grupy pod klawisz (znajomi / klan / sojusz / wszyscy na mapie), rozwiązanie grupy pod klawisz,
- * opcjonalnie automatyczne zapraszanie nowych osób na mapie (AUTOMAT, domyślnie wyłączony).
+ * Zaproszenia do grupy pod klawisz (znajomi / klan / sojusz / wszyscy na mapie) i rozwiązanie grupy pod klawisz.
+ * Bez automatów — każde zaproszenie wysyłasz sam (klawisz albo przycisk).
  */
 (() => {
   let cfg, invited = {};
@@ -198,12 +198,11 @@
     });
   }
 
-  function inviteAll(src = 'Cook') {
-    const cool = src === 'auto' ? 10 * 60000 : 30000; // automat nie męczy tej samej osoby częściej niż co 10 min
-    const l = eligible().filter((p) => !(invited[p.id] > now() - cool));
+  function inviteAll() {
+    const l = eligible().filter((p) => !(invited[p.id] > now() - 30000));   // tej samej osoby nie częściej niż co 30 s
     const room = Math.max(0, cfg.maxParty - Math.max(1, game.partyMembers().length));
     const pick = l.slice(0, room || l.length);
-    if (!pick.length) { if (src === 'Cook') toast('Let\'s Cook: nikogo do zaproszenia', 'warn', 1600); return; }
+    if (!pick.length) { toast('Let\'s Cook: nikogo do zaproszenia', 'warn', 1600); return; }
     pick.forEach((p) => { invited[p.id] = now(); net.send('partyInvite', { id: p.id }, { src: 'Let\'s Cook' }); });
     toast(`Let's Cook: zapraszam ${pick.length} os.`, 'ok', 1800);
   }
@@ -216,9 +215,9 @@
   MP.cook = { disband };
 
   defineAddon({
-    id: 'cook', name: 'Let\'s Cook Together', icon: 'cook', color: ['#ff8a5c', '#e2533a'], risk: 'auto',
+    id: 'cook', name: 'Let\'s Cook Together', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
     desc: 'Zaproszenia do grupy pod klawisz dla znajomych, klanowiczów, sojuszników albo wszystkich na mapie oraz rozwiązanie grupy pod klawisz.',
-    defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10, auto: false },
+    defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10 },
     keys: [
       { key: 'keyInvite', label: 'zaproś', fn: () => inviteAll() },
       { key: 'keyDisband', label: 'rozwiąż grupę', fn: () => disband() },
@@ -235,7 +234,6 @@
       { group: 'Kogo zapraszać', key: 'never', type: 'list', label: 'Nigdy nie zapraszaj (nicki)' },
       { group: 'Kogo zapraszać', key: 'range', type: 'number', label: 'Zasięg (kratki, 0 = cała mapa)', min: 0, max: 100 },
       { group: 'Kogo zapraszać', key: 'maxParty', type: 'number', label: 'Maksymalny rozmiar grupy', min: 2, max: 10 },
-      { group: 'Automat', key: 'auto', type: 'bool', auto: true, label: 'Automatycznie zapraszaj, gdy ktoś pasujący pojawi się na mapie', confirm: 'To automatyzacja — zaproszenia będą wysyłane bez Twojego kliknięcia. Na własne ryzyko.', countdown: 2 },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-btns' },
@@ -244,7 +242,7 @@
     },
     init(c) {
       cfg = c;
-      setInterval(() => { if (cfg.enabled && cfg.auto && game.ready() && !game.inBattle()) inviteAll('auto'); }, 3000);
+      if ('auto' in c) { delete c.auto; config.save(); }   // usunięty automat z wcześniejszych wersji
       bus.on('map:change', () => { invited = {}; });
     },
   });

@@ -24,7 +24,7 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 | 🛡 | **Bratan** | Blokuje każdy atak (także ręczny) na klanowiczów, znajomych, sojuszników i osoby z listy. |
 | 👥 | **Kto tu jest?** | Okno z graczami na mapie: filtry, sortowanie, zapisywane zestawy, tryb minimalny. Klik na gracza → karta z EQ, Dobij, zaproszeniem do grupy i znajomych, Bratanem. |
 | 🏆 | **Kto złapie** | Pod kafelkami łupu: Twoja szansa (%) na złapanie przedmiotu przy biciu w grupie. |
-| 🍲 | **Let's Cook Together** | Klawisz = zaproś znajomych/klan/sojusz/wszystkich z mapy. Klawisz = rozwiąż grupę. Opcjonalny automat. |
+| 🍲 | **Let's Cook Together** | Klawisz = zaproś znajomych/klan/sojusz/wszystkich z mapy. Klawisz = rozwiąż grupę. Bez automatów. |
 | ✎ | **Podpisownik** | Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny). |
 | 🎒 | **Pokaż EQ** | Najedź na gracza (domyślnie z Shift) → jego ekwipunek + podsumowanie bonusów legendarnych. |
 | ★ | **Jaki To Bon** | Skrót bonusu legendarnego w rogu przedmiotu (OR, CBK, DA…). Skróty edytowalne. |

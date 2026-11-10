@@ -112,7 +112,21 @@ MP.itemDeco = itemDeco;
  */
 (() => {
   let cfg;
+  /**
+   * Klucz „takiego samego" przedmiotu: ten sam szablon (tpl) / nazwa + ten sam cel teleportu.
+   * Dzięki temu 3 kamienie czerwonego smoka ustawione w to samo miejsce dzielą jeden podpis.
+   */
+  function keyOf(it) {
+    if (!it) return null;
+    const raw = it.raw || {};
+    const base = raw.tpl || it.tpl || it.name;
+    const st = it.stats || {};
+    const dest = st.custom_teleport || st.teleport || '';
+    return base ? `${base}|${dest}` : null;
+  }
   function labelFor(it, id) {
+    const k = keyOf(it);
+    if (k && cfg.byKey[k]) return cfg.byKey[k].label;
     if (cfg.byId[id]) return cfg.byId[id];
     if (!it) return null;
     const n = it.name.toLowerCase();
@@ -124,29 +138,36 @@ MP.itemDeco = itemDeco;
     }
     return null;
   }
-  MP.podpis = { labelFor: (it, id) => (cfg && cfg.enabled ? labelFor(it, id) : null), isSigned: (id) => !!(cfg && cfg.byId[id]) };
+  const signedKey = (id) => { const it = game.itemById(id); const k = keyOf(it); return !!(cfg && ((k && cfg.byKey[k]) || cfg.byId[id])); };
+  MP.podpis = { labelFor: (it, id) => (cfg && cfg.enabled ? labelFor(it, id) : null), isSigned: (id) => signedKey(id) };
 
   async function signItem(id) {
     const it = game.itemById(id);
-    const cur = cfg.byId[id] || '';
+    const k = keyOf(it);
+    const cur = (k && cfg.byKey[k] && cfg.byKey[k].label) || cfg.byId[id] || '';
+    const same = k ? game.heroItems().filter((x) => keyOf(x) === k).length : 1;
     const towns = ['Ithan', 'Torneg', 'Werbin', 'Eder', 'Karka-han', 'Nithal', 'Tuzmer', 'Thuzal', 'Mythar', 'Port Tuzmer'];
-    const isTp = it && (it.stats.teleport || /telepor|kamie[nń]|zw[oó]j/i.test(it.name));
+    const isTp = it && (it.stats.teleport || it.stats.custom_teleport || /telepor|kamie[nń]|zw[oó]j/i.test(it.name));
     const head = it ? el('div', { class: 'mp-itemhead' }, it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
-      el('div', null, el('b', null, it.name), el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, cur ? 'Obecny podpis: ' + cur : 'Bez podpisu'))) : null;
+      el('div', null, el('b', null, it.name),
+        el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, (cur ? 'Obecny podpis: ' + cur : 'Bez podpisu') + (same > 1 ? ` · takich samych w EQ: ${same}` : '')))) : null;
     const v = await promptBox({
-      title: 'Podpisz przedmiot', head, label: 'Krótki podpis, widoczny na przedmiocie w ekwipunku (do 14 znaków):',
+      title: 'Podpisz przedmiot', head,
+      label: same > 1 ? `Podpis trafi na wszystkie ${same} takie same przedmioty (do 14 znaków):` : 'Krótki podpis, widoczny na przedmiocie w ekwipunku (do 14 znaków):',
       value: cur, placeholder: isTp ? 'np. Ithan' : 'np. na e2', maxLength: 14, suggestions: isTp ? towns : [], allowClear: true,
     });
     if (v === null) return;
-    if (v) cfg.byId[id] = v.slice(0, 14); else delete cfg.byId[id];
+    delete cfg.byId[id];
+    if (k) { if (v) cfg.byKey[k] = { label: v.slice(0, 14), name: it ? it.name : '' }; else delete cfg.byKey[k]; }
+    else if (v) cfg.byId[id] = v.slice(0, 14);
     config.save(); bus.emit('deco');
-    toast(v ? `Podpisano: ${v}` : 'Usunięto podpis', 'ok', 1500);
+    toast(v ? `Podpisano: ${v}${same > 1 ? ` (${same} szt.)` : ''}` : 'Usunięto podpis', 'ok', 1500);
   }
 
   defineAddon({
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
-    desc: 'Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny), widoczne w ekwipunku. Prawy klik na przedmiocie → „Podpisz…" (albo Alt + prawy klik).',
-    defaults: { enabled: false, byId: {}, rules: [], autoTeleport: true },
+    desc: 'Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny), widoczne w ekwipunku. Prawy klik na przedmiocie → „Podpisz…" (albo Alt + prawy klik). Podpis trafia od razu na wszystkie takie same przedmioty — np. kamienie ustawione w to samo miejsce.',
+    defaults: { enabled: false, byId: {}, byKey: {}, rules: [], autoTeleport: true },
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu (jeśli gra ją podaje)' }],
     render(box, c, rerender) {
       const tb = el('tbody');
@@ -156,15 +177,22 @@ MP.itemDeco = itemDeco;
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Reguły według nazwy'),
         c.rules.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Brak reguł.'),
         el('div', { class: 'mp-btns' }, m, l, el('button', { class: 'mp-btn', onclick: () => { if (m.value.trim() && l.value.trim()) { c.rules.push({ match: m.value.trim(), label: l.value.trim().slice(0, 14) }); config.save(); bus.emit('deco'); rerender(); } } }, 'Dodaj'))));
+      const keys = Object.entries(c.byKey || {});
       const ids = Object.entries(c.byId);
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Podpisane pojedyncze przedmioty'),
-        ids.length ? el('table', { class: 'mp-table' }, el('tbody', null, ids.map(([id, lb]) => el('tr', null, el('td', null, game.itemById(id)?.name || el('span', { class: 'mp-dim' }, '#' + id + ' (nie w EQ)')), el('td', null, lb), el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.byId[id]; config.save(); bus.emit('deco'); rerender(); } }, '×'))))))
+      const count = (k) => game.heroItems().filter((x) => keyOf(x) === k).length;
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Podpisane przedmioty'),
+        keys.length || ids.length ? el('table', { class: 'mp-table' }, el('tbody', null,
+          keys.map(([k, v]) => el('tr', null, el('td', null, v.name || k.split('|')[0], el('span', { class: 'mp-dim' }, ` · w EQ: ${count(k)}`)), el('td', null, v.label),
+            el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.byKey[k]; config.save(); bus.emit('deco'); rerender(); } }, '×')))),
+          ids.map(([id, lb]) => el('tr', null, el('td', null, game.itemById(id)?.name || el('span', { class: 'mp-dim' }, '#' + id + ' (nie w EQ)')), el('td', null, lb),
+            el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.byId[id]; config.save(); bus.emit('deco'); rerender(); } }, '×'))))))
           : el('div', { class: 'mp-dim' }, 'Brak — prawy klik na przedmiocie → „Podpisz…".')));
     },
     init(c) {
       cfg = c;
+      c.byKey = c.byKey || {};
       itemDeco.add((node, it, id) => { const lb = cfg.enabled && labelFor(it, id); return lb ? { cls: 'sig', text: lb, title: 'Podpisownik: ' + lb } : null; });
-      menus.add('item', (id) => (cfg.enabled ? [{ label: '✎ Podpisz…', fn: () => signItem(id) }] : []));
+      menus.add('item', (id) => (cfg.enabled ? [{ label: 'Podpisz…', fn: () => signItem(id) }] : []));
     },
     onToggle() { bus.emit('deco'); },
   });

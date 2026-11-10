@@ -179,7 +179,7 @@ const ui = {
             a.risk === 'destructive' ? el('span', { class: 'mp-badge destr' }, icon('warn', 11), 'usuwa/zużywa') : null),
           el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
         cfg.enabled ? el('button', { class: 'mp-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów po prawej', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); rerender(); } },
-          icon('pin', 14), quickbar.isPinned(a.id) ? 'W skrótach ✓' : 'Dodaj do skrótów') : null,
+          icon('pin', 14), quickbar.isPinned(a.id) ? 'W skrótach' : 'Dodaj do skrótów') : null,
         switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, M.querySelector('.mp-h .mp-sw')))));
       M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
     }

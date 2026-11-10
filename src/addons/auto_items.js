@@ -197,8 +197,8 @@
       if (!t) return;
       e.preventDefault(); e.stopPropagation();
       menus.showOwn(e.clientX, e.clientY, [
-        { label: S.disbandArmed ? '✖ Anuluj „rozwiąż po walce"' : '⏱ Rozwiąż grupę po walce', fn: armDisband },
-        { label: '✖ Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka rączka' })) },
+        { label: S.disbandArmed ? 'Anuluj „rozwiąż po walce"' : 'Rozwiąż grupę po walce', fn: armDisband },
+        { label: 'Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka rączka' })) },
       ], 'Grupa');
     }, true);
   }
@@ -227,10 +227,10 @@
       cfg = c;
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
-        return queued(id) ? [{ label: '✖ Usuń z „po walce"', fn: () => toggleQueue(id) }]
-          : [{ label: '⏱ Użyj po walce', fn: () => toggleQueue(id) }];
+        return queued(id) ? [{ label: 'Nie używaj po walce', fn: () => toggleQueue(id) }]
+          : [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
       });
-      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: '⏱', title: 'Szybka rączka: użyj po walce' } : null));
+      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: 'PW', title: 'Szybka rączka: użyj po walce' } : null));
       bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => runQueue('auto'), rnd(500, 900)); });
       if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
       hookPartyIcon();
@@ -331,8 +331,8 @@
         if (!cfg.enabled) return [];
         const it = game.itemById(id);
         const out = [];
-        if (it && ((it.cl >= 1 && it.cl <= 14) || it.cl === 29)) out.push({ label: '✦ Cel ulepszania', fn: () => setTarget(id) });
-        if (it && it.st === 0) out.push(cfg.protect.includes(id) ? { label: '🔓 Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: '🔒 Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
+        if (it && ((it.cl >= 1 && it.cl <= 14) || it.cl === 29)) out.push({ label: 'Cel ulepszania', fn: () => setTarget(id) });
+        if (it && it.st === 0) out.push(cfg.protect.includes(id) ? { label: 'Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: 'Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
         return out;
       });
       bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => enhance('auto'), rnd(1200, 1800)); });

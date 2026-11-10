@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.6.5
+// @version      1.6.7
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -250,6 +250,7 @@ function normItem(it) {
     id: Number(it.id),
     name: it.name || '',
     cl: Number(it.cl) || 0,
+    tpl: Number(it.tpl) || 0,
     icon: it.icon || '',
     loc: it.loc || '',
     st: Number(it.st) || 0,           // 0 = w torbie, >0 = założony slot
@@ -1759,7 +1760,7 @@ const ui = {
             a.risk === 'destructive' ? el('span', { class: 'mp-badge destr' }, icon('warn', 11), 'usuwa/zużywa') : null),
           el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
         cfg.enabled ? el('button', { class: 'mp-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów po prawej', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); rerender(); } },
-          icon('pin', 14), quickbar.isPinned(a.id) ? 'W skrótach ✓' : 'Dodaj do skrótów') : null,
+          icon('pin', 14), quickbar.isPinned(a.id) ? 'W skrótach' : 'Dodaj do skrótów') : null,
         switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, M.querySelector('.mp-h .mp-sw')))));
       M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
     }
@@ -2562,7 +2563,7 @@ function parseProtection(data) {
     const b = win.body; b.innerHTML = '';
     const f = cfg.filter;
     const save = () => { config.save(); drawList(); };
-    const modeBtn = el('button', { class: 'mp-mini', title: cfg.minimal ? 'Pokaż filtry' : 'Tryb minimalny (sama lista)', onclick: () => { cfg.minimal = !cfg.minimal; config.save(); open(); } }, cfg.minimal ? '⚙ filtry' : '▭ minimalny');
+    const modeBtn = el('button', { class: 'mp-mini', title: cfg.minimal ? 'Pokaż filtry' : 'Tryb minimalny (sama lista)', onclick: () => { cfg.minimal = !cfg.minimal; config.save(); open(); } }, cfg.minimal ? 'Filtry' : 'Minimalny');
     countEl = el('span', { class: 'mp-dim', style: { fontSize: '11.5px', flex: 1 } });
     b.appendChild(el('div', { style: { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' } }, countEl, modeBtn));
     if (!cfg.minimal) {
@@ -2609,7 +2610,7 @@ function parseProtection(data) {
         !isFriendly(p) ? btn('Dobij', 'napad', () => MP.napad.attack(game.otherById(p.id) || p, 'key')) : null,
         btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
         !p.isFriend ? btn('Znajomy', 'ktotu', () => net.send('friendAdd', { id: p.id, nick: p.nick }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Wysłano zaproszenie do znajomych: ${p.nick}`, 'ok', 1500)), 'Dodaj do znajomych') : null,
-        btn(isProt ? 'Bratan ✓' : 'Bratan', 'bratan', () => togList(bcfg, 'nicks', p.nick, isProt), isProt ? 'Usuń z ochrony Bratana' : 'Chroń przed atakiem (Bratan)'),
+        btn(isProt ? 'Bratan (chroniony)' : 'Bratan', 'bratan', () => togList(bcfg, 'nicks', p.nick, isProt), isProt ? 'Usuń z ochrony Bratana' : 'Chroń przed atakiem (Bratan)'),
                 btn('Kopiuj', null, () => { try { navigator.clipboard.writeText(p.nick); toast('Skopiowano nick', 'ok', 1200); } catch {} })));
   }
 
@@ -2706,8 +2707,8 @@ function parseProtection(data) {
 })();
 
 /* ───────── Let's Cook Together ─────────
- * Zaproszenia do grupy pod klawisz (znajomi / klan / sojusz / wszyscy na mapie), rozwiązanie grupy pod klawisz,
- * opcjonalnie automatyczne zapraszanie nowych osób na mapie (AUTOMAT, domyślnie wyłączony).
+ * Zaproszenia do grupy pod klawisz (znajomi / klan / sojusz / wszyscy na mapie) i rozwiązanie grupy pod klawisz.
+ * Bez automatów — każde zaproszenie wysyłasz sam (klawisz albo przycisk).
  */
 (() => {
   let cfg, invited = {};
@@ -2724,12 +2725,11 @@ function parseProtection(data) {
     });
   }
 
-  function inviteAll(src = 'Cook') {
-    const cool = src === 'auto' ? 10 * 60000 : 30000; // automat nie męczy tej samej osoby częściej niż co 10 min
-    const l = eligible().filter((p) => !(invited[p.id] > now() - cool));
+  function inviteAll() {
+    const l = eligible().filter((p) => !(invited[p.id] > now() - 30000));   // tej samej osoby nie częściej niż co 30 s
     const room = Math.max(0, cfg.maxParty - Math.max(1, game.partyMembers().length));
     const pick = l.slice(0, room || l.length);
-    if (!pick.length) { if (src === 'Cook') toast('Let\'s Cook: nikogo do zaproszenia', 'warn', 1600); return; }
+    if (!pick.length) { toast('Let\'s Cook: nikogo do zaproszenia', 'warn', 1600); return; }
     pick.forEach((p) => { invited[p.id] = now(); net.send('partyInvite', { id: p.id }, { src: 'Let\'s Cook' }); });
     toast(`Let's Cook: zapraszam ${pick.length} os.`, 'ok', 1800);
   }
@@ -2742,9 +2742,9 @@ function parseProtection(data) {
   MP.cook = { disband };
 
   defineAddon({
-    id: 'cook', name: 'Let\'s Cook Together', icon: 'cook', color: ['#ff8a5c', '#e2533a'], risk: 'auto',
+    id: 'cook', name: 'Let\'s Cook Together', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
     desc: 'Zaproszenia do grupy pod klawisz dla znajomych, klanowiczów, sojuszników albo wszystkich na mapie oraz rozwiązanie grupy pod klawisz.',
-    defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10, auto: false },
+    defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10 },
     keys: [
       { key: 'keyInvite', label: 'zaproś', fn: () => inviteAll() },
       { key: 'keyDisband', label: 'rozwiąż grupę', fn: () => disband() },
@@ -2761,7 +2761,6 @@ function parseProtection(data) {
       { group: 'Kogo zapraszać', key: 'never', type: 'list', label: 'Nigdy nie zapraszaj (nicki)' },
       { group: 'Kogo zapraszać', key: 'range', type: 'number', label: 'Zasięg (kratki, 0 = cała mapa)', min: 0, max: 100 },
       { group: 'Kogo zapraszać', key: 'maxParty', type: 'number', label: 'Maksymalny rozmiar grupy', min: 2, max: 10 },
-      { group: 'Automat', key: 'auto', type: 'bool', auto: true, label: 'Automatycznie zapraszaj, gdy ktoś pasujący pojawi się na mapie', confirm: 'To automatyzacja — zaproszenia będą wysyłane bez Twojego kliknięcia. Na własne ryzyko.', countdown: 2 },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-btns' },
@@ -2770,7 +2769,7 @@ function parseProtection(data) {
     },
     init(c) {
       cfg = c;
-      setInterval(() => { if (cfg.enabled && cfg.auto && game.ready() && !game.inBattle()) inviteAll('auto'); }, 3000);
+      if ('auto' in c) { delete c.auto; config.save(); }   // usunięty automat z wcześniejszych wersji
       bus.on('map:change', () => { invited = {}; });
     },
   });
@@ -2891,7 +2890,21 @@ MP.itemDeco = itemDeco;
  */
 (() => {
   let cfg;
+  /**
+   * Klucz „takiego samego" przedmiotu: ten sam szablon (tpl) / nazwa + ten sam cel teleportu.
+   * Dzięki temu 3 kamienie czerwonego smoka ustawione w to samo miejsce dzielą jeden podpis.
+   */
+  function keyOf(it) {
+    if (!it) return null;
+    const raw = it.raw || {};
+    const base = raw.tpl || it.tpl || it.name;
+    const st = it.stats || {};
+    const dest = st.custom_teleport || st.teleport || '';
+    return base ? `${base}|${dest}` : null;
+  }
   function labelFor(it, id) {
+    const k = keyOf(it);
+    if (k && cfg.byKey[k]) return cfg.byKey[k].label;
     if (cfg.byId[id]) return cfg.byId[id];
     if (!it) return null;
     const n = it.name.toLowerCase();
@@ -2903,29 +2916,36 @@ MP.itemDeco = itemDeco;
     }
     return null;
   }
-  MP.podpis = { labelFor: (it, id) => (cfg && cfg.enabled ? labelFor(it, id) : null), isSigned: (id) => !!(cfg && cfg.byId[id]) };
+  const signedKey = (id) => { const it = game.itemById(id); const k = keyOf(it); return !!(cfg && ((k && cfg.byKey[k]) || cfg.byId[id])); };
+  MP.podpis = { labelFor: (it, id) => (cfg && cfg.enabled ? labelFor(it, id) : null), isSigned: (id) => signedKey(id) };
 
   async function signItem(id) {
     const it = game.itemById(id);
-    const cur = cfg.byId[id] || '';
+    const k = keyOf(it);
+    const cur = (k && cfg.byKey[k] && cfg.byKey[k].label) || cfg.byId[id] || '';
+    const same = k ? game.heroItems().filter((x) => keyOf(x) === k).length : 1;
     const towns = ['Ithan', 'Torneg', 'Werbin', 'Eder', 'Karka-han', 'Nithal', 'Tuzmer', 'Thuzal', 'Mythar', 'Port Tuzmer'];
-    const isTp = it && (it.stats.teleport || /telepor|kamie[nń]|zw[oó]j/i.test(it.name));
+    const isTp = it && (it.stats.teleport || it.stats.custom_teleport || /telepor|kamie[nń]|zw[oó]j/i.test(it.name));
     const head = it ? el('div', { class: 'mp-itemhead' }, it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
-      el('div', null, el('b', null, it.name), el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, cur ? 'Obecny podpis: ' + cur : 'Bez podpisu'))) : null;
+      el('div', null, el('b', null, it.name),
+        el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, (cur ? 'Obecny podpis: ' + cur : 'Bez podpisu') + (same > 1 ? ` · takich samych w EQ: ${same}` : '')))) : null;
     const v = await promptBox({
-      title: 'Podpisz przedmiot', head, label: 'Krótki podpis, widoczny na przedmiocie w ekwipunku (do 14 znaków):',
+      title: 'Podpisz przedmiot', head,
+      label: same > 1 ? `Podpis trafi na wszystkie ${same} takie same przedmioty (do 14 znaków):` : 'Krótki podpis, widoczny na przedmiocie w ekwipunku (do 14 znaków):',
       value: cur, placeholder: isTp ? 'np. Ithan' : 'np. na e2', maxLength: 14, suggestions: isTp ? towns : [], allowClear: true,
     });
     if (v === null) return;
-    if (v) cfg.byId[id] = v.slice(0, 14); else delete cfg.byId[id];
+    delete cfg.byId[id];
+    if (k) { if (v) cfg.byKey[k] = { label: v.slice(0, 14), name: it ? it.name : '' }; else delete cfg.byKey[k]; }
+    else if (v) cfg.byId[id] = v.slice(0, 14);
     config.save(); bus.emit('deco');
-    toast(v ? `Podpisano: ${v}` : 'Usunięto podpis', 'ok', 1500);
+    toast(v ? `Podpisano: ${v}${same > 1 ? ` (${same} szt.)` : ''}` : 'Usunięto podpis', 'ok', 1500);
   }
 
   defineAddon({
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
-    desc: 'Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny), widoczne w ekwipunku. Prawy klik na przedmiocie → „Podpisz…" (albo Alt + prawy klik).',
-    defaults: { enabled: false, byId: {}, rules: [], autoTeleport: true },
+    desc: 'Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny), widoczne w ekwipunku. Prawy klik na przedmiocie → „Podpisz…" (albo Alt + prawy klik). Podpis trafia od razu na wszystkie takie same przedmioty — np. kamienie ustawione w to samo miejsce.',
+    defaults: { enabled: false, byId: {}, byKey: {}, rules: [], autoTeleport: true },
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu (jeśli gra ją podaje)' }],
     render(box, c, rerender) {
       const tb = el('tbody');
@@ -2935,15 +2955,22 @@ MP.itemDeco = itemDeco;
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Reguły według nazwy'),
         c.rules.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Brak reguł.'),
         el('div', { class: 'mp-btns' }, m, l, el('button', { class: 'mp-btn', onclick: () => { if (m.value.trim() && l.value.trim()) { c.rules.push({ match: m.value.trim(), label: l.value.trim().slice(0, 14) }); config.save(); bus.emit('deco'); rerender(); } } }, 'Dodaj'))));
+      const keys = Object.entries(c.byKey || {});
       const ids = Object.entries(c.byId);
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Podpisane pojedyncze przedmioty'),
-        ids.length ? el('table', { class: 'mp-table' }, el('tbody', null, ids.map(([id, lb]) => el('tr', null, el('td', null, game.itemById(id)?.name || el('span', { class: 'mp-dim' }, '#' + id + ' (nie w EQ)')), el('td', null, lb), el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.byId[id]; config.save(); bus.emit('deco'); rerender(); } }, '×'))))))
+      const count = (k) => game.heroItems().filter((x) => keyOf(x) === k).length;
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Podpisane przedmioty'),
+        keys.length || ids.length ? el('table', { class: 'mp-table' }, el('tbody', null,
+          keys.map(([k, v]) => el('tr', null, el('td', null, v.name || k.split('|')[0], el('span', { class: 'mp-dim' }, ` · w EQ: ${count(k)}`)), el('td', null, v.label),
+            el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.byKey[k]; config.save(); bus.emit('deco'); rerender(); } }, '×')))),
+          ids.map(([id, lb]) => el('tr', null, el('td', null, game.itemById(id)?.name || el('span', { class: 'mp-dim' }, '#' + id + ' (nie w EQ)')), el('td', null, lb),
+            el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.byId[id]; config.save(); bus.emit('deco'); rerender(); } }, '×'))))))
           : el('div', { class: 'mp-dim' }, 'Brak — prawy klik na przedmiocie → „Podpisz…".')));
     },
     init(c) {
       cfg = c;
+      c.byKey = c.byKey || {};
       itemDeco.add((node, it, id) => { const lb = cfg.enabled && labelFor(it, id); return lb ? { cls: 'sig', text: lb, title: 'Podpisownik: ' + lb } : null; });
-      menus.add('item', (id) => (cfg.enabled ? [{ label: '✎ Podpisz…', fn: () => signItem(id) }] : []));
+      menus.add('item', (id) => (cfg.enabled ? [{ label: 'Podpisz…', fn: () => signItem(id) }] : []));
     },
     onToggle() { bus.emit('deco'); },
   });
@@ -3655,8 +3682,8 @@ MP.itemDeco = itemDeco;
       if (!t) return;
       e.preventDefault(); e.stopPropagation();
       menus.showOwn(e.clientX, e.clientY, [
-        { label: S.disbandArmed ? '✖ Anuluj „rozwiąż po walce"' : '⏱ Rozwiąż grupę po walce', fn: armDisband },
-        { label: '✖ Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka rączka' })) },
+        { label: S.disbandArmed ? 'Anuluj „rozwiąż po walce"' : 'Rozwiąż grupę po walce', fn: armDisband },
+        { label: 'Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka rączka' })) },
       ], 'Grupa');
     }, true);
   }
@@ -3685,10 +3712,10 @@ MP.itemDeco = itemDeco;
       cfg = c;
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
-        return queued(id) ? [{ label: '✖ Usuń z „po walce"', fn: () => toggleQueue(id) }]
-          : [{ label: '⏱ Użyj po walce', fn: () => toggleQueue(id) }];
+        return queued(id) ? [{ label: 'Nie używaj po walce', fn: () => toggleQueue(id) }]
+          : [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
       });
-      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: '⏱', title: 'Szybka rączka: użyj po walce' } : null));
+      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: 'PW', title: 'Szybka rączka: użyj po walce' } : null));
       bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => runQueue('auto'), rnd(500, 900)); });
       if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
       hookPartyIcon();
@@ -3789,8 +3816,8 @@ MP.itemDeco = itemDeco;
         if (!cfg.enabled) return [];
         const it = game.itemById(id);
         const out = [];
-        if (it && ((it.cl >= 1 && it.cl <= 14) || it.cl === 29)) out.push({ label: '✦ Cel ulepszania', fn: () => setTarget(id) });
-        if (it && it.st === 0) out.push(cfg.protect.includes(id) ? { label: '🔓 Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: '🔒 Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
+        if (it && ((it.cl >= 1 && it.cl <= 14) || it.cl === 29)) out.push({ label: 'Cel ulepszania', fn: () => setTarget(id) });
+        if (it && it.st === 0) out.push(cfg.protect.includes(id) ? { label: 'Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: 'Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
         return out;
       });
       bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => enhance('auto'), rnd(1200, 1800)); });
@@ -3833,5 +3860,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.6.5";
+MP.version = "1.6.7";
 })();

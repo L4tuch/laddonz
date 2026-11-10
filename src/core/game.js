@@ -64,6 +64,7 @@ function normItem(it) {
     id: Number(it.id),
     name: it.name || '',
     cl: Number(it.cl) || 0,
+    tpl: Number(it.tpl) || 0,
     icon: it.icon || '',
     loc: it.loc || '',
     st: Number(it.st) || 0,           // 0 = w torbie, >0 = założony slot
