@@ -83,7 +83,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-btn[disabled]{opacity:.45;pointer-events:none}
 .mp-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .mp-upslot{padding:10px}
-.mp-mt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.mp-mt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .mp-mt-card{cursor:pointer;border-radius:10px;padding:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18)}
 .mp-mt-card:hover{border-color:rgba(255,255,255,.3)}.mp-mt-card.on{border-color:var(--mp-accent);box-shadow:0 0 0 1px var(--mp-accent)}
 .mp-mt-stage{height:84px;border-radius:7px;display:flex;align-items:center;justify-content:center;background-color:#141312}
@@ -91,7 +91,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-mt-win{width:84%;border-radius:4px;display:flex;flex-direction:column;gap:3px;padding:5px 7px;box-sizing:border-box;font:10px/1.2 Arial,sans-serif}
 .mp-mt-win i{font-style:normal;font-weight:700;font-size:11px}.mp-mt-win em{font-style:normal;align-self:flex-start;padding:1px 8px;font-size:9.5px;border-radius:2px}
 .mp-mt-win.domyslny{background:#2b2116;border:3px solid #8a6a3a;color:#e8d3a3}.mp-mt-win.domyslny i{color:#e8c47a}.mp-mt-win.domyslny em{background:linear-gradient(#335e2a,#264a1f);border:1px solid #4f7e40;color:#fff}
-.mp-mt-win.mroczny{background:#141312;border:3px solid #2b2826;outline:1px solid #a8461a;outline-offset:-4px;color:#ddd5ca}.mp-mt-win.mroczny i{color:#efe6da;text-shadow:0 0 6px rgba(255,110,40,.4)}.mp-mt-win.mroczny em{background:linear-gradient(#2c2927,#1a1817);box-shadow:inset 0 0 0 1px rgba(200,90,40,.55);color:#e9e2d8}
+
 .mp-mt-name{text-align:center;font-size:11.5px;margin-top:5px}.mp-mt-desc{text-align:center;font-size:10.5px;opacity:.6;margin-top:2px}
 .mp-mt-own{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}.mp-mt-row{display:flex;align-items:center;gap:6px}
 .mp-setq{outline:2px solid var(--mp-accent)!important;outline-offset:1px;border-radius:3px;box-shadow:0 0 8px var(--mp-accent)!important}
