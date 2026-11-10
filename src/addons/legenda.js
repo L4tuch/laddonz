@@ -695,8 +695,9 @@
       // obwódka na zewnętrznej krawędzi całego okna (razem z metalową ramą), nie na jego środku
       const cs = getComputedStyle(w), bw = (k) => parseFloat(cs[k]) || 0;
       Object.assign(wr.style, { top: -(bw('borderTopWidth') - 1) + 'px', bottom: -(bw('borderBottomWidth') - 1) + 'px', left: -(bw('borderLeftWidth') - 1) + 'px', right: -(bw('borderRightWidth') - 1) + 'px' });
+      for (const top of $$(':scope > .header-label-positioner, :scope > .close-button-corner-decor', w)) if (getComputedStyle(top).position === 'static') top.style.position = 'relative';
       // gruba obwódka — przykrywa całą metalową ramę okna (ok. tyle, ile ma rama z boku)
-      wr.style.setProperty('--ringw', Math.max(8, Math.min(14, bw('borderLeftWidth') - 6)) + 'px');
+      wr.style.setProperty('--ringw', Math.max(5, Math.min(7, Math.round(bw('borderLeftWidth') / 3))) + 'px');
       wr.style.setProperty('--lgc', spec.glow);
     }
     // efekt na samym przedmiocie
