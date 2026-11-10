@@ -449,10 +449,10 @@ MP.itemDeco = itemDeco;
     const loot = after.filter((l) => /^loot/i.test(l));
     const rest = after.filter((l) => !/^loot/i.test(l));
     return el('div', { class: 'mp-eqhead2' },
-      before.map((l) => el('div', { class: 'rank' }, l)),
-      el('div', { class: 'nick' }, ni >= 0 ? lines[ni] : (p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id)),
-      (rest.length ? rest : (p && p.clanName ? [p.clanName] : [])).map((l) => el('div', { class: 'clan' }, l)),
-      loot.map((l) => el('div', { class: 'loot' }, l)));
+      before.map((l) => el('div', { class: 'mp-eq-rank' }, l)),
+      el('div', { class: 'mp-eq-nick' }, ni >= 0 ? lines[ni] : (p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id)),
+      (rest.length ? rest : (p && p.clanName ? [p.clanName] : [])).map((l) => el('div', { class: 'mp-eq-clan' }, l)),
+      loot.map((l) => el('div', { class: 'mp-eq-loot' }, l)));
   }
 
   function place(x, y) {
@@ -502,7 +502,7 @@ MP.itemDeco = itemDeco;
     // puste miejsca na sloty — delikatne pola, żeby było widać układ także przy niepełnym EQ
     for (let r = 0; r <= maxR; r++) for (let c = 0; c <= maxC; c++) {
       if (taken.has(c + ':' + r)) continue;
-      box.insertBefore(el('div', { class: 'mp-eqcell empty', style: { left: c * S + 'px', top: r * S + 'px' } }), box.firstChild);
+      box.insertBefore(el('div', { class: 'mp-eqcell mp-eqslot', style: { left: c * S + 'px', top: r * S + 'px' } }), box.firstChild);
     }
     box.style.width = (maxC + 1) * S - 2 + 'px';
     box.style.height = (maxR + 1) * S - 2 + 'px';

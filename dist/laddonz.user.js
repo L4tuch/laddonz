@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.6.3
+// @version      1.6.4
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1083,13 +1083,19 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-eq-on .tip-wrapper.normal-tip{clip-path:inset(0 0 100% 0)!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
 .mp-eq-on .tip-wrapper.normal-tip *{visibility:hidden!important}
 #mp-eqtip .mp-clone{text-align:center;position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:none!important;border:0!important;box-shadow:none!important;background:transparent!important;margin:0 0 4px!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;clip-path:none!important;max-width:none!important;width:auto!important;pointer-events:none!important}
-#mp-eqtip.gamey{max-width:360px}
+#mp-eqtip.gamey{max-width:360px;height:auto!important;max-height:92vh;overflow:hidden}
+/* izolacja od stylów gry (gra ma własne klasy o podobnych nazwach) */
+#mp-eqtip div{position:static;float:none;height:auto;min-height:0;background-image:none;transform:none}
+#mp-eqtip .mp-eqlayout{position:relative!important}
+#mp-eqtip .mp-eqlayout .mp-eqcell{position:absolute!important;height:34px!important}
+#mp-eqtip .mp-ibadge{position:absolute!important;height:auto!important}
+#mp-eqtip .mp-eqoutfit{background-repeat:no-repeat}
 #mp-eqtip .mp-clone *{max-width:100%!important;position:static!important}
 #mp-eqtip .mp-eqhead2{text-align:center;margin-bottom:4px;line-height:1.35}
-#mp-eqtip .mp-eqhead2 .rank{color:#ff9a2e}
-#mp-eqtip .mp-eqhead2 .loot{text-align:right;color:#f2c94c;font-size:11px}
-#mp-eqtip .mp-eqhead2 .nick{border:1px solid #444;padding:1px 8px;font-weight:700}
-#mp-eqtip .mp-eqhead2 .clan{color:#d9c27a;margin-top:2px}
+#mp-eqtip .mp-eqhead2 .mp-eq-rank{color:#ff9a2e}
+#mp-eqtip .mp-eqhead2 .mp-eq-loot{text-align:right;color:#f2c94c;font-size:11px}
+#mp-eqtip .mp-eqhead2 .mp-eq-nick{border:1px solid #444;padding:1px 8px;font-weight:700}
+#mp-eqtip .mp-eqhead2 .mp-eq-clan{color:#d9c27a;margin-top:2px}
 #mp-eqtip .mp-eqbody{display:flex;align-items:center;justify-content:center;gap:10px;border-top:1px solid #3c3c3c;padding-top:6px}
 #mp-eqtip .mp-eqoutfit{flex:none;background-repeat:no-repeat;image-rendering:pixelated}
 #mp-eqtip .mp-eqmain{min-width:120px;display:flex;justify-content:center}
@@ -1102,7 +1108,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 #mp-eqtip.gamey .mp-eqcell.unique{border-color:#e6c84a}
 #mp-eqtip .mp-eqlayout{position:relative;margin:4px auto 6px}
 #mp-eqtip .mp-eqlayout .mp-eqcell{position:absolute;width:34px;height:34px}
-#mp-eqtip .mp-eqcell.empty{background:rgba(255,255,255,.025)!important;border:1px dashed rgba(255,255,255,.07)!important;box-shadow:none!important}
+#mp-eqtip .mp-eqcell.mp-eqslot{background:rgba(255,255,255,.025)!important;border:1px dashed rgba(255,255,255,.07)!important;box-shadow:none!important}
 #mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
 #mp-eqtip.gamey .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px}
 .mp-eqgrid{display:grid;grid-template-columns:repeat(6,40px);gap:5px;margin:6px 0}
@@ -2618,7 +2624,7 @@ function parseProtection(data) {
       const [cls, tl] = relTag(p);
       const row = el('div', { class: 'mp-prow' + (openId === p.id ? ' open' : ''), 'data-pid': p.id, onclick: () => { openId = openId === p.id ? null : p.id; drawList(true); } },
         cfg.minimal ? null : el('span', { class: 'mp-dim', style: { width: '22px', fontSize: '11px' } }, p.prof.toUpperCase()),
-        el('span', { class: 'n', title: p.clanName ? `${p.nick} [${p.clanName}]` : p.nick }, `${p.nick} `, el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, `(${p.lvl}${cfg.minimal ? p.prof : ''})`)),
+        el('span', { class: 'n' }, `${p.nick} `, el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, `(${p.lvl}${cfg.minimal ? p.prof : ''})`)),
         cls ? el('span', { class: 'tag ' + cls }, cfg.minimal ? tl[0].toUpperCase() : tl) : null,
         el('span', { class: 'mp-dim', style: { fontSize: '11px', width: '30px', textAlign: 'right' } }, p.d.toFixed(0)));
       listBox.appendChild(row);
@@ -3222,10 +3228,10 @@ MP.itemDeco = itemDeco;
     const loot = after.filter((l) => /^loot/i.test(l));
     const rest = after.filter((l) => !/^loot/i.test(l));
     return el('div', { class: 'mp-eqhead2' },
-      before.map((l) => el('div', { class: 'rank' }, l)),
-      el('div', { class: 'nick' }, ni >= 0 ? lines[ni] : (p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id)),
-      (rest.length ? rest : (p && p.clanName ? [p.clanName] : [])).map((l) => el('div', { class: 'clan' }, l)),
-      loot.map((l) => el('div', { class: 'loot' }, l)));
+      before.map((l) => el('div', { class: 'mp-eq-rank' }, l)),
+      el('div', { class: 'mp-eq-nick' }, ni >= 0 ? lines[ni] : (p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id)),
+      (rest.length ? rest : (p && p.clanName ? [p.clanName] : [])).map((l) => el('div', { class: 'mp-eq-clan' }, l)),
+      loot.map((l) => el('div', { class: 'mp-eq-loot' }, l)));
   }
 
   function place(x, y) {
@@ -3275,7 +3281,7 @@ MP.itemDeco = itemDeco;
     // puste miejsca na sloty — delikatne pola, żeby było widać układ także przy niepełnym EQ
     for (let r = 0; r <= maxR; r++) for (let c = 0; c <= maxC; c++) {
       if (taken.has(c + ':' + r)) continue;
-      box.insertBefore(el('div', { class: 'mp-eqcell empty', style: { left: c * S + 'px', top: r * S + 'px' } }), box.firstChild);
+      box.insertBefore(el('div', { class: 'mp-eqcell mp-eqslot', style: { left: c * S + 'px', top: r * S + 'px' } }), box.firstChild);
     }
     box.style.width = (maxC + 1) * S - 2 + 'px';
     box.style.height = (maxR + 1) * S - 2 + 'px';
@@ -3802,5 +3808,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.6.3";
+MP.version = "1.6.4";
 })();
