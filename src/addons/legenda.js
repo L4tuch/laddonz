@@ -795,6 +795,14 @@
    * zapamiętujemy jej nazwę i obrazek. Test pokazuje wtedy prawdziwe legendy z gry, nie wymyślone.
    */
   const LEG_FALLBACK = ['Sygnet geotermalny', 'Czaszka Przeznaczenia', 'Buciory lidera szajki'];
+  /** Wbudowane szablony do testu: prawdziwe przedmioty z gry (nazwa + ikona z serwera grafik Margonem, wg margohelp.pl). */
+  const IMG = 'https://micc.garmory-cdn.cloud/obrazki/itemy/';
+  const BUILTIN = {
+    legendary: [['Bombowe uderzenie', 'rek/rekawice1275.gif'], ['Egzoszkielet pneumatyczny', 'zbr/zbroja1336.gif'], ['Zębatka magicznozłota', 'pie/pierscien1212.gif'], ['Maska z tlenem wysokoprężnym', 'nas/naszyjnik1225.gif'], ['Spalinowy kask goblina', 'hel/helm1342.gif'], ['Dolny pancerz egzoszkieletu', 'but/buty1177.gif']],
+    heroic: [['Kaftan zielonej rewolucji', 'zbr/zbroja1340.gif'], ['Sygnet nasadowy', 'pie/pierscien1210.gif'], ['Minutowy zapalnik bombowy', 'nas/naszyjnik1226.gif']],
+    unique: [['Maska pilota', 'hel/helm1137.gif'], ['Podkalibrowy pocisk lodowosabotowy', 'orb/orb341.gif']],
+    common: [['Amortyzatory stabilizatora', 'but/buty1175.gif']],
+  };
   function iconOf(n, raw) {
     const cv = n.querySelector('canvas');
     if (cv && cv.width) { try { return cv.toDataURL('image/png'); } catch {} }
@@ -823,7 +831,8 @@
   function legendFromTpl(r = 'legendary') {
     const db = store.get('legenda:itemTpl', {});
     let list = (db[r] || []).slice();
-    if (r === 'legendary') list = list.concat(store.get('legenda:legTpl', []).filter((x) => !list.some((y) => y.name === x.name)));
+    // + wbudowane przedmioty z gry (zawsze są — także zanim dodatek cokolwiek zbierze)
+    for (const [name, icon] of BUILTIN[r] || []) if (!list.some((y) => y.name === name)) list.push({ name, img: IMG + icon });
     if (!list.length) return null;
     const t = pickName(list, (x) => x.name);
     const it = el('div', { class: 'item mp-lg-tpl-item', style: { width: '32px', height: '32px' } }, el('img', { src: t.img, alt: '', draggable: 'false', style: { width: '32px', height: '32px', display: 'block', pointerEvents: 'none' } }));
@@ -851,8 +860,13 @@
       if (r === 'legendary') t.dataset.mpLg = '1'; else { delete t.dataset.mpLg; delete t.dataset.mpName; }
       return t;
     }
-    // brak szablonów z gry — rysowana ikonka zamiast Twoich przedmiotów
-    const it = phItem(r);
+    // brak szablonów z danych gry — prawdziwy przedmiot z Twojej torby / ekwipunku (grafika z gry),
+    // a dopiero gdy nic nie ma — rysowana ikonka
+    let pool = bag[r];
+    if (!pool || !pool.length) pool = [].concat(bag.legendary, bag.heroic, bag.unique, bag.common);
+    let it;
+    if (pool && pool.length) { it = cloneItem(pool[Math.floor(Math.random() * pool.length)]); it.style.position = it.style.left = it.style.top = it.style.transform = ''; it.querySelectorAll('.amount, small, .cl-icon').forEach((n) => n.remove()); }
+    else it = phItem(r);
     it.title = RAR[r][0];
     if (r === 'legendary') { it.dataset.mpLg = '1'; it.dataset.mpName = pickName(LEG_FALLBACK); } else { delete it.dataset.mpLg; delete it.dataset.mpName; }
     return it;
@@ -888,12 +902,8 @@
     const rars = randomRars();
     const bag = bagByRarity();
     const cards = rars.map((r) => {
-      const pool = bag[r];
-      let it;
-      if (pool && pool.length) { it = cloneItem(pool[Math.floor(Math.random() * pool.length)]); it.style.position = 'relative'; it.style.left = it.style.top = '0'; }
-      else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1] } });
-      it.classList.add('mp-lg-fake-item-real'); it.title = RAR[r][0];
-      if (r === 'legendary') it.dataset.mpLg = '1';
+      const it = testItem(r, bag);
+      it.style.position = 'relative'; it.style.left = it.style.top = '0';
       return el('div', { class: 'mp-lg-fake-card' },
         el('div', { class: 'mp-lg-fake-slot interface-element-one-item-slot-background-to-repeat' }, it),
         el('div', { class: 'mp-lg-fake-want' }, 'Chcę'),
