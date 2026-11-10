@@ -439,21 +439,32 @@
    * Zapamiętujemy też, do jakiego poziomu da się ulepszyć daną rzadkość — następnym razem bez sprawdzania.
    */
   async function precheck() {
-    const probe = game.bag().find((i) => typeOf(i.cl) && ['common', 'unique', 'heroic'].includes(i.rarity) && !targetIds().has(i.id) && !(MP.podpis && MP.podpis.isSigned(i.id)));
-    if (!probe) return;
-    for (const sl of slots().slice()) {
-      const it = game.itemById(sl.id);
-      if (!it) continue;
-      const r = await net.send('enhancePreview', { item: it.id, ingredients: probe.id }, { src: 'Ulepszarka' });
-      const steps = (store.get('up:last', {}) || {}).steps || [];
-      steps.push({ a: 'check', item: it.id, lvl: enhLevel(it), resp: short(r.data) }); store.set('up:last', { t: new Date().toISOString(), steps: steps.slice(-20) });
-      if (r.data && (r.data.t === 'stop' || r.data.t === 'reload')) return;
-      if (isMaxedResp(r.data)) { learnMax(it); removeMaxed(it.id, it.name); }
-      else if (r.data && r.data.e && r.data.e !== 'ok') {
-        // gra odmawia ulepszania tego przedmiotu (ze zwykłym składnikiem) — nie ma sensu trzymać go na liście
-        removeMaxed(it.id, it.name, String(r.data.e).slice(0, 80));
-      } else maxResp({ target: it })(r.data || {});   // zapis postępu
-      await sleep(250);
+    const lvlOf = (i) => Number(i && i.stats && i.stats.lvl) || 0;
+    // ciche komunikaty gry w trakcie sprawdzania (np. „Poziom przedmiotu jest zbyt niski!" z podglądu)
+    const origMsg = W.message;
+    let restored = false;
+    if (typeof origMsg === 'function') W.message = function (m, ...a) { if (/^(Ulepszarka|Bratan|Dobijarka|Fake Taxi)/.test(String(m))) return origMsg.call(this, m, ...a); };
+    try {
+      for (const sl of slots().slice()) {
+        const it = game.itemById(sl.id);
+        if (!it) continue;
+        // składnik próbny: przedmiot z ekwipunku w torbie o poziomie co najmniej takim jak ulepszany (niższy gra odrzuca)
+        const tl = lvlOf(it);
+        const probe = game.bag()
+          .filter((i) => typeOf(i.cl) && ['common', 'unique', 'heroic'].includes(i.rarity) && !targetIds().has(i.id) && !(MP.podpis && MP.podpis.isSigned(i.id)) && lvlOf(i) >= tl)
+          .sort((a, b) => lvlOf(a) - lvlOf(b))[0];
+        if (!probe) continue;
+        const r = await net.send('enhancePreview', { item: it.id, ingredients: probe.id }, { src: 'Ulepszarka' });
+        const steps = (store.get('up:last', {}) || {}).steps || [];
+        steps.push({ a: 'check', item: it.id, lvl: enhLevel(it), probeLvl: lvlOf(probe), resp: short(r.data) }); store.set('up:last', { t: new Date().toISOString(), steps: steps.slice(-20) });
+        if (r.data && (r.data.t === 'stop' || r.data.t === 'reload')) return;
+        if (isMaxedResp(r.data)) { learnMax(it); removeMaxed(it.id, it.name); }
+        else maxResp({ target: it })(r.data || {});   // zapis postępu
+        await sleep(250);
+      }
+    } finally {
+      await sleep(300);
+      if (!restored && typeof origMsg === 'function') { W.message = origMsg; restored = true; }
     }
   }
   /** Zapamiętany maksymalny poziom dla rzadkości (np. zwykłe kończą się wcześniej niż heroiki). */
@@ -578,19 +589,19 @@
     }
     return null;
   }
-  function isMaxed(it) {
-    const lvl = enhLevel(it);
-    if (lvl != null && lvl >= maxFor(it)) return true;
-    if (lvl != null && lvl < maxFor(it)) return false;
+  /** Tekst opisu przedmiotu (dymek gry). */
+  function tipText(it) {
     try {
       const f = it.raw && (it.raw.getTipContent || it.raw.getTipData);
-      if (typeof f === 'function') {
-        let t = f.call(it.raw); if (t && typeof t === 'object') t = JSON.stringify(t);
-        const txt = String(t || '').replace(/<[^>]+>/g, ' ');
-        if (/maksymaln\w* (poziom\w* )?ulepsz|ulepszon\w* maksymalnie|max(imum)? (enhancement|upgrade)/i.test(txt)) return true;
-      }
+      if (typeof f === 'function') { let t = f.call(it.raw); if (t && typeof t === 'object') t = JSON.stringify(t); return String(t || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '); }
     } catch {}
-    return false;
+    return '';
+  }
+  function isMaxed(it) {
+    if (!it) return false;
+    if (/maksymaln\w* (poziom\w* )?ulepsz|ulepszon\w* maksymalnie|max(imum)? (enhancement|upgrade)|nie mo[żz]na (ju[żz] )?(bardziej )?ulepsz/i.test(tipText(it))) return true;
+    const lvl = enhLevel(it);
+    return lvl != null && lvl >= maxFor(it);
   }
   function dropMaxed() {
     if (!cfg) return false;
