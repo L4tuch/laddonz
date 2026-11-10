@@ -18,7 +18,7 @@
     smoke: { name: 'Smoke', desc: 'Z okna łupu bucha czarny dym, który wznosi się i rozpływa po całym ekranie.', col: '#cfd3d8', grad: ['#0c0c0e', '#3a3d44'], dur: 7200 },
     kasyno: { name: 'Kasyno', desc: 'Jackpot! Fontanna i deszcz złotych monet z brzękiem, złote światła za oknem.', col: '#ffd34d', grad: ['#3a2600', '#d39a14'], dur: 6600 },
     disco: { name: 'Disco', desc: 'Nad oknem łupu zjeżdża kula disco, światła wirują, latają neony i gra muzyka.', col: '#ff4fd8', grad: ['#2a0a3e', '#ff2bd6'], dur: 9000 },
-    wlasny: { name: 'Własny', desc: 'Złóż efekt sam: wybierz warstwy, kolor, czas trwania i dźwięk.', col: '#7c5cff', grad: ['#1d1640', '#7c5cff'], dur: 6500 },
+    wlasny: { name: 'Własny', desc: 'Złóż efekt sam: wybierz warstwy, kolor i dźwięk.', col: '#7c5cff', grad: ['#1d1640', '#7c5cff'], dur: 6500 },
   };
   const LAYERS = [
     ['flash', 'Rozbłysk'], ['bolts', 'Błyskawice'], ['smoke', 'Dym'], ['coins', 'Monety'],
@@ -30,7 +30,17 @@
     kasyno: ['glow', 'sunburst', 'coins', 'banner'],
     disco: ['shade', 'beams', 'spots', 'ball', 'neon', 'pulse', 'banner'],
   };
-  const STRIKES = [0.1, 0.82, 1.5, 1.95, 3.05, 3.9];          // sekundy — wspólne dla obrazu i grzmotów
+  /** Uderzenia piorunów (sekundy) — wspólne dla obrazu i grzmotów; mocne otwarcie, potem burza do końca efektu. */
+  function strikesFor(dur) {
+    const out = [0.1, 0.82, 1.5, 1.95, 3.05, 3.9];
+    let t = 3.9;
+    while (true) { t += R(1.1, 2.2); if (t > dur - 1.6) break; out.push(+t.toFixed(2)); if (Math.random() < 0.3 && t + 0.4 < dur - 1.6) out.push(+(t + R(0.25, 0.45)).toFixed(2)); }
+    return out.filter((x) => x < dur - 1);
+  }
+  let STRIKES = [0.1, 0.82, 1.5, 1.95, 3.05, 3.9];
+  /** Fontanny monet w Kasynie (sekundy) — wspólne dla obrazu i dźwięku. */
+  const FOUNTAINS = (dur) => { const o = [0]; for (let t = 4.6; t < dur - 3; t += 4.6) o.push(t); return o; };
+  const durOf = () => Math.max(5, Math.min(20, Number(cfg && cfg.dur) || 15));
 
   /* ═════════════════ narzędzia ═════════════════ */
   const R = (a, b) => a + Math.random() * (b - a);
@@ -76,7 +86,7 @@
 
   const SOUND = {
     /** Grzmot: suchy trzask + przetaczający się pomruk, rozłożony w stereo. */
-    thor(a, out, t0) {
+    thor(a, out, t0, dur = 15) {
       const white = noiseBuf(a, 1.2), brown = noiseBuf(a, 6, true);
       STRIKES.forEach((s, i) => {
         const t = t0 + s, big = i % 2 === 0;
@@ -97,33 +107,40 @@
       // deszcz w tle
       const rain = src(a, white), bp = a.createBiquadFilter(), gr = a.createGain(); rain.loop = true;
       bp.type = 'bandpass'; bp.frequency.value = 5000; bp.Q.value = 0.4;
-      gr.gain.setValueAtTime(0.0001, t0); gr.gain.exponentialRampToValueAtTime(0.06, t0 + 1); gr.gain.setValueAtTime(0.06, t0 + 5); gr.gain.exponentialRampToValueAtTime(0.0001, t0 + 6.2);
-      rain.connect(bp).connect(gr).connect(out); rain.start(t0); rain.stop(t0 + 6.3);
+      gr.gain.setValueAtTime(0.0001, t0); gr.gain.exponentialRampToValueAtTime(0.06, t0 + 1); gr.gain.setValueAtTime(0.06, t0 + dur - 1.2); gr.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      rain.connect(bp).connect(gr).connect(out); rain.start(t0); rain.stop(t0 + dur + 0.1);
     },
     /** Dym: głęboki wybuch powietrza, potem szum rozchodzący się na boki. */
-    smoke(a, out, t0) {
-      const white = noiseBuf(a, 8), brown = noiseBuf(a, 8, true);
+    smoke(a, out, t0, dur = 15) {
+      const white = noiseBuf(a, 8), brown = noiseBuf(a, 8, true), D = dur;
       const boom = src(a, brown), lp = a.createBiquadFilter(), gb = a.createGain();
       lp.type = 'lowpass'; lp.frequency.setValueAtTime(400, t0); lp.frequency.exponentialRampToValueAtTime(60, t0 + 1.6);
       env(gb, t0, 0.03, 1.8, 1.8); boom.connect(lp).connect(gb).connect(out); boom.start(t0); boom.stop(t0 + 2);
       [-0.75, 0.75, 0].forEach((pan, i) => {
         const n = src(a, white), bp = a.createBiquadFilter(), g = a.createGain(), p = a.createStereoPanner();
         bp.type = 'bandpass'; bp.Q.value = 0.9;
-        bp.frequency.setValueAtTime(220, t0); bp.frequency.exponentialRampToValueAtTime(1400 + i * 300, t0 + 0.7); bp.frequency.exponentialRampToValueAtTime(260, t0 + 6.5);
+        bp.frequency.setValueAtTime(220, t0); bp.frequency.exponentialRampToValueAtTime(1400 + i * 300, t0 + 0.7); bp.frequency.exponentialRampToValueAtTime(380, t0 + D * 0.5); bp.frequency.exponentialRampToValueAtTime(240, t0 + D);
         p.pan.setValueAtTime(0, t0); p.pan.linearRampToValueAtTime(pan, t0 + 3);
-        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(i === 2 ? 0.5 : 0.35, t0 + 0.35); g.gain.exponentialRampToValueAtTime(0.12, t0 + 3); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 7);
-        n.connect(bp).connect(g).connect(p).connect(out); n.start(t0, i); n.stop(t0 + 7.1);
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(i === 2 ? 0.5 : 0.35, t0 + 0.35); g.gain.exponentialRampToValueAtTime(0.16, t0 + 3); g.gain.setValueAtTime(0.16, t0 + D - 3); g.gain.exponentialRampToValueAtTime(0.0001, t0 + D);
+        n.loop = true; n.connect(bp).connect(g).connect(p).connect(out); n.start(t0, i); n.stop(t0 + D + 0.1);
       });
       const hiss = src(a, white), hp = a.createBiquadFilter(), gh = a.createGain();
-      hp.type = 'highpass'; hp.frequency.value = 6000; env(gh, t0 + 0.1, 0.4, 0.05, 5.5);
-      hiss.connect(hp).connect(gh).connect(out); hiss.start(t0 + 0.1); hiss.stop(t0 + 6.2);
+      hp.type = 'highpass'; hp.frequency.value = 6000; env(gh, t0 + 0.1, 0.4, 0.05, D - 0.6);
+      hiss.loop = true; hiss.connect(hp).connect(gh).connect(out); hiss.start(t0 + 0.1); hiss.stop(t0 + D);
+      // kolejne kłęby: miękkie „puff" co kilka sekund, w rytm nowych chmur na ekranie
+      for (let tt = 3.2; tt < D - 2.5; tt += R(2.4, 3.4)) {
+        const pf = src(a, brown), lp2 = a.createBiquadFilter(), g3 = a.createGain(), pp = a.createStereoPanner();
+        lp2.type = 'lowpass'; lp2.frequency.setValueAtTime(700, t0 + tt); lp2.frequency.exponentialRampToValueAtTime(90, t0 + tt + 1.4); pp.pan.value = R(-0.7, 0.7);
+        env(g3, t0 + tt, 0.08, 0.7, 1.4); pf.connect(lp2).connect(g3).connect(pp).connect(out); pf.start(t0 + tt, R(0, 5)); pf.stop(t0 + tt + 1.6);
+      }
     },
     /** Monety: dzwonek „jackpot" i kaskada metalicznych brzęknięć. */
-    kasyno(a, out, t0) {
-      [1046.5, 1318.5, 1568, 2093].forEach((f, i) => {
+    kasyno(a, out, t0, dur = 15) {
+      const ding = (tt) => [1046.5, 1318.5, 1568, 2093].forEach((f, i) => {
         const o = a.createOscillator(), g = a.createGain(); o.type = 'triangle'; o.frequency.value = f;
-        env(g, t0 + i * 0.07, 0.005, 0.22, 1.1); o.connect(g).connect(out); o.start(t0 + i * 0.07); o.stop(t0 + i * 0.07 + 1.3);
+        env(g, tt + i * 0.07, 0.005, 0.22, 1.1); o.connect(g).connect(out); o.start(tt + i * 0.07); o.stop(tt + i * 0.07 + 1.3);
       });
+      FOUNTAINS(dur).forEach((f) => ding(t0 + f));
       const clink = (t, f, v, pan) => {
         const p = a.createStereoPanner(); p.pan.value = pan; p.connect(out);
         [1, 2.76, 5.4, 8.93].forEach((m, k) => {
@@ -131,11 +148,12 @@
           env(g, t, 0.002, v / (1 + k * 1.3), R(0.12, 0.35)); o.connect(g).connect(p); o.start(t); o.stop(t + 0.45);
         });
       };
-      for (let i = 0; i < 70; i++) { const t = t0 + 0.15 + Math.pow(Math.random(), 1.6) * 4.2; clink(t, R(2100, 4200), R(0.05, 0.16), R(-0.8, 0.8)); }
-      for (let i = 0; i < 8; i++) clink(t0 + 0.05 + i * 0.045, R(2600, 3400), 0.2, R(-0.3, 0.3));
+      const span = Math.max(3, dur - 2.5);
+      for (let i = 0; i < Math.round(22 * span); i++) { const t = t0 + 0.15 + Math.random() * span; clink(t, R(2100, 4200), R(0.04, 0.13), R(-0.8, 0.8)); }
+      FOUNTAINS(dur).forEach((f) => { for (let i = 0; i < 8; i++) clink(t0 + f + 0.05 + i * 0.045, R(2600, 3400), 0.2, R(-0.3, 0.3)); });
     },
     /** Disco: 4 takty 120 BPM — stopa, hi-hat, klaśnięcie, oktawowy bas, akordy i smyczki na wejście. */
-    disco(a, out, t0, dur = 9) {
+    disco(a, out, t0, dur = 15) {
       const bpm = 120, beat = 60 / bpm, bars = Math.max(2, Math.floor(dur / (beat * 4)));
       const comp = a.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4; comp.connect(out);
       const white = noiseBuf(a, 1);
@@ -200,6 +218,7 @@
       if (which === 'own') return stop;
     }
     const fn = SOUND[which] || SOUND.thor;
+    if (!run) STRIKES = strikesFor(durMs / 1000);
     fn(a, master, t0, durMs / 1000);
     return stop;
   }
@@ -287,7 +306,7 @@
    */
   const L = {
     storm(E) {
-      const sheets = Array.from({ length: 7 }, () => ({ at: R(0.3, E.dur - 1.2), x: R(0.1, 0.9), y: R(0.05, 0.4) }));
+      const sheets = Array.from({ length: Math.round(E.dur * 1.2) }, () => ({ at: R(0.3, E.dur - 1.2), x: R(0.1, 0.9), y: R(0.05, 0.4) }));
       return { back(x, t) {
         const a = E.fade(t);
         const g = x.createRadialGradient(E.W / 2, E.H * 0.3, 60, E.W / 2, E.H / 2, Math.max(E.W, E.H) * 0.75);
@@ -389,11 +408,11 @@
       } };
     },
     coins(E) {
-      const sp = getCoins(), { r } = E, C = [], G = []; let acc = 0, fountain = false;
+      const sp = getCoins(), { r } = E, C = [], G = []; let acc = 0, fi = 0; const fq = FOUNTAINS(E.dur);
       const add = (o) => C.push(Object.assign({ ph: R(0, 6.3), vph: R(7, 15), tilt: R(-0.5, 0.5), sz: R(11, 18), b: 0, dead: 0 }, o));
       return { front(x, t, dt) {
-        if (!fountain) { fountain = true; const cx = r.left + r.width / 2; for (let i = 0; i < 70; i++) add({ x: cx + R(-20, 20), y: r.top + 8, vx: R(-420, 420), vy: R(-1050, -520), g: 1500 }); }
-        if (t < Math.min(3.2, E.dur - 2)) { acc += dt * 64; const n = Math.floor(acc); acc -= n; for (let i = 0; i < n; i++) add({ x: R(0, E.W), y: R(-60, -20), vx: R(-40, 40), vy: R(180, 380), g: 700 }); }
+        while (fi < fq.length && t >= fq[fi]) { fi++; const cx = r.left + r.width / 2; for (let i = 0; i < 70; i++) add({ x: cx + R(-20, 20), y: r.top + 8, vx: R(-420, 420), vy: R(-1050, -520), g: 1500 }); }
+        if (t < E.dur - 3) { acc += dt * (t < 3.2 ? 64 : 26); const n = Math.floor(acc); acc -= n; for (let i = 0; i < n; i++) add({ x: R(0, E.W), y: R(-60, -20), vx: R(-40, 40), vy: R(180, 380), g: 700 }); }
         for (let i = C.length - 1; i >= 0; i--) {
           const c = C[i];
           c.vy += c.g * dt; c.x += c.vx * dt; c.y += c.vy * dt; c.ph += c.vph * dt;
@@ -610,7 +629,8 @@
     const cc = cfg.custom || {};
     const layers = custom ? ['shade'].concat((cc.layers || []).filter((l) => l !== 'flash' && l !== 'banner'), (cc.layers || []).includes('flash') ? ['flash'] : [], (cc.layers || []).includes('banner') ? ['banner'] : []) : PRESET_LAYERS[st];
     if (custom && (cc.layers || []).includes('ball') && !layers.includes('spots')) layers.splice(layers.indexOf('ball'), 0, 'spots');
-    const dur = custom ? Math.max(3, Math.min(15, Number(cc.dur) || 6.5)) : STYLES[st].dur / 1000;
+    const dur = durOf();
+    STRIKES = strikesFor(dur);
     let win = lootWindow(), fake = null;
     if (!win && opts.test) { fake = fakeLoot(); win = fake; }
     const rect = win ? win.getBoundingClientRect() : { left: innerWidth / 2 - 130, top: innerHeight / 2 - 80, width: 260, height: 160, right: innerWidth / 2 + 130, bottom: innerHeight / 2 + 80 };
@@ -664,8 +684,10 @@
   }
   let pending = null;
   const legendIds = new Set();      // legendy znane z danych serwera — podświetlimy je, gdy okno łupu się pojawi
-  function trigger(id, name) {
+  function trigger(id, name, win) {
     if (!cfg.enabled || !fresh(String(id))) return;
+    // kolejna legenda w tym samym oknie łupu, gdy efekt już trwa — tylko podświetlenie, bez restartu efektu
+    if (run && run.win && win && run.win === win) return;
     if (pending) { pending.names.push(name); return; }
     pending = { names: [name] };
     // chwila na otwarcie okna łupu, żeby efekt wiedział, gdzie ono jest
@@ -692,7 +714,7 @@
       if (it.dataset.mpLg) { if (!it.querySelector(':scope > .mp-lg-hl')) markItem(it); continue; }
       const id = game.itemIdFromEl(it);
       if (!id) continue;
-      if (isLegendNode(it) || legendIds.has(String(id))) { it.dataset.mpLg = '1'; markItem(it); trigger(id, ''); }
+      if (isLegendNode(it) || legendIds.has(String(id))) { it.dataset.mpLg = '1'; markItem(it); trigger(id, '', w); }
     }
   }
   function onData(d) {
@@ -701,7 +723,12 @@
     for (const [id, it] of Object.entries(d.item)) {
       if (!it || typeof it !== 'object') continue;
       if (!(lootish || it.loc === 'l')) continue;
-      if (/rarity=legendary/.test(String(it.stat || '')) || (it.stat && it.stat.rarity === 'legendary')) { legendIds.add(String(it.id || id)); trigger(it.id || id, ''); }
+      if (!(/rarity=legendary/.test(String(it.stat || '')) || (it.stat && it.stat.rarity === 'legendary'))) continue;
+      const lid = String(it.id || id);
+      legendIds.add(lid);
+      // efekt odpala się dopiero, gdy przedmiot pojawi się w oknie łupu (scanDom). Zapas: dane wprost mówią, że to łup
+      // (loc „l"), a okna łupu nie widać — wtedy efekt i tak startuje.
+      if (it.loc === 'l') setTimeout(() => { if (!seen.has(lid) && !lootWindow()) trigger(lid, ''); }, 1500);
     }
   }
 
@@ -715,6 +742,7 @@
   };
   const svgI = (k) => el('span', { class: 'mp-lg-ico', html: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>` });
 
+  let lastSnd = null;
   async function ownInfo(key) { try { const r = await idb.get('snd:' + key); return r ? { name: r.name, size: r.size } : null; } catch { return null; } }
   function pickFile(key, done) {
     const inp = el('input', { type: 'file', accept: 'audio/*,.mp3,.ogg,.wav,.m4a', style: { display: 'none' } });
@@ -736,7 +764,7 @@
   defineAddon({
     id: 'legenda', name: 'Legendarny Łup', icon: 'legenda', color: ['#ff9a1f', '#ff3d6e'], renderFirst: true,
     desc: 'Gdy w łupie trafi się przedmiot legendarny — efekt na cały ekran z dźwiękiem: Thor, Smoke, Kasyno, Disco albo Twój własny. Każdy styl ma wbudowany dźwięk i może mieć Twój plik dźwiękowy. Przycisk „Test" pokazuje efekt od razu.',
-    defaults: { enabled: false, style: 'thor', volume: 0.7, sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
+    defaults: { enabled: false, style: 'thor', volume: 0.7, dur: 15, sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
     notes: () => [{ type: 'info', text: 'Wymaga włączonej opcji gry <b>Podświetlenie okna łupów</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy). Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
     render(box, c, rerender) {
@@ -759,6 +787,12 @@
       vol.addEventListener('input', () => { paint(); c.volume = Number(vol.value); });
       vol.addEventListener('change', () => config.save());
       sc.appendChild(el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Głośność'), vol));
+      const dr = el('input', { class: 'mp-range', type: 'range', min: 5, max: 20, step: 1, value: durOf() });
+      const dOut = el('span', { class: 'mp-dim', style: { width: '40px', textAlign: 'right' } }, `${durOf()} s`);
+      const pd = () => dr.style.setProperty('--p', ((dr.value - 5) / 15) * 100 + '%'); pd();
+      dr.addEventListener('input', () => { pd(); dOut.textContent = dr.value + ' s'; c.dur = Number(dr.value); });
+      dr.addEventListener('change', () => config.save());
+      sc.appendChild(el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Czas trwania'), dr, dOut));
       if (k === 'wlasny') {
         const cc = c.custom = Object.assign({ layers: [], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' }, c.custom || {});
         const sel = el('select', { class: 'mp-in' }, SOUND_KEYS.map(([v, l]) => { const o = el('option', { value: v }, l); if (cc.sound === v) o.selected = true; return o; }));
@@ -785,8 +819,8 @@
       })();
       sc.appendChild(el('div', { class: 'mp-btns' },
         el('button', { class: 'mp-btn pri', onclick: () => play(k, { test: true }) }, 'Test efektu'),
-        el('button', { class: 'mp-btn', onclick: () => playSound(k, (k === 'wlasny' ? (c.custom.dur || 6.5) * 1000 : S.dur)) }, 'Odsłuchaj dźwięk'),
-        el('button', { class: 'mp-btn', onclick: stopFx }, 'Zatrzymaj')));
+        el('button', { class: 'mp-btn', onclick: () => { stopFx(); playSound(k, durOf() * 1000).then((st) => { lastSnd = st; }); } }, 'Odsłuchaj dźwięk'),
+        el('button', { class: 'mp-btn', onclick: () => { stopFx(); if (lastSnd) { lastSnd(); lastSnd = null; } } }, 'Zatrzymaj')));
       box.appendChild(sc);
 
       // własny styl
@@ -795,15 +829,9 @@
         const chips = el('div', { class: 'mp-btns' }, LAYERS.map(([lk, ln]) => el('button', { class: 'mp-upchip' + (cc.layers.includes(lk) ? ' on' : ''), onclick: () => { cc.layers = cc.layers.includes(lk) ? cc.layers.filter((x) => x !== lk) : cc.layers.concat(lk); config.save(); rerender(); } }, ln)));
         const col = el('input', { class: 'mp-color', type: 'color', value: cc.color || '#ff9a1f' });
         col.addEventListener('change', () => { cc.color = col.value; config.save(); });
-        const dr = el('input', { class: 'mp-range', type: 'range', min: 3, max: 15, step: 0.5, value: cc.dur || 6.5 });
-        const dOut = el('span', { class: 'mp-dim', style: { width: '40px', textAlign: 'right' } }, `${cc.dur || 6.5} s`);
-        const pd = () => dr.style.setProperty('--p', ((dr.value - 3) / 12) * 100 + '%'); pd();
-        dr.addEventListener('input', () => { pd(); dOut.textContent = dr.value + ' s'; cc.dur = Number(dr.value); });
-        dr.addEventListener('change', () => config.save());
         box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Twój efekt'),
           el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Warstwy efektu — włącz dowolne:'), chips,
-          el('div', { class: 'mp-lg-row', style: { marginTop: '10px' } }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Kolor'), col),
-          el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Czas trwania'), dr, dOut)));
+          el('div', { class: 'mp-lg-row', style: { marginTop: '10px' } }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Kolor'), col)));
       }
     },
     init(c) {
