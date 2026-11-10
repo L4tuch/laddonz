@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.3.3
+// @version      3.3.4
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -5583,8 +5583,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
 /* — okno łupu: gładkie tło bez pionowych krawędzi paneli, okienka przedmiotów jako spokojne kafle — */
 .c-window.mt-loot > .content{background:transparent!important;box-shadow:none!important}
-/* tło okna łupów sięga aż do metalowej ramy — jedna płaszczyzna, bez pasów między ramą a środkiem */
-.c-window.mt-loot > .content::before{content:'';position:absolute;left:-15px;right:-15px;top:-25px;bottom:0;z-index:-1;pointer-events:none;border-radius:5px;background:radial-gradient(ellipse 80% 110px at 50% 0, ${t.glow}, transparent 75%), radial-gradient(ellipse 120% 95% at 50% 45%, transparent 55%, rgba(0,0,0,.5)), linear-gradient(${ha(t.bg2, 0.88)}, ${ha(t.bg0, 0.95)}), ${TX}}
+/* tło okna łupów sięga aż do metalowej ramy — jedna płaszczyzna, bez pasów między ramą a środkiem.
+   Rysowane na samym oknie (pseudo-element), żeby niczego w środku nie przesuwać — pasek z „Potwierdź" zostaje na miejscu */
+.c-window.mt-loot::before{content:'';position:absolute;left:-15px;right:-15px;top:-25px;bottom:0;z-index:-1;pointer-events:none;border-radius:5px;background:radial-gradient(ellipse 80% 110px at 50% 0, ${t.glow}, transparent 75%), radial-gradient(ellipse 120% 95% at 50% 45%, transparent 55%, rgba(0,0,0,.5)), linear-gradient(${ha(t.bg2, 0.88)}, ${ha(t.bg0, 0.95)}), ${TX}}
 .c-window.mt-loot .content .mt-lclear, .c-window.mt-loot .content .mt-lclear:is(.mt-b0,.mt-b1,.mt-b2,.mt-bov,.mt-bd), .c-window.mt-loot .content [class*="interface-element-middle-"]{background:transparent!important;background-image:none!important;border-color:transparent!important;border-image:none!important;box-shadow:none!important}
 .c-window.mt-loot .content .mt-lin{background:transparent!important;background-image:none!important;border-color:transparent!important;box-shadow:none!important}
 /* okienko przedmiotu: szlachetny kafel — metalowa krawędź, światło od góry, głęboki cień w środku */
@@ -5707,7 +5708,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       w.classList.add('mt-loot');
       // wszystkie tła w środku okna (także kolorowe, np. brązowo-czerwone okienka przedmiotów) → kolory stylu
       const c = w.querySelector(':scope > .content'); if (!c) continue;
-      if (getComputedStyle(c).position === 'static') c.style.position = 'relative';
       // okienko przedmiotu = największy przodek kafelka, w którym jest tylko ten jeden przedmiot
       const cards = new Set();
       for (const it of $$('.item', c)) {
@@ -5721,7 +5721,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       }
       // reszta teł w środku okna znika — zostaje jedno, spójne tło okna (żadnych pasów po bokach)
       for (const n of $$('*', c)) {
-        if (cards.has(n) || n.closest('.item, .button, .mp-lg-hl, .mp-ibadge, .mp-lg-pop, .mt-lslot') || n.classList.contains('mt-lslot')) continue;
+        if (cards.has(n) || n.closest('.item, .button, .mp-lg-hl, .mp-ibadge, .mp-lg-pop, .mt-lslot, .c-window__bottom-bar') || n.classList.contains('mt-lslot')) continue;
         const cs = getComputedStyle(n);
         if (cs.backgroundImage !== 'none' || (tone(cs.backgroundColor) || { a: 0 }).a > 0.02 || parseFloat(cs.borderLeftWidth) > 0 || parseFloat(cs.borderTopWidth) > 0 || cs.borderImageSource !== 'none') n.classList.add(n.closest('.mt-lcard') ? 'mt-lin' : 'mt-lclear');
       }
@@ -7324,5 +7324,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.3.3";
+MP.version = "3.3.4";
 })();
