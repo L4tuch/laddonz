@@ -102,14 +102,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .interface-element-grid-border, .interface-element-background-color-3{background-color:${t.bg1}!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
 
 /* — okna — */
-.border-window{border-image-source:${winFrame(t)}!important}
+.c-window:not(.transparent).border-window{border-image-source:${winFrame(t)}!important}
 .c-window .inner-content{background-color:transparent!important}
-.c-window > .content{color:${t.text}}
-.c-window{box-shadow:0 12px 30px rgba(0,0,0,.6),0 0 22px ${t.glow}!important}
-.c-window.transparent > .border-image{background-color:${t.bg0}cc!important}
-.c-window .header-label{background:linear-gradient(${t.bg2},${t.bg1})!important;box-shadow:inset 0 0 0 1px ${t.line},0 0 10px ${t.glow}!important;border-radius:4px}
+.c-window:not(.transparent) > .content{color:${t.text}}
+.c-window:not(.transparent){box-shadow:0 12px 30px rgba(0,0,0,.6),0 0 22px ${t.glow}!important}
+/* okna przezroczyste (mapa podręczna, przelogowanie, liczniki…) zostają przezroczyste — gra sama ustawia ich krycie */
+.c-window:not(.transparent) .header-label{background-color:${t.bg2}!important;box-shadow:0 0 10px ${t.glow}!important}
 .c-window .header-label .text{color:${t.text}!important;text-shadow:0 0 8px ${t.glow},0 1px 1px #000!important}
-.c-window .header-label .left-decor, .c-window .header-label .right-decor{opacity:0!important}
+/* ozdoby plakietki z nazwą okna — ten sam kształt, przebarwione */
+.c-window .header-label .left-decor, .c-window .header-label .right-decor{filter:${t.tint} brightness(1.5)}
 .c-window .close-button-corner-decor{filter:${t.tint} brightness(1.6)}
 /* okna łupów i ważne okna — mocniejsze światło */
 .c-window[class*="loot"], .c-window.window-on-peak{box-shadow:0 12px 30px rgba(0,0,0,.6),0 0 0 1px ${t.a1}55,0 0 34px ${t.glow}!important}
@@ -121,7 +122,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 [class*="interface-element-header-3"], .opt-header{background:linear-gradient(${t.bg2},${t.bg1})!important;color:${t.text}!important;box-shadow:inset 0 -1px 0 ${t.line}!important}
 .interface-element-active-card-background-stretch, .interface-element-active-card-border-image{border-image-source:${card(t, true)}!important}
 .interface-element-green-box-background{background:linear-gradient(90deg,${t.bg0},${t.bg2} 12%,${t.bg2} 88%,${t.bg0})!important;box-shadow:inset 0 0 0 1px ${t.line}!important}
-.c-window .content{background-color:${t.bg1}!important}
+.c-window:not(.transparent) > .content{background-color:${t.bg1}!important}
 
 /* — zakładki — */
 .tabs-nav .card{background:linear-gradient(${t.bg1},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
