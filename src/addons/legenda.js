@@ -811,6 +811,7 @@
       const id = game.itemIdFromEl(n), it = id && game.itemById(id);
       if (!it || it.rarity !== 'legendary' || !it.name || list.some((x) => x.name === it.name)) continue;
       let raw = null; try { raw = E().items.getItemById(id); } catch {}
+      const h = game.hero(); if (raw && h && String(raw.own) === String(h.id)) continue;   // nie bierzemy Twoich przedmiotów
       const img = iconOf(n, raw); if (!img) continue;
       list.push({ name: it.name, img }); changed = true;
       if (list.length > 24) list.shift();
@@ -819,24 +820,39 @@
   }
   let usedNames = new Set();
   const pickName = (arr, f = (x) => x) => { const free = arr.filter((x) => !usedNames.has(f(x))); const src = free.length ? free : arr; const v = src[Math.floor(Math.random() * src.length)]; usedNames.add(f(v)); return v; };
-  function legendFromTpl() {
-    const list = store.get('legenda:legTpl', []);
+  function legendFromTpl(r = 'legendary') {
+    const db = store.get('legenda:itemTpl', {});
+    let list = (db[r] || []).slice();
+    if (r === 'legendary') list = list.concat(store.get('legenda:legTpl', []).filter((x) => !list.some((y) => y.name === x.name)));
     if (!list.length) return null;
     const t = pickName(list, (x) => x.name);
     const it = el('div', { class: 'item mp-lg-tpl-item', style: { width: '32px', height: '32px' } }, el('img', { src: t.img, alt: '', draggable: 'false', style: { width: '32px', height: '32px', display: 'block', pointerEvents: 'none' } }));
     it.dataset.mpName = t.name;
     return it;
   }
+  /** Zastępcze ikonki (gdy nie ma jeszcze szablonów z gry): proste rysunki przedmiotów w kolorze rzadkości. */
+  const PH = {
+    miecz: "<path d='M22 4l6 0 0 6-12 12-4-4z' fill='#d8dde4' stroke='#5a6270'/><path d='M9 19l4 4-3 3-4-4z' fill='#8a5a2b'/><path d='M6 26l2 2-3 3-2-2z' fill='#c9a13a'/>",
+    helm: "<path d='M6 20c0-8 4-14 10-14s10 6 10 14v4H6z' fill='#b9c0ca' stroke='#4a525e'/><path d='M10 18h12v3H10z' fill='#2a2f38'/><path d='M16 6v18' stroke='#4a525e'/>",
+    pierscien: "<circle cx='16' cy='19' r='8' fill='none' stroke='#e2b53c' stroke-width='3'/><path d='M12 9l4-5 4 5-4 4z' fill='#e04a4a' stroke='#7a1e1e'/>",
+    amulet: "<path d='M8 4c0 8 4 12 8 12s8-4 8-12' fill='none' stroke='#c9a13a' stroke-width='1.6'/><path d='M16 14l6 7-6 8-6-8z' fill='#4ab0e0' stroke='#1d4a66'/>",
+    buty: "<path d='M9 5h8v14l8 4v4H7z' fill='#7a5230' stroke='#3b2614'/><path d='M7 24h18' stroke='#3b2614'/>",
+    tarcza: "<path d='M16 4l10 4v8c0 7-5 11-10 13C11 27 6 23 6 16V8z' fill='#7d8a99' stroke='#3a4350'/><path d='M16 8v18M9 14h14' stroke='#c9a13a' stroke-width='2'/>",
+  };
+  function phItem(r) {
+    const k = Object.keys(PH)[Math.floor(Math.random() * 6)], c = RAR[r][1];
+    const svgSrc = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect x='.5' y='.5' width='31' height='31' rx='3' fill='#1b1712' stroke='${c}'/>${PH[k]}</svg>`);
+    return el('div', { class: 'item mp-lg-tpl-item', style: { width: '32px', height: '32px' } }, el('img', { src: svgSrc, alt: '', draggable: 'false', style: { width: '32px', height: '32px', display: 'block', pointerEvents: 'none' } }));
+  }
   function testItem(r, bag) {
-    if (r === 'legendary') {
-      const t = legendFromTpl();
-      if (t) { t.title = t.dataset.mpName; t.dataset.mpLg = '1'; return t; }
+    const t = legendFromTpl(r);
+    if (t) {
+      t.title = t.dataset.mpName;
+      if (r === 'legendary') t.dataset.mpLg = '1'; else { delete t.dataset.mpLg; delete t.dataset.mpName; }
+      return t;
     }
-    let pool = bag[r];
-    if (!pool || !pool.length) pool = [].concat(bag.legendary, bag.heroic, bag.unique, bag.common);   // brak takiej rzadkości w torbie — dowolny przedmiot
-    let it;
-    if (pool && pool.length) { it = cloneItem(pool[Math.floor(Math.random() * pool.length)]); it.style.position = it.style.left = it.style.top = it.style.transform = ''; it.querySelectorAll('.amount, small, .cl-icon').forEach((n) => n.remove()); }
-    else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1], width: '32px', height: '32px' } });
+    // brak szablonów z gry — rysowana ikonka zamiast Twoich przedmiotów
+    const it = phItem(r);
     it.title = RAR[r][0];
     if (r === 'legendary') { it.dataset.mpLg = '1'; it.dataset.mpName = pickName(LEG_FALLBACK); } else { delete it.dataset.mpLg; delete it.dataset.mpName; }
     return it;
@@ -1034,7 +1050,42 @@
       if (isLegendNode(it) || legendIds.has(String(id))) { it.dataset.mpLg = '1'; markItem(it); trigger(id, '', w); }
     }
   }
+  /*
+   * Szablony przedmiotów z gry (nazwa + ikona z serwera gry) do testu — zbierane z danych, które gra i tak przysyła:
+   * przedmioty podlinkowane na czacie, ekwipunek innych graczy (np. Pokaż EQ), łupy drużyny, sklepy.
+   * Twoje własne przedmioty są pomijane, żeby test nie pokazywał Twojego EQ.
+   */
+  function iconUrl(icon) {
+    if (!icon) return null;
+    icon = String(icon);
+    if (/^https?:|^data:/.test(icon)) return icon;
+    let base = '';
+    try { base = (W.CFG && (W.CFG.a_ipath || W.CFG.r_ipath || W.CFG.ipath)) || ''; } catch {}
+    if (!base) base = '/obrazki/itemy/';
+    if (base.startsWith('/')) base = 'https://micc.garmory-cdn.cloud' + base;
+    return base.replace(/\/?$/, '/') + icon.replace(/^\//, '');
+  }
+  function learnItems(d) {
+    if (!d || !d.item || typeof d.item !== 'object') return;
+    const h = game.hero(), me = h && String(h.id);
+    const db = store.get('legenda:itemTpl', { legendary: [], heroic: [], unique: [], common: [] });
+    let changed = false;
+    for (const it of Object.values(d.item)) {
+      if (!it || typeof it !== 'object' || !it.name || !it.icon) continue;
+      if (me && String(it.own) === me) continue;                 // Twoje przedmioty — pomijamy
+      const m = String(it.stat || '').match(/rarity=(\w+)/); let r = m ? m[1] : (it.stat && it.stat.rarity) || 'common';
+      if (r === 'upgraded') r = 'unique';
+      if (!db[r]) continue;
+      if (db[r].some((x) => x.name === it.name)) continue;
+      const url = iconUrl(it.icon); if (!url) continue;
+      db[r].push({ name: String(it.name), img: url });
+      if (db[r].length > (r === 'legendary' ? 40 : 20)) db[r].shift();
+      changed = true;
+    }
+    if (changed) store.set('legenda:itemTpl', db);
+  }
   function onData(d) {
+    try { learnItems(d); } catch {}
     if (!cfg.enabled || !d || !d.item || typeof d.item !== 'object') return;
     const lootish = !!(d.loot || d.loots);
     for (const [id, it] of Object.entries(d.item)) {
@@ -1138,7 +1189,7 @@
         el('div', { class: 'mp-btns' }, HL.map(([v, l]) => el('button', { class: 'mp-upchip' + ((c.hlMode || 'ring') === v ? ' on' : ''), onclick: () => { c.hlMode = v; config.save(); rerender(); } }, l))),
         el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
           el('button', { class: 'mp-upchip' + (c.names !== false ? ' on' : ''), onclick: () => { c.names = c.names === false; config.save(); rerender(); } }, c.names !== false ? 'Napis pod oknem: „Zdobyłeś: …" — włączony' : 'Napis pod oknem: wyłączony')),
-        el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, `Test pokazuje 1–3 legendy. Szablony legend z gry zapamiętane do testu: ${store.get('legenda:legTpl', []).length} (zbierają się same, gdy widzisz legendy — w torbie, ekwipunku albo podglądzie EQ innych graczy).`)));
+        el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, `Test pokazuje 1–3 legendy. Szablony przedmiotów z gry do testu: legendy ${((store.get('legenda:itemTpl', {}).legendary) || []).length + store.get('legenda:legTpl', []).length}, pozostałe ${['heroic', 'unique', 'common'].reduce((a, k) => a + (((store.get('legenda:itemTpl', {})[k]) || []).length), 0)}. Zbierają się same z gry (przedmioty z czatu, podgląd EQ innych graczy, łupy drużyny) — bez Twojego ekwipunku.`)));
 
       // dźwięk wybranego stylu
       const k = c.style, S = STYLES[k];
@@ -1246,7 +1297,7 @@
       setInterval(() => { try { collectLegends(); } catch {} }, 5000);
       const scan = debounce(scanDom, 80);
       new MutationObserver(() => { if (cfg.enabled) scan(); }).observe(document.body, { childList: true, subtree: true });
-      MP.legenda = { play, stop: stopFx, STYLES, SOUND, debug: () => { const t = store.get('legenda:lootTpl', null); return { rozmiary: store.get('legenda:lootSizes', {}), wzor: t ? t.html.slice(0, 9000) : null, rodzic: t && t.parent }; } };
+      MP.legenda = { play, stop: stopFx, STYLES, SOUND, learn: learnItems, debug: () => { const t = store.get('legenda:lootTpl', null); return { rozmiary: store.get('legenda:lootSizes', {}), wzor: t ? t.html.slice(0, 9000) : null, rodzic: t && t.parent }; } };
     },
     onToggle(on) { if (!on) stopFx(); },
   });
