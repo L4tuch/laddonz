@@ -99,7 +99,7 @@ const menus = {
         return f.apply(this, args);
       };
       w.__mpMenu = true;
-      try { I[n] = w; this.hooked = true; this.hookName = n; } catch {}
+      try { I[n] = w; this.hooked = true; this.hookName = n; this.origPopup = { obj: I, fn: f }; } catch {}
     }
   },
 
@@ -309,7 +309,32 @@ const menus = {
     }
   },
 
-  /** Własne, szklane menu panelu. */
+  /**
+   * Menu wyglądające dokładnie jak w grze: rysuje je sama gra (jej funkcja menu), więc czcionka i styl są
+   * standardowe. Gdyby się nie dało — nasze menu w stylu gry.
+   */
+  showGame(x, y, entries, title) {
+    const o = this.origPopup;
+    if (o && entries.length) {
+      setTimeout(() => {
+        let shown = false;
+        try {
+          const lbl0 = entries[0].label;
+          const count = () => $$('body *').filter((n) => !n.children.length && (n.textContent || '').trim() === lbl0 && isVisible(n) && !n.closest('#mp-ctx')).length;
+          const before = count();
+          const menu = entries.map((e) => [e.label, () => { try { e.fn(); } catch (err) { console.warn(err); } }]);
+          const ev = { clientX: x, clientY: y, pageX: x, pageY: y, x, y, button: 2, which: 3, type: 'contextmenu', target: document.body, currentTarget: document.body, preventDefault() {}, stopPropagation() {} };
+          o.fn.call(o.obj, menu, ev);
+          shown = count() > before;   // gra narysowała nowe menu
+        } catch {}
+        if (!shown) this.showOwn(x, y, entries, title);
+      }, 60);
+      return;
+    }
+    this.showOwn(x, y, entries, title);
+  },
+
+  /** Własne menu panelu (zapas). */
   showOwn(x, y, entries, title) {
     $('#mp-ctx')?.remove();
     const m = el('div', { id: 'mp-ctx' },

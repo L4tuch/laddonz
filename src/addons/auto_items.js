@@ -242,7 +242,7 @@
   function openSetMenu(x, y) {
     const cur = currentBuild();
     const list = buildList().filter((b) => b.id !== cur);
-    menus.showOwn(x, y, [
+    menus.showGame(x, y, [
       ...list.map((b) => ({ label: `${b.id}. ${b.name}${S.set && S.set.id === b.id ? ' (wybrany)' : ''}`, fn: () => armSet(b) })),
       ...(S.set ? [{ label: 'Nie zmieniaj po walce', fn: () => armSet(null) }] : []),
     ], 'Zmień po walce na…');
@@ -258,6 +258,8 @@
     const names = store.get('sets:names', {}) || {};
     items.forEach((n) => { const m = (n.textContent || '').trim().match(/^(\d{1,2})\.\s*(.+)$/); if (m) names[m[1]] = m[2].trim(); });
     store.set('sets:names', names);
+    if (now() - menus.lastInject < 1500) return true;                       // już dopisane do menu gry
+    if ($$('.mp-buildq').some((n) => isVisible(n))) return true;             // już jest — tylko jedna pozycja
     const last = items[items.length - 1];
     const parent = last.parentElement;
     if (!parent || parent.querySelector(':scope > .mp-buildq')) return true;
@@ -365,7 +367,7 @@
       const t = e.target.closest && e.target.closest(sel);
       if (!t) return;
       e.preventDefault(); e.stopPropagation();
-      menus.showOwn(e.clientX, e.clientY, [
+      menus.showGame(e.clientX, e.clientY, [
         { label: S.disbandArmed ? 'Anuluj „rozwiąż po walce"' : 'Rozwiąż grupę po walce', fn: armDisband },
         { label: 'Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka' })) },
       ], 'Grupa');

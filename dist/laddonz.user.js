@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      2.0.3
+// @version      2.0.4
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1541,7 +1541,7 @@ const menus = {
         return f.apply(this, args);
       };
       w.__mpMenu = true;
-      try { I[n] = w; this.hooked = true; this.hookName = n; } catch {}
+      try { I[n] = w; this.hooked = true; this.hookName = n; this.origPopup = { obj: I, fn: f }; } catch {}
     }
   },
 
@@ -1751,7 +1751,32 @@ const menus = {
     }
   },
 
-  /** Własne, szklane menu panelu. */
+  /**
+   * Menu wyglądające dokładnie jak w grze: rysuje je sama gra (jej funkcja menu), więc czcionka i styl są
+   * standardowe. Gdyby się nie dało — nasze menu w stylu gry.
+   */
+  showGame(x, y, entries, title) {
+    const o = this.origPopup;
+    if (o && entries.length) {
+      setTimeout(() => {
+        let shown = false;
+        try {
+          const lbl0 = entries[0].label;
+          const count = () => $$('body *').filter((n) => !n.children.length && (n.textContent || '').trim() === lbl0 && isVisible(n) && !n.closest('#mp-ctx')).length;
+          const before = count();
+          const menu = entries.map((e) => [e.label, () => { try { e.fn(); } catch (err) { console.warn(err); } }]);
+          const ev = { clientX: x, clientY: y, pageX: x, pageY: y, x, y, button: 2, which: 3, type: 'contextmenu', target: document.body, currentTarget: document.body, preventDefault() {}, stopPropagation() {} };
+          o.fn.call(o.obj, menu, ev);
+          shown = count() > before;   // gra narysowała nowe menu
+        } catch {}
+        if (!shown) this.showOwn(x, y, entries, title);
+      }, 60);
+      return;
+    }
+    this.showOwn(x, y, entries, title);
+  },
+
+  /** Własne menu panelu (zapas). */
   showOwn(x, y, entries, title) {
     $('#mp-ctx')?.remove();
     const m = el('div', { id: 'mp-ctx' },
@@ -4141,7 +4166,7 @@ MP.itemDeco = itemDeco;
   function openSetMenu(x, y) {
     const cur = currentBuild();
     const list = buildList().filter((b) => b.id !== cur);
-    menus.showOwn(x, y, [
+    menus.showGame(x, y, [
       ...list.map((b) => ({ label: `${b.id}. ${b.name}${S.set && S.set.id === b.id ? ' (wybrany)' : ''}`, fn: () => armSet(b) })),
       ...(S.set ? [{ label: 'Nie zmieniaj po walce', fn: () => armSet(null) }] : []),
     ], 'Zmień po walce na…');
@@ -4157,6 +4182,8 @@ MP.itemDeco = itemDeco;
     const names = store.get('sets:names', {}) || {};
     items.forEach((n) => { const m = (n.textContent || '').trim().match(/^(\d{1,2})\.\s*(.+)$/); if (m) names[m[1]] = m[2].trim(); });
     store.set('sets:names', names);
+    if (now() - menus.lastInject < 1500) return true;                       // już dopisane do menu gry
+    if ($$('.mp-buildq').some((n) => isVisible(n))) return true;             // już jest — tylko jedna pozycja
     const last = items[items.length - 1];
     const parent = last.parentElement;
     if (!parent || parent.querySelector(':scope > .mp-buildq')) return true;
@@ -4264,7 +4291,7 @@ MP.itemDeco = itemDeco;
       const t = e.target.closest && e.target.closest(sel);
       if (!t) return;
       e.preventDefault(); e.stopPropagation();
-      menus.showOwn(e.clientX, e.clientY, [
+      menus.showGame(e.clientX, e.clientY, [
         { label: S.disbandArmed ? 'Anuluj „rozwiąż po walce"' : 'Rozwiąż grupę po walce', fn: armDisband },
         { label: 'Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka' })) },
       ], 'Grupa');
@@ -5013,5 +5040,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "2.0.3";
+MP.version = "2.0.4";
 })();
