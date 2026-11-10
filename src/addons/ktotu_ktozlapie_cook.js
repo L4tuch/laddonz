@@ -1,4 +1,4 @@
-/* ───────── Kto tu jest? ─────────
+/* ───────── Gracze na mapie+ ─────────
  * Lista graczy na mapie + filtry i zapisane zestawy filtrów. Tryb minimalny: sama lista po filtrach.
  * Kliknięcie gracza → karta z informacjami i akcjami (EQ, Dobij, zaproś, znajomi, Bratan…).
  */
@@ -22,7 +22,7 @@
   }
 
   function open() {
-    win = floatWin({ id: 'ktotu', title: 'Kto tu jest?', iconName: 'ktotu', color: ['#3fa2ff', '#2a6fd6'], x: 90, y: 140, width: cfg.minimal ? 250 : 380, onClose: () => { clearInterval(timer); win = null; } });
+    win = floatWin({ id: 'ktotu', title: 'Gracze na mapie+', iconName: 'ktotu', color: ['#3fa2ff', '#2a6fd6'], x: 90, y: 140, width: cfg.minimal ? 250 : 380, onClose: () => { clearInterval(timer); win = null; } });
     win.win.style.width = (cfg.minimal ? 250 : 380) + 'px';
     draw();
     clearInterval(timer);
@@ -81,8 +81,14 @@
       el('div', { class: 'mp-btns', style: { marginTop: '6px', gap: '5px' } },
         btn('EQ', 'pokazeq', (e) => MP.pokazEq.showForce(p.id, e.clientX + 14, e.clientY - 20)),
         !isFriendly(p) ? btn('Dobij', 'napad', () => MP.napad.attack(game.otherById(p.id) || p, 'key')) : null,
-        btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
-        !p.isFriend ? btn('Znajomy', 'ktotu', () => net.send('friendAdd', { id: p.id, nick: p.nick }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Wysłano zaproszenie do znajomych: ${p.nick}`, 'ok', 1500)), 'Dodaj do znajomych') : null,
+        btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Gracze na mapie+' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
+        !p.isFriend ? btn('Znajomy', 'ktotu', async () => {
+          // jak gracz: opcja „Dodaj do znajomych" z menu gracza w grze
+          const ok = await menus.choosePlayerOption(p.id, /znajom/i);
+          if (ok) toast(`Wysłano zaproszenie do znajomych: ${p.nick}`, 'ok', 1500);
+          else if (net.cmd('friendAdd').t) net.send('friendAdd', { id: p.id, nick: p.nick }, { src: 'Gracze na mapie+' });
+          else toast('Nie znalazłam opcji „Dodaj do znajomych" w menu tego gracza', 'warn');
+        }, 'Dodaj do znajomych') : null,
         btn(isProt ? 'Bratan (chroniony)' : 'Bratan', 'bratan', () => togList(bcfg, 'nicks', p.nick, isProt), isProt ? 'Usuń z ochrony Bratana' : 'Chroń przed atakiem (Bratan)'),
                 btn('Kopiuj', null, () => { try { navigator.clipboard.writeText(p.nick); toast('Skopiowano nick', 'ok', 1200); } catch {} })));
   }
@@ -107,11 +113,10 @@
   }
 
   defineAddon({
-    id: 'ktotu', name: 'Kto tu jest?', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
+    id: 'ktotu', name: 'Gracze na mapie+', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
     desc: 'Lista graczy na mapie z filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami. Tryb minimalny pokazuje samą listę po filtrach. Kliknij gracza, żeby zobaczyć jego kartę: EQ, Dobij, zaproszenie do grupy i znajomych, Bratan.',
     defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
-    notes: () => [!net.cmd('friendAdd').t ? { type: 'info', text: 'Przycisk „Znajomy" zadziała po jednorazowym nauczeniu komendy: dodaj ręcznie kogoś do znajomych, potem Diagnostyka → Podsłuch → „Dodanie do znajomych".' } : null],
     settings: [
       { key: 'key', type: 'key', label: 'Klawisz: pokaż/ukryj listę graczy' },
       { key: 'minimal', type: 'bool', label: 'Tryb minimalny (sama lista po filtrach)' },
@@ -238,6 +243,8 @@
     document.querySelectorAll('.mp-ibadge.chance').forEach((b) => { if (!wins.some((w) => w.contains(b))) b.remove(); });
     if (!wins.length) return;
     const P = participants();
+    // szansa ma sens tylko w grupie — przy walce w pojedynkę nic nie pokazujemy
+    if (P.ids.length < 2 && !game.partyMembers().length) { document.querySelectorAll('.mp-ibadge.chance').forEach((b) => b.remove()); return; }
     const h = game.hero();
     for (const w of wins) {
       for (const it of $$('.item', w)) {
@@ -376,7 +383,6 @@
       { key: 'keyInvite', label: 'zaproś', fn: () => inviteAll() },
       { key: 'keyDisband', label: 'rozwiąż grupę', fn: () => disband() },
     ],
-    notes: () => [!net.cmd('partyDisband').verified ? { type: 'info', text: 'Komenda rozwiązania grupy jest domyślna (niezweryfikowana). Jeśli nie działa: rozwiąż raz grupę ręcznie i przypisz komendę w Diagnostyka → Podsłuch.' } : null],
     settings: [
       { group: 'Klawisze', key: 'keyInvite', type: 'key', label: 'Klawisz: zaproś do grupy' },
       { group: 'Klawisze', key: 'keyDisband', type: 'key', label: 'Klawisz: rozwiąż grupę' },

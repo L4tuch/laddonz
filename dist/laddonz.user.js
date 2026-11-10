@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.9.4
+// @version      1.9.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -576,6 +576,7 @@ const DEFAULT_COMMANDS = {
   // potwierdzone w grze (raport z okna rzemiosła): podgląd → ulepszenie → gra zadaje pytanie → odpowiedź „Tak" wysyła sama gra.
   // NIE dopisujemy odpowiedzi z góry (answer…=1) — serwer traktuje to jako błąd i wyrzuca z gry.
   enhancePreview: { t: 'enhancement&action=progress_preview&item={item}&ingredients={ingredients}', verified: true, destructive: false, label: 'Podgląd ulepszenia', how: 'Włóż przedmiot i składnik w oknie ulepszania.' },
+  enhanceAnswer: { t: 'enhancement&action=progress&item={item}&ingredients={ingredients}&answer{q}=1', verified: true, destructive: false, label: 'Odpowiedź „Tak" na pytanie przy ulepszaniu', how: '' },
   enhance:      { t: 'enhancement&action=progress&item={item}&ingredients={ingredients}', verified: true, destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
 };
 
@@ -612,8 +613,8 @@ const net = {
 
   build(name, params = {}) {
     const c = this.cmd(name);
-    if (!c.t) return { error: `Komenda „${c.label || name}" nie jest jeszcze ustawiona. Wejdź w Diagnostyka → Podsłuch i ${c.how?.toLowerCase() || 'wykonaj akcję ręcznie'}` };
-    if (c.destructive && !c.verified) return { error: `Komenda „${c.label}" jest zablokowana do czasu weryfikacji (Diagnostyka).` };
+    if (!c.t) return { error: `Ta akcja nie jest jeszcze dostępna (${c.label || name}).` };
+    if (c.destructive && !c.verified) return { error: `Ta akcja jest zablokowana (${c.label}).` };
     let t = c.t;
     for (const [k, v] of Object.entries(params)) t = t.split(`{${k}}`).join(encodeURIComponent(String(v)).replace(/%2C/g, ','));
     if (/\{\w+\}/.test(t)) return { error: `Brak parametru w komendzie: ${t}` };
@@ -699,11 +700,7 @@ const net = {
         });
         rec.tpl = tpl;
         if (/answer\d+=/.test(tpl)) return;   // to odpowiedź na pytanie gry — nie zapamiętujemy (komenda bez odpowiedzi jest wbudowana)
-        if (item !== 1 || ing !== 1 || tpl === this.cmd('enhance').t) return;   // ta sama co wbudowana → nic do zmiany
-        this.setCmd('enhance', tpl, true);
-        this.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Nauczono komendy ulepszania: ' + tpl });
-        toast('Ulepszarka: gra ulepsza teraz inaczej — zapamiętałam nowy sposób', 'ok');
-        bus.emit('cmd:learned', 'enhance');
+        // komenda ulepszania jest wbudowana — niczego nie zapamiętujemy (dawniej łapało przez pomyłkę podgląd)
       }, 1800);
     } catch {}
   },
@@ -1772,7 +1769,7 @@ MP.menus = menus;
 // ═══ src/core/ui.js ═══
 /* ───────────────────────── ui.js ─────────────────────────
  * Panel konfiguracyjny: przycisk startowy + okno z zakładkami
- *   Dodatki · Diagnostyka · Log · Ogólne
+ *   Dodatki · Ogólne
  */
 const ui = {
   panel: null,
@@ -1856,7 +1853,8 @@ const ui = {
   renderAll() {
     const P = this.panel;
     P.innerHTML = '';
-    const tabs = [['addons', 'grid', 'Dodatki'], ['diag', 'diag', 'Diagnostyka'], ['log', 'log', 'Log'], ['general', 'gear', 'Ogólne']];
+    const tabs = [['addons', 'grid', 'Dodatki'], ['general', 'gear', 'Ogólne']];
+    if (!['addons', 'general'].includes(this.tab)) this.tab = 'addons';
     const head = el('div', { class: 'mp-head' },
       el('div', { class: 'mp-tile', style: { background: grad([config.data.global.accent, '#3fa2ff']) } }, icon('logo', 18)),
       el('div', null, el('div', { class: 'mp-title' }, 'laddonz'), el('div', { class: 'mp-sub' }, this.subtitle())),
@@ -1897,8 +1895,6 @@ const ui = {
         const row = el('div', { class: 'mp-row' + (this.sel === a.id ? ' sel' : '') + (cfg.enabled ? '' : ' off'), onclick: (e) => { if (e.target.closest('.mp-sw')) return; this.sel = a.id; draw(); this.renderMain(); } },
           el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 18)),
           el('div', { class: 'nm' }, a.name),
-          a.risk === 'auto' ? el('span', { class: 'mp-badge auto', title: 'Zawiera automatyzację' }, 'A') : null,
-          a.risk === 'destructive' ? el('span', { class: 'mp-badge destr', title: 'Może usuwać/zużywać przedmioty' }, '!') : null,
           sw);
         list.appendChild(row);
       }
@@ -1915,7 +1911,7 @@ const ui = {
     if (v && a.risk === 'destructive' && !addons.cfg(a.id)._ack) {
       const ok = await confirmBox({
         title: `Włączyć „${a.name}"?`, danger: true, okText: 'Rozumiem, włącz', countdown: 3,
-        html: 'Ten dodatek może <b>usuwać lub zużywać przedmioty</b>. Komendy niszczące są zablokowane, dopóki nie zweryfikujesz ich w zakładce <b>Diagnostyka</b>, a przed każdą operacją zobaczysz listę przedmiotów do potwierdzenia.',
+        html: 'Ten dodatek może <b>zużywać przedmioty</b>. Przed każdą operacją zobaczysz listę przedmiotów do potwierdzenia.',
       });
       if (!ok) { resetSw(); return false; }
       addons.cfg(a.id)._ack = true;
@@ -1931,8 +1927,6 @@ const ui = {
     const st = this.main.scrollTop;
     this.main.innerHTML = '';
     if (this.tab === 'addons') this.renderAddon();
-    else if (this.tab === 'diag') this.renderDiag();
-    else if (this.tab === 'log') this.renderLog();
     else this.renderGeneral();
     this.main.scrollTop = st;
   },
@@ -1947,8 +1941,7 @@ const ui = {
         el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 26)),
         el('div', { style: { flex: 1 } },
           el('h2', null, a.name, ' ',
-            a.risk === 'auto' ? el('span', { class: 'mp-badge auto' }, icon('warn', 11), 'automat') : null,
-            a.risk === 'destructive' ? el('span', { class: 'mp-badge destr' }, icon('warn', 11), 'usuwa/zużywa') : null),
+            null),
           el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
         cfg.enabled ? el('button', { class: 'mp-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów po prawej', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); rerender(); } },
           icon('pin', 14), quickbar.isPinned(a.id) ? 'W skrótach' : 'Dodaj do skrótów') : null,
@@ -1960,10 +1953,10 @@ const ui = {
     if (a.render && a.renderFirst) { renderBox = el('div'); M.appendChild(renderBox); }
     if (a.settings && a.settings.length) {
       const groups = {};
-      for (const s of a.settings) (groups[s.group || 'Ustawienia'] = groups[s.group || 'Ustawienia'] || []).push(s);
+      for (const s of a.settings.filter((x) => !x.adv && x.group !== 'Zaawansowane')) (groups[s.group || 'Ustawienia'] = groups[s.group || 'Ustawienia'] || []).push(s);
       for (const [g, arr] of Object.entries(groups)) {
         const card = el('div', { class: 'mp-card' }, el('h3', null, g));
-        arr.forEach((s) => { if (!s.show || s.show(cfg)) card.appendChild(field(s, cfg, () => { config.save(); a.onChange && a.onChange(s.key, cfg); if (s.rerender) rerender(); })); });
+        arr.forEach((s) => { if (s.adv) return; if (!s.show || s.show(cfg)) card.appendChild(field(s, cfg, () => { config.save(); a.onChange && a.onChange(s.key, cfg); if (s.rerender) rerender(); })); });
         M.appendChild(card);
       }
     }
@@ -2057,8 +2050,6 @@ const ui = {
     const M = this.main;
     const save = () => { config.save(); this.applyTheme(); };
     const S = [
-      { key: 'dryRun', type: 'bool', label: 'Tryb próbny', hint: 'Panel NIC nie wysyła do gry, tylko zapisuje w logu co by zrobił. Idealne na pierwsze uruchomienie.' },
-      { key: 'minInterval', type: 'number', label: 'Minimalny odstęp między komendami panelu (ms)', min: 150, max: 5000, hint: 'Dotyczy wszystkich dodatków naraz. Nie schodź poniżej 250 ms.' },
       { key: 'panelKey', type: 'key', label: 'Skrót otwierający panel' },
       { key: 'perCharacter', type: 'bool', label: 'Osobne ustawienia dla każdej postaci', hint: 'Zmiana zadziała po odświeżeniu gry.' },
       { key: 'theme', type: 'custom', render: (obj, onSave) => el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } },
@@ -2068,7 +2059,6 @@ const ui = {
           onclick: () => { obj.theme = k; onSave(); this.renderAll(); quickbar.draw(); },
         }, el('div', { class: 'sw', style: { background: `linear-gradient(135deg, ${t.accent}55, rgba(${t.bg},1))` } }, el('i')), el('div', { class: 'nm' }, t.name))))) },
       { key: 'glass', type: 'range', label: 'Przezroczystość tła', min: 0.2, max: 0.95, step: 0.05 },
-      { key: 'menuSelector', type: 'textarea', label: 'Selektor menu prawego przycisku w grze', hint: 'Zapas, gdy opcje (np. „Dobij") nie pojawiają się w menu gracza.' },
     ];
     const card = el('div', { class: 'mp-card' }, el('h3', null, 'Ogólne'));
     S.forEach((s) => card.appendChild(field(s, g, () => { save(); if (s.key === 'dryRun') this.renderAll(); })));
@@ -2099,9 +2089,32 @@ const ui = {
         el('button', { class: 'mp-btn', onclick: () => { ta.value = config.export(); ta.select(); try { navigator.clipboard.writeText(ta.value); toast('Skopiowano do schowka', 'ok'); } catch {} } }, 'Eksportuj'),
         el('button', { class: 'mp-btn', onclick: () => { try { config.import(ta.value); toast('Zaimportowano — odśwież grę', 'ok'); } catch (e) { toast(e.message, 'bad'); } } }, 'Importuj'),
         el('button', { class: 'mp-btn bad', onclick: async () => { if (await confirmBox({ title: 'Przywrócić domyślne?', danger: true, html: 'Wszystkie ustawienia tej postaci zostaną skasowane.' })) { config.reset(); toast('Ustawienia skasowane — odśwież grę', 'ok'); } } }, 'Przywróć domyślne'))));
+    M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Coś nie działa?'),
+      el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Skopiuj raport i wklej go w rozmowie z twórcą — są w nim ostatnie ruchy dodatków i odpowiedzi gry (bez haseł i danych konta).'),
+      el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => copyReport() }, 'Kopiuj raport'))));
     M.appendChild(el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, `laddonz v${MP.version}. Kod otwarty — sprawdź, co robi każdy dodatek, zanim go włączysz.`));
   },
 };
+
+/** Wspólny raport dla twórcy (wszystkie dodatki): log, odpowiedzi gry, błędy strony, dane Ulepszarki. */
+function copyReport() {
+  let r = {};
+  try {
+    r = {
+      wersja: MP.version, czas: new Date().toISOString(),
+      wlaczone: addons.list.filter((a) => addons.on(a.id)).map((a) => a.name),
+      log: net.log.slice(0, 40).map((x) => ({ t: x.t, k: x.kind, src: x.src, task: x.task, msg: x.msg })),
+      komendyGry: (net.recent || []).slice(0, 40),
+      bledyStrony: store.get('errlog', []),
+      ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,
+      pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
+    };
+  } catch (e) { r.blad = String(e); }
+  const txt = JSON.stringify(r, null, 1);
+  const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
+  try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
+  toast('Raport skopiowany — wklej go w rozmowie', 'ok');
+}
 
 /* ───── elementy formularza ───── */
 function switchEl(on, onChange, small) {
@@ -2511,7 +2524,7 @@ function parseProtection(data) {
   };
 
   defineAddon({
-    id: 'napad', name: 'Dobijarka', icon: 'napad', color: ['#ff5d7a', '#b8325a'], risk: 'auto',
+    id: 'napad', name: 'Dobijarka', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
     desc: 'Włączona: atakuje każdego gracza, który wejdzie w zasięg (w podanym zakresie poziomów). Klawisz działa zawsze — namierza najbliższego gracza i atakuje go, gdy tylko będzie w zasięgu. Opcjonalnie zapamiętuje cel po jego zniknięciu, dopóki nie wybierzesz innego albo nie przerwiesz. To samo robi opcja „Dobij" w menu gracza; „Przerwij dobijanie" cofa polecenie. Kogo nie atakować, ustawiasz w Bratanie.',
     defaults: { enabled: false, keyAttack: '', lvlMin: 0, lvlMax: 500, target: null, remember: true },
     notes: () => [{ type: 'warn', text: 'Włączona Dobijarka atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
@@ -2614,7 +2627,7 @@ function parseProtection(data) {
       { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'bgAlpha', type: 'range', label: 'Krycie tła (0 = bez tła)', min: 0, max: 1, step: 0.05, live: () => apply() },
       { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'frame', type: 'bool', label: 'Ramka' },
       { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'radius', type: 'range', label: 'Zaokrąglenie (px)', min: 0, max: 24, live: () => apply() },
-      { group: 'Zaawansowane', key: 'gameSelectors', type: 'text', label: 'Selektor komunikatów gry', hint: 'Domyślnie .big-messages .message' },
+      { adv: true, group: 'Zaawansowane', key: 'gameSelectors', type: 'text', label: 'Selektor komunikatów gry', hint: 'Domyślnie .big-messages .message' },
     ],
     render(box, c, rerender) {
       const grid = el('div', { class: 'mp-wk-grid' });
@@ -2695,7 +2708,7 @@ function parseProtection(data) {
     defaults: { height: 160, selector: '.new-chat-window' },
     settings: [
       { key: 'height', type: 'range', label: 'Wysokość czatu (px)', min: 60, max: 700, step: 10, live: () => apply() },
-      { key: 'selector', type: 'text', label: 'Selektor okna czatu', hint: 'Domyślnie .new-chat-window — zmień tylko, jeśli gra zmieni wygląd czatu.' },
+      { adv: true, key: 'selector', type: 'text', label: 'Selektor okna czatu', hint: 'Domyślnie .new-chat-window — zmień tylko, jeśli gra zmieni wygląd czatu.' },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Okno czatu'),
@@ -2714,7 +2727,7 @@ function parseProtection(data) {
 })();
 
 // ═══ src/addons/ktotu_ktozlapie_cook.js ═══
-/* ───────── Kto tu jest? ─────────
+/* ───────── Gracze na mapie+ ─────────
  * Lista graczy na mapie + filtry i zapisane zestawy filtrów. Tryb minimalny: sama lista po filtrach.
  * Kliknięcie gracza → karta z informacjami i akcjami (EQ, Dobij, zaproś, znajomi, Bratan…).
  */
@@ -2738,7 +2751,7 @@ function parseProtection(data) {
   }
 
   function open() {
-    win = floatWin({ id: 'ktotu', title: 'Kto tu jest?', iconName: 'ktotu', color: ['#3fa2ff', '#2a6fd6'], x: 90, y: 140, width: cfg.minimal ? 250 : 380, onClose: () => { clearInterval(timer); win = null; } });
+    win = floatWin({ id: 'ktotu', title: 'Gracze na mapie+', iconName: 'ktotu', color: ['#3fa2ff', '#2a6fd6'], x: 90, y: 140, width: cfg.minimal ? 250 : 380, onClose: () => { clearInterval(timer); win = null; } });
     win.win.style.width = (cfg.minimal ? 250 : 380) + 'px';
     draw();
     clearInterval(timer);
@@ -2797,8 +2810,14 @@ function parseProtection(data) {
       el('div', { class: 'mp-btns', style: { marginTop: '6px', gap: '5px' } },
         btn('EQ', 'pokazeq', (e) => MP.pokazEq.showForce(p.id, e.clientX + 14, e.clientY - 20)),
         !isFriendly(p) ? btn('Dobij', 'napad', () => MP.napad.attack(game.otherById(p.id) || p, 'key')) : null,
-        btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
-        !p.isFriend ? btn('Znajomy', 'ktotu', () => net.send('friendAdd', { id: p.id, nick: p.nick }, { src: 'Kto tu jest?' }).then((r) => r.ok && toast(`Wysłano zaproszenie do znajomych: ${p.nick}`, 'ok', 1500)), 'Dodaj do znajomych') : null,
+        btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Gracze na mapie+' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
+        !p.isFriend ? btn('Znajomy', 'ktotu', async () => {
+          // jak gracz: opcja „Dodaj do znajomych" z menu gracza w grze
+          const ok = await menus.choosePlayerOption(p.id, /znajom/i);
+          if (ok) toast(`Wysłano zaproszenie do znajomych: ${p.nick}`, 'ok', 1500);
+          else if (net.cmd('friendAdd').t) net.send('friendAdd', { id: p.id, nick: p.nick }, { src: 'Gracze na mapie+' });
+          else toast('Nie znalazłam opcji „Dodaj do znajomych" w menu tego gracza', 'warn');
+        }, 'Dodaj do znajomych') : null,
         btn(isProt ? 'Bratan (chroniony)' : 'Bratan', 'bratan', () => togList(bcfg, 'nicks', p.nick, isProt), isProt ? 'Usuń z ochrony Bratana' : 'Chroń przed atakiem (Bratan)'),
                 btn('Kopiuj', null, () => { try { navigator.clipboard.writeText(p.nick); toast('Skopiowano nick', 'ok', 1200); } catch {} })));
   }
@@ -2823,11 +2842,10 @@ function parseProtection(data) {
   }
 
   defineAddon({
-    id: 'ktotu', name: 'Kto tu jest?', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
+    id: 'ktotu', name: 'Gracze na mapie+', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
     desc: 'Lista graczy na mapie z filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami. Tryb minimalny pokazuje samą listę po filtrach. Kliknij gracza, żeby zobaczyć jego kartę: EQ, Dobij, zaproszenie do grupy i znajomych, Bratan.',
     defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
-    notes: () => [!net.cmd('friendAdd').t ? { type: 'info', text: 'Przycisk „Znajomy" zadziała po jednorazowym nauczeniu komendy: dodaj ręcznie kogoś do znajomych, potem Diagnostyka → Podsłuch → „Dodanie do znajomych".' } : null],
     settings: [
       { key: 'key', type: 'key', label: 'Klawisz: pokaż/ukryj listę graczy' },
       { key: 'minimal', type: 'bool', label: 'Tryb minimalny (sama lista po filtrach)' },
@@ -2954,6 +2972,8 @@ function parseProtection(data) {
     document.querySelectorAll('.mp-ibadge.chance').forEach((b) => { if (!wins.some((w) => w.contains(b))) b.remove(); });
     if (!wins.length) return;
     const P = participants();
+    // szansa ma sens tylko w grupie — przy walce w pojedynkę nic nie pokazujemy
+    if (P.ids.length < 2 && !game.partyMembers().length) { document.querySelectorAll('.mp-ibadge.chance').forEach((b) => b.remove()); return; }
     const h = game.hero();
     for (const w of wins) {
       for (const it of $$('.item', w)) {
@@ -3092,7 +3112,6 @@ function parseProtection(data) {
       { key: 'keyInvite', label: 'zaproś', fn: () => inviteAll() },
       { key: 'keyDisband', label: 'rozwiąż grupę', fn: () => disband() },
     ],
-    notes: () => [!net.cmd('partyDisband').verified ? { type: 'info', text: 'Komenda rozwiązania grupy jest domyślna (niezweryfikowana). Jeśli nie działa: rozwiąż raz grupę ręcznie i przypisz komendę w Diagnostyka → Podsłuch.' } : null],
     settings: [
       { group: 'Klawisze', key: 'keyInvite', type: 'key', label: 'Klawisz: zaproś do grupy' },
       { group: 'Klawisze', key: 'keyDisband', type: 'key', label: 'Klawisz: rozwiąż grupę' },
@@ -3835,8 +3854,8 @@ MP.itemDeco = itemDeco;
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
       { key: 'listHover', type: 'bool', label: 'Najechanie na gracza na liście graczy (w grze i w laddonz)' },
       { key: 'needShift', type: 'bool', label: 'Na mapie tylko z wciśniętym Shift' },
-      { key: 'cacheSec', type: 'number', label: 'Pamiętaj wynik przez (s)', min: 10, max: 1800 },
-      { key: 'tipSelector', type: 'text', label: 'Selektor dymka gracza w grze', hint: 'Domyślnie .tip-wrapper.normal-tip' },
+      { adv: true, key: 'cacheSec', type: 'number', label: 'Pamiętaj wynik przez (s)', min: 10, max: 1800 },
+      { adv: true, key: 'tipSelector', type: 'text', label: 'Selektor dymka gracza w grze', hint: 'Domyślnie .tip-wrapper.normal-tip' },
     ],
     init(c) {
       cfg = c;
@@ -3876,14 +3895,12 @@ MP.itemDeco = itemDeco;
     const who = summoner(text);
     const t = lc(text);
     const has = (nick) => (who ? lc(who) === lc(nick) : t.includes(lc(nick)));
-    if (cfg.list.some(has)) return who || true;
-    if (cfg.party) for (const n of partyNicks()) if (has(n)) return who || n;
-    const p = who ? game.otherByNick(who) : game.others().find((o) => t.includes(lc(o.nick)));
-    if (p && ((cfg.clan && p.isClan) || (cfg.friends && p.isFriend))) return p.nick;
+    // gra pozwala przywołać tylko własną drużynę — przyjmujemy od członków grupy
+    for (const n of partyNicks()) if (has(n)) return who || n;
     return null;
   }
   const YES_RE = /^\s*(tak|akceptuj|przyjmij|zgoda|ok)\b/i;
-  const active = () => cfg && cfg.enabled && !(cfg.notInBattle && game.inBattle());
+  const active = () => cfg && cfg.enabled && !game.inBattle();   // w trakcie walki gra i tak nie pozwala przyjąć
   const accepted = (who, how) => net.pushLog({ kind: 'info', src: 'Fake Taxi', msg: `Przyjęto przywołanie${who === true ? '' : ' od ' + who} (${how})` });
 
   /*
@@ -3973,16 +3990,9 @@ MP.itemDeco = itemDeco;
     }
   }
   defineAddon({
-    id: 'taxi', name: 'Fake Taxi', icon: 'taxi', color: ['#ffe14d', '#f0b400'], risk: 'auto',
-    desc: 'Automatycznie przyjmuje przywołania („…przyzywa do siebie swoją drużynę!") od wybranych osób — domyślnie od członków Twojej grupy.',
-    defaults: { party: true, list: [], clan: false, friends: false, notInBattle: true },
-    settings: [
-      { key: 'party', type: 'bool', label: 'Od członków grupy' },
-      { key: 'friends', type: 'bool', label: 'Od znajomych' },
-      { key: 'clan', type: 'bool', label: 'Od klanowiczów' },
-      { key: 'list', type: 'list', label: 'Zawsze od (nicki)', placeholder: 'nick + Enter' },
-      { key: 'notInBattle', type: 'bool', label: 'Nie w trakcie walki' },
-    ],
+    id: 'taxi', name: 'Fake Taxi', icon: 'taxi', color: ['#ffe14d', '#f0b400'],
+    desc: 'Włączony: od razu przyjmuje przywołanie drużyny („…przyzywa do siebie swoją drużynę!") — okno z pytaniem w ogóle się nie pokazuje.',
+    defaults: {},
     init(c) {
       cfg = c;
       if ('auto' in c || 'dialogSelector' in c) { delete c.auto; delete c.dialogSelector; config.save(); }
@@ -3993,34 +4003,33 @@ MP.itemDeco = itemDeco;
   });
 })();
 
-/* ───────── Auto f ─────────
+/* ───────── Szybka walka (dawniej Auto f) ─────────
  * Włączone = na starcie każdej walki postać od razu przechodzi na szybką walkę.
  * Do tego jest przełącznik na liście dodatków — np. przy kolosie, gdy odchodzisz od komputera.
  */
 (() => {
   let cfg, doneFor = 0;
   defineAddon({
-    id: 'autof', name: 'Auto f', icon: 'autof', color: ['#ffd447', '#ff8a00'], risk: 'auto',
+    id: 'autof', name: 'Szybka walka', icon: 'autof', color: ['#ffd447', '#ff8a00'],
     desc: 'Włącz/wyłącz. Gdy jest włączony, każda walka od razu przechodzi na szybką walkę — np. przy kolosie, gdy odchodzisz od komputera, a reszta nie musi czekać na Twoją turę.',
     defaults: { enabled: false, delayMin: 250, delayMax: 600 },
-    notes: () => [{ type: 'warn', text: 'To automat: działa bez Twojego kliknięcia, dopóki go nie wyłączysz.' }],
     settings: [
-      { key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000 },
-      { key: 'delayMax', type: 'number', label: 'Opóźnienie do (ms)', min: 150, max: 4000 },
+      { adv: true, key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000 },
+      { adv: true, key: 'delayMax', type: 'number', label: 'Opóźnienie do (ms)', min: 150, max: 4000 },
     ],
     init(c) {
       cfg = c;
       bus.on('battle:start', () => {
         if (!cfg.enabled) return;
         const t = now(); if (t - doneFor < 2000) return; doneFor = t;
-        setTimeout(() => { if (game.inBattle()) net.send('fastFight', {}, { src: 'Auto f', urgent: true }); }, rnd(cfg.delayMin, Math.max(cfg.delayMin + 50, cfg.delayMax)));
+        setTimeout(() => { if (game.inBattle()) net.send('fastFight', {}, { src: 'Szybka walka', urgent: true }); }, rnd(cfg.delayMin, Math.max(cfg.delayMin + 50, cfg.delayMax)));
       });
     },
-    onToggle(on) { toast(on ? 'Auto f: włączony' : 'Auto f: wyłączony', on ? 'warn' : 'info', 1600); },
+    onToggle(on) { toast(on ? 'Szybka walka: włączona' : 'Szybka walka: wyłączona', on ? 'warn' : 'info', 1600); },
   });
 })();
 
-/* ───────── Szybka rączka ─────────
+/* ───────── Szybka Rączka ─────────
  * Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty
  * (teleporty, mikstury, przywołania…) — tak, jakbyś sam kliknął na nim „Użyj". Bez klawiszy i konfiguracji.
  * Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".
@@ -4033,8 +4042,8 @@ MP.itemDeco = itemDeco;
   function toggleQueue(id) {
     const it = game.itemById(id);
     const i = cfg.queue.findIndex((q) => q.id === Number(id));
-    if (i >= 0) { cfg.queue.splice(i, 1); toast(`Szybka rączka: „${it ? it.name : id}" nie zostanie użyty po walce`); }
-    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, tp: !!(it && (it.stats.teleport || it.stats.custom_teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka rączka: „${it ? it.name : id}" zostanie użyty po walce`); }
+    if (i >= 0) { cfg.queue.splice(i, 1); toast(`Szybka Rączka: „${it ? it.name : id}" nie zostanie użyty po walce`); }
+    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, tp: !!(it && (it.stats.teleport || it.stats.custom_teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka Rączka: „${it ? it.name : id}" zostanie użyty po walce`); }
     config.save(); bus.emit('deco');
   }
 
@@ -4042,7 +4051,7 @@ MP.itemDeco = itemDeco;
   async function useItem(id) {
     const node = $$(`.item.item-id-${id}`).find((n) => !/-showeq/.test(String(n.className)));
     if (node && await menus.chooseItemOption(node, /^(u[żz]yj|teleportuj|przywo[łl]aj|wypij|zjedz|otw[óo]rz)/i)) return true;
-    const r = await net.send('useItem', { id }, { src: 'Szybka rączka' });
+    const r = await net.send('useItem', { id }, { src: 'Szybka Rączka' });
     return r.ok;
   }
 
@@ -4052,7 +4061,7 @@ MP.itemDeco = itemDeco;
     running = true;
     try {
       // najpierw rozwiązanie grupy (nie zmienia mapy), potem przedmioty — teleporty na końcu
-      if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka rączka', urgent: true }); }
+      if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka', urgent: true }); }
       const items = cfg.queue.slice().sort((a, b) => a.tp - b.tp);
       for (const q of items) {
         cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
@@ -4085,17 +4094,17 @@ MP.itemDeco = itemDeco;
       e.preventDefault(); e.stopPropagation();
       menus.showOwn(e.clientX, e.clientY, [
         { label: S.disbandArmed ? 'Anuluj „rozwiąż po walce"' : 'Rozwiąż grupę po walce', fn: armDisband },
-        { label: 'Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka rączka' })) },
+        { label: 'Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka' })) },
       ], 'Grupa');
     }, true);
   }
 
   defineAddon({
-    id: 'szybka', name: 'Szybka rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'], risk: 'auto',
+    id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
     desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".',
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
-      { group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
+      { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
     ],
     render(box, c, rerender) {
       const tb = el('tbody', null, c.queue.map((q, i) => el('tr', null, el('td', null, q.name, q.tp ? el('span', { class: 'mp-dim' }, ' (teleport)') : null),
@@ -4113,7 +4122,7 @@ MP.itemDeco = itemDeco;
         return queued(id) ? [{ label: 'Nie używaj po walce', fn: () => toggleQueue(id) }]
           : [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
       });
-      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka rączka: zostanie użyty po walce' } : null));
+      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka Rączka: zostanie użyty po walce' } : null));
       // od razu po zakończeniu walki
       bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0)) runQueue(); });
       if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
@@ -4351,7 +4360,16 @@ MP.itemDeco = itemDeco;
           steps.push({ a: 'progress', item: o.target.id, n: part.length, ok: r.ok, err: r.error, resp: short(r.data) }); saveSteps();
           if (isMaxedResp(r.data)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }
           if (!r.ok || badResp(r.data)) { failed = true; break outer; }
-          const gone = await waitGone(part.map((i) => i.id), 6000);
+          let gone = await waitGone(part.map((i) => i.id), 3500);
+          if (!gone) {
+            // gra zadała pytanie (w odpowiedzi jest numer pytania), a okienka nie udało się kliknąć — odpowiadamy „Tak" tak jak gra po kliknięciu
+            const m = String(short(r.data) || '').match(/\b(100\d{4})\b/);
+            if (m) {
+              await net.send('enhanceAnswer', { item: o.target.id, ingredients: ids, q: m[1] }, { src: 'Ulepszarka', onResponse: maxResp(o) });
+              steps.push({ a: 'answer', q: m[1] }); saveSteps();
+            }
+            gone = await waitGone(part.map((i) => i.id), 5000);
+          }
           steps.push({ a: 'gone', n: gone }); saveSteps();
           if (!gone) { failed = true; break outer; }
           n += gone;
@@ -4406,29 +4424,39 @@ MP.itemDeco = itemDeco;
    * Pytanie gry przy ulepszaniu („Czy na pewno…?") — przez kilka sekund po naszym ulepszeniu klikamy „Tak"
    * (ukryte, więc nic nie mignie). Odpowiedź wysyła sama gra, dokładnie jak przy ręcznym kliknięciu.
    */
+  const askSeen = [];
   const ask = {
     until: 0, mo: null,
-    arm() { this.until = now() + 6000; if (!this.mo) { this.mo = new MutationObserver(() => this.scan()); this.mo.observe(document.body, { childList: true, subtree: true }); } this.scan(); },
-    disarm() { this.until = 0; },
-    scan() {
-      if (now() > this.until) return;
-      const yesRe = /^\s*(tak|ok|akceptuj|potwierd[źz])\b/i;
-      let btns = $$('button, .button, .btn, [class*="button"]').filter((b) => yesRe.test(b.textContent || '') && (b.textContent || '').trim().length < 20 && !b.closest('.mp-glass, .mp-modal-bg'));
-      btns = btns.filter((b) => !btns.some((o) => o !== b && b.contains(o)));
-      for (const btn of btns) {
-        let box = btn.parentElement;
-        for (let i = 0; i < 8 && box && !/(ulepsz|sk[łl]adnik|zu[żz]y|zniszcz|na pewno|czy chcesz)/i.test(box.textContent || ''); i++) box = box.parentElement;
-        if (!box || box.__mpUp) continue;
-        const win = btn.closest('[class*="window"]');
-        if (win && /rzemios/i.test(((win.querySelector('[class*="header"], [class*="title"]') || {}).textContent || ''))) continue;   // nigdy przyciski w samym oknie rzemiosła
-        if ((box.textContent || '').length > 600) continue;
-        box.__mpUp = true;
-        box.style.setProperty('visibility', 'hidden', 'important');
-        btn.click();
-        net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Potwierdzono pytanie gry: ' + (box.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120) });
+    arm() {
+      this.until = now() + 8000;
+      if (!this.mo) {
+        // tylko NOWE okienka, które pojawią się po naszym ulepszeniu (pytanie gry „Czy na pewno…?")
+        this.mo = new MutationObserver((muts) => { if (now() > this.until) return; for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) this.check(n); });
+        this.mo.observe(document.body, { childList: true, subtree: true });
       }
     },
+    disarm() { this.until = 0; },
+    check(node) {
+      if (node.closest && node.closest('.mp-glass, .mp-modal-bg, #mp-qpop')) return;
+      const win = node.closest && node.closest('[class*="window"]');
+      if (win && /rzemios/i.test(((win.querySelector('[class*="header"], [class*="title"]') || {}).textContent || ''))) return;   // nigdy przyciski w samym oknie rzemiosła
+      const yesRe = /^\s*(tak|ok|akceptuj|potwierd[źz])\b/i;
+      let btns = [node, ...node.querySelectorAll('*')].filter((b) => yesRe.test(b.textContent || '') && (b.textContent || '').trim().length < 20);
+      btns = btns.filter((b) => !btns.some((o) => o !== b && b.contains(o)));
+      const btn = btns[0];
+      if (!btn) return;
+      let box = btn;
+      while (box.parentElement && box.parentElement !== document.body && (box.parentElement.textContent || '').length < 700) box = box.parentElement;
+      if (box.__mpUp) return;
+      box.__mpUp = true;
+      const txt = (box.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200);
+      askSeen.unshift({ t: new Date().toISOString().slice(11, 19), txt }); if (askSeen.length > 5) askSeen.length = 5;
+      box.style.setProperty('visibility', 'hidden', 'important');
+      setTimeout(() => btn.click(), 30);
+      net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Potwierdzono pytanie gry: ' + txt.slice(0, 120) });
+    },
   };
+
 
   /*
    * Maksymalnie ulepszony przedmiot → sam znika z listy. Poziom ulepszenia czytamy ze statystyk przedmiotu
@@ -4492,10 +4520,10 @@ MP.itemDeco = itemDeco;
     freeBlockSig = bagSig();
   }
 
-  /** Raport do wysłania twórcy, gdy samouczenie nie zadziała. */
+  /** Dane Ulepszarki do wspólnego raportu (Ogólne → Kopiuj raport). */
   function report() {
     const E0 = W.Engine || {};
-    const r = {
+    return {
       wersja: MP.version, komenda: net.cmd('enhance'),
       ostatnieUlepszanie: store.get('up:last', null),
       rzemiosloOtwarte: craftState(),
@@ -4509,11 +4537,9 @@ MP.itemDeco = itemDeco;
       ruchyPrzyRzemiosle: net.learnLog.slice(0, 15),
       engine: Object.keys(E0).filter((k) => /craft|enhanc|recip|rzem/i.test(k)),
       okna: $$('[class*="window"]').filter(isVisible).map((w) => String(w.className).slice(0, 80) + ' | ' + ((w.querySelector('[class*="header"], [class*="title"]') || {}).textContent || '').trim().slice(0, 40)).slice(0, 12),
+      dialogi: askSeen.slice(0, 5),
+      maksPoziomy: store.get('up:maxlvl', {}),
     };
-    const txt = JSON.stringify(r, null, 1);
-    const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
-    try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
-    toast('Ulepszarka: raport skopiowany — wklej go w rozmowie', 'ok');
   }
 
   /* ── wybór celu ── */
@@ -4642,10 +4668,10 @@ MP.itemDeco = itemDeco;
       // wyrzuciło z gry w trakcie ulepszania? — automatyczne ulepszanie wstrzymane, dopóki go nie wznowisz
       store.del('up:inflight'); if (cfg.autoPaused) { delete cfg.autoPaused; config.save(); }
       // stara komenda z dopisaną odpowiedzią (powodowała wyrzucenie) — usuwamy
-      try { const own = (config.data.commands || {}).enhance; if (own && /answer\d+=/.test(own.t || '')) net.resetCmd('enhance'); } catch {}
+      try { if ((config.data.commands || {}).enhance) net.resetCmd('enhance'); } catch {}   // komenda jest wbudowana — żadnych nauczonych zamienników
       setInterval(() => { if (cfg.enabled && !running) dropMaxed(); }, 5000);
       setInterval(freeWatch, 1500);
-      MP.ulepszarka = { addTarget, plan, run, craftState, typeOf, closeCraft, report, dropMaxed, enhLevel };
+      MP.ulepszarka = { addTarget, plan, run, craftState, typeOf, closeCraft, reportData: report, dropMaxed, enhLevel };
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
         const it = game.itemById(id);
@@ -4678,6 +4704,7 @@ MP.itemDeco = itemDeco;
   await sleep(800);
   const h = game.hero();
   config.load(h && h.nick);
+  config.data.global.dryRun = false;   // tryb próbny usunięty z panelu
   injectCSS();
   net.install();
   // część obiektów gry powstaje później — ponawiamy podpięcie przez pierwsze 2 minuty
@@ -4697,5 +4724,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.9.4";
+MP.version = "1.9.5";
 })();

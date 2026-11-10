@@ -8,10 +8,9 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 - **Automaty są domyślnie wyłączone** (oznaczone w panelu literą **A** i żółtą plakietką). Włączasz je świadomie, po ostrzeżeniu.
 - **Nic nie jest zużywane bez Twojej zgody.** Ulepszarka ulepsza tylko na Twoje polecenie (przycisk albo klawisz) i domyślnie pokazuje listę zużywanych przedmiotów z ich rzadkością.
 - **Komendy usuwania i ulepszania są zablokowane**, dopóki sam ich nie „pokażesz" panelowi (patrz: [Pierwsze uruchomienie](#4-pierwsze-uruchomienie--weryfikacja-komend)).
-- **Wszystko przechodzi przez jedną kolejkę** z minimalnym odstępem (domyślnie 300 ms) i jest zapisywane w zakładce **Log**.
-- **Tryb próbny** (Ogólne → Tryb próbny): panel niczego nie wysyła, tylko zapisuje w logu, co by zrobił.
+- **Wszystko przechodzi przez jedną kolejkę** z minimalnym odstępem (300 ms).
 
-> ⚠️ Żaden dodatek firm trzecich nie jest oficjalnie zatwierdzony przez Garmory. Funkcje automatyczne (Dobijarka, Auto f, Fake Taxi, automat Szybkiej rączki, auto-zaproszenia) to dokładnie ten rodzaj rzeczy, za który najłatwiej o bana. Używasz ich na własne ryzyko.
+> ⚠️ Żaden dodatek firm trzecich nie jest oficjalnie zatwierdzony przez Garmory. Funkcje działające bez kliknięcia (Dobijarka, Szybka walka, Fake Taxi, Szybka Rączka) to dokładnie ten rodzaj rzeczy, za który najłatwiej o bana. Używasz ich na własne ryzyko.
 
 ---
 
@@ -22,15 +21,15 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 | ⚔ | **Dobijarka** | Włączona: atakuje każdego gracza, który wejdzie w zasięg (zakres poziomów od–do). Klawisz (działa też przy wyłączonej): namierza najbliższego gracza i atakuje go, gdy będzie w zasięgu. W menu gracza: „Dobij" / „Przerwij dobijanie". Postać nigdy sama nie podchodzi. |
 | 🔔 | **Hey WakeUP!** | Domyślnie powiadomienia wyglądają jak w grze (żółty tekst na dole). Dodatek zmienia ich kolory, czcionkę, rozmiar, tło i położenie — także dla komunikatów gry. |
 | 🛡 | **Bratan** | Blokuje każdy atak (także ręczny) na klanowiczów, znajomych, sojuszników i osoby z listy. |
-| 👥 | **Kto tu jest?** | Okno z graczami na mapie: filtry, sortowanie, zapisywane zestawy, tryb minimalny. Klik na gracza → karta z EQ, Dobij, zaproszeniem do grupy i znajomych, Bratanem. |
-| 🏆 | **Kto złapie** | Pod kafelkami łupu: Twoja szansa (%) na złapanie przedmiotu — liczone tylko osoby z Twojej drużyny, które brały udział w walce. |
+| 👥 | **Gracze na mapie+** | Okno z graczami na mapie: filtry, sortowanie, zapisywane zestawy, tryb minimalny. Klik na gracza → karta z EQ, Dobij, zaproszeniem do grupy i znajomych, Bratanem. |
+| 🏆 | **Kto złapie** | Pod kafelkami łupu: Twoja szansa (%) na złapanie przedmiotu — tylko w walce w grupie; liczone osoby z Twojej drużyny, które brały udział w walce, z pierwszeństwem pasującej profesji. |
 | 🍲 | **Let's Cook Together** | Klawisz = zaproś znajomych/klan/sojusz/wszystkich z mapy. Klawisz = rozwiąż grupę. Bez automatów. |
 | ✎ | **Podpisownik** | Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny). |
 | 🎒 | **Pokaż EQ** | Najedź na gracza (domyślnie z Shift) → jego ekwipunek + podsumowanie bonusów legendarnych. |
 | ★ | **Jaki To Bon** | Skrót bonusu legendarnego w rogu przedmiotu (OR, CBK, DA…). Skróty edytowalne. |
-| 🚕 | **Fake Taxi** | Włączony = automatycznie przyjmuje przywołania („…przyzywa do siebie swoją drużynę!") od członków grupy; opcjonalnie od znajomych, klanu i z listy nicków. Okno z pytaniem w ogóle się nie pokazuje. |
-| ⚡ | **Auto f** | Włącz/wyłącz: gdy włączony, każda walka od razu przechodzi na szybką walkę (np. przy kolosie, gdy odchodzisz od komputera). |
-| ✋ | **Szybka rączka** | Prawy klik na przedmiocie → „Użyj po walce" — po walce przedmiot jest używany od razu (jak „Użyj" z menu). Ikonka zegara na przedmiocie. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". |
+| 🚕 | **Fake Taxi** | Włączony = od razu przyjmuje przywołanie drużyny („…przyzywa do siebie swoją drużynę!") — okno z pytaniem w ogóle się nie pokazuje. Bez ustawień. |
+| ⚡ | **Szybka walka** | Włącz/wyłącz: gdy włączony, każda walka od razu przechodzi na szybką walkę (np. przy kolosie, gdy odchodzisz od komputera). |
+| ✋ | **Szybka Rączka** | Prawy klik na przedmiocie → „Użyj po walce" — po walce przedmiot jest używany od razu (jak „Użyj" z menu). Ikonka zegara na przedmiocie. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". |
 | ✦ | **Ulepszarka** | Przeciągasz (albo wskazujesz) przedmiot do ulepszania i wybierasz, czym go karmić: rzadkość (zwykłe / unikaty / heroiki — nigdy legendy) i typy (hełm, pierścień, naszyjnik…). Każdy typ składników może karmić tylko jeden przedmiot — gdy wszystkie typy są zajęte, kolejnego przedmiotu nie dodasz. Ulepszasz przyciskiem „Ulepsz teraz" albo klawiszem — zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Okno rzemiosła zamyka się samo. Opcjonalnie ulepsza sama, gdy w torbie zostanie N wolnych miejsc. |
 | 💬 | **MiniChat** | Rozmiar, czcionka i przezroczystość czatu, zwijanie pod klawisz. |
 
@@ -72,28 +71,17 @@ Gdy zmienisz coś w repozytorium, podbij numer wersji w nagłówku (`@version 1.
 
 Jeśli zmieniasz pliki w `src/`, przebuduj skrypt: `node build.js` (wymaga tylko Node.js, bez dodatkowych paczek), a potem wrzuć nowy `dist/laddonz.user.js`.
 
-## 4. Pierwsze uruchomienie — weryfikacja komend
+## 4. Pierwsze uruchomienie
 
-Panel komunikuje się z grą tymi samymi komendami, które wysyła sama gra. Część z nich zna z góry, części musi się „nauczyć", podglądając Twoją ręczną akcję. **To celowe** — dzięki temu panel nigdy nie wyśle komendy usuwania czy ulepszania, której nie widziałeś na własne oczy.
-
-1. Otwórz panel → **Ogólne** → włącz **Tryb próbny**. Pobaw się dodatkami i sprawdź w zakładce **Log**, co panel *by* wysłał.
-2. Wejdź w **Diagnostyka** → sekcja *Punkty zaczepienia*. Wszystko powinno mieć ✔. Jeśli coś ma ✘, zapisz które — to miejsce do poprawki w `src/core/game.js`.
-> **Ulepszarka działa od razu** — komenda ulepszania jest wbudowana (sprawdzona w grze). Gdyby gra kiedyś ją zmieniła, wystarczy raz ręcznie ulepszyć przedmiot w oknie rzemiosła — panel zauważy nowy sposób i sam go zapamięta.
-
-3. Dla każdej komendy ze statusem **do ustawienia** / **zablokowana** wykonaj daną akcję **ręcznie w grze** (opis jest przy komendzie), np.:
-   - *Zmiana zestawu* → przełącz zestaw ekwipunku,
-   - *Podgląd EQ gracza* → kliknij u kogoś „Pokaż ekwipunek".
-4. Zaraz po tym w sekcji **Podsłuch** pojawi się wysłana przez grę komenda. Przy niej wybierz z listy **Przypisz do…** właściwą akcję. Panel pokaże szablon (np. `…&id={id}`) — zatwierdź.
-5. Wyłącz **Tryb próbny**. Gotowe.
-
-Komendy z pomarańczowym statusem **domyślna** (atak, szybka walka, zaproszenie, rozwiązanie grupy, użycie przedmiotu) to najlepsze znane domyślne wartości. Jeśli któraś akcja nie działa, zweryfikuj ją tak samo przez Podsłuch.
+Nic nie trzeba ustawiać — komendy gry są wbudowane. Włącz potrzebne dodatki w zakładce **Dodatki**, a te, których używasz najczęściej, dodaj do skrótów (pasek po prawej).
 
 ## 5. Gdy coś nie działa
 
 - **Panel się nie pokazuje:** sprawdź, czy grasz na nowym interfejsie i czy w Tampermonkey skrypt jest włączony (zielony przełącznik). F12 → Konsola → szukaj wpisów `[laddonz]`.
 - **Liczby/plakietki nie pojawiają się na oknie (łup, czat, ikona grupy, przywołanie):** gra mogła zmienić nazwę klasy okna. F12 → strzałka „wskaż element" → kliknij okno → skopiuj jego klasę (np. `.loot-wnd`) do pola *Selektor…* w ustawieniach dodatku.
-- **Menu prawego przycisku nie ma nowych opcji:** sprawdź Diagnostykę. Zapasowo: **Alt + prawy klik** na przedmiocie zawsze otwiera menu panelu, a Dobij jest też dostępne w oknie „Kto tu jest?".
+- **Menu prawego przycisku nie ma nowych opcji:** zapasowo **Alt + prawy klik** na przedmiocie zawsze otwiera menu panelu, a Dobij jest też dostępne w oknie „Gracze na mapie+".
 - **Kopia ustawień:** Ogólne → Eksportuj / Importuj.
+- **Raport dla twórcy:** Ogólne → „Kopiuj raport" — wklej go w rozmowie, gdy coś nie działa.
 
 ## Diagnostyka (gdy coś nie działa w Twojej wersji gry)
 

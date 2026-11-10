@@ -23,14 +23,12 @@
     const who = summoner(text);
     const t = lc(text);
     const has = (nick) => (who ? lc(who) === lc(nick) : t.includes(lc(nick)));
-    if (cfg.list.some(has)) return who || true;
-    if (cfg.party) for (const n of partyNicks()) if (has(n)) return who || n;
-    const p = who ? game.otherByNick(who) : game.others().find((o) => t.includes(lc(o.nick)));
-    if (p && ((cfg.clan && p.isClan) || (cfg.friends && p.isFriend))) return p.nick;
+    // gra pozwala przywołać tylko własną drużynę — przyjmujemy od członków grupy
+    for (const n of partyNicks()) if (has(n)) return who || n;
     return null;
   }
   const YES_RE = /^\s*(tak|akceptuj|przyjmij|zgoda|ok)\b/i;
-  const active = () => cfg && cfg.enabled && !(cfg.notInBattle && game.inBattle());
+  const active = () => cfg && cfg.enabled && !game.inBattle();   // w trakcie walki gra i tak nie pozwala przyjąć
   const accepted = (who, how) => net.pushLog({ kind: 'info', src: 'Fake Taxi', msg: `Przyjęto przywołanie${who === true ? '' : ' od ' + who} (${how})` });
 
   /*
@@ -120,16 +118,9 @@
     }
   }
   defineAddon({
-    id: 'taxi', name: 'Fake Taxi', icon: 'taxi', color: ['#ffe14d', '#f0b400'], risk: 'auto',
-    desc: 'Automatycznie przyjmuje przywołania („…przyzywa do siebie swoją drużynę!") od wybranych osób — domyślnie od członków Twojej grupy.',
-    defaults: { party: true, list: [], clan: false, friends: false, notInBattle: true },
-    settings: [
-      { key: 'party', type: 'bool', label: 'Od członków grupy' },
-      { key: 'friends', type: 'bool', label: 'Od znajomych' },
-      { key: 'clan', type: 'bool', label: 'Od klanowiczów' },
-      { key: 'list', type: 'list', label: 'Zawsze od (nicki)', placeholder: 'nick + Enter' },
-      { key: 'notInBattle', type: 'bool', label: 'Nie w trakcie walki' },
-    ],
+    id: 'taxi', name: 'Fake Taxi', icon: 'taxi', color: ['#ffe14d', '#f0b400'],
+    desc: 'Włączony: od razu przyjmuje przywołanie drużyny („…przyzywa do siebie swoją drużynę!") — okno z pytaniem w ogóle się nie pokazuje.',
+    defaults: {},
     init(c) {
       cfg = c;
       if ('auto' in c || 'dialogSelector' in c) { delete c.auto; delete c.dialogSelector; config.save(); }
@@ -140,34 +131,33 @@
   });
 })();
 
-/* ───────── Auto f ─────────
+/* ───────── Szybka walka (dawniej Auto f) ─────────
  * Włączone = na starcie każdej walki postać od razu przechodzi na szybką walkę.
  * Do tego jest przełącznik na liście dodatków — np. przy kolosie, gdy odchodzisz od komputera.
  */
 (() => {
   let cfg, doneFor = 0;
   defineAddon({
-    id: 'autof', name: 'Auto f', icon: 'autof', color: ['#ffd447', '#ff8a00'], risk: 'auto',
+    id: 'autof', name: 'Szybka walka', icon: 'autof', color: ['#ffd447', '#ff8a00'],
     desc: 'Włącz/wyłącz. Gdy jest włączony, każda walka od razu przechodzi na szybką walkę — np. przy kolosie, gdy odchodzisz od komputera, a reszta nie musi czekać na Twoją turę.',
     defaults: { enabled: false, delayMin: 250, delayMax: 600 },
-    notes: () => [{ type: 'warn', text: 'To automat: działa bez Twojego kliknięcia, dopóki go nie wyłączysz.' }],
     settings: [
-      { key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000 },
-      { key: 'delayMax', type: 'number', label: 'Opóźnienie do (ms)', min: 150, max: 4000 },
+      { adv: true, key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000 },
+      { adv: true, key: 'delayMax', type: 'number', label: 'Opóźnienie do (ms)', min: 150, max: 4000 },
     ],
     init(c) {
       cfg = c;
       bus.on('battle:start', () => {
         if (!cfg.enabled) return;
         const t = now(); if (t - doneFor < 2000) return; doneFor = t;
-        setTimeout(() => { if (game.inBattle()) net.send('fastFight', {}, { src: 'Auto f', urgent: true }); }, rnd(cfg.delayMin, Math.max(cfg.delayMin + 50, cfg.delayMax)));
+        setTimeout(() => { if (game.inBattle()) net.send('fastFight', {}, { src: 'Szybka walka', urgent: true }); }, rnd(cfg.delayMin, Math.max(cfg.delayMin + 50, cfg.delayMax)));
       });
     },
-    onToggle(on) { toast(on ? 'Auto f: włączony' : 'Auto f: wyłączony', on ? 'warn' : 'info', 1600); },
+    onToggle(on) { toast(on ? 'Szybka walka: włączona' : 'Szybka walka: wyłączona', on ? 'warn' : 'info', 1600); },
   });
 })();
 
-/* ───────── Szybka rączka ─────────
+/* ───────── Szybka Rączka ─────────
  * Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty
  * (teleporty, mikstury, przywołania…) — tak, jakbyś sam kliknął na nim „Użyj". Bez klawiszy i konfiguracji.
  * Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".
@@ -180,8 +170,8 @@
   function toggleQueue(id) {
     const it = game.itemById(id);
     const i = cfg.queue.findIndex((q) => q.id === Number(id));
-    if (i >= 0) { cfg.queue.splice(i, 1); toast(`Szybka rączka: „${it ? it.name : id}" nie zostanie użyty po walce`); }
-    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, tp: !!(it && (it.stats.teleport || it.stats.custom_teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka rączka: „${it ? it.name : id}" zostanie użyty po walce`); }
+    if (i >= 0) { cfg.queue.splice(i, 1); toast(`Szybka Rączka: „${it ? it.name : id}" nie zostanie użyty po walce`); }
+    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, tp: !!(it && (it.stats.teleport || it.stats.custom_teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka Rączka: „${it ? it.name : id}" zostanie użyty po walce`); }
     config.save(); bus.emit('deco');
   }
 
@@ -189,7 +179,7 @@
   async function useItem(id) {
     const node = $$(`.item.item-id-${id}`).find((n) => !/-showeq/.test(String(n.className)));
     if (node && await menus.chooseItemOption(node, /^(u[żz]yj|teleportuj|przywo[łl]aj|wypij|zjedz|otw[óo]rz)/i)) return true;
-    const r = await net.send('useItem', { id }, { src: 'Szybka rączka' });
+    const r = await net.send('useItem', { id }, { src: 'Szybka Rączka' });
     return r.ok;
   }
 
@@ -199,7 +189,7 @@
     running = true;
     try {
       // najpierw rozwiązanie grupy (nie zmienia mapy), potem przedmioty — teleporty na końcu
-      if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka rączka', urgent: true }); }
+      if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka', urgent: true }); }
       const items = cfg.queue.slice().sort((a, b) => a.tp - b.tp);
       for (const q of items) {
         cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
@@ -232,17 +222,17 @@
       e.preventDefault(); e.stopPropagation();
       menus.showOwn(e.clientX, e.clientY, [
         { label: S.disbandArmed ? 'Anuluj „rozwiąż po walce"' : 'Rozwiąż grupę po walce', fn: armDisband },
-        { label: 'Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka rączka' })) },
+        { label: 'Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka' })) },
       ], 'Grupa');
     }, true);
   }
 
   defineAddon({
-    id: 'szybka', name: 'Szybka rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'], risk: 'auto',
+    id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
     desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".',
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
-      { group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
+      { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
     ],
     render(box, c, rerender) {
       const tb = el('tbody', null, c.queue.map((q, i) => el('tr', null, el('td', null, q.name, q.tp ? el('span', { class: 'mp-dim' }, ' (teleport)') : null),
@@ -260,7 +250,7 @@
         return queued(id) ? [{ label: 'Nie używaj po walce', fn: () => toggleQueue(id) }]
           : [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
       });
-      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka rączka: zostanie użyty po walce' } : null));
+      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka Rączka: zostanie użyty po walce' } : null));
       // od razu po zakończeniu walki
       bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0)) runQueue(); });
       if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
@@ -498,7 +488,16 @@
           steps.push({ a: 'progress', item: o.target.id, n: part.length, ok: r.ok, err: r.error, resp: short(r.data) }); saveSteps();
           if (isMaxedResp(r.data)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }
           if (!r.ok || badResp(r.data)) { failed = true; break outer; }
-          const gone = await waitGone(part.map((i) => i.id), 6000);
+          let gone = await waitGone(part.map((i) => i.id), 3500);
+          if (!gone) {
+            // gra zadała pytanie (w odpowiedzi jest numer pytania), a okienka nie udało się kliknąć — odpowiadamy „Tak" tak jak gra po kliknięciu
+            const m = String(short(r.data) || '').match(/\b(100\d{4})\b/);
+            if (m) {
+              await net.send('enhanceAnswer', { item: o.target.id, ingredients: ids, q: m[1] }, { src: 'Ulepszarka', onResponse: maxResp(o) });
+              steps.push({ a: 'answer', q: m[1] }); saveSteps();
+            }
+            gone = await waitGone(part.map((i) => i.id), 5000);
+          }
           steps.push({ a: 'gone', n: gone }); saveSteps();
           if (!gone) { failed = true; break outer; }
           n += gone;
@@ -553,29 +552,39 @@
    * Pytanie gry przy ulepszaniu („Czy na pewno…?") — przez kilka sekund po naszym ulepszeniu klikamy „Tak"
    * (ukryte, więc nic nie mignie). Odpowiedź wysyła sama gra, dokładnie jak przy ręcznym kliknięciu.
    */
+  const askSeen = [];
   const ask = {
     until: 0, mo: null,
-    arm() { this.until = now() + 6000; if (!this.mo) { this.mo = new MutationObserver(() => this.scan()); this.mo.observe(document.body, { childList: true, subtree: true }); } this.scan(); },
-    disarm() { this.until = 0; },
-    scan() {
-      if (now() > this.until) return;
-      const yesRe = /^\s*(tak|ok|akceptuj|potwierd[źz])\b/i;
-      let btns = $$('button, .button, .btn, [class*="button"]').filter((b) => yesRe.test(b.textContent || '') && (b.textContent || '').trim().length < 20 && !b.closest('.mp-glass, .mp-modal-bg'));
-      btns = btns.filter((b) => !btns.some((o) => o !== b && b.contains(o)));
-      for (const btn of btns) {
-        let box = btn.parentElement;
-        for (let i = 0; i < 8 && box && !/(ulepsz|sk[łl]adnik|zu[żz]y|zniszcz|na pewno|czy chcesz)/i.test(box.textContent || ''); i++) box = box.parentElement;
-        if (!box || box.__mpUp) continue;
-        const win = btn.closest('[class*="window"]');
-        if (win && /rzemios/i.test(((win.querySelector('[class*="header"], [class*="title"]') || {}).textContent || ''))) continue;   // nigdy przyciski w samym oknie rzemiosła
-        if ((box.textContent || '').length > 600) continue;
-        box.__mpUp = true;
-        box.style.setProperty('visibility', 'hidden', 'important');
-        btn.click();
-        net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Potwierdzono pytanie gry: ' + (box.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120) });
+    arm() {
+      this.until = now() + 8000;
+      if (!this.mo) {
+        // tylko NOWE okienka, które pojawią się po naszym ulepszeniu (pytanie gry „Czy na pewno…?")
+        this.mo = new MutationObserver((muts) => { if (now() > this.until) return; for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) this.check(n); });
+        this.mo.observe(document.body, { childList: true, subtree: true });
       }
     },
+    disarm() { this.until = 0; },
+    check(node) {
+      if (node.closest && node.closest('.mp-glass, .mp-modal-bg, #mp-qpop')) return;
+      const win = node.closest && node.closest('[class*="window"]');
+      if (win && /rzemios/i.test(((win.querySelector('[class*="header"], [class*="title"]') || {}).textContent || ''))) return;   // nigdy przyciski w samym oknie rzemiosła
+      const yesRe = /^\s*(tak|ok|akceptuj|potwierd[źz])\b/i;
+      let btns = [node, ...node.querySelectorAll('*')].filter((b) => yesRe.test(b.textContent || '') && (b.textContent || '').trim().length < 20);
+      btns = btns.filter((b) => !btns.some((o) => o !== b && b.contains(o)));
+      const btn = btns[0];
+      if (!btn) return;
+      let box = btn;
+      while (box.parentElement && box.parentElement !== document.body && (box.parentElement.textContent || '').length < 700) box = box.parentElement;
+      if (box.__mpUp) return;
+      box.__mpUp = true;
+      const txt = (box.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200);
+      askSeen.unshift({ t: new Date().toISOString().slice(11, 19), txt }); if (askSeen.length > 5) askSeen.length = 5;
+      box.style.setProperty('visibility', 'hidden', 'important');
+      setTimeout(() => btn.click(), 30);
+      net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Potwierdzono pytanie gry: ' + txt.slice(0, 120) });
+    },
   };
+
 
   /*
    * Maksymalnie ulepszony przedmiot → sam znika z listy. Poziom ulepszenia czytamy ze statystyk przedmiotu
@@ -639,10 +648,10 @@
     freeBlockSig = bagSig();
   }
 
-  /** Raport do wysłania twórcy, gdy samouczenie nie zadziała. */
+  /** Dane Ulepszarki do wspólnego raportu (Ogólne → Kopiuj raport). */
   function report() {
     const E0 = W.Engine || {};
-    const r = {
+    return {
       wersja: MP.version, komenda: net.cmd('enhance'),
       ostatnieUlepszanie: store.get('up:last', null),
       rzemiosloOtwarte: craftState(),
@@ -656,11 +665,9 @@
       ruchyPrzyRzemiosle: net.learnLog.slice(0, 15),
       engine: Object.keys(E0).filter((k) => /craft|enhanc|recip|rzem/i.test(k)),
       okna: $$('[class*="window"]').filter(isVisible).map((w) => String(w.className).slice(0, 80) + ' | ' + ((w.querySelector('[class*="header"], [class*="title"]') || {}).textContent || '').trim().slice(0, 40)).slice(0, 12),
+      dialogi: askSeen.slice(0, 5),
+      maksPoziomy: store.get('up:maxlvl', {}),
     };
-    const txt = JSON.stringify(r, null, 1);
-    const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
-    try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
-    toast('Ulepszarka: raport skopiowany — wklej go w rozmowie', 'ok');
   }
 
   /* ── wybór celu ── */
@@ -789,10 +796,10 @@
       // wyrzuciło z gry w trakcie ulepszania? — automatyczne ulepszanie wstrzymane, dopóki go nie wznowisz
       store.del('up:inflight'); if (cfg.autoPaused) { delete cfg.autoPaused; config.save(); }
       // stara komenda z dopisaną odpowiedzią (powodowała wyrzucenie) — usuwamy
-      try { const own = (config.data.commands || {}).enhance; if (own && /answer\d+=/.test(own.t || '')) net.resetCmd('enhance'); } catch {}
+      try { if ((config.data.commands || {}).enhance) net.resetCmd('enhance'); } catch {}   // komenda jest wbudowana — żadnych nauczonych zamienników
       setInterval(() => { if (cfg.enabled && !running) dropMaxed(); }, 5000);
       setInterval(freeWatch, 1500);
-      MP.ulepszarka = { addTarget, plan, run, craftState, typeOf, closeCraft, report, dropMaxed, enhLevel };
+      MP.ulepszarka = { addTarget, plan, run, craftState, typeOf, closeCraft, reportData: report, dropMaxed, enhLevel };
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
         const it = game.itemById(id);

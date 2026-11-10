@@ -16,6 +16,7 @@
   await sleep(800);
   const h = game.hero();
   config.load(h && h.nick);
+  config.data.global.dryRun = false;   // tryb próbny usunięty z panelu
   injectCSS();
   net.install();
   // część obiektów gry powstaje później — ponawiamy podpięcie przez pierwsze 2 minuty

@@ -1,6 +1,6 @@
 /* ───────────────────────── ui.js ─────────────────────────
  * Panel konfiguracyjny: przycisk startowy + okno z zakładkami
- *   Dodatki · Diagnostyka · Log · Ogólne
+ *   Dodatki · Ogólne
  */
 const ui = {
   panel: null,
@@ -84,7 +84,8 @@ const ui = {
   renderAll() {
     const P = this.panel;
     P.innerHTML = '';
-    const tabs = [['addons', 'grid', 'Dodatki'], ['diag', 'diag', 'Diagnostyka'], ['log', 'log', 'Log'], ['general', 'gear', 'Ogólne']];
+    const tabs = [['addons', 'grid', 'Dodatki'], ['general', 'gear', 'Ogólne']];
+    if (!['addons', 'general'].includes(this.tab)) this.tab = 'addons';
     const head = el('div', { class: 'mp-head' },
       el('div', { class: 'mp-tile', style: { background: grad([config.data.global.accent, '#3fa2ff']) } }, icon('logo', 18)),
       el('div', null, el('div', { class: 'mp-title' }, 'laddonz'), el('div', { class: 'mp-sub' }, this.subtitle())),
@@ -125,8 +126,6 @@ const ui = {
         const row = el('div', { class: 'mp-row' + (this.sel === a.id ? ' sel' : '') + (cfg.enabled ? '' : ' off'), onclick: (e) => { if (e.target.closest('.mp-sw')) return; this.sel = a.id; draw(); this.renderMain(); } },
           el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 18)),
           el('div', { class: 'nm' }, a.name),
-          a.risk === 'auto' ? el('span', { class: 'mp-badge auto', title: 'Zawiera automatyzację' }, 'A') : null,
-          a.risk === 'destructive' ? el('span', { class: 'mp-badge destr', title: 'Może usuwać/zużywać przedmioty' }, '!') : null,
           sw);
         list.appendChild(row);
       }
@@ -143,7 +142,7 @@ const ui = {
     if (v && a.risk === 'destructive' && !addons.cfg(a.id)._ack) {
       const ok = await confirmBox({
         title: `Włączyć „${a.name}"?`, danger: true, okText: 'Rozumiem, włącz', countdown: 3,
-        html: 'Ten dodatek może <b>usuwać lub zużywać przedmioty</b>. Komendy niszczące są zablokowane, dopóki nie zweryfikujesz ich w zakładce <b>Diagnostyka</b>, a przed każdą operacją zobaczysz listę przedmiotów do potwierdzenia.',
+        html: 'Ten dodatek może <b>zużywać przedmioty</b>. Przed każdą operacją zobaczysz listę przedmiotów do potwierdzenia.',
       });
       if (!ok) { resetSw(); return false; }
       addons.cfg(a.id)._ack = true;
@@ -159,8 +158,6 @@ const ui = {
     const st = this.main.scrollTop;
     this.main.innerHTML = '';
     if (this.tab === 'addons') this.renderAddon();
-    else if (this.tab === 'diag') this.renderDiag();
-    else if (this.tab === 'log') this.renderLog();
     else this.renderGeneral();
     this.main.scrollTop = st;
   },
@@ -175,8 +172,7 @@ const ui = {
         el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 26)),
         el('div', { style: { flex: 1 } },
           el('h2', null, a.name, ' ',
-            a.risk === 'auto' ? el('span', { class: 'mp-badge auto' }, icon('warn', 11), 'automat') : null,
-            a.risk === 'destructive' ? el('span', { class: 'mp-badge destr' }, icon('warn', 11), 'usuwa/zużywa') : null),
+            null),
           el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
         cfg.enabled ? el('button', { class: 'mp-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów po prawej', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); rerender(); } },
           icon('pin', 14), quickbar.isPinned(a.id) ? 'W skrótach' : 'Dodaj do skrótów') : null,
@@ -188,10 +184,10 @@ const ui = {
     if (a.render && a.renderFirst) { renderBox = el('div'); M.appendChild(renderBox); }
     if (a.settings && a.settings.length) {
       const groups = {};
-      for (const s of a.settings) (groups[s.group || 'Ustawienia'] = groups[s.group || 'Ustawienia'] || []).push(s);
+      for (const s of a.settings.filter((x) => !x.adv && x.group !== 'Zaawansowane')) (groups[s.group || 'Ustawienia'] = groups[s.group || 'Ustawienia'] || []).push(s);
       for (const [g, arr] of Object.entries(groups)) {
         const card = el('div', { class: 'mp-card' }, el('h3', null, g));
-        arr.forEach((s) => { if (!s.show || s.show(cfg)) card.appendChild(field(s, cfg, () => { config.save(); a.onChange && a.onChange(s.key, cfg); if (s.rerender) rerender(); })); });
+        arr.forEach((s) => { if (s.adv) return; if (!s.show || s.show(cfg)) card.appendChild(field(s, cfg, () => { config.save(); a.onChange && a.onChange(s.key, cfg); if (s.rerender) rerender(); })); });
         M.appendChild(card);
       }
     }
@@ -285,8 +281,6 @@ const ui = {
     const M = this.main;
     const save = () => { config.save(); this.applyTheme(); };
     const S = [
-      { key: 'dryRun', type: 'bool', label: 'Tryb próbny', hint: 'Panel NIC nie wysyła do gry, tylko zapisuje w logu co by zrobił. Idealne na pierwsze uruchomienie.' },
-      { key: 'minInterval', type: 'number', label: 'Minimalny odstęp między komendami panelu (ms)', min: 150, max: 5000, hint: 'Dotyczy wszystkich dodatków naraz. Nie schodź poniżej 250 ms.' },
       { key: 'panelKey', type: 'key', label: 'Skrót otwierający panel' },
       { key: 'perCharacter', type: 'bool', label: 'Osobne ustawienia dla każdej postaci', hint: 'Zmiana zadziała po odświeżeniu gry.' },
       { key: 'theme', type: 'custom', render: (obj, onSave) => el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } },
@@ -296,7 +290,6 @@ const ui = {
           onclick: () => { obj.theme = k; onSave(); this.renderAll(); quickbar.draw(); },
         }, el('div', { class: 'sw', style: { background: `linear-gradient(135deg, ${t.accent}55, rgba(${t.bg},1))` } }, el('i')), el('div', { class: 'nm' }, t.name))))) },
       { key: 'glass', type: 'range', label: 'Przezroczystość tła', min: 0.2, max: 0.95, step: 0.05 },
-      { key: 'menuSelector', type: 'textarea', label: 'Selektor menu prawego przycisku w grze', hint: 'Zapas, gdy opcje (np. „Dobij") nie pojawiają się w menu gracza.' },
     ];
     const card = el('div', { class: 'mp-card' }, el('h3', null, 'Ogólne'));
     S.forEach((s) => card.appendChild(field(s, g, () => { save(); if (s.key === 'dryRun') this.renderAll(); })));
@@ -327,9 +320,32 @@ const ui = {
         el('button', { class: 'mp-btn', onclick: () => { ta.value = config.export(); ta.select(); try { navigator.clipboard.writeText(ta.value); toast('Skopiowano do schowka', 'ok'); } catch {} } }, 'Eksportuj'),
         el('button', { class: 'mp-btn', onclick: () => { try { config.import(ta.value); toast('Zaimportowano — odśwież grę', 'ok'); } catch (e) { toast(e.message, 'bad'); } } }, 'Importuj'),
         el('button', { class: 'mp-btn bad', onclick: async () => { if (await confirmBox({ title: 'Przywrócić domyślne?', danger: true, html: 'Wszystkie ustawienia tej postaci zostaną skasowane.' })) { config.reset(); toast('Ustawienia skasowane — odśwież grę', 'ok'); } } }, 'Przywróć domyślne'))));
+    M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Coś nie działa?'),
+      el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Skopiuj raport i wklej go w rozmowie z twórcą — są w nim ostatnie ruchy dodatków i odpowiedzi gry (bez haseł i danych konta).'),
+      el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => copyReport() }, 'Kopiuj raport'))));
     M.appendChild(el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, `laddonz v${MP.version}. Kod otwarty — sprawdź, co robi każdy dodatek, zanim go włączysz.`));
   },
 };
+
+/** Wspólny raport dla twórcy (wszystkie dodatki): log, odpowiedzi gry, błędy strony, dane Ulepszarki. */
+function copyReport() {
+  let r = {};
+  try {
+    r = {
+      wersja: MP.version, czas: new Date().toISOString(),
+      wlaczone: addons.list.filter((a) => addons.on(a.id)).map((a) => a.name),
+      log: net.log.slice(0, 40).map((x) => ({ t: x.t, k: x.kind, src: x.src, task: x.task, msg: x.msg })),
+      komendyGry: (net.recent || []).slice(0, 40),
+      bledyStrony: store.get('errlog', []),
+      ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,
+      pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
+    };
+  } catch (e) { r.blad = String(e); }
+  const txt = JSON.stringify(r, null, 1);
+  const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
+  try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
+  toast('Raport skopiowany — wklej go w rozmowie', 'ok');
+}
 
 /* ───── elementy formularza ───── */
 function switchEl(on, onChange, small) {

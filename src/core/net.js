@@ -22,6 +22,7 @@ const DEFAULT_COMMANDS = {
   // potwierdzone w grze (raport z okna rzemiosła): podgląd → ulepszenie → gra zadaje pytanie → odpowiedź „Tak" wysyła sama gra.
   // NIE dopisujemy odpowiedzi z góry (answer…=1) — serwer traktuje to jako błąd i wyrzuca z gry.
   enhancePreview: { t: 'enhancement&action=progress_preview&item={item}&ingredients={ingredients}', verified: true, destructive: false, label: 'Podgląd ulepszenia', how: 'Włóż przedmiot i składnik w oknie ulepszania.' },
+  enhanceAnswer: { t: 'enhancement&action=progress&item={item}&ingredients={ingredients}&answer{q}=1', verified: true, destructive: false, label: 'Odpowiedź „Tak" na pytanie przy ulepszaniu', how: '' },
   enhance:      { t: 'enhancement&action=progress&item={item}&ingredients={ingredients}', verified: true, destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
 };
 
@@ -58,8 +59,8 @@ const net = {
 
   build(name, params = {}) {
     const c = this.cmd(name);
-    if (!c.t) return { error: `Komenda „${c.label || name}" nie jest jeszcze ustawiona. Wejdź w Diagnostyka → Podsłuch i ${c.how?.toLowerCase() || 'wykonaj akcję ręcznie'}` };
-    if (c.destructive && !c.verified) return { error: `Komenda „${c.label}" jest zablokowana do czasu weryfikacji (Diagnostyka).` };
+    if (!c.t) return { error: `Ta akcja nie jest jeszcze dostępna (${c.label || name}).` };
+    if (c.destructive && !c.verified) return { error: `Ta akcja jest zablokowana (${c.label}).` };
     let t = c.t;
     for (const [k, v] of Object.entries(params)) t = t.split(`{${k}}`).join(encodeURIComponent(String(v)).replace(/%2C/g, ','));
     if (/\{\w+\}/.test(t)) return { error: `Brak parametru w komendzie: ${t}` };
@@ -145,11 +146,7 @@ const net = {
         });
         rec.tpl = tpl;
         if (/answer\d+=/.test(tpl)) return;   // to odpowiedź na pytanie gry — nie zapamiętujemy (komenda bez odpowiedzi jest wbudowana)
-        if (item !== 1 || ing !== 1 || tpl === this.cmd('enhance').t) return;   // ta sama co wbudowana → nic do zmiany
-        this.setCmd('enhance', tpl, true);
-        this.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Nauczono komendy ulepszania: ' + tpl });
-        toast('Ulepszarka: gra ulepsza teraz inaczej — zapamiętałam nowy sposób', 'ok');
-        bus.emit('cmd:learned', 'enhance');
+        // komenda ulepszania jest wbudowana — niczego nie zapamiętujemy (dawniej łapało przez pomyłkę podgląd)
       }, 1800);
     } catch {}
   },
