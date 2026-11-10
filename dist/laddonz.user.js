@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.9.0
+// @version      1.9.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1085,6 +1085,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-upslot{padding:10px}
 .mp-rar{display:inline-block;font-size:10.5px;padding:0 6px;border-radius:6px;margin-left:4px;background:rgba(255,255,255,.1)}
 .mp-rar.unique{background:#c9a21a33;color:#ffd75e}.mp-rar.heroic{background:#2f7bff33;color:#7fb2ff}.mp-rar.legendary{background:#ff7a1a33;color:#ffa45e}.mp-rar.upgraded{background:#c94cff33;color:#e19bff}.mp-rar.common{color:#ddd}
+.mp-upbar{height:4px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:5px;overflow:hidden}.mp-upbar i{display:block;height:100%;background:var(--mp-accent)}
 .mp-uphead{display:flex;align-items:center;gap:10px}
 .mp-updrop{width:44px;height:44px;flex:none;border-radius:9px;border:1.5px dashed rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--mp-accent);background:rgba(255,255,255,.04);transition:.15s}
 .mp-updrop:hover{border-color:var(--mp-accent);background:rgba(255,255,255,.09)}
@@ -4168,6 +4169,34 @@ MP.itemDeco = itemDeco;
     } catch {}
     return 'unknown';
   }
+  /**
+   * Otwiera Rzemiosło tak jak gra (Engine.crafting.triggerOpen → gra sama wysyła artisanship&action=open)
+   * i przełącza na zakładkę Ulepszanie. Zwraca true dopiero, gdy okno jest otwarte na ulepszaniu.
+   */
+  let openedByUs = false;
+  async function ensureCraft() {
+    if (craftState() === 'enh') return true;
+    if (!net.craftOpen()) {
+      const c = W.Engine && W.Engine.crafting;
+      try { if (c && typeof c.triggerOpen === 'function') c.triggerOpen(); else if (c && typeof c.open === 'function') c.open(); } catch {}
+      for (let i = 0; i < 20 && !net.craftOpen(); i++) await sleep(150);
+      if (!net.craftOpen()) return false;
+      openedByUs = true;
+      await sleep(300);
+    }
+    if (craftState() !== 'enh') {
+      // kliknięcie zakładki „Ulepszanie" w oknie rzemiosła
+      const w = $$('[class*="window"]').find((x) => isVisible(x) && /rzemios/i.test(((x.querySelector('[class*="header"], [class*="title"]') || {}).textContent || '')));
+      if (w) {
+        let tabs = $$('*', w).filter((n) => isVisible(n) && /^\s*ulepszanie\s*$/i.test(n.textContent || ''));
+        tabs = tabs.filter((n) => !tabs.some((o) => o !== n && n.contains(o)));
+        const t = tabs[0];
+        if (t) { (t.closest('[class*="tab"], [class*="card"], button') || t).click(); }
+      }
+      for (let i = 0; i < 14 && craftState() !== 'enh'; i++) await sleep(150);
+    }
+    return craftState() === 'enh';
+  }
   /** Okno rzemiosła z gry (ulepszanie) — zamykane po ulepszeniu. */
   function closeCraft() {
     try {
@@ -4207,6 +4236,14 @@ MP.itemDeco = itemDeco;
 
   /** Odpowiedź gry „maksymalny poziom" → przedmiot znika z listy. */
   const maxResp = (o) => (data) => {
+    // postęp ulepszania i dzienny limit — z odpowiedzi gry (enhancement.progressing / usages_preview)
+    try {
+      const e = data && data.enhancement;
+      const pr = e && (e.progressing || e.progress_preview);
+      const sl = slots().find((s) => Number(s.id) === o.target.id);
+      if (pr && sl) { sl.prog = { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 }; config.save(); }
+      if (e && e.usages_preview) { cfg.usages = { count: Number(e.usages_preview.count) || 0, limit: Number(e.usages_preview.limit) || 0, day: new Date().toDateString() }; config.save(); }
+    } catch {}
     let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
     if (/maksymaln|max(imum)? ?(lvl|level|poziom)/i.test(txt)) {
       const i = slots().findIndex((s) => Number(s.id) === o.target.id);
@@ -4223,15 +4260,22 @@ MP.itemDeco = itemDeco;
     let p = plan();
     if (!p.length) { toast('Ulepszarka: brak pasujących przedmiotów', 'info'); return; }
     if (limit) { p = p.slice(0, 1); p[0].list = p[0].list.slice(0, limit); }   // próba: tylko jeden składnik
-    const cs = craftState();
-    if (!cs) { toast('Ulepszarka: otwórz okno Rzemiosło → zakładka Ulepszanie (bez tego gra wyrzuca)', 'warn'); return; }
-    if (cs === 'other') { toast('Ulepszarka: przełącz okno Rzemiosło na zakładkę Ulepszanie', 'warn'); return; }
     if (cfg.confirm) {
       const items = []; p.forEach((o) => o.list.forEach((i) => items.push(el('span', null, i.name, ' ', el('span', { class: 'mp-rar ' + i.rarity }, RAR_PL[i.rarity] || i.rarity), el('span', { class: 'mp-dim' }, ' → ' + o.target.name)))));
       const ok = await confirmBox({ title: 'Ulepszyć teraz?', okText: 'Ulepsz', html: `Zużyję <b>${items.length}</b> przedmiotów:`, items });
       if (!ok) return;
     }
     running = true;
+    openedByUs = false;
+    // serwer przyjmuje ulepszanie tylko przy otwartym Rzemiośle (bez tego wyrzuca) — otwieramy jak gra, a jak się nie da, nic nie wysyłamy
+    if (!(await ensureCraft())) {
+      running = false;
+      toast('Ulepszarka: nie udało się otworzyć Rzemiosło → Ulepszanie. Otwórz je ręcznie i spróbuj jeszcze raz', 'warn');
+      return 'nocraft';
+    }
+    if (cfg.usages && cfg.usages.day === new Date().toDateString() && cfg.usages.limit && cfg.usages.count >= cfg.usages.limit) {
+      running = false; toast('Ulepszarka: wykorzystano dzisiejszy limit ulepszeń', 'warn'); return;
+    }
     let n = 0, failed = false;
     const steps = [];
     const saveSteps = () => store.set('up:last', { t: new Date().toISOString(), steps: steps.slice(-20) });
@@ -4256,6 +4300,8 @@ MP.itemDeco = itemDeco;
           steps.push({ a: 'gone', n: gone }); saveSteps();
           if (!gone) { failed = true; break outer; }
           n += gone;
+          const sl = slots().find((x) => Number(x.id) === o.target.id);
+          if (!sl || (sl.prog && sl.prog.lvl >= MAX_LVL)) break;   // przedmiot osiągnął maksimum — następny cel
           await sleep(600);
         }
       }
@@ -4367,10 +4413,8 @@ MP.itemDeco = itemDeco;
     if (free == null || free > Number(cfg.freeAt)) { freeBlockSig = ''; return; }
     const sig = bagSig();
     if (sig === freeBlockSig) return;          // już próbowaliśmy przy tej zawartości torby
-    if (now() - freeNag < 30000 && !net.craftOpen()) return;   // przypomnienie o oknie rzemiosła co 30 s
     freeBlockSig = sig;
     if (!plan().length) return;
-    if (craftState() !== 'enh' && craftState() !== 'unknown') { toast(`Ulepszarka: zostało ${free} wolnych miejsc — otwórz Rzemiosło → Ulepszanie, a ulepszę`, 'warn'); freeBlockSig = ''; freeNag = now(); return; }
     net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Wolne miejsca w torbie: ${free} — ulepszam` });
     await run('free');
     freeBlockSig = bagSig();
@@ -4468,12 +4512,13 @@ MP.itemDeco = itemDeco;
         return chip(l, s.types.includes(k), () => { s.types = s.types.includes(k) ? s.types.filter((x) => x !== k) : s.types.concat(k); config.save(); rr(); }, owner && owner.name);
       })),
       !s.types.length ? el('div', { class: 'mp-warnc', style: { marginTop: '6px' } }, 'Wybierz przynajmniej jeden typ — inaczej ten przedmiot nie będzie ulepszany.') : null,
-      el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, `Pasujące w torbie teraz: ${cnt}`));
+      el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, `Pasujące w torbie teraz: ${cnt}` + (s.prog && s.prog.max ? ` · poziom +${enhLevel(it) != null ? enhLevel(it) : s.prog.lvl} · postęp ${s.prog.cur} / ${s.prog.max}` : (enhLevel(it) != null ? ` · poziom +${enhLevel(it)}` : ''))),
+      s.prog && s.prog.max ? el('div', { class: 'mp-upbar' }, el('i', { style: { width: Math.min(100, Math.round(100 * s.prog.cur / s.prog.max)) + '%' } })) : null);
   }
 
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
-    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Ulepszasz przyciskiem albo klawiszem przy otwartym oknie Rzemiosło → Ulepszanie — to zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Każdy typ składników może być przypisany tylko do jednego ulepszanego przedmiotu.',
+    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Ulepszasz przyciskiem albo klawiszem (okno Rzemiosło → Ulepszanie otwiera się samo) — to zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Każdy typ składników może być przypisany tylko do jednego ulepszanego przedmiotu.',
     defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, closeCraft: true, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
@@ -4504,6 +4549,7 @@ MP.itemDeco = itemDeco;
       }
       if (cfg.autoPaused) box.appendChild(el('div', { class: 'mp-card' }, el('div', { class: 'mp-warnc' }, 'Poprzednie ulepszanie zostało przerwane (np. gra wyrzuciła). Ulepszanie przy pełnej torbie jest wstrzymane.'),
         el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { cfg.autoPaused = false; config.save(); rr(); } }, 'Wznów'), el('button', { class: 'mp-btn', onclick: report }, 'Kopiuj raport'))));
+      if (cfg.usages && cfg.usages.limit && cfg.usages.day === new Date().toDateString()) box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, `Dzisiejsze ulepszenia: ${cfg.usages.count} / ${cfg.usages.limit}`));
       if (Number(cfg.freeAt) > 0) {
         const f = game.freeBagSlots();
         box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, f == null ? 'Nie udało się odczytać wolnych miejsc w torbie — kliknij „Kopiuj raport" i wklej w rozmowie.' : `Wolne miejsca w torbie teraz: ${f} · ulepszę przy ${cfg.freeAt} lub mniej`));
@@ -4584,5 +4630,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.9.0";
+MP.version = "1.9.1";
 })();
