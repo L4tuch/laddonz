@@ -276,7 +276,7 @@
   const TYPES = [
     ['helm', 'Hełm', [9]], ['neck', 'Naszyjnik', [13]], ['ring', 'Pierścień', [12]], ['gloves', 'Rękawice', [11]],
     ['armor', 'Zbroja', [8]], ['boots', 'Buty', [10]], ['weapon', 'Broń', [1, 2, 3, 4, 6]],
-    ['offhand', 'Tarcza / pomocnicze', [5, 7, 14]], ['arrows', 'Strzały', [21, 29]],
+    ['offhand', 'Tarcza / pomocnicze', [5, 7, 14]],
   ];
   const typeOf = (cl) => (TYPES.find((t) => t[2].includes(Number(cl))) || [])[0] || null;
   const typeName = (k) => (TYPES.find((t) => t[0] === k) || [, k])[1];
@@ -358,11 +358,24 @@
     const t = typeOf(i.cl);
     return !!t && s.types.includes(t);
   }
+  /**
+   * Tylko prawdziwy ekwipunek (to, co da się założyć). Mikstury, strzały, zwoje itp. — nigdy, nawet gdyby
+   * gra dała im numer klasy podobny do ekwipunku: rozpoznajemy je po statystykach i po „Typ: …" w opisie.
+   */
+  const NOT_EQ_STATS = ['amount', 'cansplit', 'capacity', 'leczy', 'perheal', 'fullheal', 'teleport', 'custom_teleport', 'ammo', 'quest', 'bag', 'recipe', 'blessing'];
+  function isEquipment(i) {
+    if (!i || !typeOf(i.cl)) return false;
+    if (NOT_EQ_STATS.some((k) => i.stats && i.stats[k] != null)) return false;
+    const m = tipText(i).match(/Typ:\s*([^\s]+)/i);
+    if (m && /lecz|konsump|neutral|strza|klucz|zw[óo]j|torb|talizman|b[łl]ogos|quest|zadan|ulepsz|przepis|walut|mikst/i.test(m[1])) return false;
+    return true;
+  }
   function candidates() {
     const queue = new Set((addons.cfg('szybka')?.queue || []).map((q) => Number(q.id)));
     const tg = targetIds();
     return game.bag().filter((i) => {
       if (i.st !== 0 || tg.has(i.id) || NEVER.includes(i.rarity)) return false;
+      if (!isEquipment(i)) return false;
       if (MP.podpis && MP.podpis.isSigned(i.id)) return false;
       if (queue.has(i.id) || cfg.protect.includes(i.id) || nickIn(cfg.protectNames, i.name)) return false;
       return true;
@@ -465,7 +478,7 @@
         // składnik próbny: przedmiot z ekwipunku w torbie o poziomie co najmniej takim jak ulepszany (niższy gra odrzuca)
         const tl = lvlOf(it);
         const probe = game.bag()
-          .filter((i) => typeOf(i.cl) && ['common', 'unique', 'heroic'].includes(i.rarity) && !targetIds().has(i.id) && !(MP.podpis && MP.podpis.isSigned(i.id)) && lvlOf(i) >= tl && !isRejected(it.id, i.id))
+          .filter((i) => isEquipment(i) && ['common', 'unique', 'heroic'].includes(i.rarity) && !targetIds().has(i.id) && !(MP.podpis && MP.podpis.isSigned(i.id)) && lvlOf(i) >= tl && !isRejected(it.id, i.id))
           .sort((a, b) => lvlOf(a) - lvlOf(b))[0];
         if (!probe) continue;
         const r = await net.send('enhancePreview', { item: it.id, ingredients: probe.id }, { src: 'Ulepszarka' });
@@ -828,6 +841,7 @@
         config.save();
       }
       if (!Array.isArray(c.protect)) c.protect = [];
+      slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => t !== 'arrows'); if (sl.type === 'arrows') sl.type = null; });
       { const u = new Set(); slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => !u.has(t)); sl.types.forEach((t) => u.add(t)); }); }   // typ składników tylko u jednego przedmiotu
       watchPointer();
       // wyrzuciło z gry w trakcie ulepszania? — automatyczne ulepszanie wstrzymane, dopóki go nie wznowisz
