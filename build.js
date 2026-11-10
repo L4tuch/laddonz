@@ -33,6 +33,7 @@ const ORDER = [
   'src/addons/items_overlay.js',
   'src/addons/auto_items.js',
   'src/addons/wrogowie.js',
+  'src/addons/motywnik.js',
   'src/main.js',
 ];
 
