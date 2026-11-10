@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.1.2
+// @version      3.1.3
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -5290,6 +5290,18 @@ ${emblem(t, 11, 14, 4)}${emblem(t, 109, 14, 4)}
     return svg(`<svg xmlns='http://www.w3.org/2000/svg' width='96' height='5'><defs>${metalDefs(t)}<linearGradient id='rh' x1='0' y1='0' x2='0' y2='1'>${g.map((c, i) => `<stop offset='${i / 4}' stop-color='${c}'/>`).join('')}</linearGradient></defs>
 <rect width='96' height='5' fill='url(#rh)'/><rect y='${flip ? 0 : 4.4}' width='96' height='.6' fill='#000' opacity='.6'/>${t.orn === 'star' ? `<circle cx='48' cy='2.5' r='1.1' fill='${t.star}'/>` : `<circle cx='48' cy='2.5' r='1.2' fill='url(#mr)' stroke='${m3}' stroke-width='.4'/>`}</svg>`);
   };
+  /** Własne tło HUD-a na górze (342×65): metalowa tarcza w kolorach stylu z polami na nick, mapę, złoto i smocze łuski. */
+  const hudSvg = (t) => {
+    const [m1, m2, m3] = t.m;
+    const box = (x, y, w, h) => `<rect x='${x}' y='${y}' width='${w}' height='${h}' rx='3' fill='${t.bg0}' stroke='${t.line}' stroke-width='.8'/><rect x='${x + 1}' y='${y + 1}' width='${w - 2}' height='1' fill='${m1}' opacity='.08'/>`;
+    return svg(`<svg xmlns='http://www.w3.org/2000/svg' width='342' height='65'><defs>${metalDefs(t)}<linearGradient id='hf' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg1}'/></linearGradient></defs>
+<path d='M1 0 L341 0 L333 52 Q331 62 320 63 L22 63 Q11 62 9 52 Z' fill='url(#hf)' stroke='${m3}' stroke-width='2'/>
+<path d='M3 0 L339 0 L331.5 51.5 Q329.5 60.5 320 61.3 L22 61.3 Q12.5 60.5 10.5 51.5 Z' fill='none' stroke='${m2}' stroke-width='1.1'/>
+<path d='M5 1 L337 1' stroke='${m1}' stroke-width='.6' opacity='.5'/>
+${box(30, 1, 282, 19)}${box(16, 22, 222, 16)}${box(242, 22, 84, 16)}${box(90, 41, 80, 17)}${box(211, 41, 80, 17)}
+${emblem(t, 20, 49, 3.2)}${emblem(t, 322, 49, 3.2)}
+</svg>`);
+  };
   /** Filtr przebarwiający szare, metalowe grafiki gry (kula HP, obramowania pasków doświadczenia) na metal stylu. */
   const metalFilter = (t, hud) => {
     const h = t.m[1].replace('#', ''); const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255);
@@ -5345,7 +5357,7 @@ ${IL} .top.positioner > .bg{background:${railH(t, true)} 0 100% / 96px 5px repea
 ${IL} .bottom.positioner > .bg{background:${railH(t, false)} 0 0 / 96px 5px repeat-x, linear-gradient(${t.bg0},${t.bg1})!important}
 /* metal wokół kuli HP, ramki pasków doświadczenia i wskaźników — ten sam rysunek, barwa metalu stylu */
 .bottom-panel .bottom-panel-graphic, .bottom-panel .hp-indicator-wrapper > .glass, .bottom-panel .exp-progress > .overlay, .bottom-panel .pointer-exp-graphic, .bottom-panel .pointer-ttl-graphic{filter:${metalFilter(t)}!important}
-.mt-hud-bg{filter:${metalFilter(t, true)}!important}
+.mt-hud-bg{background:${hudSvg(t)} 0 0 / 100% 100% no-repeat!important;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6)) drop-shadow(0 0 8px ${t.glow})!important}
 .bottom-panel .exp-progress .progress > .inner{background:linear-gradient(#0b0b0d 0%, ${t.a2} 22%, ${t.a1} 50%, ${t.a2} 70%, #0b0b0d 100%)!important}
 .skill-usable-slot[class*="interface-element-one-item-slot"]{background-color:${t.bg0}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 0 6px rgba(0,0,0,.6)!important}
 /* ozdoby wokół HP, panel szybkich umiejętności i HUD na górze — grafiki gry bez zmian (żadnych prostokątów wokół) */
@@ -5388,6 +5400,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .mt-plate{background-image:${plate(t)}!important;background-size:100% 100%!important;background-position:0 0!important;background-repeat:no-repeat!important;background-color:${t.bg1}!important;color:${t.text}!important;text-shadow:0 1px 1px #000!important}
 .mt-plate-bi{border-image-source:${plate(t)}!important}
 .mt-plate *, .mt-plate-bi ~ *{color:${t.text}}
+
+/* nagłówki tabel (klany, członkowie, historia…) — klasy gry z drewnem */
+.c-window [class*="table-header-1"], .c-window .table-header, .c-window .table-header-wrapper, .c-window .header-sort, .c-window .hover-header, .c-window [class*="interface-element-table-header"]{background-image:${plate(t)}!important;background-size:100% 100%!important;background-position:0 0!important;background-repeat:no-repeat!important;background-color:${t.bg1}!important;border-image-source:${plate(t)}!important;color:${t.text}!important;text-shadow:0 1px 1px #000!important}
+.c-window [class*="table-header-1"]::before, .c-window [class*="table-header-1"]::after, .c-window .table-header::before, .c-window .table-header::after{background-image:none!important}
+.c-window .table-header *, .c-window [class*="table-header-1"] *{color:${t.text}!important}
+.c-window .table-header-wrapper{box-shadow:inset 0 -1px 0 ${t.m[2]}!important}
 
 /* — zakładki — */
 .tabs-nav .card{background:linear-gradient(${t.bg1},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
@@ -5506,7 +5524,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     fixText(document.body);
     mo = new MutationObserver((muts) => {
       for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1 && !skip(n)) queue.add(n);
-      if (queue.size && !qT) qT = setTimeout(() => { qT = null; const q = [...queue]; queue.clear(); q.forEach((n) => n.isConnected && fixText(n)); }, 150);
+      if (queue.size && !qT) qT = setTimeout(() => { qT = null; const q = [...queue]; queue.clear(); q.forEach((n) => n.isConnected && fixText(n)); hudLayer(active()); }, 150);
     });
     mo.observe(document.body, { childList: true, subtree: true });
     [1200, 4000].forEach((ms) => setTimeout(() => { fixText(document.body); hudLayer(active()); }, ms));
@@ -5536,7 +5554,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function hudLayer(on) {
     for (const hud of $$('.hud-container')) {
       let lay = hud.querySelector(':scope > .mt-hud-bg');
-      if (!on) { if (lay) lay.remove(); const ic = hud.querySelector(':scope > .mt-hud-ico'); if (ic) ic.remove(); hud.classList.remove('mt-hud'); hud.style.removeProperty('background-image'); continue; }
+      if (!on) { if (lay) lay.remove(); const ic = hud.querySelector(':scope > .mt-hud-ico'); if (ic) ic.remove(); if (hud.classList.contains('mt-hud')) { hud.classList.remove('mt-hud'); hud.style.removeProperty('background-image'); } continue; }
       if (!lay) {
         const cs = getComputedStyle(hud);
         if (cs.backgroundImage === 'none') continue;
@@ -5551,8 +5569,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         const circ = (x, y, r) => `M${x - r},${y}a${r},${r} 0 1,0 ${2 * r},0a${r},${r} 0 1,0 ${-2 * r},0`;
         const g = hud.querySelector('.gold-btn'), c = hud.querySelector('.credits-btn');
         const parts = [];
-        if (g) parts.push(circ(g.offsetLeft - 15, g.offsetTop + 10.5, 12.5));
-        if (c) parts.push(circ(c.offsetLeft - 11, c.offsetTop + 10.5, 12.5));
+        if (g) parts.push(circ(g.offsetLeft - 15, g.offsetTop + 10.5, 11));
+        if (c) parts.push(circ(c.offsetLeft - 11, c.offsetTop + 10.5, 11));
         if (parts.length) { ico.style.clipPath = `path('${parts.join(' ')}')`; lay.after(ico); }
       }
       hud.classList.add('mt-hud');
@@ -5731,5 +5749,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.1.2";
+MP.version = "3.1.3";
 })();
