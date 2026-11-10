@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         L4Scripts — dodatki (NI)
+// @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/__GITHUB_USER__/__GITHUB_REPO__
 // @version      __VERSION__
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.

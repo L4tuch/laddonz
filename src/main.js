@@ -10,7 +10,7 @@
   W.addEventListener('unhandledrejection', (e) => logErr('promise: ' + (e.reason && (e.reason.message || e.reason))));
   const t0 = now();
   while (!game.ready()) {
-    if (now() - t0 > 120000) { console.warn('[L4Scripts] Nie wykryto gry (nowy interfejs) — panel nie startuje.'); return; }
+    if (now() - t0 > 120000) { console.warn('[L4Tools] Nie wykryto gry (nowy interfejs) — panel nie startuje.'); return; }
     await sleep(500);
   }
   await sleep(800);
@@ -29,9 +29,9 @@
   itemDeco.start();
   ui.start();
   quickbar.start();
-  console.log(`%c[L4Scripts] v${MP.version} gotowy — ${addons.list.length} dodatków. Panel: ${config.data.global.panelKey}`, 'color:#7c5cff;font-weight:bold');
+  console.log(`%c[L4Tools] v${MP.version} gotowy — ${addons.list.length} dodatków. Panel: ${config.data.global.panelKey}`, 'color:#7c5cff;font-weight:bold');
   if (!store.get('welcomed', false)) {
     store.set('welcomed', true);
-    toast(`L4Scripts gotowy — kliknij ikonkę albo naciśnij ${config.data.global.panelKey}`, 'ok', 6000);
+    toast(`L4Tools gotowy — kliknij ikonkę albo naciśnij ${config.data.global.panelKey}`, 'ok', 6000);
   }
 })();

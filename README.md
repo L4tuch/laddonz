@@ -1,4 +1,4 @@
-# L4Scripts — dodatki do Margonem (nowy interfejs)
+# L4Tools — dodatki do Margonem (nowy interfejs)
 
 Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel konfiguracyjny z ikonką dla każdego dodatku.
 
@@ -77,7 +77,7 @@ Nic nie trzeba ustawiać — komendy gry są wbudowane. Włącz potrzebne dodatk
 
 ## 5. Gdy coś nie działa
 
-- **Panel się nie pokazuje:** sprawdź, czy grasz na nowym interfejsie i czy w Tampermonkey skrypt jest włączony (zielony przełącznik). F12 → Konsola → szukaj wpisów `[L4Scripts]`.
+- **Panel się nie pokazuje:** sprawdź, czy grasz na nowym interfejsie i czy w Tampermonkey skrypt jest włączony (zielony przełącznik). F12 → Konsola → szukaj wpisów `[L4Tools]`.
 - **Liczby/plakietki nie pojawiają się na oknie (łup, czat, ikona grupy, przywołanie):** gra mogła zmienić nazwę klasy okna. F12 → strzałka „wskaż element" → kliknij okno → skopiuj jego klasę (np. `.loot-wnd`) do pola *Selektor…* w ustawieniach dodatku.
 - **Menu prawego przycisku nie ma nowych opcji:** zapasowo **Alt + prawy klik** na przedmiocie zawsze otwiera menu panelu, a Dobij jest też dostępne w oknie „Gracze na mapie+".
 - **Kopia ustawień:** Ogólne → Eksportuj / Importuj.

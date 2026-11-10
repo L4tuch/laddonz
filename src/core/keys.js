@@ -51,7 +51,7 @@ const keys = {
         if (b.get() !== c) continue;
         if (b.when && !b.when()) continue;
         e.preventDefault(); e.stopPropagation();
-        try { b.fn(e); } catch (err) { console.warn('[L4Scripts] skrót', b.label, err); }
+        try { b.fn(e); } catch (err) { console.warn('[L4Tools] skrót', b.label, err); }
         return;
       }
     }, true);

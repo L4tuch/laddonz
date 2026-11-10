@@ -276,7 +276,7 @@
   const TYPES = [
     ['helm', 'Hełm', [9]], ['neck', 'Naszyjnik', [13]], ['ring', 'Pierścień', [12]], ['gloves', 'Rękawice', [11]],
     ['armor', 'Zbroja', [8]], ['boots', 'Buty', [10]], ['weapon', 'Broń', [1, 2, 3, 4, 6]],
-    ['offhand', 'Tarcza / pomocnicze', [5, 7, 14]],
+    ['offhand', 'Tarcza / pomocnicze', [5, 7, 14]], ['arrows', 'Strzały', [21, 29]],
   ];
   const typeOf = (cl) => (TYPES.find((t) => t[2].includes(Number(cl))) || [])[0] || null;
   const typeName = (k) => (TYPES.find((t) => t[0] === k) || [, k])[1];
@@ -363,8 +363,17 @@
    * gra dała im numer klasy podobny do ekwipunku: rozpoznajemy je po statystykach i po „Typ: …" w opisie.
    */
   const NOT_EQ_STATS = ['amount', 'cansplit', 'capacity', 'leczy', 'perheal', 'fullheal', 'teleport', 'custom_teleport', 'ammo', 'quest', 'bag', 'recipe', 'blessing'];
+  /** Prawdziwe strzały (gra daje miksturom podobny numer klasy — rozróżniamy po opisie/nazwie). */
+  function isArrow(i) {
+    if (!i) return false;
+    if (i.stats && (i.stats.leczy != null || i.stats.perheal != null || i.stats.fullheal != null)) return false;
+    const typ = (tipText(i).match(/Typ:\s*([^\s]+)/i) || [])[1] || '';
+    if (typ) return /strza|be[łl]t|pocisk|amunic/i.test(typ);
+    return /strza[łl]|be[łl]t|pocisk/i.test(i.name || '') || i.stats.ammo != null;
+  }
   function isEquipment(i) {
     if (!i || !typeOf(i.cl)) return false;
+    if (typeOf(i.cl) === 'arrows') return isArrow(i);
     if (NOT_EQ_STATS.some((k) => i.stats && i.stats[k] != null)) return false;
     const m = tipText(i).match(/Typ:\s*([^\s]+)/i);
     if (m && /lecz|konsump|neutral|strza|klucz|zw[óo]j|torb|talizman|b[łl]ogos|quest|zadan|ulepsz|przepis|walut|mikst/i.test(m[1])) return false;
@@ -498,6 +507,8 @@
   }
   /** Zapamiętany maksymalny poziom dla rzadkości (np. zwykłe kończą się wcześniej niż heroiki). */
   function learnMax(it) {
+    if (it && it.id) { cfg.maxed = [...new Set((cfg.maxed || []).concat(Number(it.id)))].slice(-200); config.save(); }
+    return;
     const lvl = enhLevel(it);
     if (lvl == null || !it.rarity) return;
     const m = store.get('up:maxlvl', {}) || {};
@@ -542,10 +553,9 @@
           let gone = await waitGone(useIds, 3500);
           if (!gone) {
             // gra zadała pytanie (w odpowiedzi jest numer pytania), a okienka nie udało się kliknąć — odpowiadamy „Tak" tak jak gra po kliknięciu
-            const m = String(short(r.data) || '').match(/\b(100\d{4})\b/);
-            if (m) {
-              await net.send('enhanceAnswer', { item: o.target.id, ingredients: okIds, q: m[1] }, { src: 'Ulepszarka', onResponse: maxResp(o) });
-              steps.push({ a: 'answer', q: m[1] }); saveSteps();
+            if (msgIds(r.data).includes(Q_SURE)) {   // tylko na znane pytanie „czy na pewno"
+              await net.send('enhanceAnswer', { item: o.target.id, ingredients: okIds, q: Q_SURE }, { src: 'Ulepszarka', onResponse: maxResp(o) });
+              steps.push({ a: 'answer', q: Q_SURE }); saveSteps();
             }
             gone = await waitGone(useIds, 5000);
           }
@@ -567,9 +577,17 @@
     }
   }
   /** Odpowiedź serwera z błędem (np. „Błąd wewnętrzny", t:stop) → przerywamy natychmiast. */
-  /** Odpowiedź gry „przedmiot ma już maksymalny poziom" (błąd albo poziom w podglądzie). */
+  /*
+   * Numery komunikatów gry przy ulepszaniu (z raportów):
+   *   1001012 — pytanie „czy na pewno" (np. przy unikatach) → odpowiadamy „Tak"
+   *   1001013 — przedmiot ma już maksymalny poziom ulepszenia → znika z listy
+   */
+  const Q_SURE = '1001012', MSG_MAXED = '1001013';
+  const msgIds = (d) => { try { return (Array.isArray(d && d.message) ? d.message : []).map((m) => String(m && (m.id ?? m))); } catch { return []; } };
+  /** Odpowiedź gry „przedmiot ma już maksymalny poziom" (komunikat 1001013, błąd albo poziom w podglądzie). */
   const isMaxedResp = (d) => {
     if (!d) return false;
+    if (msgIds(d).includes(MSG_MAXED)) return true;
     try {
       const e = d.enhancement, pr = e && (e.progress_preview || e.progressing);
       if (pr && Number(pr.upgradeLevel) >= MAX_LVL) return true;
@@ -659,6 +677,7 @@
   }
   function isMaxed(it) {
     if (!it) return false;
+    if (cfg && cfg.maxed && cfg.maxed.includes(Number(it.id))) return true;
     if (/maksymaln\w* (poziom\w* )?ulepsz|ulepszon\w* maksymalnie|max(imum)? (enhancement|upgrade)|nie mo[żz]na (ju[żz] )?(bardziej )?ulepsz/i.test(tipText(it))) return true;
     const lvl = enhLevel(it);
     return lvl != null && lvl >= maxFor(it);
@@ -730,7 +749,7 @@
     const it = game.itemById(id);
     if (!it) { toast('Ulepszarka: to nie jest Twój przedmiot', 'warn'); return; }
     const t = typeOf(it.cl);
-    if (!t) { toast(`Ulepszarka: „${it.name}" nie da się ulepszać`, 'warn'); return; }
+    if (!t || (t === 'arrows' && !isArrow(it)) || (t !== 'arrows' && !isEquipment(it) && it.st === 0 && it.stats.amount != null)) { toast(`Ulepszarka: „${it.name}" nie da się ulepszać`, 'warn'); return; }
     if (targetIds().has(it.id)) { toast(`Ulepszarka: „${it.name}" już jest ulepszany`, 'info'); return; }
     if (isMaxed(it)) { toast(`Ulepszarka: „${it.name}" jest już maksymalnie ulepszony`, 'info'); return; }
     const free = freeTypes();
@@ -842,7 +861,6 @@
         config.save();
       }
       if (!Array.isArray(c.protect)) c.protect = [];
-      slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => t !== 'arrows'); if (sl.type === 'arrows') sl.type = null; });
       { const u = new Set(); slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => !u.has(t)); sl.types.forEach((t) => u.add(t)); }); }   // typ składników tylko u jednego przedmiotu
       watchPointer();
       // wyrzuciło z gry w trakcie ulepszania? — automatyczne ulepszanie wstrzymane, dopóki go nie wznowisz

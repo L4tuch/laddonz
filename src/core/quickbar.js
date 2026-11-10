@@ -75,7 +75,7 @@ const quickbar = {
       });
       this.bar.appendChild(t);
     }
-    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Pełny panel L4Scripts', onclick: () => ui.toggle() }, icon('logo', 15)));
+    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Pełny panel L4Tools', onclick: () => ui.toggle() }, icon('logo', 15)));
     this.place();
   },
 

@@ -416,7 +416,7 @@ MP.itemDeco = itemDeco;
           return it;
         });
       } else dbg.noWindow = true;
-    } catch (e) { console.warn('[L4Scripts] showEq', e); dbg.error = String(e); }
+    } catch (e) { console.warn('[L4Tools] showEq', e); dbg.error = String(e); }
     finally { off(); }
     // zamykanie okna gry w tle — nie każemy czekać na podgląd
     const userOpened = userEqClick >= t0 - 150;
@@ -655,7 +655,7 @@ MP.itemDeco = itemDeco;
       }
     };
 
-    /* LISTA GRACZY (w grze i w L4Scripts) */
+    /* LISTA GRACZY (w grze i w L4Tools) */
     const listRow = (t) => t && t.closest && t.closest('.one-other, .tw-list-item, .mp-prow');
     const playerFromRow = (row) => {
       if (row.dataset && row.dataset.pid) return game.otherById(row.dataset.pid);
@@ -705,7 +705,7 @@ MP.itemDeco = itemDeco;
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
-      { key: 'listHover', type: 'bool', label: 'Najechanie na gracza na liście graczy (w grze i w L4Scripts)' },
+      { key: 'listHover', type: 'bool', label: 'Najechanie na gracza na liście graczy (w grze i w L4Tools)' },
       { key: 'needShift', type: 'bool', label: 'Na mapie tylko z wciśniętym Shift' },
       { adv: true, key: 'cacheSec', type: 'number', label: 'Pamiętaj wynik przez (s)', min: 10, max: 1800 },
       { adv: true, key: 'tipSelector', type: 'text', label: 'Selektor dymka gracza w grze', hint: 'Domyślnie .tip-wrapper.normal-tip' },

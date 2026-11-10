@@ -62,7 +62,7 @@ const bus = {
   off(ev, fn) { this.map.get(ev)?.delete(fn); },
   emit(ev, ...a) {
     for (const fn of this.map.get(ev) || []) {
-      try { fn(...a); } catch (e) { console.warn('[L4Scripts] błąd w obsłudze', ev, e); }
+      try { fn(...a); } catch (e) { console.warn('[L4Tools] błąd w obsłudze', ev, e); }
     }
   },
 };

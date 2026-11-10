@@ -75,7 +75,7 @@ const net = {
       try {
         const r = g(task);
         if (r && r.block) return r;
-      } catch (e) { console.warn('[L4Scripts] guard error', e); }
+      } catch (e) { console.warn('[L4Tools] guard error', e); }
     }
     return null;
   },
