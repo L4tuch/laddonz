@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.1.4
+// @version      3.1.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -5344,8 +5344,10 @@ ${emblem(t, 20, 49, 3.2)}${emblem(t, 322, 49, 3.2)}
 /* — krój pisma (te same wielkości co w grze) — */
 /* tylko okna, dymki, menu, czat i prawa kolumna — pasek dolny (HP, doświadczenie, czas) zostaje z czcionką gry */
 .c-window:not(.transparent), .tip-wrapper, .popup-menu-layer, .new-chat-window, ${IL} .right-column.main-column,
-.c-window:not(.transparent) :not(.item):not(.item *), .tip-wrapper *, .new-chat-window *, ${IL} .right-column.main-column :not(.item):not(.item *){font-family:${body}!important}
+.c-window:not(.transparent) :not(.item):not(.item *):not(.button):not(.button *):not(.widget-button):not(.widget-button *):not(.card):not(.card *), .tip-wrapper *, .new-chat-window *:not(.button):not(.button *):not(.widget-button):not(.widget-button *):not(.card):not(.card *), ${IL} .right-column.main-column :not(.item):not(.item *):not(.button):not(.button *):not(.widget-button):not(.widget-button *):not(.card):not(.card *){font-family:${body}!important}
 .c-window .header-label .text, .c-window .header-label, .c-window .header-label *{font-family:${t.head}!important}
+/* przyciski zostają z krojem gry — inne metryki czcionki przesuwały napis w pionie */
+.button, .button *, .widget-button, .widget-button *, .tabs-nav .card, .tabs-nav .card *, .mt-mi, .mt-mi *{font-family:Arimo, Arial, sans-serif!important}
 
 /* — ramy ekranu: kolumny, górny i dolny pasek — */
 ${IL} .left-column.main-column, ${IL} .left-column.main-column .new-chat-window, ${IL} .left-column.main-column .chat-input-wrapper{background-color:${t.bg1}!important}
@@ -5430,7 +5432,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
 /* — menu prawego przycisku — */
 .mt-menu{background:${t.bg1}!important;box-shadow:0 0 0 1px ${t.line},0 10px 26px rgba(0,0,0,.65),0 0 16px ${t.glow}!important;border-image:none!important}
-.mt-mi{${btnMain};font-family:${body}!important}
+.mt-mi{${btnMain}}
 .mt-mi:hover{${hover}}
 #mp-ctx{background:${t.bg1}!important;border-color:${t.line}!important}
 #mp-ctx .mp-ctx-item{${btnMain};border-color:transparent!important}
@@ -5753,5 +5755,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.1.4";
+MP.version = "3.1.5";
 })();
