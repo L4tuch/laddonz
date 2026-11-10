@@ -123,6 +123,7 @@ const net = {
   },
   autoLearn(t, args) {
     try { this.recent.unshift({ t: new Date().toISOString().slice(11, 23), task: t.slice(0, 160), craft: this.craftOpen() }); if (this.recent.length > 60) this.recent.length = 60; } catch {}
+    try { bus.emit('cmd', t); } catch {}
     try {
       const head = t.split('&')[0];
       const craft = this.craftOpen() || /enhanc|upgrad|ulepsz|craft/i.test(head);

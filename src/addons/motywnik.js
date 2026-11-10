@@ -308,7 +308,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 /* — okno łupu: gładkie tło bez pionowych krawędzi paneli, okienka przedmiotów jako spokojne kafle — */
 .c-window.mt-loot > .content{background:linear-gradient(${t.bg2}, ${t.bg1} 90px)!important}
 .c-window.mt-loot [class*="interface-element-middle-"]{border-image-source:none!important;border-image:none!important;background:transparent!important;box-shadow:none!important}
-.c-window.mt-loot .content :has(> .item):not(.content):not(.inner-content){background-color:${t.bg0}!important;border-radius:4px}
+.c-window.mt-loot .mt-lc{background-image:linear-gradient(${t.bg2},${t.bg0})!important;background-color:${t.bg1}!important}
+.c-window.mt-loot .mt-lcb{border-color:${t.m[2]}!important}
+.c-window.mt-loot .mt-lc.mt-lcb{box-shadow:inset 0 1px 0 ${t.m[0]}1a!important}
 
 /* — zakładki — */
 .tabs-nav .card{background:linear-gradient(${t.bg2},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 1px 0 ${t.m[0]}1f!important;text-shadow:0 1px 1px #000!important}
@@ -419,7 +421,21 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   /* okno łupu: rozpoznawane po nagłówku „Łup…" — dostaje spokojniejszy, gładki wygląd */
   function tagLoot() {
     if (!active()) return;
-    for (const w of $$('.c-window')) { const h = w.querySelector('.header-label .text, .header-label'); if (h && /^\s*łup/i.test(h.textContent || '')) w.classList.add('mt-loot'); }
+    for (const w of $$('.c-window')) {
+      const h = w.querySelector('.header-label .text, .header-label');
+      if (!(h && /^\s*łup/i.test(h.textContent || ''))) continue;
+      w.classList.add('mt-loot');
+      // wszystkie tła w środku okna (także kolorowe, np. brązowo-czerwone okienka przedmiotów) → kolory stylu
+      const c = w.querySelector(':scope > .content'); if (!c) continue;
+      for (const n of $$('*', c)) {
+        if (n.closest('.item, .button, .mp-lg-hl, .mp-ibadge, .mp-lg-pop') || /interface-element-one-item-slot|item-slot/.test(String(n.className))) continue;
+        const cs = getComputedStyle(n), r = n.getBoundingClientRect();
+        const col = tone(cs.backgroundColor);
+        const bigImg = cs.backgroundImage !== 'none' && /url\(/.test(cs.backgroundImage) && r.width > 44 && r.height > 44;
+        if ((col && col.a > 0.05) || bigImg) n.classList.add('mt-lc');
+        if (parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0) n.classList.add('mt-lcb');
+      }
+    }
   }
   function tagPopups() {
     if (!active()) return;
@@ -461,7 +477,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function stop() {
     if (mo) { mo.disconnect(); mo = null; }
     document.removeEventListener('contextmenu', onCtx, true);
-    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi', 'mt-loot'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
+    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi', 'mt-loot', 'mt-lc', 'mt-lcb'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
   }
   const active = () => !!(cfg && cfg.enabled && THEMES[cfg.theme] && !THEMES[cfg.theme].none);
 

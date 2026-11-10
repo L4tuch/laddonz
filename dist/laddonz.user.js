@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.3.0
+// @version      3.3.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -680,6 +680,7 @@ const net = {
   },
   autoLearn(t, args) {
     try { this.recent.unshift({ t: new Date().toISOString().slice(11, 23), task: t.slice(0, 160), craft: this.craftOpen() }); if (this.recent.length > 60) this.recent.length = 60; } catch {}
+    try { bus.emit('cmd', t); } catch {}
     try {
       const head = t.split('&')[0];
       const craft = this.craftOpen() || /enhanc|upgrad|ulepsz|craft/i.test(head);
@@ -1107,6 +1108,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-pt-e.soon{animation:mpPtBlink 1s ease-in-out infinite}
 .mp-pt-c{margin:2px 0 4px;padding:3px 7px;border-radius:4px;background:color-mix(in srgb,var(--c) 18%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 70%,transparent);color:var(--c);font-size:.95em}
 .mp-pt-c.soon{animation:mpPtBlink .7s ease-in-out infinite;font-weight:700}
+.mp-pt-u{font-size:.85em;margin:-1px 0 4px 2px}
+.mp-pt-cd{font-size:.82em;opacity:.8;font-weight:400;margin-top:1px}
 .mp-pt-none{font-size:.88em;font-style:italic}
 @keyframes mpPtBlink{0%,100%{filter:none}50%{filter:brightness(1.6);box-shadow:inset 0 0 0 1px var(--c),0 0 10px var(--c)}}
 .mp-lg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
@@ -1140,6 +1143,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 @keyframes mpLgOut{0%,100%{box-shadow:inset 0 0 6px color-mix(in srgb,var(--lgc) 55%,transparent),0 0 3px 0 var(--lgc)}50%{box-shadow:inset 0 0 14px var(--lgc),0 0 7px 1px var(--lgc)}}
 @keyframes mpLgBg{0%,100%{background:color-mix(in srgb,var(--lgc) 10%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lgc) 60%,transparent)}50%{background:color-mix(in srgb,var(--lgc) 28%,transparent);box-shadow:inset 0 0 0 1px var(--lgc),inset 0 0 12px var(--lgc)}}
 .mp-lg-hl.thor{--lgc:#6fb2ff}.mp-lg-hl.thor::before{background:conic-gradient(from var(--mpa),transparent 0 18%,#4f9dff 26%,#fff 30%,#4f9dff 34%,transparent 42% 68%,#4f9dff 76%,#fff 80%,#4f9dff 84%,transparent 92%);animation-duration:.9s}
+.mp-lg-hl.thor::after{background:radial-gradient(circle,rgba(200,230,255,.55),transparent 70%);opacity:0;animation:mpLgThorFl 2.3s steps(1) infinite}
+@keyframes mpLgThorFl{0%,100%{opacity:0}31%{opacity:1}33%{opacity:0}35%{opacity:.7}37%{opacity:0}78%{opacity:.9}80%{opacity:0}}
 .mp-lg-hl.smoke{--lgc:#b9bec6}.mp-lg-hl.smoke::before{background:conic-gradient(from var(--mpa),#0b0b0d,#8a8f98,#0b0b0d 35%,#d9dde3 50%,#0b0b0d 65%,#6b7078,#0b0b0d);animation-duration:4s}
 .mp-lg-hl.kasyno{--lgc:#ffc83a}.mp-lg-hl.kasyno::before{background:conic-gradient(from var(--mpa),#8a5a05,#ffd34d,#fff6c4 12%,#ffd34d 20%,#b8860b 35%,#ffd34d 55%,#fff6c4 62%,#ffd34d 70%,#8a5a05);animation-duration:1.8s}
 .mp-lg-hl.kasyno::after{background:linear-gradient(115deg,transparent 35%,rgba(255,250,220,.6) 50%,transparent 65%) -150% 0/250% 100% no-repeat;animation:mpLgSweep 1.6s ease-in-out infinite}
@@ -1150,14 +1155,21 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-win.thor{animation:mpLgWinThor 1.6s infinite}
 @keyframes mpLgWin{0%,100%{filter:drop-shadow(0 0 6px var(--lgc))}50%{filter:drop-shadow(0 0 18px var(--lgc))}}
 @keyframes mpLgWinThor{0%,100%{filter:drop-shadow(0 0 6px #4f9dff)}7%{filter:drop-shadow(0 0 22px #cfe8ff)}10%{filter:drop-shadow(0 0 4px #4f9dff)}13%{filter:drop-shadow(0 0 16px #9fd0ff)}}
-.mp-lg-fake{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147482000;pointer-events:none;background:linear-gradient(#1d1a17,#100e0c);border:2px solid #6b5a45;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.6);color:#eadfcf;font:12.8px Arial,sans-serif;min-width:230px}
-.mp-lg-fake-h{text-align:center;padding:6px 10px;border-bottom:1px solid #4a3f33;font-weight:700;letter-spacing:.5px}
-.mp-lg-fake-b{display:flex;gap:6px;padding:12px;justify-content:center}
-.mp-lg-fake-card{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px 6px;border:1px solid #4a3f33;border-radius:4px;background:rgba(255,255,255,.03);width:62px}
-.mp-lg-fake-item{width:34px;height:34px;border-radius:3px;background:radial-gradient(circle at 40% 35%,color-mix(in srgb,var(--rc) 70%,#fff),color-mix(in srgb,var(--rc) 55%,#000));box-shadow:inset 0 0 0 2px var(--rc)}
-.mp-lg-fake-want{font-size:11px;opacity:.85}
-.mp-lg-fake-btns{display:flex;gap:4px}.mp-lg-fake-btns i{font-style:normal;width:18px;height:18px;line-height:18px;text-align:center;border-radius:3px;background:#2b2b2b;border:1px solid #555;font-size:11px}
-.mp-lg-fake-f{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 10px;border-top:1px solid #4a3f33;font-size:12px}.mp-lg-fake-f b{padding:3px 10px;border:1px solid #5b6b45;border-radius:3px;background:#24301b}
+.mp-lg-fake{position:fixed!important;left:50%!important;top:46%!important;transform:translate(-50%,-50%);z-index:900!important;pointer-events:none!important;box-sizing:border-box;min-width:300px;border-style:solid;border-width:32px 20px;display:block!important}
+.c-window.mp-lg-fake > .content{position:relative!important;inset:auto!important;padding:4px 0 8px;background-color:rgb(24,16,12)}
+.mp-lg-fake .header-label-positioner{position:absolute;left:0;right:0;top:-28px;display:flex;justify-content:center}
+.mp-lg-fake .header-label{position:relative;padding:4px 26px;min-width:60px;text-align:center;color:#e6d6bf}
+.mp-lg-fake .close-button-corner-decor{position:absolute;right:-20px;top:-32px;width:51px;height:52px}
+.mp-lg-fake-b{display:flex;gap:6px;justify-content:center;padding:6px}
+.mp-lg-fake-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 6px 6px;border:1px solid #6b2a1a;background:#3a1a10;width:64px;box-sizing:border-box}
+.mp-lg-fake-slot{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background-color:#281d15;box-shadow:inset 0 0 0 1px #000}
+.mp-lg-fake-item{width:32px;height:32px;border-radius:2px;background:radial-gradient(circle at 40% 35%,color-mix(in srgb,var(--rc) 70%,#fff),color-mix(in srgb,var(--rc) 55%,#000));box-shadow:inset 0 0 0 2px var(--rc)}
+.mp-lg-fake-want{font-size:11.5px;color:#e6d6bf}
+.mp-lg-fake-btns{display:flex;gap:4px}.mp-lg-fake-btns .button{min-width:22px;height:22px;line-height:22px;text-align:center;padding:0!important;font-size:12px}
+.mp-lg-fake-f{position:absolute!important;left:-20px;right:-20px;bottom:-32px;height:32px;display:flex!important;align-items:center;justify-content:space-between;gap:10px;padding:0 26px;box-sizing:border-box;color:#e6d6bf;font-size:12.8px}
+.mp-lg-fake-f .interface-element-bottom-bar-background-stretch{position:absolute;inset:0;z-index:-1;border-style:solid;border-width:0 20px}
+.mp-lg-fake-f .button{padding:0 12px;height:24px;line-height:24px}
+.mp-lg-pop{position:fixed;z-index:2147483002;pointer-events:none;perspective:300px}
 .mp-mt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .mp-mt-card{cursor:pointer;border-radius:10px;padding:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18)}
 .mp-mt-card:hover{border-color:rgba(255,255,255,.3)}.mp-mt-card.on{border-color:var(--mp-accent);box-shadow:0 0 0 1px var(--mp-accent)}
@@ -5559,7 +5571,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 /* — okno łupu: gładkie tło bez pionowych krawędzi paneli, okienka przedmiotów jako spokojne kafle — */
 .c-window.mt-loot > .content{background:linear-gradient(${t.bg2}, ${t.bg1} 90px)!important}
 .c-window.mt-loot [class*="interface-element-middle-"]{border-image-source:none!important;border-image:none!important;background:transparent!important;box-shadow:none!important}
-.c-window.mt-loot .content :has(> .item):not(.content):not(.inner-content){background-color:${t.bg0}!important;border-radius:4px}
+.c-window.mt-loot .mt-lc{background-image:linear-gradient(${t.bg2},${t.bg0})!important;background-color:${t.bg1}!important}
+.c-window.mt-loot .mt-lcb{border-color:${t.m[2]}!important}
+.c-window.mt-loot .mt-lc.mt-lcb{box-shadow:inset 0 1px 0 ${t.m[0]}1a!important}
 
 /* — zakładki — */
 .tabs-nav .card{background:linear-gradient(${t.bg2},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 1px 0 ${t.m[0]}1f!important;text-shadow:0 1px 1px #000!important}
@@ -5670,7 +5684,21 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   /* okno łupu: rozpoznawane po nagłówku „Łup…" — dostaje spokojniejszy, gładki wygląd */
   function tagLoot() {
     if (!active()) return;
-    for (const w of $$('.c-window')) { const h = w.querySelector('.header-label .text, .header-label'); if (h && /^\s*łup/i.test(h.textContent || '')) w.classList.add('mt-loot'); }
+    for (const w of $$('.c-window')) {
+      const h = w.querySelector('.header-label .text, .header-label');
+      if (!(h && /^\s*łup/i.test(h.textContent || ''))) continue;
+      w.classList.add('mt-loot');
+      // wszystkie tła w środku okna (także kolorowe, np. brązowo-czerwone okienka przedmiotów) → kolory stylu
+      const c = w.querySelector(':scope > .content'); if (!c) continue;
+      for (const n of $$('*', c)) {
+        if (n.closest('.item, .button, .mp-lg-hl, .mp-ibadge, .mp-lg-pop') || /interface-element-one-item-slot|item-slot/.test(String(n.className))) continue;
+        const cs = getComputedStyle(n), r = n.getBoundingClientRect();
+        const col = tone(cs.backgroundColor);
+        const bigImg = cs.backgroundImage !== 'none' && /url\(/.test(cs.backgroundImage) && r.width > 44 && r.height > 44;
+        if ((col && col.a > 0.05) || bigImg) n.classList.add('mt-lc');
+        if (parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0) n.classList.add('mt-lcb');
+      }
+    }
   }
   function tagPopups() {
     if (!active()) return;
@@ -5712,7 +5740,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function stop() {
     if (mo) { mo.disconnect(); mo = null; }
     document.removeEventListener('contextmenu', onCtx, true);
-    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi', 'mt-loot'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
+    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi', 'mt-loot', 'mt-lc', 'mt-lcb'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
   }
   const active = () => !!(cfg && cfg.enabled && THEMES[cfg.theme] && !THEMES[cfg.theme].none);
 
@@ -6512,7 +6540,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
       h = el('div'); card.appendChild(h);
     }
+    const was = h.className;
     h.className = hlClass();
+    // Smoke: wyróżnienie wyłania się powoli, jak z dymu
+    if (cfg.style === 'smoke' && !/\bsmoke\b/.test(was)) try { h.animate([{ opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)' }], { duration: 3500, easing: 'ease-out' }); } catch {}
     h.style.setProperty('--lgc', cfg.style === 'wlasny' ? ((cfg.custom && cfg.custom.color) || '#ff9a1f') : STYLES[cfg.style] ? STYLES[cfg.style].col : '#8fc4ff');
   }
   function markWindow(win, test) {
@@ -6532,6 +6563,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     if (!run) return;
     cancelAnimationFrame(run.raf); run.cvs.forEach((c) => c.remove()); if (run.fake) run.fake.remove();
     if (run.media) run.media.remove();
+    (run.pops || []).forEach((b) => b.remove());
     if (run.win) run.win.classList.remove('mp-lg-win', 'thor', 'smoke', 'kasyno', 'disco', 'wlasny');
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
     if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
@@ -6540,18 +6572,69 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
   /** Okno łupu „na niby" do testu: kilka losowych przedmiotów (zwykłe, unikaty, heroiki, legendy), jak w grze. */
   const RAR = { common: ['Zwykły', '#9a9a9a'], unique: ['Unikatowy', '#e6c13b'], heroic: ['Heroiczny', '#3fa2ff'], legendary: ['Legendarny', '#ff8a1f'] };
+  /** Kopia kafelka przedmiotu z gry (razem z obrazkiem z płótna). */
+  function cloneItem(src) {
+    const c = src.cloneNode(true);
+    const a = src.querySelectorAll('canvas'), b = c.querySelectorAll('canvas');
+    a.forEach((cv, i) => { try { b[i].width = cv.width; b[i].height = cv.height; b[i].getContext('2d').drawImage(cv, 0, 0); } catch {} });
+    c.removeAttribute('id'); c.querySelectorAll('.mp-ibadge, .mp-lg-hl').forEach((x) => x.remove());
+    return c;
+  }
+  /** Przedmioty z Twojej torby/ekwipunku do testu, pogrupowane po rzadkości. */
+  function bagByRarity() {
+    const out = { common: [], unique: [], heroic: [], legendary: [] };
+    for (const n of $$('.item[class*="item-id-"]')) {
+      if (n.closest(LOOT_SEL + ', .mp-lg-fake, #mp-panel, .mp-glass') || !isVisible(n)) continue;
+      const it = game.itemById(game.itemIdFromEl(n)); if (!it) continue;
+      const r = it.rarity === 'upgraded' ? 'unique' : it.rarity;
+      if (out[r] && out[r].length < 6) out[r].push(n);
+    }
+    return out;
+  }
+  /** Okno łupów do testu — zbudowane z tych samych elementów co okno gry, więc wygląda jak ono (także w Motywniku). */
   function fakeLoot() {
     const n = 3 + Math.floor(Math.random() * 3);
     const rars = Array.from({ length: n }, () => ['common', 'common', 'unique', 'heroic', 'legendary'][Math.floor(Math.random() * 5)]);
     if (!rars.includes('legendary')) rars[Math.floor(Math.random() * n)] = 'legendary';
+    const bag = bagByRarity();
     const cards = rars.map((r) => {
-      const it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1] }, title: RAR[r][0] });
+      const pool = bag[r];
+      let it;
+      if (pool && pool.length) { it = cloneItem(pool[Math.floor(Math.random() * pool.length)]); it.style.position = 'relative'; it.style.left = it.style.top = '0'; }
+      else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1] } });
+      it.classList.add('mp-lg-fake-item-real'); it.title = RAR[r][0];
       if (r === 'legendary') it.dataset.mpLg = '1';
-      return el('div', { class: 'mp-lg-fake-card' }, it, el('div', { class: 'mp-lg-fake-want' }, 'Chcę'), el('div', { class: 'mp-lg-fake-btns' }, el('i', null, '✓'), el('i', null, '✕')));
+      return el('div', { class: 'mp-lg-fake-card' },
+        el('div', { class: 'mp-lg-fake-slot interface-element-one-item-slot-background-to-repeat' }, it),
+        el('div', { class: 'mp-lg-fake-want' }, 'Chcę'),
+        el('div', { class: 'mp-lg-fake-btns' }, el('div', { class: 'button small green' }, el('div', { class: 'label' }, '✓')), el('div', { class: 'button small red' }, el('div', { class: 'label' }, '✕'))));
     });
-    const f = el('div', { class: 'mp-lg-fake' }, el('div', { class: 'mp-lg-fake-h' }, 'Łupy'), el('div', { class: 'mp-lg-fake-b' }, cards), el('div', { class: 'mp-lg-fake-f' }, el('span', null, '10 s'), el('b', null, 'Potwierdź'), el('span', null, '10 m')));
-    document.body.appendChild(f);
+    const f = el('div', { class: 'c-window border-window mp-lg-fake' },
+      el('div', { class: 'header-label-positioner' }, el('div', { class: 'header-label' }, el('div', { class: 'left-decor' }), el('div', { class: 'right-decor' }), el('div', { class: 'text' }, 'Łupy'))),
+      el('div', { class: 'content' }, el('div', { class: 'inner-content' }, el('div', { class: 'mp-lg-fake-b' }, cards))),
+      el('div', { class: 'c-window__bottom-bar mp-lg-fake-f' }, el('div', { class: 'interface-element-bottom-bar-background-stretch' }), el('span', null, '10 s'), el('div', { class: 'button small green' }, el('div', { class: 'label' }, 'Potwierdź')), el('span', null, '10 m')),
+      el('div', { class: 'close-button-corner-decor' }, el('button', { class: 'close-button' })));
+    (document.querySelector('.alerts-layer') || document.body).appendChild(f);
     return f;
+  }
+
+  /* ── Kasyno: legenda wyskakuje z okienka i kręci się jak moneta ── */
+  function popItems(win, me) {
+    for (const it of $$('.item', win).filter((x) => x.dataset.mpLg)) {
+      const r = it.getBoundingClientRect(); if (!r.width) continue;
+      const c = cloneItem(it);
+      const box = el('div', { class: 'mp-lg-pop', style: { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' } }, c);
+      Object.assign(c.style, { position: 'absolute', left: '0', top: '0', margin: '0' });
+      document.body.appendChild(box);
+      (me.pops = me.pops || []).push(box);
+      const an = box.animate([
+        { transform: 'translateY(0) scale(1) rotateY(0deg)', filter: 'drop-shadow(0 0 0 #ffd34d)' },
+        { transform: 'translateY(-78px) scale(2) rotateY(540deg)', filter: 'drop-shadow(0 0 14px #ffd34d)', offset: 0.3 },
+        { transform: 'translateY(-84px) scale(2) rotateY(1260deg)', filter: 'drop-shadow(0 0 20px #fff2a8)', offset: 0.72 },
+        { transform: 'translateY(0) scale(1) rotateY(1800deg)', filter: 'drop-shadow(0 0 0 #ffd34d)' },
+      ], { duration: 3400, easing: 'cubic-bezier(.3,.7,.4,1)' });
+      an.onfinish = () => box.remove();
+    }
   }
 
   async function play(styleKey, opts = {}) {
@@ -6568,8 +6651,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const rect = win ? win.getBoundingClientRect() : { left: innerWidth / 2 - 130, top: innerHeight / 2 - 80, width: 260, height: 160, right: innerWidth / 2 + 130, bottom: innerHeight / 2 + 80 };
     // tylna warstwa tuż pod oknem łupu (w tym samym kontekście warstw), żeby dym i światła były ZA oknem
     let zb = 2147480000;
-    if (win && !fake) { zb = 0; try { const zz = parseInt(getComputedStyle(win).zIndex, 10); if (zz > 0) zb = zz - 1; } catch {} }
-    const back = canvas(zb, win && !fake ? win : null);
+    if (win) { zb = 0; try { const zz = parseInt(getComputedStyle(win).zIndex, 10); if (zz > 0) zb = zz - 1; } catch {} }
+    const back = canvas(zb, win || null);
     const front = canvas(2147483000);
     const E = {
       W: innerWidth, H: innerHeight, r: { left: rect.left, top: rect.top, width: rect.width, height: rect.height, right: rect.left + rect.width, bottom: rect.top + rect.height },
@@ -6587,6 +6670,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (opts.test && !fake) $$('.mp-lg-hl', win).forEach((h) => { if (!before.has(h)) h.classList.add('test'); });
     }
     showMedia(E);
+    if (st === 'kasyno' && win) FOUNTAINS(dur).forEach((ft) => setTimeout(() => { if (run === me) popItems(win, me); }, ft * 1000 + 250));
     // przy teście panel przygasa, żeby było widać cały efekt
     if (me.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .3s'; g.style.opacity = '0.12'; });
     run = me;
@@ -6853,7 +6937,43 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   let cfg, win = null, preview = false, timer = null;
   const PACKETS = [];               // ostatnie pakiety walki (do diagnozy)
   const LOGS = [];                  // ostatnie linie dziennika walki
-  let state = { round: 0, w: {}, fromLog: {}, charge: {} };
+  let state = { round: 0, w: {}, fromLog: {}, charge: {}, acts: 0, casts: [], domTurn: 0 };
+  const fresh = () => ({ round: 0, w: {}, fromLog: {}, charge: {}, acts: 0, casts: [], domTurn: 0 });
+
+  /*
+   * Umiejętności ostateczne tytanów i kolosów: [nazwa, pierwsza tura, co ile tur, opis].
+   * Źródło: opisy postaci na margohelp.pl i margoworld.pl („Rzucany w X turze, co Y tur").
+   */
+  const BOSS = {
+    'Zabójczy Królik': [['Rozszarpanie wrogów', 4, 12, 'obrażenia + głęboka rana na wszystkich'], ['Ugryzienie w ucho', 8, 12, 'ogłuszenie 1 tura + głęboka rana'], ['Żar tropików', 11, 11, 'ogień i trucizna na wszystkich'], ['Ucieczka i przegrupowanie', 16, 24, 'odrzut wszystkich o 2 rzędy']],
+    'Renegat Baulus': [['Obezwładnienie', 1, 14, 'ogłuszenie wszystkich na 1 turę'], ['Manifestacja', 3, 14, 'obrażenia + trucizna na wszystkich'], ['Zamach łańcuchami', 8, 14, 'obrażenia + odrzut o 2 rzędy'], ['Miażdżące uderzenie', 10, 14, 'mocny cios w broniącego']],
+    'Piekielny Arcymag': [['Ognisty podmuch', 1, 15, '3 ciosy ognia w losowych graczy'], ['Piekielna burza', 7, 15, 'ogień i błyskawice na wszystkich'], ['Odprawa niewtajemniczonych', 12, 15, 'obrażenia + odrzut o 2 rzędy'], ['Pirokineza', 20, 20, 'ogień na wszystkich']],
+    'Versus Zoons': [['Ostre powitanie', 1, 100, 'losowa linia + głęboka rana'], ['Egzekucja', 5, 10, 'mocny cios w broniącego'], ['Grad zatrutych kul', 9, 10, 'obrażenia + trucizna na wszystkich'], ['Głębokie rany', 13, 10, 'obrażenia + głęboka rana na wszystkich']],
+    'Łowczyni Wspomnień': [['Wiatrował', 2, 10, 'losowa linia graczy'], ['Sprzeciw mieszkańców lasu', 5, 10, 'obrażenia + głęboka rana na wszystkich'], ['Ukojenie', 8, 10, 'leczy się o 7% życia'], ['Gniew driad', 10, 10, 'obrażenia + trucizna na wszystkich']],
+    'Przyzywacz Demonów': [['Wydarcie duszy', 1, 10, 'ogłuszenie celu na 4 tury'], ['Zaklęcie rozpraszające', 4, 10, 'ogłuszenie wszystkich na 1 turę'], ['Osłona otchłani', 7, 10, 'zdejmuje spowolnienia + ogień na wszystkich'], ['Pocałunek śmierci', 10, 10, 'ogień i zimno na wszystkich']],
+    'Maddok Magua': [['Bagienny paraliż', 1, 12, 'ogłuszenie 1 tura + głęboka rana na wszystkich'], ['Salwa grzmiących włóczni', 5, 12, 'obrażenia + błyskawice na wszystkich'], ['Manifestacja cierpienia', 7, 12, 'odrzut wszystkich o 2 rzędy'], ['Klątwa króla mokradeł', 10, 12, 'błyskawice w losową linię']],
+    'Tezcatlipoca': [['Krwawe wybroczyny', 1, 10, 'rana + ogłuszenie 1 tura na wszystkich'], ['Odzyskanie wigoru', 4, 10, 'zdejmuje spowolnienia, leczy 12%'], ['Deszcz meteorytów', 7, 10, 'ogień i błyskawice na wszystkich'], ['Księżycowe cięcie', 10, 10, 'cios z przebiciem i żywiołami']],
+    'Barbatos Smoczy Strażnik': [['Kaleczące skrzydła Barbatosa', 1, 10, 'ogłuszenie linii broniącego na 2 tury'], ['Kamienne zdeptanie', 4, 10, '2 ciosy w broniącego'], ['Deszcz kryształowych odłamków', 7, 10, '2 ciosy ognia we wszystkich'], ['Pradawny ogień Hebrehotha', 10, 10, 'ogień w linię broniącego']],
+    'Tanroth': [['Lodowy powiew', 1, 15, 'podwójne zimno na wszystkich'], ['Przebicie włócznią', 5, 15, 'cios z przebiciem i zimnem'], ['Wymrożenie', 8, 15, 'ogłuszenie wszystkich na 1 turę'], ['Lodowa burza', 11, 15, 'obrażenia + ogłuszenie wszystkich']],
+    'Amaimon Soploręki': [['Chapnięcie', 3, 15, 'cios w broniącego'], ['Przeszycie do szpiku', 7, 15, 'cios z zimnem w broniącego'], ['Noc Perseidów', 10, 15, 'trucizna + ogłuszenie wszystkich 1 tura'], ['Lodowe Pandemonium', 15, 15, 'obrażenia + zimno w linię broniącego']],
+    'Umibozu': [['Zesłanie Funayurei', 2, 36, 'ogłuszenie całej drużyny na 2 tury'], ['Gniewne wody', 4, 12, 'zimno na całą drużynę'], ['Dłoń Ośmiu Trygramów', 7, 12, 'cios + trucizna w broniącego'], ['Czarne wydzieliny', 10, 12, 'zimno, linia + trucizna']],
+    'Vashkar': [['Donnerwelle', 1, 10, 'błyskawice na wszystkich'], ['Błyszczący trzepot', 4, 20, 'odrzut o rząd + zdejmuje spowolnienia'], ['Wielostrzał', 6, 10, '4 strzały w losowych graczy'], ['Lśniące Sanktuarium', 8, 10, 'błyskawice i strzały na wszystkich']],
+    'Hydrokora Chimeryczna': [['Fuego llameante', 1, 12, 'ogień w linię broniącego'], ['Zanurzenie pazurów', 3, 12, 'cios z przebiciem w linię'], ['Wynaturzenie', 6, 18, 'ogień w losowego gracza'], ['Agresja trzech głów', 9, 12, 'potrójny cios w broniącego']],
+    'Lulukav': [['Spaczenie', 1, 10, 'obrażenia + trucizna na wszystkich'], ['Pochłonięcie dusz', 6, 10, 'atak + leczy się o 20%'], ['Lulukavkavkavkav', 9, 10, 'błyskawice, trucizna i rana na wszystkich']],
+    'Arachin Podstępny': [['Innovatis', 8, 14, 'zdejmuje swoje spowolnienia']],
+    'Reuzen': [['Deszcz zatrutych gałęzi', 1, 10, 'obrażenia + trucizna na wszystkich'], ['Duszące mchy', 5, 10, 'ogłuszenie wszystkich na 2 tury'], ['Trzęsienie ziemi', 8, 10, 'obrażenia na wszystkich']],
+  };
+  const bossOf = (name) => { const n = String(name || '').toLowerCase(); return Object.keys(BOSS).find((k) => n.includes(k.toLowerCase())); };
+  /** Najbliższe umiejętności ostateczne bossa od tury `turn` (włącznie). */
+  function nextUlts(boss, turn) {
+    return BOSS[boss].map(([n, first, every, d]) => {
+      let at = first;
+      if (turn > first) at = first + Math.ceil((turn - first) / every) * every;
+      return { name: n, at, left: at - turn, desc: d };
+    }).sort((a, b) => a.left - b.left);
+  }
+  /** Bieżąca tura: z danych walki, z okna walki albo z liczby Twoich ruchów — największa wiarygodna wartość. */
+  const turnNow = () => Math.max(state.round || 0, state.domTurn || 0, state.acts || 0, 1);
 
   /* ── klasyfikacja efektów ── */
   const NEG = /osłab|oslab|trucizn|zatru|krwaw|ogłusz|oglusz|zamroż|zamroz|szadź|szadz|spowol|oślep|oslep|podpal|płon|plon|poraż|poraz|klątw|klatw|przebic|obniż|obniz|zmniejsz|redukc|unieruch|paraliż|paraliz|strach|rozbroj|wyzwani|prowok|kruch|rozdarc|zranien|odrętw|odretw|uśpien|uspien|chorob|-\s*\d/i;
@@ -6891,24 +7011,51 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     return null;
   }
 
+  /** Nazwa Twojej umiejętności po numerze (z danych gry albo z paska umiejętności w walce). */
+  function skillName(id) {
+    try {
+      const S = E() && E().skills;
+      const cand = S && (S.skills || S.list || S.d || S);
+      const it = cand && (typeof cand.get === 'function' ? cand.get(id) : cand[id]);
+      const n = it && (it.name || (it.d && it.d.name));
+      if (n) return String(n);
+    } catch {}
+    const slot = document.querySelector(`[data-skill-id="${id}"], [data-id="${id}"].skill, .skill-${id}`);
+    const t = slot && (slot.getAttribute('tip') || slot.title || slot.textContent || '').replace(/<[^>]+>/g, ' ').trim();
+    return t ? t.split(/\s{2,}|\n/)[0].slice(0, 40) : `Umiejętność #${id}`;
+  }
+  /** Dziennik walki z okna gry (.battle-msg) i numer tury, jeśli okno go pokazuje. */
+  const seenMsg = new WeakSet();
+  function readDom() {
+    const bw = document.querySelector('.battle-controller, .battle-window, .battle');
+    if (!bw) return;
+    const tm = (bw.textContent || '').match(/tura\s*:?\s*(\d{1,3})/i);
+    if (tm) state.domTurn = Math.max(state.domTurn, Number(tm[1]));
+    for (const m of bw.querySelectorAll('.battle-msg')) { if (seenMsg.has(m)) continue; seenMsg.add(m); parseLog(m.textContent || ''); }
+  }
+
   /* ── odczyt z dziennika walki ── */
   const strip = (s) => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   function parseLog(line) {
     const s = strip(line);
     if (!s) return;
     LOGS.push(s); if (LOGS.length > 80) LOGS.shift();
+    const tr = s.match(/^\s*(?:tura|runda)\s*(\d{1,3})\b/i); if (tr) { state.domTurn = Math.max(state.domTurn, Number(tr[1])); return; }
+    // „…(2 tury)" / „…na 3 tury" bez czasownika — efekt po nazwie przy ostatnio wspomnianej postaci
+    const tt = s.match(/^(.+?)[:\-–]\s*([^()]{2,40}?)\s*\((\d+)\s*tur/i);
+    if (tt) { const who = tt[1].trim(); (state.fromLog[who] = state.fromLog[who] || {})[tt[2].trim()] = { left: Number(tt[3]), at: turnNow() }; }
     // „X ładuje / przygotowuje / kumuluje potężny atak … (za) 3 tur(y)"
     let m = s.match(/^(.+?)\s+(?:ładuje|laduje|przygotowuje|kumuluje|szykuje|gromadzi)\b(.*?)(\d+)\s*(?:tur|rund)/i);
-    if (m) { state.charge[m[1].trim()] = { name: (m[2].replace(/\b(za|do|się|sie|w ciągu)\b/gi, '').trim() || 'Naładowany atak').slice(0, 40), left: Number(m[3]), at: state.round }; return; }
+    if (m) { state.charge[m[1].trim()] = { name: (m[2].replace(/\b(za|do|się|sie|w ciągu)\b/gi, '').trim() || 'Naładowany atak').slice(0, 40), left: Number(m[3]), at: turnNow() }; return; }
     // „X … efekt Y … (na) 3 tur(y)" / „Y (3 tury)" przy imieniu
     m = s.match(/^(.+?)\s+(?:otrzymuje|zyskuje|dostaje|jest pod wpływem|zostaje objęty|zostaje objęta|ma)\s+(?:efekt\s+)?[„"']?([^„"'(]{2,40}?)[”"']?\s*(?:na|\(|przez)\s*(\d+)\s*(?:tur|rund)/i);
-    if (m) { const who = m[1].trim(); (state.fromLog[who] = state.fromLog[who] || {})[m[2].trim()] = { left: Number(m[3]), at: state.round }; }
+    if (m) { const who = m[1].trim(); (state.fromLog[who] = state.fromLog[who] || {})[m[2].trim()] = { left: Number(m[3]), at: turnNow() }; }
   }
 
   function onData(d) {
     if (!d || !d.f) return;
     const f = d.f;
-    if (f.init || f.init === 0) state = { round: 0, w: {}, fromLog: {}, charge: {} };
+    if (f.init || f.init === 0) state = fresh();
     PACKETS.push(JSON.parse(JSON.stringify(f, (k, v) => (typeof v === 'string' && v.length > 300 ? v.slice(0, 300) + '…' : v)))); if (PACKETS.length > 40) PACKETS.shift();
     const rnd = Number(f.round ?? f.r ?? f.turn ?? f.move);
     if (!isNaN(rnd) && rnd > state.round) state.round = rnd;
@@ -6940,11 +7087,28 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     // z dziennika: dopasowanie po imieniu
     for (const o of Object.values(out)) {
       const L = state.fromLog[o.name];
-      if (L) for (const [nm, v] of Object.entries(L)) { const left = v.left - Math.max(0, state.round - v.at); if (left > 0 && !o.eff.some((e) => e.name === nm)) o.eff.push({ name: nm, left, k: kind(nm) }); }
+      if (L) for (const [nm, v] of Object.entries(L)) { const left = v.left - Math.max(0, turnNow() - v.at); if (left > 0 && !o.eff.some((e) => e.name === nm)) o.eff.push({ name: nm, left, k: kind(nm) }); }
       const C = state.charge[o.name];
-      if (C && !o.charge) { const left = C.left - Math.max(0, state.round - C.at); if (left >= 0) o.charge = { name: C.name, left }; }
+      if (C && !o.charge) { const left = C.left - Math.max(0, turnNow() - C.at); if (left >= 0) o.charge = { name: C.name, left }; }
       // ten sam efekt z dwóch źródeł — jeden wpis
       const seen = new Set(); o.eff = o.eff.filter((e) => { const k = e.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+    }
+    // tytan / kolos z bazy: najbliższa umiejętność ostateczna jako „ładowany atak" + lista kolejnych
+    const turn = turnNow();
+    for (const o of Object.values(out)) {
+      const b = bossOf(o.name); if (!b) continue;
+      const ul = nextUlts(b, turn);
+      o.boss = b; o.ults = ul;
+      if (!o.charge || o.charge.left > ul[0].left) o.charge = { name: ul[0].name, left: ul[0].left, desc: ul[0].desc };
+    }
+    // Twoje umiejętności rzucone na wojowników (np. Wyzwanie, Szadź): ile tur temu
+    for (const c of state.casts) {
+      const o = c.id != null ? out[String(c.id)] : null;
+      if (!o) continue;
+      const ago = turn - c.at;
+      if (ago > 12) continue;
+      const nm = `${c.name} (Ty)`;
+      if (!o.eff.some((e) => e.name.toLowerCase().startsWith(c.name.toLowerCase()))) o.eff.push({ name: nm, left: null, ago, k: kind(c.name) === 'neu' ? (Number(o.id) < 0 ? 'neg' : 'pos') : kind(c.name) });
     }
     // drużyny: ta z bohaterem = „my"
     const me = h && out[String(h.id)];
@@ -6965,7 +7129,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     if (win && win.isConnected) return win;
     const pos = store.get('win:pogromca', { x: innerWidth - 330, y: 140 });
     win = el('div', { id: 'mp-pt', style: { left: pos.x + 'px', top: pos.y + 'px' } },
-      el('div', { class: 'mp-pt-h' }, el('b', null, 'Pogromca Tytanów'), el('span', { class: 'mp-pt-r' }), el('button', { class: 'mp-pt-x', title: 'Ukryj do końca walki', onclick: () => { win.style.display = 'none'; preview = false; } }, '×')),
+      el('div', { class: 'mp-pt-h' }, el('b', null, 'Pogromca Tytanów'), el('span', { class: 'mp-pt-r' }), el('button', { class: 'mp-pt-x', title: 'Zbierz dane walki (skopiuj i wklej w rozmowie)', onclick: () => collect() }, '⧉'), el('button', { class: 'mp-pt-x', title: 'Ukryj do końca walki', onclick: () => { win.style.display = 'none'; preview = false; } }, '×')),
       el('div', { class: 'mp-pt-b' }));
     document.body.appendChild(win);
     makeDraggable(win, win.querySelector('.mp-pt-h'), (p) => store.set('win:pogromca', p));
@@ -6974,18 +7138,19 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
   function chip(e, P, warnAt) {
     const c = e.k === 'pos' ? P.pos : e.k === 'neg' ? P.neg : P.neu;
-    const soon = e.left <= warnAt;
+    const soon = e.left != null && e.left <= warnAt;
     return el('div', { class: 'mp-pt-e' + (soon ? ' soon' : ''), style: { '--c': c, background: P.chip } },
-      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), el('span', { class: 'mp-pt-t' }, e.left === 1 ? '1 tura' : e.left > 1 && e.left < 5 ? `${e.left} tury` : `${e.left} tur`));
+      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), el('span', { class: 'mp-pt-t' }, e.left == null ? (e.ago === 0 ? 'teraz' : `${e.ago} t. temu`) : e.left === 1 ? '1 tura' : e.left > 1 && e.left < 5 ? `${e.left} tury` : `${e.left} tur`));
   }
   function row(o, P) {
     const box = el('div', { class: 'mp-pt-w' },
       el('div', { class: 'mp-pt-wn' }, el('span', null, o.name), o.hpp !== null && !isNaN(o.hpp) ? el('span', { class: 'mp-pt-hp' }, el('i', { style: { width: Math.max(0, Math.min(100, o.hpp)) + '%' } })) : null));
     if (o.charge) {
       const now1 = o.charge.left <= (cfg.warnAt ?? 1);
-      box.appendChild(el('div', { class: 'mp-pt-c' + (now1 ? ' soon' : ''), style: { '--c': P.chg } }, '⚡ ', el('b', null, o.charge.name), ' — ', o.charge.left <= 0 ? 'atakuje TERAZ' : `atak za ${o.charge.left} ${o.charge.left === 1 ? 'turę' : o.charge.left < 5 ? 'tury' : 'tur'}`));
+      box.appendChild(el('div', { class: 'mp-pt-c' + (now1 ? ' soon' : ''), style: { '--c': P.chg }, title: o.charge.desc || '' }, '⚡ ', el('b', null, o.charge.name), ' — ', o.charge.left <= 0 ? 'w TEJ turze' : `za ${o.charge.left} ${o.charge.left === 1 ? 'turę' : o.charge.left < 5 ? 'tury' : 'tur'}`, o.charge.desc ? el('div', { class: 'mp-pt-cd' }, o.charge.desc) : null));
     }
-    const eff = o.eff.slice().sort((a, b) => a.left - b.left);
+    if (o.ults && o.ults.length > 1) box.appendChild(el('div', { class: 'mp-pt-u', style: { color: P.dim } }, 'Dalej: ', o.ults.slice(1, 3).map((u, i) => el('span', null, i ? ' · ' : '', el('b', { style: { color: P.text } }, u.name), ` za ${u.left} t.`))));
+    const eff = o.eff.slice().sort((a, b) => (a.left ?? 99) - (b.left ?? 99));
     if (eff.length) box.appendChild(el('div', { class: 'mp-pt-es' }, eff.map((e) => chip(e, P, cfg.warnAt ?? 1))));
     else if (!o.charge) box.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'brak efektów'));
     return box;
@@ -6997,7 +7162,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     w.querySelector('.mp-pt-h b').style.fontFamily = P.head;
     w.querySelector('.mp-pt-h').style.borderColor = P.line;
     const { allies, enemies } = data || model();
-    w.querySelector('.mp-pt-r').textContent = state.round ? `tura ${state.round}` : preview ? 'podgląd' : '';
+    w.querySelector('.mp-pt-r').textContent = preview ? 'podgląd' : `tura ${turnNow()}`;
     const B = w.querySelector('.mp-pt-b'); B.textContent = '';
     const solo = allies.length <= 1;
     const sec = (title, list) => { if (!list.length) return; B.appendChild(el('div', { class: 'mp-pt-s', style: { color: P.dim, borderColor: P.line } }, title)); list.forEach((o) => B.appendChild(row(o, P))); };
@@ -7014,7 +7179,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         { id: 2, name: 'Nakuemease', hpp: 57, eff: [{ name: 'Szadź', left: 1, k: 'neg' }] },
       ],
       enemies: [
-        { id: -1, name: 'Tytan Ognia', hpp: 64, charge: { name: 'Erupcja', left: 2 }, eff: [{ name: 'Wyzwanie', left: 2, k: 'neg' }, { name: 'Osłabienie', left: 4, k: 'neg' }, { name: 'Wzmocnienie', left: 1, k: 'pos' }] },
+        { id: -1, name: 'Piekielny Arcymag', hpp: 64, charge: { name: 'Piekielna burza', left: 2, desc: 'ogień i błyskawice na wszystkich' }, ults: [{ name: 'Piekielna burza', left: 2 }, { name: 'Odprawa niewtajemniczonych', left: 7 }, { name: 'Ognisty podmuch', left: 10 }], eff: [{ name: 'Wyzwanie (Ty)', left: null, ago: 1, k: 'neg' }, { name: 'Osłabienie', left: 4, k: 'neg' }, { name: 'Wzmocnienie', left: 1, k: 'pos' }] },
         { id: -2, name: 'Sługa tytana', hpp: 30, charge: { name: 'Naładowany atak', left: 1 }, eff: [] },
       ],
     };
@@ -7023,7 +7188,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function tick() {
     if (!cfg.enabled) return;
     if (preview) return;
-    if (game.inBattle()) render();
+    if (game.inBattle()) { readDom(); if (cfg.onlyBoss && !Object.values(model()).flat().some((o) => o.boss)) { if (win) win.style.display = 'none'; return; } render(); }
     else if (win && win.style.display !== 'none') { win.style.display = 'none'; }
   }
 
@@ -7032,7 +7197,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const shape = (o, d = 0) => { if (!o || typeof o !== 'object' || d > 2) return typeof o; const r = {}; for (const k of Object.keys(o).slice(0, 60)) { const v = o[k]; r[k] = typeof v === 'function' ? 'fn' : v && typeof v === 'object' ? shape(v, d + 1) : v; } return r; };
     let ws = b && (b.warriorsList || b.warriors); try { if (typeof ws === 'function') ws = ws.call(b); } catch {}
     const arr = Array.isArray(ws) ? ws : Object.values(ws || {});
-    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
+    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
     const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
     try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
     toast(`Pogromca Tytanów: skopiowano dane walki (${PACKETS.length} pakietów) — wklej je w rozmowie`, 'ok', 5000);
@@ -7047,6 +7212,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       { key: 'showEnemies', type: 'bool', label: 'Pokazuj przeciwników' },
       { key: 'warnAt', type: 'number', label: 'Wyróżnij, gdy zostało tur', min: 0, max: 5, hint: 'Efekt lub atak, który kończy się za tyle tur (lub mniej), miga.' },
       { key: 'scale', type: 'range', label: 'Wielkość okienka (%)', min: 80, max: 140, step: 5 },
+      { key: 'onlyBoss', type: 'bool', label: 'Tylko w walkach z tytanami i kolosami' },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Podgląd i dane'),
@@ -7060,7 +7226,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     init(c) {
       cfg = c;
       bus.on('data', onData);
-      bus.on('battle:start', () => { state = { round: 0, w: {}, fromLog: {}, charge: {} }; preview = false; });
+      bus.on('battle:start', () => { state = fresh(); preview = false; });
+      // Twoje ruchy w walce = kolejne tury (zapas, gdy gra nie podaje numeru tury)
+      bus.on('cmd', (t) => {
+        const m = String(t || '').match(/^fight&a=(attack|spell|move|skip|wait|turn|use)(?:&s=(\d+))?(?:.*?&id=(-?\d+))?/);
+        if (!m || !game.inBattle()) return;
+        state.acts++;
+        if (m[1] === 'spell' && m[2]) state.casts.push({ s: Number(m[2]), id: m[3] ? Number(m[3]) : null, at: turnNow(), name: skillName(Number(m[2])) });
+        if (win && cfg.enabled && !preview) setTimeout(render, 50);
+      });
       bus.on('battle:end', () => { if (win && !preview) win.style.display = 'none'; });
       timer = setInterval(tick, 500);
       MP.pogromca = { render, sample, collect, state: () => state, preview: () => { preview = true; render(sample()); } };
@@ -7123,5 +7297,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.3.0";
+MP.version = "3.3.1";
 })();

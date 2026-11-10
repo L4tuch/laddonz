@@ -633,7 +633,10 @@
       if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
       h = el('div'); card.appendChild(h);
     }
+    const was = h.className;
     h.className = hlClass();
+    // Smoke: wyróżnienie wyłania się powoli, jak z dymu
+    if (cfg.style === 'smoke' && !/\bsmoke\b/.test(was)) try { h.animate([{ opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)' }], { duration: 3500, easing: 'ease-out' }); } catch {}
     h.style.setProperty('--lgc', cfg.style === 'wlasny' ? ((cfg.custom && cfg.custom.color) || '#ff9a1f') : STYLES[cfg.style] ? STYLES[cfg.style].col : '#8fc4ff');
   }
   function markWindow(win, test) {
@@ -653,6 +656,7 @@
     if (!run) return;
     cancelAnimationFrame(run.raf); run.cvs.forEach((c) => c.remove()); if (run.fake) run.fake.remove();
     if (run.media) run.media.remove();
+    (run.pops || []).forEach((b) => b.remove());
     if (run.win) run.win.classList.remove('mp-lg-win', 'thor', 'smoke', 'kasyno', 'disco', 'wlasny');
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
     if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
@@ -661,18 +665,69 @@
   }
   /** Okno łupu „na niby" do testu: kilka losowych przedmiotów (zwykłe, unikaty, heroiki, legendy), jak w grze. */
   const RAR = { common: ['Zwykły', '#9a9a9a'], unique: ['Unikatowy', '#e6c13b'], heroic: ['Heroiczny', '#3fa2ff'], legendary: ['Legendarny', '#ff8a1f'] };
+  /** Kopia kafelka przedmiotu z gry (razem z obrazkiem z płótna). */
+  function cloneItem(src) {
+    const c = src.cloneNode(true);
+    const a = src.querySelectorAll('canvas'), b = c.querySelectorAll('canvas');
+    a.forEach((cv, i) => { try { b[i].width = cv.width; b[i].height = cv.height; b[i].getContext('2d').drawImage(cv, 0, 0); } catch {} });
+    c.removeAttribute('id'); c.querySelectorAll('.mp-ibadge, .mp-lg-hl').forEach((x) => x.remove());
+    return c;
+  }
+  /** Przedmioty z Twojej torby/ekwipunku do testu, pogrupowane po rzadkości. */
+  function bagByRarity() {
+    const out = { common: [], unique: [], heroic: [], legendary: [] };
+    for (const n of $$('.item[class*="item-id-"]')) {
+      if (n.closest(LOOT_SEL + ', .mp-lg-fake, #mp-panel, .mp-glass') || !isVisible(n)) continue;
+      const it = game.itemById(game.itemIdFromEl(n)); if (!it) continue;
+      const r = it.rarity === 'upgraded' ? 'unique' : it.rarity;
+      if (out[r] && out[r].length < 6) out[r].push(n);
+    }
+    return out;
+  }
+  /** Okno łupów do testu — zbudowane z tych samych elementów co okno gry, więc wygląda jak ono (także w Motywniku). */
   function fakeLoot() {
     const n = 3 + Math.floor(Math.random() * 3);
     const rars = Array.from({ length: n }, () => ['common', 'common', 'unique', 'heroic', 'legendary'][Math.floor(Math.random() * 5)]);
     if (!rars.includes('legendary')) rars[Math.floor(Math.random() * n)] = 'legendary';
+    const bag = bagByRarity();
     const cards = rars.map((r) => {
-      const it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1] }, title: RAR[r][0] });
+      const pool = bag[r];
+      let it;
+      if (pool && pool.length) { it = cloneItem(pool[Math.floor(Math.random() * pool.length)]); it.style.position = 'relative'; it.style.left = it.style.top = '0'; }
+      else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1] } });
+      it.classList.add('mp-lg-fake-item-real'); it.title = RAR[r][0];
       if (r === 'legendary') it.dataset.mpLg = '1';
-      return el('div', { class: 'mp-lg-fake-card' }, it, el('div', { class: 'mp-lg-fake-want' }, 'Chcę'), el('div', { class: 'mp-lg-fake-btns' }, el('i', null, '✓'), el('i', null, '✕')));
+      return el('div', { class: 'mp-lg-fake-card' },
+        el('div', { class: 'mp-lg-fake-slot interface-element-one-item-slot-background-to-repeat' }, it),
+        el('div', { class: 'mp-lg-fake-want' }, 'Chcę'),
+        el('div', { class: 'mp-lg-fake-btns' }, el('div', { class: 'button small green' }, el('div', { class: 'label' }, '✓')), el('div', { class: 'button small red' }, el('div', { class: 'label' }, '✕'))));
     });
-    const f = el('div', { class: 'mp-lg-fake' }, el('div', { class: 'mp-lg-fake-h' }, 'Łupy'), el('div', { class: 'mp-lg-fake-b' }, cards), el('div', { class: 'mp-lg-fake-f' }, el('span', null, '10 s'), el('b', null, 'Potwierdź'), el('span', null, '10 m')));
-    document.body.appendChild(f);
+    const f = el('div', { class: 'c-window border-window mp-lg-fake' },
+      el('div', { class: 'header-label-positioner' }, el('div', { class: 'header-label' }, el('div', { class: 'left-decor' }), el('div', { class: 'right-decor' }), el('div', { class: 'text' }, 'Łupy'))),
+      el('div', { class: 'content' }, el('div', { class: 'inner-content' }, el('div', { class: 'mp-lg-fake-b' }, cards))),
+      el('div', { class: 'c-window__bottom-bar mp-lg-fake-f' }, el('div', { class: 'interface-element-bottom-bar-background-stretch' }), el('span', null, '10 s'), el('div', { class: 'button small green' }, el('div', { class: 'label' }, 'Potwierdź')), el('span', null, '10 m')),
+      el('div', { class: 'close-button-corner-decor' }, el('button', { class: 'close-button' })));
+    (document.querySelector('.alerts-layer') || document.body).appendChild(f);
     return f;
+  }
+
+  /* ── Kasyno: legenda wyskakuje z okienka i kręci się jak moneta ── */
+  function popItems(win, me) {
+    for (const it of $$('.item', win).filter((x) => x.dataset.mpLg)) {
+      const r = it.getBoundingClientRect(); if (!r.width) continue;
+      const c = cloneItem(it);
+      const box = el('div', { class: 'mp-lg-pop', style: { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' } }, c);
+      Object.assign(c.style, { position: 'absolute', left: '0', top: '0', margin: '0' });
+      document.body.appendChild(box);
+      (me.pops = me.pops || []).push(box);
+      const an = box.animate([
+        { transform: 'translateY(0) scale(1) rotateY(0deg)', filter: 'drop-shadow(0 0 0 #ffd34d)' },
+        { transform: 'translateY(-78px) scale(2) rotateY(540deg)', filter: 'drop-shadow(0 0 14px #ffd34d)', offset: 0.3 },
+        { transform: 'translateY(-84px) scale(2) rotateY(1260deg)', filter: 'drop-shadow(0 0 20px #fff2a8)', offset: 0.72 },
+        { transform: 'translateY(0) scale(1) rotateY(1800deg)', filter: 'drop-shadow(0 0 0 #ffd34d)' },
+      ], { duration: 3400, easing: 'cubic-bezier(.3,.7,.4,1)' });
+      an.onfinish = () => box.remove();
+    }
   }
 
   async function play(styleKey, opts = {}) {
@@ -689,8 +744,8 @@
     const rect = win ? win.getBoundingClientRect() : { left: innerWidth / 2 - 130, top: innerHeight / 2 - 80, width: 260, height: 160, right: innerWidth / 2 + 130, bottom: innerHeight / 2 + 80 };
     // tylna warstwa tuż pod oknem łupu (w tym samym kontekście warstw), żeby dym i światła były ZA oknem
     let zb = 2147480000;
-    if (win && !fake) { zb = 0; try { const zz = parseInt(getComputedStyle(win).zIndex, 10); if (zz > 0) zb = zz - 1; } catch {} }
-    const back = canvas(zb, win && !fake ? win : null);
+    if (win) { zb = 0; try { const zz = parseInt(getComputedStyle(win).zIndex, 10); if (zz > 0) zb = zz - 1; } catch {} }
+    const back = canvas(zb, win || null);
     const front = canvas(2147483000);
     const E = {
       W: innerWidth, H: innerHeight, r: { left: rect.left, top: rect.top, width: rect.width, height: rect.height, right: rect.left + rect.width, bottom: rect.top + rect.height },
@@ -708,6 +763,7 @@
       if (opts.test && !fake) $$('.mp-lg-hl', win).forEach((h) => { if (!before.has(h)) h.classList.add('test'); });
     }
     showMedia(E);
+    if (st === 'kasyno' && win) FOUNTAINS(dur).forEach((ft) => setTimeout(() => { if (run === me) popItems(win, me); }, ft * 1000 + 250));
     // przy teście panel przygasa, żeby było widać cały efekt
     if (me.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .3s'; g.style.opacity = '0.12'; });
     run = me;
