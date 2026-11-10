@@ -21,6 +21,7 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 | ⚔ | **Dobijarka** | Włączona: atakuje każdego gracza, który wejdzie w zasięg (zakres poziomów od–do). Klawisz (działa też przy wyłączonej): namierza najbliższego gracza i atakuje go, gdy będzie w zasięgu. W menu gracza: „Dobij" / „Przerwij dobijanie". Postać nigdy sama nie podchodzi. |
 | 🔔 | **Hey WakeUP!** | Domyślnie powiadomienia wyglądają jak w grze (żółty tekst na dole). Dodatek zmienia ich kolory, czcionkę, rozmiar, tło i położenie — także dla komunikatów gry. |
 | 🛡 | **Bratan** | Blokuje każdy atak (także ręczny) na klanowiczów, znajomych, sojuszników i osoby z listy. |
+| ◎ | **Wrogowie na mapie** | Na czerwonych mapach komunikat gry „Wróg na mapie: Nick", gdy pojawi się wróg. Do wyboru: wrogie klany, oznaczeni wrogowie, neutralni (bez relacji). Znajomi, klan, sojusz, grupa i lista Bratana — nigdy. |
 | 👥 | **Gracze na mapie+** | Okno z graczami na mapie: filtry, sortowanie, zapisywane zestawy, tryb minimalny. Klik na gracza → karta z EQ, Dobij, zaproszeniem do grupy i znajomych, Bratanem. |
 | 🏆 | **Kto złapie** | Pod kafelkami łupu: Twoja szansa (%) na złapanie przedmiotu — tylko w walce w grupie; liczone osoby z Twojej drużyny, które brały udział w walce, z pierwszeństwem pasującej profesji. |
 | 🍲 | **Let's Cook Together** | Klawisz = zaproś znajomych/klan/sojusz/wszystkich z mapy. Klawisz = rozwiąż grupę. Bez automatów. |

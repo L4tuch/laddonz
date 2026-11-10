@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      2.0.5
+// @version      2.1.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -955,6 +955,7 @@ const ICON_PATHS = {
   // dodatki
   napad: '<path d="M4 20l7-7"/><path d="M14.5 3.5l6 6-8.5 8.5-6-6z"/><path d="M3 17l4 4"/><path d="M16 6l2 2"/>',
   wakeup: '<path d="M6 16V11a6 6 0 1112 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 004 0"/><path d="M3 7.5c.6-1.6 1.6-3 3-4"/><path d="M21 7.5c-.6-1.6-1.6-3-3-4"/>',
+  wrogowie: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/>',
   bratan: '<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6z"/><path d="M8.5 12.5l2.3 2.3 4.7-5"/>',
   ktotu: '<circle cx="9" cy="8" r="3.3"/><path d="M3 20c.4-3.6 2.8-5.6 6-5.6s5.6 2 6 5.6"/><circle cx="17.5" cy="15.5" r="2.6"/><path d="M19.4 17.4L22 20"/>',
   ktozlapie: '<path d="M7 4h10l-1 6.5a4 4 0 01-8 0z"/><path d="M12 14.5V18"/><path d="M8.5 20.5h7"/><path d="M17 5.5h2.5a2 2 0 010 4H16.6"/><path d="M7 5.5H4.5a2 2 0 000 4h2.9"/>',
@@ -1317,7 +1318,7 @@ const addons = {
   cfg(id) { return config.data.addons[id]; },
   on(id) { return !!(config.data.addons[id] && config.data.addons[id].enabled); },
 
-  ORDER: ['napad', 'wakeup', 'bratan', 'ktotu', 'ktozlapie', 'cook', 'podpis', 'pokazeq', 'jakibon', 'taxi', 'autof', 'szybka', 'ulepszarka', 'minichat'],
+  ORDER: ['napad', 'wakeup', 'bratan', 'wrogowie', 'ktotu', 'ktozlapie', 'cook', 'podpis', 'pokazeq', 'jakibon', 'taxi', 'autof', 'szybka', 'ulepszarka', 'minichat'],
 
   initAll() {
     this.list.sort((a, b) => this.ORDER.indexOf(a.id) - this.ORDER.indexOf(b.id));
@@ -2133,6 +2134,7 @@ function copyReport() {
       ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,
       pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
       szybka: MP.szybka ? MP.szybka.debug() : null,
+      wrogowie: MP.wrogowie ? MP.wrogowie.debug() : null,
     };
   } catch (e) { r.blad = String(e); }
   const txt = JSON.stringify(r, null, 1);
@@ -4999,6 +5001,74 @@ MP.itemDeco = itemDeco;
   });
 })();
 
+// ═══ src/addons/wrogowie.js ═══
+/* ───────── Wrogowie na mapie ─────────
+ * Na czerwonych mapach (pełne PvP) pokazuje komunikat gry „Wróg na mapie: Nick", gdy pojawi się wróg:
+ * gracz oznaczony jako wróg, członek wrogiego klanu, a opcjonalnie także gracze neutralni (bez relacji).
+ * Nigdy: znajomi, klan, sojusznicy, członkowie grupy i gracze chronieni w Bratanie.
+ * Ten sam gracz znowu dopiero, gdy zniknie z mapy i wróci (najwcześniej po minucie).
+ */
+(() => {
+  let cfg, timer = null, mapId = 0;
+  const seen = new Map();      // id → ostatnio widziany (ms)
+  const told = new Map();      // id → kiedy powiadomiono (ms)
+
+  /** Czerwona mapa = pełne PvP. Gra opisuje typ mapy liczbą (pole pvp). */
+  function isRed() {
+    const m = game.mapInfo();
+    return (cfg.pvpCodes || [2]).map(Number).includes(Number(m.pvp));
+  }
+  function protectedByBratan(p) {
+    try { const b = addons.cfg('bratan'); return !!(b && b.enabled && (b.nicks || []).some((n) => String(n).toLowerCase() === p.nick.toLowerCase())); } catch { return false; }
+  }
+  function isEnemy(p, party) {
+    if (p.isFriend || p.isClan || p.isAlly || party.has(p.id) || protectedByBratan(p)) return false;
+    const rel = String(p.relation || '');
+    if (rel === '3') return !!cfg.personal;                  // osobisty wróg
+    if (rel === '6' || rel === '8') return !!cfg.enemyClans;  // wrogi klan / frakcja
+    if (p.isEnemyTagged) return true;
+    return !!cfg.neutral;                                     // brak relacji — „random"
+  }
+  function tick() {
+    if (!cfg.enabled || !game.ready()) return;
+    const m = game.mapInfo();
+    if (m.id !== mapId) { mapId = m.id; seen.clear(); told.clear(); }
+    if (!isRed()) return;
+    const t = now();
+    const party = new Set(game.partyMembers().map(Number));
+    const fresh = [];
+    for (const p of game.others()) {
+      if (!isEnemy(p, party)) continue;
+      const wasHere = seen.has(p.id) && t - seen.get(p.id) < 5000;
+      seen.set(p.id, t);
+      if (wasHere) continue;
+      if (told.has(p.id) && t - told.get(p.id) < 60000) continue;
+      told.set(p.id, t);
+      fresh.push(p);
+    }
+    fresh.slice(0, 5).forEach((p) => toast(`Wróg na mapie: ${p.nick}${cfg.showLvl ? ` (${p.lvl}${p.prof || ''})` : ''}`, 'warn', 5000));
+    if (fresh.length > 5) toast(`Wrogów na mapie: jeszcze ${fresh.length - 5}`, 'warn', 5000);
+  }
+
+  defineAddon({
+    id: 'wrogowie', name: 'Wrogowie na mapie', icon: 'wrogowie', color: ['#ff6a5c', '#c0392b'],
+    desc: 'Na czerwonych mapach pokazuje komunikat „Wróg na mapie: Nick", gdy pojawi się wróg. Znajomi, klan, sojusznicy, grupa i gracze z listy Bratana nigdy nie są zgłaszani.',
+    defaults: { personal: true, enemyClans: true, neutral: false, showLvl: false, pvpCodes: [2] },
+    settings: [
+      { key: 'enemyClans', type: 'bool', label: 'Wrogie klany' },
+      { key: 'personal', type: 'bool', label: 'Gracze oznaczeni jako wrogowie' },
+      { key: 'neutral', type: 'bool', label: 'Gracze neutralni (bez relacji) też jako wrogowie' },
+      { key: 'showLvl', type: 'bool', label: 'Pokazuj poziom i profesję przy nicku' },
+    ],
+    init(c) {
+      cfg = c;
+      timer = setInterval(tick, 1000);
+      MP.wrogowie = { debug: () => ({ mapa: game.mapInfo(), czerwona: isRed() }) };
+    },
+    onToggle(on) { if (on) { seen.clear(); told.clear(); mapId = 0; } },
+  });
+})();
+
 // ═══ src/main.js ═══
 /* ───────────────────────── main.js ─────────────────────────
  * Start: czekamy aż gra się wczyta, potem uruchamiamy panel.
@@ -5053,5 +5123,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "2.0.5";
+MP.version = "2.1.0";
 })();

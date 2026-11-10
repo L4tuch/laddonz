@@ -32,6 +32,7 @@ const ORDER = [
   'src/addons/ktotu_ktozlapie_cook.js',
   'src/addons/items_overlay.js',
   'src/addons/auto_items.js',
+  'src/addons/wrogowie.js',
   'src/main.js',
 ];
 
