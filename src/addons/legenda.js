@@ -795,14 +795,15 @@
    * zapamiętujemy jej nazwę i obrazek. Test pokazuje wtedy prawdziwe legendy z gry, nie wymyślone.
    */
   const LEG_FALLBACK = ['Sygnet geotermalny', 'Czaszka Przeznaczenia', 'Buciory lidera szajki'];
-  /** Wbudowane szablony do testu: prawdziwe przedmioty z gry (nazwa + ikona z serwera grafik Margonem, wg margohelp.pl). */
+  /** Wbudowane szablony do testu: łupy tytana Tanroth (300 lvl) — nazwy i ikony z gry, wg margohelp.pl/mob/46. */
   const IMG = 'https://micc.garmory-cdn.cloud/obrazki/itemy/';
   const BUILTIN = {
-    legendary: [['Bombowe uderzenie', 'rek/rekawice1275.gif'], ['Egzoszkielet pneumatyczny', 'zbr/zbroja1336.gif'], ['Zębatka magicznozłota', 'pie/pierscien1212.gif'], ['Maska z tlenem wysokoprężnym', 'nas/naszyjnik1225.gif'], ['Spalinowy kask goblina', 'hel/helm1342.gif'], ['Dolny pancerz egzoszkieletu', 'but/buty1177.gif']],
-    heroic: [['Kaftan zielonej rewolucji', 'zbr/zbroja1340.gif'], ['Sygnet nasadowy', 'pie/pierscien1210.gif'], ['Minutowy zapalnik bombowy', 'nas/naszyjnik1226.gif']],
-    unique: [['Maska pilota', 'hel/helm1137.gif'], ['Podkalibrowy pocisk lodowosabotowy', 'orb/orb341.gif']],
-    common: [['Amortyzatory stabilizatora', 'but/buty1175.gif']],
+    legendary: [['Złowieszcze rogi zimy', 'hel/helm761.gif'], ['Mroźny nów', 'nas/naszyjnik834.gif'], ['Miecz białego mrozu', 'mie/miecz86.gif'], ['Mroźna róża', 'pie/pierscien851.gif'], ['Mroźna gwiazda', 'mie/miecz301.gif'], ['Dłonie śnieżnych lawin', 'rek/rekawice846.gif']],
+    heroic: [['Maska dotkliwych odmrożeń', 'hel/helm762.gif'], ['Sopel głębokiego ranienia', 'bro/sztylet82.gif'], ['Ostrze lodowych nacieków', 'mie/miecz70.gif'], ['Kruszyciel zamarzniętych kałuż', 'top/topor25.gif']],
+    unique: [['Magiczna ochrona uszu', 'hel/helm763.gif'], ['Szyszak minusowych temperatur', 'hel/helm70.gif'], ['Sztywne palce dziedzica', 'rek/rekawice98.gif']],
+    common: [['Podejrzane żółte kryształy', 'orb/orb98.gif']],
   };
+
   function iconOf(n, raw) {
     const cv = n.querySelector('canvas');
     if (cv && cv.width) { try { return cv.toDataURL('image/png'); } catch {} }
