@@ -23,6 +23,7 @@ const ICON_PATHS = {
   // interfejs
   logo: '<path d="M12 2.5l8.5 5v9L12 21.5l-8.5-5v-9z"/><path d="M10 7.8v8.4h5" stroke-width="2.3"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
   diag: '<path d="M3 12h4l2.5-6 5 12 2.5-6H21"/>',
   log: '<path d="M5 5h14M5 10h14M5 15h9M5 20h6"/>',

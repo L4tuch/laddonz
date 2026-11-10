@@ -332,102 +332,200 @@
 })();
 
 /* ───────── Ulepszarka ─────────
- * Ulepsza wybrany przedmiot składnikami z torby, wybranymi wg rzadkości. Pod klawisz albo (AUTOMAT) po walce.
- * Twarde bezpieczniki: nigdy założone, nigdy legendy/artefakty/ulepszone, nigdy podpisane ani z kolejki
- * Szybkiej rączki, heroiki tylko po osobnym potwierdzeniu, komenda musi być zweryfikowana.
+ * Wskazujesz przedmiot(y) do ulepszania — przeciągając go do okienka, klikając okienko i potem przedmiot,
+ * albo z menu przedmiotu. Pod każdym wybierasz, jakimi przedmiotami go karmić: rzadkość (zwykłe / unikaty /
+ * heroiki — legend NIGDY) i typy (hełm, pierścień, naszyjnik…). Ulepszanych może być naraz tyle przedmiotów,
+ * ile jest typów — po jednym na typ.
+ * Włączona: po każdej walce NOWE przedmioty z łupu pasujące do ustawień trafiają do ulepszania. Przedmioty,
+ * które już leżały w torbie, są ruszane tylko przyciskiem „Ulepsz teraz" (z listą do potwierdzenia).
+ * Twarde bezpieczniki: nigdy założone, legendy, artefakty, ulepszane cele, podpisane w Podpisowniku,
+ * z kolejki Szybkiej rączki ani chronione; komenda ulepszania musi być zweryfikowana.
  */
 (() => {
-  let cfg, running = false;
-  const HARD_BLOCK = ['legendary', 'artefact', 'upgraded'];
+  let cfg, running = false, known = new Set(), pickSlot = null, dragId = null;
+  const RAR = [['common', 'Zwykłe'], ['unique', 'Unikaty'], ['heroic', 'Heroiki']];
+  const TYPES = [
+    ['helm', 'Hełm', [9]], ['neck', 'Naszyjnik', [13]], ['ring', 'Pierścień', [12]], ['gloves', 'Rękawice', [11]],
+    ['armor', 'Zbroja', [8]], ['boots', 'Buty', [10]], ['weapon', 'Broń', [1, 2, 3, 4, 6]],
+    ['offhand', 'Tarcza / pomocnicze', [5, 7, 14]], ['arrows', 'Strzały', [21, 29]],
+  ];
+  const typeOf = (cl) => (TYPES.find((t) => t[2].includes(Number(cl))) || [])[0] || null;
+  const typeName = (k) => (TYPES.find((t) => t[0] === k) || [, k])[1];
+  const NEVER = ['legendary', 'artefact', 'upgraded'];
 
-  function ingredients() {
-    const allowed = new Set(['common', cfg.useUnique && 'unique', cfg.useHeroic && 'heroic'].filter(Boolean));
-    const classes = new Set(String(cfg.classes).split(',').map((s) => Number(s.trim())).filter(Boolean));
-    const queue = new Set((addons.cfg('szybka')?.queue || []).map((q) => q.id));
+  const slots = () => (Array.isArray(cfg.slots) ? cfg.slots : (cfg.slots = []));
+  const targetIds = () => new Set(slots().map((s) => Number(s.id)));
+  function snapshot() { known = new Set(game.heroItems().map((i) => i.id)); }
+
+  /** Składniki dla danego celu (bez przydziału do innych celów). */
+  function fits(i, s) {
+    if (!s.rar[i.rarity] || NEVER.includes(i.rarity)) return false;
+    const t = typeOf(i.cl);
+    return !!t && s.types.includes(t);
+  }
+  function candidates(onlyNew) {
+    const queue = new Set((addons.cfg('szybka')?.queue || []).map((q) => Number(q.id)));
+    const tg = targetIds();
     return game.bag().filter((i) => {
-      if (i.id === cfg.target || i.st !== 0) return false;
-      if (HARD_BLOCK.includes(i.rarity) || !allowed.has(i.rarity)) return false;
-      if (classes.size && !classes.has(i.cl)) return false;
+      if (i.st !== 0 || tg.has(i.id) || NEVER.includes(i.rarity)) return false;
+      if (onlyNew && known.has(i.id)) return false;
       if (MP.podpis && MP.podpis.isSigned(i.id)) return false;
       if (queue.has(i.id) || cfg.protect.includes(i.id) || nickIn(cfg.protectNames, i.name)) return false;
-      if (cfg.minLvl && Number(i.stats.lvl || 0) < cfg.minLvl) return false;
       return true;
-    }).slice(0, cfg.maxPer);
+    });
+  }
+  /** Przydział: każdy składnik do pierwszego celu, któremu pasuje. */
+  function plan(onlyNew) {
+    const out = slots().map((s) => ({ s, target: game.itemById(s.id), list: [] }));
+    for (const i of candidates(onlyNew)) { const o = out.find((o) => o.target && fits(i, o.s)); if (o) o.list.push(i); }
+    return out.filter((o) => o.target && o.list.length);
   }
 
-  async function enhance(src) {
-    if (running) return;
-    if (game.inBattle()) return;
-    const target = game.itemById(cfg.target);
-    if (!target) { if (src === 'key') toast('Ulepszarka: ustaw przedmiot do ulepszania (prawy klik → „Cel ulepszania")', 'warn'); return; }
+  async function run(src) {
+    if (running || game.inBattle()) return;
+    if (!slots().length) { if (src === 'btn') toast('Ulepszarka: najpierw wskaż przedmiot do ulepszania', 'warn'); return; }
     const c = net.cmd('enhance');
-    if (!c.t || !c.verified) { if (src === 'key') toast('Ulepszarka: zweryfikuj komendę ulepszania w Diagnostyce', 'bad'); return; }
-    const list = ingredients();
-    if (!list.length) { if (src === 'key') toast('Ulepszarka: brak pasujących składników', 'info'); return; }
-    if (src === 'key' || !cfg._autoAck) {
-      const ok = await confirmBox({ title: `Ulepszyć „${target.name}"?`, danger: true, okText: 'Ulepsz', countdown: 2, html: `Zużyję <b>${list.length}</b> przedmiotów:`, items: list.map((i) => `${i.name} (${i.rarity})`) });
+    if (!c.t || !c.verified) { if (src === 'btn') toast('Ulepszarka: zweryfikuj komendę ulepszania w Diagnostyce', 'bad'); return; }
+    const p = plan(src === 'auto');
+    if (!p.length) { if (src === 'btn') toast('Ulepszarka: brak pasujących przedmiotów', 'info'); return; }
+    if (src === 'btn') {
+      const items = []; p.forEach((o) => o.list.forEach((i) => items.push(`${i.name} (${i.rarity}) → ${o.target.name}`)));
+      const ok = await confirmBox({ title: 'Ulepszyć teraz?', danger: true, okText: 'Ulepsz', countdown: 2, html: `Zużyję <b>${items.length}</b> przedmiotów:`, items });
       if (!ok) return;
-      if (src === 'auto') { cfg._autoAck = true; config.save(); }
     }
     running = true;
+    let n = 0;
     try {
-      // każdy składnik jeszcze raz sprawdzony tuż przed wysłaniem
-      const fresh = list.filter((i) => { const f = game.itemById(i.id); return f && f.st === 0 && !HARD_BLOCK.includes(f.rarity); });
-      const tpl = c.t;
-      if (tpl.includes('{ingredients}')) {
-        await net.send('enhance', { item: target.id, ingredients: fresh.map((i) => i.id).join(',') }, { src: 'Ulepszarka' });
-      } else {
-        for (const i of fresh) { await net.send('enhance', { item: target.id, id: i.id, ingredients: i.id }, { src: 'Ulepszarka' }); await sleep(300); }
+      for (const o of p) {
+        // każdy składnik sprawdzony jeszcze raz tuż przed wysłaniem
+        const fresh = o.list.filter((i) => { const f = game.itemById(i.id); return f && f.st === 0 && !NEVER.includes(f.rarity) && !targetIds().has(f.id); });
+        for (let k = 0; k < fresh.length; k += 10) {
+          const part = fresh.slice(k, k + 10);
+          if (c.t.includes('{ingredients}')) await net.send('enhance', { item: o.target.id, ingredients: part.map((i) => i.id).join(',') }, { src: 'Ulepszarka' });
+          else for (const i of part) { await net.send('enhance', { item: o.target.id, id: i.id, ingredients: i.id }, { src: 'Ulepszarka' }); await sleep(250); }
+          n += part.length;
+        }
       }
-      toast(`Ulepszarka: użyto ${fresh.length} składników`, 'ok');
-    } finally { running = false; }
+      net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Zużyto ${n} przedmiotów na ulepszanie` });
+      if (src === 'btn') toast(`Ulepszarka: użyto ${n} przedmiotów`, 'ok');
+    } finally { running = false; snapshot(); rr(); }
   }
 
-  function setTarget(id) {
+  /* ── wybór celu ── */
+  function addTarget(id) {
+    pickSlot = null; document.body.classList.remove('mp-up-picking');
     const it = game.itemById(id);
-    if (!it) return;
-    cfg.target = it.id; cfg.targetName = it.name; config.save();
-    toast(`Ulepszarka: cel = ${it.name}`, 'ok');
+    if (!it) { toast('Ulepszarka: to nie jest Twój przedmiot', 'warn'); return; }
+    const t = typeOf(it.cl);
+    if (!t) { toast(`Ulepszarka: „${it.name}" nie da się ulepszać`, 'warn'); return; }
+    const same = slots().find((s) => s.type === t);
+    if (same && Number(same.id) !== it.id) {
+      // ten sam typ → podmiana celu w tym okienku
+      Object.assign(same, { id: it.id, name: it.name, icon: it.icon });
+    } else if (!same) {
+      slots().push({ id: it.id, name: it.name, icon: it.icon, type: t, rar: { common: true, unique: false, heroic: false }, types: [t] });
+    }
+    config.save();
+    toast(`Ulepszarka: ulepszam „${it.name}"`, 'ok');
+    rr();
+  }
+  function removeSlot(i) { slots().splice(i, 1); config.save(); rr(); }
+  let rr = () => {};
+  function startPick() {
+    pickSlot = true;
+    document.body.classList.add('mp-up-picking');
+    toast('Ulepszarka: kliknij przedmiot, który chcesz ulepszać (Esc — anuluj)', 'info');
+  }
+
+  function itemNode(t) { return t && t.closest && t.closest('[class*="item-id-"], [data-item-id]'); }
+  function overDrop(x, y) { return $$('.mp-updrop').some((d) => { const r = d.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom && isVisible(d); }); }
+  function watchPointer() {
+    // tryb „kliknij przedmiot"
+    document.addEventListener('click', (e) => {
+      if (!pickSlot) return;
+      const n = itemNode(e.target);
+      if (!n || n.closest('.mp-glass')) return;
+      e.preventDefault(); e.stopPropagation();
+      addTarget(game.itemIdFromEl(n));
+    }, true);
+    document.addEventListener('keydown', (e) => { if (pickSlot && e.key === 'Escape') { pickSlot = null; document.body.classList.remove('mp-up-picking'); } }, true);
+    // przeciąganie przedmiotu z gry na okienko (gra przeciąga myszką, nie przez HTML5 drag)
+    document.addEventListener('mousedown', (e) => { const n = itemNode(e.target); dragId = n && !n.closest('.mp-glass') ? game.itemIdFromEl(n) : null; }, true);
+    document.addEventListener('mouseup', (e) => {
+      const id = dragId; dragId = null;
+      if (id && overDrop(e.clientX, e.clientY)) { e.stopPropagation(); addTarget(id); }
+    }, true);
+    document.addEventListener('dragover', (e) => { if (e.target.closest && e.target.closest('.mp-updrop')) e.preventDefault(); }, true);
+    document.addEventListener('drop', (e) => { if (e.target.closest && e.target.closest('.mp-updrop') && dragId) { e.preventDefault(); const id = dragId; dragId = null; addTarget(id); } }, true);
+  }
+
+  function chip(label, on, fn) { return el('button', { class: 'mp-upchip' + (on ? ' on' : ''), onclick: fn }, label); }
+  function slotEl(s, idx) {
+    const it = game.itemById(s.id);
+    const cnt = candidates(false).filter((i) => fits(i, s)).length;
+    return el('div', { class: 'mp-card mp-upslot' },
+      el('div', { class: 'mp-uphead' },
+        el('div', { class: 'mp-updrop has', title: 'Przeciągnij tu inny przedmiot tego typu, żeby go podmienić', onclick: startPick },
+          s.icon ? el('img', { src: game.iconUrl(s.icon), alt: '' }) : null),
+        el('div', { style: { flex: 1, minWidth: 0 } },
+          el('b', null, s.name), el('div', { class: 'mp-dim' }, typeName(s.type) + (it ? (it.st ? ' · założony' : ' · w torbie') : ' · brak w ekwipunku'))),
+        el('button', { class: 'mp-x', title: 'Przestań ulepszać', onclick: () => removeSlot(idx) }, icon('close', 14))),
+      el('div', { class: 'mp-uplab' }, 'Ulepszam przedmiotami'),
+      el('div', { class: 'mp-chips' }, RAR.map(([k, l]) => chip(l, s.rar[k], () => { s.rar[k] = !s.rar[k]; config.save(); rr(); }))),
+      el('div', { class: 'mp-uplab' }, 'Typy przedmiotów'),
+      el('div', { class: 'mp-chips' }, TYPES.map(([k, l]) => chip(l, s.types.includes(k), () => { s.types = s.types.includes(k) ? s.types.filter((x) => x !== k) : s.types.concat(k); config.save(); rr(); }))),
+      el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, `Pasujące w torbie teraz: ${cnt}`));
   }
 
   defineAddon({
-    id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], risk: 'destructive',
-    desc: 'Ulepsza wybrany przedmiot pod klawisz, używając składników z torby wg rzadkości (np. tylko zwykłe, albo zwykłe + unikaty). Opcjonalnie po każdej walce.',
-    defaults: { key: '', target: 0, targetName: '', useUnique: false, useHeroic: false, classes: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,29', maxPer: 10, minLvl: 0, protect: [], protectNames: [], auto: false },
-    keys: [{ key: 'key', label: 'ulepsz', fn: () => enhance('key') }],
-    notes: (c) => [
+    id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], risk: 'destructive', renderFirst: true,
+    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Włączona: po walce nowe pasujące przedmioty z łupu idą na ulepszanie. To, co już było w torbie, tylko przyciskiem „Ulepsz teraz". Naraz po jednym ulepszanym przedmiocie na każdy typ.',
+    defaults: { slots: [], protect: [], protectNames: [] },
+    notes: () => [
       !net.cmd('enhance').verified ? { type: 'bad', text: 'Ulepszanie zablokowane, dopóki nie zweryfikujesz komendy: ulepsz ręcznie przedmiot jednym składnikiem, potem Diagnostyka → Podsłuch → „Ulepszenie przedmiotu".' } : null,
-      { type: 'info', text: 'Nigdy nie są używane jako składniki: założone przedmioty, legendy, artefakty, przedmioty ulepszone, podpisane w Podpisowniku i te z kolejki Szybkiej rączki.' },
     ],
     settings: [
-      { group: 'Cel', key: 'target', type: 'select', label: 'Przedmiot do ulepszania', rerender: true, options: () => [[0, '— wybierz —'], ...game.heroItems().filter((i) => i.cl >= 1 && i.cl <= 14 || i.cl === 29).map((i) => [i.id, `${i.name}${i.st ? ' (założony)' : ''}`]), ...(cfg && cfg.target && !game.itemById(cfg.target) ? [[cfg.target, cfg.targetName + ' (brak w EQ)']] : [])] },
-      { group: 'Cel', key: 'key', type: 'key', label: 'Klawisz: ulepsz' },
-      { group: 'Składniki', key: 'useUnique', type: 'bool', label: 'Używaj unikatów', hint: 'Zwykłe przedmioty są zawsze dozwolone.' },
-      { group: 'Składniki', key: 'useHeroic', type: 'bool', label: 'Używaj heroików', danger: true, countdown: 3, confirm: 'Heroiczne przedmioty zostaną <b>spalone</b> w ulepszaniu. Na pewno?' },
-      { group: 'Składniki', key: 'maxPer', type: 'number', label: 'Maks. składników na raz', min: 1, max: 30 },
-      { group: 'Składniki', key: 'minLvl', type: 'number', label: 'Minimalny poziom składnika', min: 0, max: 500 },
-      { group: 'Składniki', key: 'classes', type: 'text', label: 'Klasy przedmiotów (cl)', hint: 'Domyślnie: broń, zbroje, biżuteria, tarcze, kołczany.' },
-      { group: 'Składniki', key: 'protectNames', type: 'list', label: 'Nigdy nie używaj (nazwy)' },
-      { group: 'Automat', key: 'auto', type: 'bool', auto: true, label: 'Ulepszaj automatycznie po każdej walce', danger: true, countdown: 3, confirm: 'Po każdej walce panel zużyje pasujące składniki bez pytania (pierwszy raz pokaże listę). Na własne ryzyko.' },
+      { group: 'Ochrona', key: 'protectNames', type: 'list', label: 'Nigdy nie używaj (nazwy)', placeholder: 'nazwa + Enter' },
     ],
-    render(box) {
-      const l = ingredients();
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, `Składniki teraz: ${l.length}`),
-        l.length ? el('ul', { style: { margin: 0, paddingLeft: '18px' } }, l.map((i) => el('li', null, `${i.name} `, el('span', { class: 'mp-dim' }, i.rarity)))) : el('div', { class: 'mp-dim' }, 'Brak pasujących przedmiotów.'),
-        el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn pri', onclick: () => enhance('key') }, 'Ulepsz teraz…'))));
+    render(box, c, rerender) {
+      rr = () => { if (box.isConnected) rerender(); };
+      slots().forEach((s, i) => box.appendChild(slotEl(s, i)));
+      const used = new Set(slots().map((s) => s.type));
+      if (used.size < TYPES.length) {
+        box.appendChild(el('div', { class: 'mp-card' },
+          el('div', { class: 'mp-uphead' },
+            el('div', { class: 'mp-updrop', title: 'Przeciągnij tu przedmiot albo kliknij i wskaż go w ekwipunku', onclick: startPick }, icon('plus', 18)),
+            el('div', { style: { flex: 1 } },
+              el('b', null, slots().length ? 'Dodaj kolejny przedmiot' : 'Wybierz przedmiot do ulepszania'),
+              el('div', { class: 'mp-dim' }, 'Przeciągnij go tutaj albo kliknij okienko, a potem przedmiot. Możesz też: prawy klik na przedmiocie → „Ulepszaj w Ulepszarce".'))),
+          slots().length ? el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, 'Wolne typy: ' + TYPES.filter((t) => !used.has(t[0])).map((t) => t[1]).join(', ')) : null));
+      }
+      if (slots().length) box.appendChild(el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn pri', onclick: () => run('btn') }, 'Ulepsz teraz…')));
     },
     init(c) {
       cfg = c;
+      if (!c._v18) {   // stary format (jeden cel + automat) → nowy
+        c._v18 = true;
+        const it = c.target && game.itemById(c.target);
+        c.slots = it && typeOf(it.cl) ? [{ id: it.id, name: it.name, icon: it.icon, type: typeOf(it.cl), rar: { common: true, unique: !!c.useUnique, heroic: !!c.useHeroic }, types: TYPES.map((t) => t[0]) }] : [];
+        ['target', 'targetName', 'useUnique', 'useHeroic', 'classes', 'maxPer', 'minLvl', 'auto', 'key', '_autoAck'].forEach((k) => delete c[k]);
+        config.save();
+      }
+      if (!Array.isArray(c.protect)) c.protect = [];
+      snapshot();
+      watchPointer();
+      MP.ulepszarka = { addTarget, plan, run, typeOf };
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
         const it = game.itemById(id);
         const out = [];
-        if (it && ((it.cl >= 1 && it.cl <= 14) || it.cl === 29)) out.push({ label: 'Cel ulepszania', fn: () => setTarget(id) });
+        if (it && typeOf(it.cl) && !targetIds().has(it.id)) out.push({ label: 'Ulepszaj w Ulepszarce', fn: () => addTarget(id) });
         if (it && it.st === 0) out.push(cfg.protect.includes(id) ? { label: 'Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: 'Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
         return out;
       });
-      bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => enhance('auto'), rnd(1200, 1800)); });
+      bus.on('battle:start', () => snapshot());
+      bus.on('battle:end', () => { if (cfg.enabled) setTimeout(() => run('auto'), rnd(900, 1400)); });
     },
-    onChange(k) { if (k === 'target') { const it = game.itemById(cfg.target); cfg.targetName = it ? it.name : ''; config.save(); } if (k === 'auto') { cfg._autoAck = false; config.save(); } },
+    onToggle(on) { if (on) snapshot(); },
   });
 })();

@@ -82,6 +82,17 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-btn.bad{background:rgba(255,93,122,.2);border-color:rgba(255,93,122,.4)}
 .mp-btn[disabled]{opacity:.45;pointer-events:none}
 .mp-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.mp-upslot{padding:10px}
+.mp-uphead{display:flex;align-items:center;gap:10px}
+.mp-updrop{width:44px;height:44px;flex:none;border-radius:9px;border:1.5px dashed rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--mp-accent);background:rgba(255,255,255,.04);transition:.15s}
+.mp-updrop:hover{border-color:var(--mp-accent);background:rgba(255,255,255,.09)}
+.mp-updrop.has{border-style:solid;border-color:rgba(255,255,255,.18)}
+.mp-updrop img{max-width:36px;max-height:36px;image-rendering:pixelated}
+.mp-uplab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.6;margin:10px 0 5px}
+.mp-upchip{all:unset;cursor:pointer;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);color:inherit;opacity:.75}
+.mp-upchip:hover{opacity:1}
+.mp-upchip.on{background:var(--mp-accent);border-color:var(--mp-accent);color:#fff;opacity:1}
+.mp-up-picking [class*="item-id-"]{cursor:crosshair!important;outline:1px dashed var(--mp-accent)}
 .mp-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .mp-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 9px;border-radius:999px;background:rgba(255,255,255,.08);font-size:12px}
 .mp-chip button{all:unset;cursor:pointer;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--mp-dim)}
