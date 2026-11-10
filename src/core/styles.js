@@ -185,6 +185,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 #mp-eqtip.gamey .mp-eqhead{display:none}
 .mp-eq-on .tip-wrapper.normal-tip:not(.mp-clone){clip-path:inset(0 0 100% 0)!important}
 #mp-eqtip .mp-clone{text-align:center;position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:none!important;border:0!important;box-shadow:none!important;background:transparent!important;margin:0 0 4px!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;clip-path:none!important;max-width:none!important;width:auto!important;pointer-events:none!important}
+#mp-eqtip.gamey{max-width:360px}
+#mp-eqtip .mp-clone *{max-width:100%!important;position:static!important}
 #mp-eqtip .mp-eqhead2{text-align:center;margin-bottom:4px}
 #mp-eqtip .mp-eqhead2 .nick{border:1px solid #444;padding:1px 8px;font-weight:700}
 #mp-eqtip .mp-eqhead2 .clan{color:#d9c27a;margin-top:2px}

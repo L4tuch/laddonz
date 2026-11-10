@@ -32,7 +32,9 @@ const menus = {
       if (e.button !== 2) return;
       const it = e.target.closest && e.target.closest('.item[class*="item-id-"], [data-item-id]');
       const id = it && game.itemIdFromEl(it);
-      if (id) this.setLast('item', id);
+      if (id) { this.setLast('item', id); return; }
+      const p = this.playerUnderTip(e.clientX, e.clientY);
+      if (p) this.setLast('player', p.id);
     }, true);
     document.addEventListener('contextmenu', (e) => {
       const it = e.target.closest && e.target.closest('.item[class*="item-id-"], [data-item-id]');
@@ -56,7 +58,21 @@ const menus = {
       if (++n > 40) clearInterval(tick);
     }, 1500);
     this.hookOthers();
-    setInterval(() => this.hookOthers(), 1000);
+    setInterval(() => this.hookOthers(), 300);
+    // gra buduje menu innego gracza tą funkcją — dostaje obiekt gracza
+    const hookCreate = () => {
+      try {
+        const O = E().others;
+        if (!O || typeof O.createOtherContextMenu !== 'function' || O.createOtherContextMenu.__mp) return;
+        const f = O.createOtherContextMenu, self = this;
+        O.createOtherContextMenu = function (...a) {
+          try { for (const x of a) { const id = x && (x.d ? x.d.id : (typeof x === 'number' || /^\d+$/.test(x) ? x : null)); if (id) { self.setLast('player', id); break; } } } catch {}
+          return f.apply(this, a);
+        };
+        O.createOtherContextMenu.__mp = true;
+      } catch {}
+    };
+    hookCreate(); setInterval(hookCreate, 3000);
     this.domFallback();
   },
 
@@ -75,7 +91,7 @@ const menus = {
       const w = function (...args) {
         try {
           const menu = args.find((a) => Array.isArray(a) && a.length && a.every((m) => Array.isArray(m) || (m && typeof m === 'object')));
-          if (menu) self.inject(menu);
+          if (menu) self.inject(menu, args);
         } catch (e) { console.warn('[laddonz] menu', e); }
         return f.apply(this, args);
       };
@@ -84,8 +100,11 @@ const menus = {
     }
   },
 
-  inject(menu) {
-    let tgt = this.last && now() - this.last.t < 800 ? this.last : null;
+  inject(menu, args = []) {
+    // 1) nick w argumentach menu (tytuł menu to nick gracza) — najpewniejsze
+    let tgt = this.playerFromArgs(args);
+    // 2) ostatni cel kliknięcia (hak gracza / dymek pod kursorem)
+    if (!tgt && this.last && now() - this.last.t < 1500) tgt = this.last;
     if (!tgt) tgt = this.guessPlayerFromMenu(menu);
     if (!tgt) return;
     const add = this.entriesFor(tgt.type, tgt.id);
@@ -93,6 +112,40 @@ const menus = {
     if (add.length) this.lastInject = now();
   },
   lastInject: 0,
+
+  playerFromArgs(args) {
+    const strs = [];
+    const walk = (v, d) => {
+      if (d > 2 || v == null) return;
+      if (typeof v === 'string') strs.push(v.toLowerCase());
+      else if (typeof v === 'object' && !Array.isArray(v) && !(v instanceof Node)) {
+        if (v.d && v.d.id && v.d.nick) { strs.push('#id:' + v.d.id); return; }
+        for (const k of ['title', 'name', 'nick', 'header', 'txt', 'text']) if (typeof v[k] === 'string') strs.push(v[k].toLowerCase());
+      }
+    };
+    args.filter((a) => !Array.isArray(a)).forEach((a) => walk(a, 0));
+    for (const s of strs) {
+      if (s.startsWith('#id:')) return { type: 'player', id: Number(s.slice(4)) };
+      const t = s.replace(/<[^>]+>/g, '').trim();
+      const p = game.others().find((o) => o.nick && o.nick.toLowerCase() === t);
+      if (p) return { type: 'player', id: p.id };
+    }
+    return null;
+  },
+
+  /** Prawy klik na mapie: gracz z dymka gry tuż przy kursorze. */
+  playerUnderTip(x, y) {
+    for (const n of $$('.tip-wrapper')) {
+      if (n.closest('#mp-eqtip') || !isVisible(n)) continue;
+      const r = n.getBoundingClientRect();
+      const dx = Math.max(r.left - x, 0, x - r.right), dy = Math.max(r.top - y, 0, y - r.bottom);
+      if (Math.hypot(dx, dy) > 90) continue;
+      const txt = (n.textContent || '').toLowerCase();
+      const p = game.others().filter((o) => o.nick && txt.includes(o.nick.toLowerCase())).sort((a, b) => b.nick.length - a.nick.length)[0];
+      if (p) return p;
+    }
+    return null;
+  },
 
   /**
    * Zapas: gdy gra rysuje menu w DOM bez funkcji, którą da się owinąć — dopisujemy pozycje do gotowego menu.

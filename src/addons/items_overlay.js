@@ -36,13 +36,17 @@ MP.itemDeco = itemDeco;
   // Kody legbon → skrót. Kody pochodzą z danych gry (statystyka „legbon"); jeśli jakiś się nie zgadza,
   // popraw go w panelu — lista „Kody na Twoich przedmiotach" pokazuje, co faktycznie masz założone.
   const DEFAULT_MAP = {
-    verycrit: 'CBK', lastheal: 'OR', holytouch: 'DA', curse: 'KL', pushback: 'OD', critred: 'KO', dmgred: 'FO', resgain: 'PO', glare: 'OŚ',
+    verycrit: 'CBK', lastheal: 'OR', holytouch: 'DA', curse: 'KL', pushback: 'OD', critred: 'KO', dmgred: 'FO', cleanse: 'PO', cleansing: 'PO', glare: 'OŚ',
   };
-  const NAMES = { verycrit: 'Cios bardzo krytyczny', lastheal: 'Ostatni ratunek', holytouch: 'Dotyk anioła', curse: 'Klątwa', pushback: 'Odrzucenie', critred: 'Krytyczna osłona', dmgred: 'Fizyczna osłona', resgain: 'Płomienne oczyszczenie', glare: 'Oślepienie' };
+  const NAMES = { verycrit: 'Cios bardzo krytyczny', lastheal: 'Ostatni ratunek', holytouch: 'Dotyk anioła', curse: 'Klątwa', pushback: 'Odrzucenie', critred: 'Krytyczna osłona', dmgred: 'Fizyczna osłona', cleanse: 'Płomienne oczyszczenie', cleansing: 'Płomienne oczyszczenie', glare: 'Oślepienie' };
 
-  function abbr(code) { return (cfg.map && cfg.map[code]) || code.slice(0, 3).toUpperCase(); }
+  function abbr(code) {
+    if (cfg.map && cfg.map[code]) return cfg.map[code];
+    if (/^cle/i.test(code)) return 'PO';            // Płomienne oczyszczenie (różne warianty kodu)
+    return code.slice(0, 3).toUpperCase();
+  }
   MP.legAbbr = (code) => (cfg ? abbr(code) : code);
-  MP.legName = (code) => NAMES[code] || code;
+  MP.legName = (code) => NAMES[code] || (/^cle/i.test(code) ? 'Płomienne oczyszczenie' : code);
 
   defineAddon({
     id: 'jakibon', name: 'Jaki To Bon', icon: 'jakibon', color: ['#ff9a3c', '#d4561c'],
@@ -67,6 +71,7 @@ MP.itemDeco = itemDeco;
     },
     init(c) {
       cfg = c;
+      if (!c._v16) { c._v16 = true; c.map = c.map || {}; if (c.map.resgain === 'PO') delete c.map.resgain; c.map.cleanse = 'PO'; c.map.cleansing = 'PO'; c.map.dmgred = c.map.dmgred || 'FO'; config.save(); }
       itemDeco.add((node, it) => {
         if (!cfg.enabled || !it || !it.legbon) return null;
         if (!cfg.allItems && !(it.st > 0)) return null;
@@ -304,8 +309,9 @@ MP.itemDeco = itemDeco;
         if (!found.every(Boolean)) { await sleep(120); dbg.src = {}; found = els.map((n, i) => lookup(i)); }
         items = ids.map((iid, i) => {
           let it;
-          if (found[i]) { it = game.normItem(found[i]); it.id = iid; }
+          if (found[i]) { it = game.normItem(found[i]); it.id = iid; (dbg.items = dbg.items || []).push({ name: found[i].name, legbon: it.legbon, rarity: it.rarity, stat: String(found[i].stat || '').slice(0, 160) }); }
           else {
+            (dbg.items = dbg.items || []).push({ brak: iid });
             dbg.fromDom++;
             const n = els[i];
             let img = '';
@@ -371,6 +377,9 @@ MP.itemDeco = itemDeco;
     if (anchor && anchor.isConnected) {
       const c = el('div', { class: anchor.className + ' mp-clone' });
       c.innerHTML = anchor.innerHTML;
+      // tylko tekst z dymka — bez obrazków/płócien (postać rysujemy sami) i bez sztywnych rozmiarów
+      c.querySelectorAll('canvas, img, video, svg, [class*="outfit"], [class*="avatar"], [class*="canvas"]').forEach((n) => n.remove());
+      c.querySelectorAll('[style]').forEach((n) => { n.style.width = ''; n.style.height = ''; n.style.minWidth = ''; n.style.minHeight = ''; n.style.position = ''; });
       return c;
     }
     const p = game.otherById(id);
@@ -381,7 +390,7 @@ MP.itemDeco = itemDeco;
     if (!tip) return;
     if (anchor && anchor.isConnected) {
       const r = anchor.getBoundingClientRect();
-      tip.style.minWidth = Math.round(r.width) + 'px';
+      tip.style.minWidth = Math.min(320, Math.round(r.width)) + 'px';
       const h = tip.offsetHeight || 200, wd = tip.offsetWidth || r.width;
       tip.style.left = clamp(r.left, 4, innerWidth - wd - 4) + 'px';
       tip.style.top = clamp(r.top, 4, Math.max(4, innerHeight - h - 4)) + 'px';

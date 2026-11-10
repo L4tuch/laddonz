@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.6.0
+// @version      1.6.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -207,16 +207,27 @@ const REL = {
 
 function parseStats(item) {
   if (!item) return {};
-  if (item._cachedStats && typeof item._cachedStats === 'object') return item._cachedStats;
-  const s = item.stat || item.stats || '';
-  if (typeof s === 'object') return s;
+  // łączymy oba źródła: tekst „stat" i _cachedStats (u szablonów potrafią się różnić)
   const out = {};
-  String(s).split(';').forEach((p) => {
+  const s = item.stat !== undefined ? item.stat : item.stats;
+  if (s && typeof s === 'object') Object.assign(out, s);
+  else String(s || '').split(';').forEach((p) => {
     if (!p) return;
     const i = p.indexOf('=');
     if (i < 0) out[p] = true; else out[p.slice(0, i)] = p.slice(i + 1);
   });
+  if (item._cachedStats && typeof item._cachedStats === 'object') {
+    for (const [k, v] of Object.entries(item._cachedStats)) if (out[k] === undefined || out[k] === '') out[k] = v;
+  }
   return out;
+}
+
+/** Bonus legendarny: ze statystyk albo z metody przedmiotu gry (getLegbonStat). */
+function legbonOf(it, st) {
+  let v = st.legbon;
+  try { if (!v && typeof it.issetLegbonStat === 'function' && it.issetLegbonStat()) v = it.getLegbonStat(); } catch {}
+  if (v && typeof v === 'object') v = v.name || v.type || v[0] || Object.values(v)[0];
+  return v ? String(v).split(/[,|]/)[0].trim() : null;
 }
 
 function normItem(it) {
@@ -233,7 +244,7 @@ function normItem(it) {
     x: Number(it.x), y: Number(it.y),
     stats: st,
     rarity: String(st.rarity || (st.legendary ? 'legendary' : st.heroic ? 'heroic' : st.unique ? 'unique' : 'common')),
-    legbon: st.legbon ? String(st.legbon).split(',')[0] : null,
+    legbon: legbonOf(it, st),
     expires,
     expired: (expires != null && expires > 0 && expires * 1000 <= now()) || st.expired === true || st.expired === '1',
     raw: it,
@@ -1050,6 +1061,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 #mp-eqtip.gamey .mp-eqhead{display:none}
 .mp-eq-on .tip-wrapper.normal-tip:not(.mp-clone){clip-path:inset(0 0 100% 0)!important}
 #mp-eqtip .mp-clone{text-align:center;position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:none!important;border:0!important;box-shadow:none!important;background:transparent!important;margin:0 0 4px!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;clip-path:none!important;max-width:none!important;width:auto!important;pointer-events:none!important}
+#mp-eqtip.gamey{max-width:360px}
+#mp-eqtip .mp-clone *{max-width:100%!important;position:static!important}
 #mp-eqtip .mp-eqhead2{text-align:center;margin-bottom:4px}
 #mp-eqtip .mp-eqhead2 .nick{border:1px solid #444;padding:1px 8px;font-weight:700}
 #mp-eqtip .mp-eqhead2 .clan{color:#d9c27a;margin-top:2px}
@@ -1301,7 +1314,9 @@ const menus = {
       if (e.button !== 2) return;
       const it = e.target.closest && e.target.closest('.item[class*="item-id-"], [data-item-id]');
       const id = it && game.itemIdFromEl(it);
-      if (id) this.setLast('item', id);
+      if (id) { this.setLast('item', id); return; }
+      const p = this.playerUnderTip(e.clientX, e.clientY);
+      if (p) this.setLast('player', p.id);
     }, true);
     document.addEventListener('contextmenu', (e) => {
       const it = e.target.closest && e.target.closest('.item[class*="item-id-"], [data-item-id]');
@@ -1325,7 +1340,21 @@ const menus = {
       if (++n > 40) clearInterval(tick);
     }, 1500);
     this.hookOthers();
-    setInterval(() => this.hookOthers(), 1000);
+    setInterval(() => this.hookOthers(), 300);
+    // gra buduje menu innego gracza tą funkcją — dostaje obiekt gracza
+    const hookCreate = () => {
+      try {
+        const O = E().others;
+        if (!O || typeof O.createOtherContextMenu !== 'function' || O.createOtherContextMenu.__mp) return;
+        const f = O.createOtherContextMenu, self = this;
+        O.createOtherContextMenu = function (...a) {
+          try { for (const x of a) { const id = x && (x.d ? x.d.id : (typeof x === 'number' || /^\d+$/.test(x) ? x : null)); if (id) { self.setLast('player', id); break; } } } catch {}
+          return f.apply(this, a);
+        };
+        O.createOtherContextMenu.__mp = true;
+      } catch {}
+    };
+    hookCreate(); setInterval(hookCreate, 3000);
     this.domFallback();
   },
 
@@ -1344,7 +1373,7 @@ const menus = {
       const w = function (...args) {
         try {
           const menu = args.find((a) => Array.isArray(a) && a.length && a.every((m) => Array.isArray(m) || (m && typeof m === 'object')));
-          if (menu) self.inject(menu);
+          if (menu) self.inject(menu, args);
         } catch (e) { console.warn('[laddonz] menu', e); }
         return f.apply(this, args);
       };
@@ -1353,8 +1382,11 @@ const menus = {
     }
   },
 
-  inject(menu) {
-    let tgt = this.last && now() - this.last.t < 800 ? this.last : null;
+  inject(menu, args = []) {
+    // 1) nick w argumentach menu (tytuł menu to nick gracza) — najpewniejsze
+    let tgt = this.playerFromArgs(args);
+    // 2) ostatni cel kliknięcia (hak gracza / dymek pod kursorem)
+    if (!tgt && this.last && now() - this.last.t < 1500) tgt = this.last;
     if (!tgt) tgt = this.guessPlayerFromMenu(menu);
     if (!tgt) return;
     const add = this.entriesFor(tgt.type, tgt.id);
@@ -1362,6 +1394,40 @@ const menus = {
     if (add.length) this.lastInject = now();
   },
   lastInject: 0,
+
+  playerFromArgs(args) {
+    const strs = [];
+    const walk = (v, d) => {
+      if (d > 2 || v == null) return;
+      if (typeof v === 'string') strs.push(v.toLowerCase());
+      else if (typeof v === 'object' && !Array.isArray(v) && !(v instanceof Node)) {
+        if (v.d && v.d.id && v.d.nick) { strs.push('#id:' + v.d.id); return; }
+        for (const k of ['title', 'name', 'nick', 'header', 'txt', 'text']) if (typeof v[k] === 'string') strs.push(v[k].toLowerCase());
+      }
+    };
+    args.filter((a) => !Array.isArray(a)).forEach((a) => walk(a, 0));
+    for (const s of strs) {
+      if (s.startsWith('#id:')) return { type: 'player', id: Number(s.slice(4)) };
+      const t = s.replace(/<[^>]+>/g, '').trim();
+      const p = game.others().find((o) => o.nick && o.nick.toLowerCase() === t);
+      if (p) return { type: 'player', id: p.id };
+    }
+    return null;
+  },
+
+  /** Prawy klik na mapie: gracz z dymka gry tuż przy kursorze. */
+  playerUnderTip(x, y) {
+    for (const n of $$('.tip-wrapper')) {
+      if (n.closest('#mp-eqtip') || !isVisible(n)) continue;
+      const r = n.getBoundingClientRect();
+      const dx = Math.max(r.left - x, 0, x - r.right), dy = Math.max(r.top - y, 0, y - r.bottom);
+      if (Math.hypot(dx, dy) > 90) continue;
+      const txt = (n.textContent || '').toLowerCase();
+      const p = game.others().filter((o) => o.nick && txt.includes(o.nick.toLowerCase())).sort((a, b) => b.nick.length - a.nick.length)[0];
+      if (p) return p;
+    }
+    return null;
+  },
 
   /**
    * Zapas: gdy gra rysuje menu w DOM bez funkcji, którą da się owinąć — dopisujemy pozycje do gotowego menu.
@@ -2068,7 +2134,6 @@ function parseProtection(data) {
 (() => {
   const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
   const RETRY_MS = 600;       // jak często ponawiać atak na namierzony cel w zasięgu
-  const LOCK_MS = 60000;      // namierzenie wygasa po minucie
   const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, lock: null, timer: null };
   let cfg;
 
@@ -2092,8 +2157,7 @@ function parseProtection(data) {
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
         if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na/i.test(txt)) {
           S.refused[p.id] = now() + 30000;
-          if (S.lock && S.lock.id === p.id) unlock();
-          return;
+          return;   // cel zostaje zapamiętany — spróbujemy znowu za 30 s
         }
         const sec = parseProtection(data);
         if (sec) {
@@ -2110,8 +2174,10 @@ function parseProtection(data) {
     if (!p) return;
     if (!allowed(p)) { toast(`Dobijarka: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
+    cfg.target = { id: p.id, nick: p.nick };          // zapamiętany na stałe (także po odświeżeniu gry)
+    config.save();
     mark.set(p.id);
-    
+    toast(`Dobijarka: cel ${p.nick}`);
     ensureLoop();
     tick();
   }
@@ -2119,8 +2185,11 @@ function parseProtection(data) {
     if (!S.lock) return;
     if (msg) toast(msg);
     S.lock = null;
+    cfg.target = null;
+    config.save();
     mark.clear();
     ensureLoop();
+    if (ui.panel && ui.sel === 'napad') ui.renderMain();
   }
   function keyNearest() {
     const h = game.hero(); if (!h) return;
@@ -2138,17 +2207,23 @@ function parseProtection(data) {
     if (need && !S.timer) S.timer = setInterval(tick, 150);
     if (!need && S.timer) { clearInterval(S.timer); S.timer = null; }
   }
+  /** Namierzony gracz na mapie: po id, a gdy wrócił z nowym id — po nicku. */
+  function lockedPlayer() {
+    if (!S.lock) return null;
+    let p = game.otherById(S.lock.id);
+    if (!p) { p = game.otherByNick(S.lock.nick); if (p) { S.lock.id = p.id; cfg.target = { id: p.id, nick: p.nick }; config.save(); } }
+    return p;
+  }
   function tick() {
     if (!game.ready()) return;
     const h = game.hero(); if (!h) return;
-    if (game.inBattle()) { if (S.lock) unlock(); return; }
-    // 1) namierzony cel — atak, gdy tylko będzie w zasięgu
+    if (game.inBattle()) return;
+    // 1) namierzony cel — pamiętany, dopóki sam go nie zmienisz/przerwiesz; atak, gdy będzie w zasięgu
     if (S.lock) {
-      const p = game.otherById(S.lock.id);
-      if (!p) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
-      if (now() - S.lock.t > LOCK_MS) { unlock('Dobijarka: namierzanie wygasło'); return; }
-      if (dist(h, p) <= RANGE) attack(p);
-      return;
+      const p = lockedPlayer();
+      if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now())) { attack(p); return; }
+      if (p) return;              // cel jest na mapie, ale daleko — czekamy
+      // celu nie ma na mapie — w międzyczasie (gdy włączona) atakuje innych w zasięgu
     }
     // 2) dodatek włączony → każdy w zasięgu
     if (!cfg.enabled) return;
@@ -2186,14 +2261,21 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'napad', name: 'Dobijarka', icon: 'napad', color: ['#ff5d7a', '#b8325a'], risk: 'auto',
-    desc: 'Włączona: atakuje każdego gracza, który wejdzie w zasięg (w podanym zakresie poziomów). Klawisz działa zawsze — namierza najbliższego gracza i atakuje go, gdy tylko będzie w zasięgu. To samo robi opcja „Dobij" w menu gracza; „Przerwij dobijanie" cofa polecenie. Kogo nie atakować, ustawiasz w Bratanie.',
-    defaults: { enabled: false, keyAttack: '', lvlMin: 0, lvlMax: 500 },
+    desc: 'Włączona: atakuje każdego gracza, który wejdzie w zasięg (w podanym zakresie poziomów). Klawisz działa zawsze — namierza najbliższego gracza i atakuje go, gdy tylko będzie w zasięgu. Cel jest pamiętany (także gdy zniknie z mapy lub odświeżysz grę), dopóki nie wybierzesz innego albo nie przerwiesz. To samo robi opcja „Dobij" w menu gracza; „Przerwij dobijanie" cofa polecenie. Kogo nie atakować, ustawiasz w Bratanie.',
+    defaults: { enabled: false, keyAttack: '', lvlMin: 0, lvlMax: 500, target: null },
     notes: () => [{ type: 'warn', text: 'Włączona Dobijarka atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
     settings: [
       { key: 'lvlMin', type: 'number', label: 'Atakuj od poziomu', min: 0, max: 500, hint: 'Dotyczy ataku na każdego w zasięgu.' },
       { key: 'lvlMax', type: 'number', label: 'Atakuj do poziomu', min: 0, max: 500 },
       { key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Działa także przy wyłączonym dodatku. Ponowne naciśnięcie = następny najbliższy. Przerwanie: prawy klik na celu → „Przerwij dobijanie".' },
     ],
+    render(box, c, rerender) {
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Zapamiętany cel'),
+        S.lock ? el('div', { style: { display: 'flex', alignItems: 'center', gap: '10px' } },
+          el('b', null, S.lock.nick), el('span', { class: 'mp-dim' }, game.otherById(S.lock.id) || game.otherByNick(S.lock.nick) ? 'na mapie' : 'poza mapą — czekam'),
+          el('button', { class: 'mp-btn bad', style: { marginLeft: 'auto' }, onclick: () => { unlock('Dobijarka: przerwano'); rerender(); } }, 'Przerwij dobijanie'))
+          : el('div', { class: 'mp-dim' }, 'Brak. Ustaw klawiszem albo „Dobij" w menu gracza.')));
+    },
     init(c) {
       cfg = c;
       if (!c._v15) { c._v15 = true; c.lvlMin = 0; c.lvlMax = 500; config.save(); }
@@ -2207,7 +2289,9 @@ function parseProtection(data) {
         if (!p || !allowed(p)) return [];
         return [{ label: 'Dobij', fn: () => lockOn(game.otherById(id) || p) }];
       });
-      bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; unlock(); });
+      bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; });
+      // przywróć zapamiętany cel
+      if (cfg.target && cfg.target.nick) S.lock = { id: Number(cfg.target.id), nick: cfg.target.nick, t: now() };
       MP.napad = { attack: (p) => lockOn(p), lockOn, unlock };
       ensureLoop();
     },
@@ -2669,13 +2753,17 @@ MP.itemDeco = itemDeco;
   // Kody legbon → skrót. Kody pochodzą z danych gry (statystyka „legbon"); jeśli jakiś się nie zgadza,
   // popraw go w panelu — lista „Kody na Twoich przedmiotach" pokazuje, co faktycznie masz założone.
   const DEFAULT_MAP = {
-    verycrit: 'CBK', lastheal: 'OR', holytouch: 'DA', curse: 'KL', pushback: 'OD', critred: 'KO', dmgred: 'FO', resgain: 'PO', glare: 'OŚ',
+    verycrit: 'CBK', lastheal: 'OR', holytouch: 'DA', curse: 'KL', pushback: 'OD', critred: 'KO', dmgred: 'FO', cleanse: 'PO', cleansing: 'PO', glare: 'OŚ',
   };
-  const NAMES = { verycrit: 'Cios bardzo krytyczny', lastheal: 'Ostatni ratunek', holytouch: 'Dotyk anioła', curse: 'Klątwa', pushback: 'Odrzucenie', critred: 'Krytyczna osłona', dmgred: 'Fizyczna osłona', resgain: 'Płomienne oczyszczenie', glare: 'Oślepienie' };
+  const NAMES = { verycrit: 'Cios bardzo krytyczny', lastheal: 'Ostatni ratunek', holytouch: 'Dotyk anioła', curse: 'Klątwa', pushback: 'Odrzucenie', critred: 'Krytyczna osłona', dmgred: 'Fizyczna osłona', cleanse: 'Płomienne oczyszczenie', cleansing: 'Płomienne oczyszczenie', glare: 'Oślepienie' };
 
-  function abbr(code) { return (cfg.map && cfg.map[code]) || code.slice(0, 3).toUpperCase(); }
+  function abbr(code) {
+    if (cfg.map && cfg.map[code]) return cfg.map[code];
+    if (/^cle/i.test(code)) return 'PO';            // Płomienne oczyszczenie (różne warianty kodu)
+    return code.slice(0, 3).toUpperCase();
+  }
   MP.legAbbr = (code) => (cfg ? abbr(code) : code);
-  MP.legName = (code) => NAMES[code] || code;
+  MP.legName = (code) => NAMES[code] || (/^cle/i.test(code) ? 'Płomienne oczyszczenie' : code);
 
   defineAddon({
     id: 'jakibon', name: 'Jaki To Bon', icon: 'jakibon', color: ['#ff9a3c', '#d4561c'],
@@ -2700,6 +2788,7 @@ MP.itemDeco = itemDeco;
     },
     init(c) {
       cfg = c;
+      if (!c._v16) { c._v16 = true; c.map = c.map || {}; if (c.map.resgain === 'PO') delete c.map.resgain; c.map.cleanse = 'PO'; c.map.cleansing = 'PO'; c.map.dmgred = c.map.dmgred || 'FO'; config.save(); }
       itemDeco.add((node, it) => {
         if (!cfg.enabled || !it || !it.legbon) return null;
         if (!cfg.allItems && !(it.st > 0)) return null;
@@ -2937,8 +3026,9 @@ MP.itemDeco = itemDeco;
         if (!found.every(Boolean)) { await sleep(120); dbg.src = {}; found = els.map((n, i) => lookup(i)); }
         items = ids.map((iid, i) => {
           let it;
-          if (found[i]) { it = game.normItem(found[i]); it.id = iid; }
+          if (found[i]) { it = game.normItem(found[i]); it.id = iid; (dbg.items = dbg.items || []).push({ name: found[i].name, legbon: it.legbon, rarity: it.rarity, stat: String(found[i].stat || '').slice(0, 160) }); }
           else {
+            (dbg.items = dbg.items || []).push({ brak: iid });
             dbg.fromDom++;
             const n = els[i];
             let img = '';
@@ -3004,6 +3094,9 @@ MP.itemDeco = itemDeco;
     if (anchor && anchor.isConnected) {
       const c = el('div', { class: anchor.className + ' mp-clone' });
       c.innerHTML = anchor.innerHTML;
+      // tylko tekst z dymka — bez obrazków/płócien (postać rysujemy sami) i bez sztywnych rozmiarów
+      c.querySelectorAll('canvas, img, video, svg, [class*="outfit"], [class*="avatar"], [class*="canvas"]').forEach((n) => n.remove());
+      c.querySelectorAll('[style]').forEach((n) => { n.style.width = ''; n.style.height = ''; n.style.minWidth = ''; n.style.minHeight = ''; n.style.position = ''; });
       return c;
     }
     const p = game.otherById(id);
@@ -3014,7 +3107,7 @@ MP.itemDeco = itemDeco;
     if (!tip) return;
     if (anchor && anchor.isConnected) {
       const r = anchor.getBoundingClientRect();
-      tip.style.minWidth = Math.round(r.width) + 'px';
+      tip.style.minWidth = Math.min(320, Math.round(r.width)) + 'px';
       const h = tip.offsetHeight || 200, wd = tip.offsetWidth || r.width;
       tip.style.left = clamp(r.left, 4, innerWidth - wd - 4) + 'px';
       tip.style.top = clamp(r.top, 4, Math.max(4, innerHeight - h - 4)) + 'px';
@@ -3573,5 +3666,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.6.0";
+MP.version = "1.6.1";
 })();

@@ -21,16 +21,27 @@ const REL = {
 
 function parseStats(item) {
   if (!item) return {};
-  if (item._cachedStats && typeof item._cachedStats === 'object') return item._cachedStats;
-  const s = item.stat || item.stats || '';
-  if (typeof s === 'object') return s;
+  // łączymy oba źródła: tekst „stat" i _cachedStats (u szablonów potrafią się różnić)
   const out = {};
-  String(s).split(';').forEach((p) => {
+  const s = item.stat !== undefined ? item.stat : item.stats;
+  if (s && typeof s === 'object') Object.assign(out, s);
+  else String(s || '').split(';').forEach((p) => {
     if (!p) return;
     const i = p.indexOf('=');
     if (i < 0) out[p] = true; else out[p.slice(0, i)] = p.slice(i + 1);
   });
+  if (item._cachedStats && typeof item._cachedStats === 'object') {
+    for (const [k, v] of Object.entries(item._cachedStats)) if (out[k] === undefined || out[k] === '') out[k] = v;
+  }
   return out;
+}
+
+/** Bonus legendarny: ze statystyk albo z metody przedmiotu gry (getLegbonStat). */
+function legbonOf(it, st) {
+  let v = st.legbon;
+  try { if (!v && typeof it.issetLegbonStat === 'function' && it.issetLegbonStat()) v = it.getLegbonStat(); } catch {}
+  if (v && typeof v === 'object') v = v.name || v.type || v[0] || Object.values(v)[0];
+  return v ? String(v).split(/[,|]/)[0].trim() : null;
 }
 
 function normItem(it) {
@@ -47,7 +58,7 @@ function normItem(it) {
     x: Number(it.x), y: Number(it.y),
     stats: st,
     rarity: String(st.rarity || (st.legendary ? 'legendary' : st.heroic ? 'heroic' : st.unique ? 'unique' : 'common')),
-    legbon: st.legbon ? String(st.legbon).split(',')[0] : null,
+    legbon: legbonOf(it, st),
     expires,
     expired: (expires != null && expires > 0 && expires * 1000 <= now()) || st.expired === true || st.expired === '1',
     raw: it,
