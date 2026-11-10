@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.4.11
+// @version      3.4.12
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -6670,6 +6670,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       let wr = w.querySelector(':scope > .mp-lg-winring');
       if (!wr) { if (getComputedStyle(w).position === 'static') w.style.position = 'relative'; wr = el('div'); w.appendChild(wr); }
       wr.className = hlClass(spec) + ' mp-lg-winring';
+      // obwódka na zewnętrznej krawędzi całego okna (razem z metalową ramą), nie na jego środku
+      const cs = getComputedStyle(w), bw = (k) => parseFloat(cs[k]) || 0;
+      Object.assign(wr.style, { top: -(bw('borderTopWidth') - 3) + 'px', bottom: -(bw('borderBottomWidth') - 3) + 'px', left: -(bw('borderLeftWidth') - 3) + 'px', right: -(bw('borderRightWidth') - 3) + 'px' });
       wr.style.setProperty('--lgc', spec.glow);
     }
     // efekt na samym przedmiocie
@@ -7704,5 +7707,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.4.11";
+MP.version = "3.4.12";
 })();
