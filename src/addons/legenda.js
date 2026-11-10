@@ -687,19 +687,8 @@
     slot.classList.add('mp-lg-glow'); slot.style.setProperty('--lgg', spec.glow);
     // całe okno łupów świeci kolorem pola z legendą (dopóki okno jest otwarte)
     const w = it.closest('.c-window');
-    if (w && !w.closest('.mp-glass')) {
-      // ta sama obwódka co na polu z legendą, tylko na całym oknie
-      let wr = w.querySelector(':scope > .mp-lg-winring');
-      if (!wr) { if (getComputedStyle(w).position === 'static') w.style.position = 'relative'; wr = el('div'); w.appendChild(wr); }
-      wr.className = hlClass(spec) + ' mp-lg-winring';
-      // obwódka na zewnętrznej krawędzi całego okna (razem z metalową ramą), nie na jego środku
-      const cs = getComputedStyle(w), bw = (k) => parseFloat(cs[k]) || 0;
-      Object.assign(wr.style, { top: -(bw('borderTopWidth') - 1) + 'px', bottom: -(bw('borderBottomWidth') - 1) + 'px', left: -(bw('borderLeftWidth') - 1) + 'px', right: -(bw('borderRightWidth') - 1) + 'px' });
-      for (const top of $$(':scope > .header-label-positioner, :scope > .close-button-corner-decor', w)) if (getComputedStyle(top).position === 'static') top.style.position = 'relative';
-      // gruba obwódka — przykrywa całą metalową ramę okna (ok. tyle, ile ma rama z boku)
-      wr.style.setProperty('--ringw', Math.max(5, Math.min(7, Math.round(bw('borderLeftWidth') / 3))) + 'px');
-      wr.style.setProperty('--lgc', spec.glow);
-    }
+    // (obwódka całego okna łupów — usunięta na życzenie; zostaje tylko wyróżnienie pola z legendą)
+    if (w) { const old = w.querySelector(':scope > .mp-lg-winring'); if (old) old.remove(); }
     // efekt na samym przedmiocie
     FX_CLASSES.forEach((c) => it.classList.remove(c));
     it.classList.add('mp-lg-fx-' + spec.item); it.style.setProperty('--lgg', spec.glow);
