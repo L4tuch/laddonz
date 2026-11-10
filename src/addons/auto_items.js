@@ -62,7 +62,7 @@
 /* ───────── Fake Taxi ─────────
  * Automatycznie przyjmuje przywołania („Gracz X przyzywa do siebie swoją drużynę! Czy chcesz się teleportować…")
  * od wybranych osób: domyślnie od członków grupy, opcjonalnie od znajomych, klanu i z listy nicków.
- * Działa przez kliknięcie „Tak" w oknie gry — dokładnie to, co zrobiłbyś sam.
+ * Okno w ogóle się nie pokazuje: akcja „Tak" jest wywoływana od razu (a gdy okno jednak powstanie — jest ukryte i od razu klikane).
  */
 (() => {
   let cfg;
@@ -90,13 +90,79 @@
     if (p && ((cfg.clan && p.isClan) || (cfg.friends && p.isFriend))) return p.nick;
     return null;
   }
+  const YES_RE = /^\s*(tak|akceptuj|przyjmij|zgoda|ok)\b/i;
+  const active = () => cfg && cfg.enabled && !(cfg.notInBattle && game.inBattle());
+  const accepted = (who, how) => net.pushLog({ kind: 'info', src: 'Fake Taxi', msg: `Przyjęto przywołanie${who === true ? '' : ' od ' + who} (${how})` });
+
+  /*
+   * 1) Zanim okno w ogóle powstanie: przechwytujemy funkcję gry, która je tworzy (askAlert / mAlert / …).
+   *    Jeśli to przywołanie od dozwolonej osoby — od razu wywołujemy akcję przycisku „Tak", a okna nie ma.
+   */
+  function textOf(x, d = 0, out = []) {
+    if (d > 4 || x == null) return out;
+    if (typeof x === 'string') out.push(x);
+    else if (Array.isArray(x)) x.forEach((v) => textOf(v, d + 1, out));
+    else if (typeof x === 'object' && !(x instanceof Node)) Object.values(x).forEach((v) => textOf(v, d + 1, out));
+    return out;
+  }
+  /** Szuka akcji przycisku „Tak" w argumentach: [['Tak', fn], …] albo [{txt:'Tak', callback: fn}, …]. */
+  function yesFn(x, d = 0) {
+    if (d > 4 || x == null || typeof x !== 'object' || x instanceof Node) return null;
+    if (Array.isArray(x) && typeof x[0] === 'string' && typeof x[1] === 'function' && YES_RE.test(x[0].replace(/<[^>]+>/g, ''))) return x[1];
+    if (!Array.isArray(x)) {
+      const lab = x.txt || x.text || x.label || x.name || x.title;
+      const fn = x.callback || x.clb || x.cb || x.fn || x.action || x.onclick || x.click;
+      if (typeof lab === 'string' && typeof fn === 'function' && YES_RE.test(lab.replace(/<[^>]+>/g, ''))) return fn;
+    }
+    for (const v of Object.values(x)) { const f = yesFn(v, d + 1); if (f) return f; }
+    return null;
+  }
+  function hookOne(obj, name) {
+    const orig = obj && obj[name];
+    if (typeof orig !== 'function' || orig.__mpTaxi) return false;
+    const wrapped = function (...args) {
+      try {
+        if (active()) {
+          const text = textOf(args).join(' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+          if (SUMMON_RE.test(text)) {
+            const who = allowed(text);
+            const f = who && yesFn(args);
+            if (f) { setTimeout(() => { try { f(); } catch {} }, 0); accepted(who, 'bez okna'); return; }
+          }
+        }
+      } catch {}
+      return orig.apply(this, args);
+    };
+    wrapped.__mpTaxi = true;
+    try { obj[name] = wrapped; return true; } catch { return false; }
+  }
+  function hookAlerts() {
+    const names = ['askAlert', 'mAlert', 'confirmAlert', 'alertAsk', '_alert'];
+    names.forEach((n) => hookOne(W, n));
+    try {
+      const I = W.Engine && W.Engine.interface;
+      if (I) {
+        const seen = new Set();
+        for (let p = I; p && p !== Object.prototype; p = Object.getPrototypeOf(p)) Object.getOwnPropertyNames(p).forEach((n) => seen.add(n));
+        seen.forEach((n) => { if (/alert|ask|confirm|dialog/i.test(n)) { try { if (typeof I[n] === 'function') hookOne(I, n); } catch {} } });
+      }
+    } catch {}
+  }
+
+  /*
+   * 2) Zapas: gdy okno jednak powstało — obserwator działa przed narysowaniem klatki,
+   *    więc ukrywamy okno i klikamy „Tak" od razu; na ekranie nic nie mignie.
+   */
   const done = new WeakSet();
+  function dialogRoot(btn, box) {
+    let r = box;
+    const len = (box.textContent || '').length;
+    while (r.parentElement && r.parentElement !== document.body && (r.parentElement.textContent || '').length < len + 120) r = r.parentElement;
+    return r;
+  }
   function scan() {
-    if (!cfg.enabled) return;
-    if (cfg.notInBattle && game.inBattle()) return;
-    // okno z pytaniem o przywołanie: element z tekstem o przywołaniu, który ma w sobie przycisk „Tak"
-    const yesRe = /^\s*(tak|akceptuj|przyjmij|zgoda|ok)\b/i;
-    let btns = $$('button, .button, .btn, [class*="button"], [class*="accept"], [class*="yes"]').filter((b) => isVisible(b) && yesRe.test(b.textContent || '') && (b.textContent || '').trim().length < 20);
+    if (!active()) return;
+    let btns = $$('button, .button, .btn, [class*="button"], [class*="accept"], [class*="yes"]').filter((b) => YES_RE.test(b.textContent || '') && (b.textContent || '').trim().length < 20);
     btns = btns.filter((b) => !btns.some((o) => o !== b && b.contains(o)));   // sam przycisk, nie pojemnik z przyciskami
     for (const btn of btns) {
       let box = btn.parentElement;
@@ -107,7 +173,11 @@
       done.add(box);
       const who = allowed(text);
       if (!who) continue;
-      setTimeout(() => { if (btn.isConnected) { btn.click(); toast(`Fake Taxi: przyjęto przywołanie${who === true ? '' : ' od ' + who}`); net.pushLog({ kind: 'info', src: 'Fake Taxi', msg: 'Kliknięto „Tak" w przywołaniu' }); } }, rnd(250, 500));
+      const root = dialogRoot(btn, box);
+      root.style.setProperty('visibility', 'hidden', 'important');
+      root.style.setProperty('opacity', '0', 'important');
+      btn.click();
+      accepted(who, 'kliknięto „Tak"');
     }
   }
   defineAddon({
@@ -124,7 +194,9 @@
     init(c) {
       cfg = c;
       if ('auto' in c || 'dialogSelector' in c) { delete c.auto; delete c.dialogSelector; config.save(); }
-      new MutationObserver(debounce(scan, 80)).observe(document.body, { childList: true, subtree: true });
+      hookAlerts();
+      setInterval(hookAlerts, 3000);   // gra może podmienić funkcje po wczytaniu
+      new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
     },
   });
 })();

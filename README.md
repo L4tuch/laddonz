@@ -29,7 +29,7 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 | 🎒 | **Pokaż EQ** | Najedź na gracza (domyślnie z Shift) → jego ekwipunek + podsumowanie bonusów legendarnych. |
 | ★ | **Jaki To Bon** | Skrót bonusu legendarnego w rogu przedmiotu (OR, CBK, DA…). Skróty edytowalne. |
 | 🗑 | **Śmieciara** | Usuwa tylko przedmioty po terminie ważności, po potwierdzeniu listy. |
-| 🚕 | **Fake Taxi** | Włączony = automatycznie przyjmuje przywołania („…przyzywa do siebie swoją drużynę!") od członków grupy; opcjonalnie od znajomych, klanu i z listy nicków. |
+| 🚕 | **Fake Taxi** | Włączony = automatycznie przyjmuje przywołania („…przyzywa do siebie swoją drużynę!") od członków grupy; opcjonalnie od znajomych, klanu i z listy nicków. Okno z pytaniem w ogóle się nie pokazuje. |
 | ⚡ | **Auto f** | Włącz/wyłącz: gdy włączony, każda walka od razu przechodzi na szybką walkę (np. przy kolosie, gdy odchodzisz od komputera). |
 | ✋ | **Szybka rączka** | Prawy klik na przedmiocie → „Użyj po walce" — po walce przedmiot jest używany od razu (jak „Użyj" z menu). Ikonka zegara na przedmiocie. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". |
 | ✦ | **Ulepszarka** | Ulepsza wybrany przedmiot składnikami z torby wg rzadkości (zwykłe / unikaty / heroiki). Pod klawisz albo po walce. |
