@@ -96,7 +96,9 @@ const menus = {
           if (menu && self.capturing) { const r = self.capturing; self.capturing = null; r(menu); return; }
           if (menu) self.inject(menu, args);
         } catch (e) { console.warn('[L4Tools] menu', e); }
-        return f.apply(this, args);
+        const res = f.apply(this, args);
+        try { const mm = args.find((a) => Array.isArray(a)); if (mm) bus.emit('popup:shown', mm.map((m) => self.entryParts(m).label).filter(Boolean)); } catch {}
+        return res;
       };
       w.__mpMenu = true;
       try { I[n] = w; this.hooked = true; this.hookName = n; this.origPopup = { obj: I, fn: f }; } catch {}
@@ -320,6 +322,7 @@ const menus = {
         try {
           const ev = { clientX: x, clientY: y, pageX: x, pageY: y, x, y, button: 2, which: 3, type: 'contextmenu', target: document.body, currentTarget: document.body, preventDefault() {}, stopPropagation() {} };
           o.fn.call(o.obj, entries.map((e) => [e.label, () => { try { e.fn(); } catch (err) { console.warn(err); } }]), ev);
+          bus.emit('popup:shown', entries.map((e) => e.label));
           return;                     // gra przyjęła menu — nie pokazujemy drugiego
         } catch {}
         this.showOwn(x, y, entries, title);
