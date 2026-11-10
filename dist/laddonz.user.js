@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.6.4
+// @version      1.6.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -3254,37 +3254,62 @@ MP.itemDeco = itemDeco;
     const cell = (it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
       it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
       it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null);
-    const withPos = items.filter((i) => i.pos && i.pos.w);
-    if (withPos.length !== items.length || !items.length) return el('div', { class: 'mp-eqgrid' }, items.map(cell));
-    const g = withPos[0].pos.grid;
-    const minX = g ? g.x : Math.min(...withPos.map((i) => i.pos.x)), minY = g ? g.y : Math.min(...withPos.map((i) => i.pos.y));
-    const step = (vals) => {
-      const u = [...new Set(vals.map((v) => Math.round(v)))].sort((a, b) => a - b);
-      let m = Infinity;
-      for (let i = 1; i < u.length; i++) { const d = u[i] - u[i - 1]; if (d >= 10 && d < m) m = d; }
-      return isFinite(m) ? m : withPos[0].pos.w + 2;
-    };
-    const ux = step(withPos.map((i) => i.pos.x)), uy = step(withPos.map((i) => i.pos.y));
+    if (!items.length) return el('div');
     const S = 36;
-    let maxC = 0, maxR = 0;
+    // Układ okna „Ekwipunek Postaci": 3 kolumny × 4 rzędy. Geometrię (rozstaw slotów i przesunięcie siatki)
+    // uczymy się z graczy z pełnym EQ i zapamiętujemy — dzięki temu niepełne EQ ma przedmioty na swoich miejscach.
+    let geo = store.get('eq:geo', null);
+    const withPos = items.filter((i) => i.pos && i.pos.w && i.pos.grid);
+    if (withPos.length >= 6) {
+      const step = (vals) => {
+        const u = [...new Set(vals.map((v) => Math.round(v)))].sort((x, y) => x - y);
+        let m = Infinity;
+        for (let i = 1; i < u.length; i++) { const d = u[i] - u[i - 1]; if (d >= 10 && d < m) m = d; }
+        return isFinite(m) ? m : null;
+      };
+      const ux = step(withPos.map((i) => i.pos.x)), uy = step(withPos.map((i) => i.pos.y));
+      if (ux && uy) {
+        const g = withPos[0].pos.grid;
+        const minX = Math.min(...withPos.map((i) => i.pos.x)), minY = Math.min(...withPos.map((i) => i.pos.y));
+        const cols = Math.max(3, ...withPos.map((i) => Math.round((i.pos.x - minX) / ux) + 1));
+        const rows = Math.max(4, ...withPos.map((i) => Math.round((i.pos.y - minY) / uy) + 1));
+        geo = { ux, uy, dx: minX - g.x, dy: minY - g.y, cols, rows };
+        store.set('eq:geo', geo);
+      }
+    }
+    // zapas przed nauczeniem się układu: slot według typu przedmiotu (cl)
+    const SLOT_BY_CL = { 25: [0, 0], 9: [1, 0], 12: [0, 1], 13: [1, 1], 11: [2, 1], 1: [0, 2], 2: [0, 2], 3: [0, 2], 4: [0, 2], 6: [0, 2], 8: [1, 2], 5: [2, 2], 7: [2, 2], 14: [2, 2], 21: [2, 2], 29: [2, 2], 22: [0, 3], 10: [1, 3] };
+    const cols = geo ? geo.cols : 3, rows = geo ? geo.rows : 4;
     const box = el('div', { class: 'mp-eqlayout' });
     const taken = new Set();
-    for (const it of withPos) {
-      const c = Math.max(0, Math.round((it.pos.x - minX) / ux)), r = Math.max(0, Math.round((it.pos.y - minY) / uy));
-      maxC = Math.max(maxC, c); maxR = Math.max(maxR, r);
+    const loose = [];
+    for (const it of items) {
+      let c = null, r = null;
+      if (geo && it.pos && it.pos.grid) {
+        c = Math.round((it.pos.x - it.pos.grid.x - geo.dx) / geo.ux);
+        r = Math.round((it.pos.y - it.pos.grid.y - geo.dy) / geo.uy);
+      } else if (SLOT_BY_CL[it.cl]) [c, r] = SLOT_BY_CL[it.cl];
+      if (c == null || c < 0 || r < 0 || c >= cols || r >= rows || taken.has(c + ':' + r)) { loose.push(it); continue; }
       taken.add(c + ':' + r);
       const n = cell(it);
       n.style.left = c * S + 'px'; n.style.top = r * S + 'px';
       box.appendChild(n);
     }
-    if (g) { maxC = Math.max(maxC, Math.round(g.w / ux) - 1); maxR = Math.max(maxR, Math.round(g.h / uy) - 1); }
-    // puste miejsca na sloty — delikatne pola, żeby było widać układ także przy niepełnym EQ
-    for (let r = 0; r <= maxR; r++) for (let c = 0; c <= maxC; c++) {
+    // przedmioty bez rozpoznanego miejsca — na pierwsze wolne pola
+    for (const it of loose) {
+      let placed = false;
+      for (let r = rows - 1; r >= 0 && !placed; r--) for (let c = cols - 1; c >= 0 && !placed; c--) {
+        if (taken.has(c + ':' + r)) continue;
+        taken.add(c + ':' + r); placed = true;
+        const n = cell(it); n.style.left = c * S + 'px'; n.style.top = r * S + 'px'; box.appendChild(n);
+      }
+    }
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       if (taken.has(c + ':' + r)) continue;
       box.insertBefore(el('div', { class: 'mp-eqcell mp-eqslot', style: { left: c * S + 'px', top: r * S + 'px' } }), box.firstChild);
     }
-    box.style.width = (maxC + 1) * S - 2 + 'px';
-    box.style.height = (maxR + 1) * S - 2 + 'px';
+    box.style.width = cols * S - 2 + 'px';
+    box.style.height = rows * S - 2 + 'px';
     return box;
   }
 
@@ -3808,5 +3833,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.6.4";
+MP.version = "1.6.5";
 })();
