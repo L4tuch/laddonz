@@ -209,7 +209,7 @@
 
   async function disband() {
     if (!game.partyMembers().length) { toast('Nie masz grupy', 'warn', 1500); return; }
-    await net.send('partyDisband', {}, { src: 'Let\'s Cook' });
+    await net.send('partyDisband', {}, { src: 'Let\'s Cook', urgent: true });
     toast('Rozwiązuję grupę', 'ok', 1500);
   }
   MP.cook = { disband };

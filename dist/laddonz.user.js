@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.6.8
+// @version      1.6.9
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -787,7 +787,24 @@ const battleWatch = {
     bus.emit(v ? 'battle:start' : 'battle:end');
   },
   start() {
-    setInterval(() => { if (game.ready()) this.set(game.inBattle()); }, 400);
+    setInterval(() => { if (game.ready()) this.set(game.inBattle()); }, 150);
+    // natychmiastowe wykrycie końca walki: podpinamy się pod funkcje gry, które ją kończą
+    const hook = () => {
+      const b = E() && E().battle;
+      if (!b) return;
+      for (const n of ['endBattle', 'endBattleForMe', 'setEndBattle', 'setEndBattleForMe']) {
+        const f = b[n];
+        if (typeof f !== 'function' || f.__mp) continue;
+        const self = this;
+        b[n] = function (...a) {
+          const r = f.apply(this, a);
+          try { if (!/^set/.test(n) || a[0]) self.set(false); } catch {}
+          return r;
+        };
+        b[n].__mp = true;
+      }
+    };
+    hook(); setInterval(hook, 3000);
   },
 };
 
@@ -2777,7 +2794,7 @@ function parseProtection(data) {
 
   async function disband() {
     if (!game.partyMembers().length) { toast('Nie masz grupy', 'warn', 1500); return; }
-    await net.send('partyDisband', {}, { src: 'Let\'s Cook' });
+    await net.send('partyDisband', {}, { src: 'Let\'s Cook', urgent: true });
     toast('Rozwiązuję grupę', 'ok', 1500);
   }
   MP.cook = { disband };
@@ -3690,17 +3707,27 @@ MP.itemDeco = itemDeco;
     return r.ok;
   }
 
+  let running = false;
   async function runQueue() {
-    if (game.inBattle()) return;
-    const items = cfg.queue.slice().sort((a, b) => a.tp - b.tp);   // teleporty na końcu (zmieniają mapę)
-    for (const q of items) {
-      cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
-      if (!game.itemById(q.id)) continue;
-      await useItem(q.id);
-      await sleep(450);
-    }
-    if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? await MP.cook.disband() : await net.send('partyDisband', {}, { src: 'Szybka rączka' }); }
-    config.save(); bus.emit('deco');
+    if (running) return;
+    running = true;
+    try {
+      // najpierw rozwiązanie grupy (nie zmienia mapy), potem przedmioty — teleporty na końcu
+      if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka rączka', urgent: true }); }
+      const items = cfg.queue.slice().sort((a, b) => a.tp - b.tp);
+      for (const q of items) {
+        cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
+        if (!game.itemById(q.id)) continue;
+        // gdy gra tuż po walce jeszcze nie pokazuje opcji „Użyj" (żadna komenda nie poszła) — ponawiamy, maks. 3 razy
+        for (let t = 0; t < 4; t++) {
+          const calls = net.stats.gameCalls + net.stats.ourCalls;
+          await useItem(q.id);
+          if (net.stats.gameCalls + net.stats.ourCalls > calls) break;
+          await sleep(400);
+        }
+      }
+      config.save(); bus.emit('deco');
+    } finally { running = false; }
   }
 
   function armDisband() {
@@ -3748,7 +3775,8 @@ MP.itemDeco = itemDeco;
           : [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
       });
       itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka rączka: zostanie użyty po walce' } : null));
-      bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0)) setTimeout(() => runQueue(), rnd(400, 700)); });
+      // od razu po zakończeniu walki
+      bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0)) runQueue(); });
       if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
       hookPartyIcon();
     },
@@ -3891,5 +3919,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.6.8";
+MP.version = "1.6.9";
 })();

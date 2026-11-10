@@ -263,7 +263,24 @@ const battleWatch = {
     bus.emit(v ? 'battle:start' : 'battle:end');
   },
   start() {
-    setInterval(() => { if (game.ready()) this.set(game.inBattle()); }, 400);
+    setInterval(() => { if (game.ready()) this.set(game.inBattle()); }, 150);
+    // natychmiastowe wykrycie końca walki: podpinamy się pod funkcje gry, które ją kończą
+    const hook = () => {
+      const b = E() && E().battle;
+      if (!b) return;
+      for (const n of ['endBattle', 'endBattleForMe', 'setEndBattle', 'setEndBattleForMe']) {
+        const f = b[n];
+        if (typeof f !== 'function' || f.__mp) continue;
+        const self = this;
+        b[n] = function (...a) {
+          const r = f.apply(this, a);
+          try { if (!/^set/.test(n) || a[0]) self.set(false); } catch {}
+          return r;
+        };
+        b[n].__mp = true;
+      }
+    };
+    hook(); setInterval(hook, 3000);
   },
 };
 
