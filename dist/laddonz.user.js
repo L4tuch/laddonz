@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.1.5
+// @version      3.1.6
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -5302,6 +5302,77 @@ ${box(30, 1, 282, 19)}${box(16, 22, 222, 16)}${box(242, 22, 84, 16)}${box(90, 41
 ${emblem(t, 20, 49, 3.2)}${emblem(t, 322, 49, 3.2)}
 </svg>`);
   };
+  /*
+   * Faktury tła — odpowiednik drewna z klasycznego interfejsu, inna dla każdego stylu:
+   *   Dark Theme — szczotkowana stal, Zorza — nocne niebo z pasmami zorzy i gwiazdami,
+   *   Neon — siatka z neonową poświatą, Obsydian — łupane szkło wulkaniczne z żyłkami żaru,
+   *   Głębia — refleksy światła pod wodą (kaustyka) i pęcherzyki.
+   * Kafelki SVG bez szwów (stitchTiles / wzór okresowy), pamiętane per styl.
+   */
+  const rnd = (seed) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const texCache = {};
+  function texture(t) {
+    const key = t.orn;
+    if (texCache[key]) return texCache[key];
+    let w = 256, h = 256, body = '';
+    const r = rnd(7 + key.length * 31);
+    if (t.orn === 'rivet') {
+      body = `<filter id='b' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.003 .55' numOctaves='2' seed='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .09 0'/></filter>
+<filter id='d' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' seed='9' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.9 .55'/></filter>
+<rect width='${w}' height='${h}' filter='url(#b)'/><rect width='${w}' height='${h}' filter='url(#d)' opacity='.5'/>`;
+    } else if (t.orn === 'star') {
+      w = 640; h = 320;
+      const band = (y, c, op, sw) => `<path d='M-40 ${y} C 120 ${y - 50}, 260 ${y + 40}, 340 ${y - 10} S 560 ${y - 60}, 680 ${y}' stroke='${c}' stroke-width='${sw}' fill='none' opacity='${op}'/>`;
+      let stars = '';
+      for (let i = 0; i < 70; i++) { const x = (r() * w).toFixed(1), y = (r() * h).toFixed(1), s = (r() * 0.9 + 0.25).toFixed(2); stars += `<circle cx='${x}' cy='${y}' r='${s}' fill='#fff' opacity='${(r() * 0.5 + 0.15).toFixed(2)}'/>`; }
+      for (let i = 0; i < 4; i++) { const x = r() * w, y = r() * h, k = 3.2; stars += `<path d='M${x},${y - k} L${x + .7},${y - .7} L${x + k},${y} L${x + .7},${y + .7} L${x},${y + k} L${x - .7},${y + .7} L${x - k},${y} L${x - .7},${y - .7}Z' fill='${t.star}' opacity='.75'/>`; }
+      body = `<filter id='a' x='-20%' y='-50%' width='140%' height='200%'><feGaussianBlur stdDeviation='16'/></filter>
+<g filter='url(#a)'>${band(90, t.a1, 0.16, 26)}${band(150, t.a3, 0.12, 34)}${band(210, t.a2, 0.12, 30)}${band(130, t.a1, 0.08, 60)}</g>${stars}`;
+    } else if (t.orn === 'diamond') {
+      w = 192; h = 192;
+      body = `<pattern id='g' width='32' height='32' patternUnits='userSpaceOnUse'><path d='M32 0 L0 0 0 32' fill='none' stroke='${t.a1}' stroke-width='.6' opacity='.12'/></pattern>
+<filter id='gl' x='-50%' y='-50%' width='200%' height='200%'><feGaussianBlur stdDeviation='1.6'/></filter>
+<rect width='${w}' height='${h}' fill='url(#g)'/>
+<path d='M0 96 L192 96 M96 0 L96 192' stroke='${t.a2}' stroke-width='1' opacity='.07' filter='url(#gl)'/>
+${[[32, 64], [128, 160], [160, 32], [64, 128]].map(([x, y]) => `<circle cx='${x}' cy='${y}' r='1.3' fill='${t.a2}' opacity='.35'/><circle cx='${x}' cy='${y}' r='4' fill='${t.a2}' opacity='.08'/>`).join('')}
+<path d='M0 192 L192 0' stroke='${t.a1}' stroke-width='14' opacity='.025' filter='url(#gl)'/>`;
+    } else if (t.orn === 'ember') {
+      // łupane szkło: trójkątne ścianki z delikatnym połyskiem + cienkie żyłki żaru
+      w = 384; h = 384;
+      const pts = [];
+      const n = 6;
+      for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) {
+        const edgeX = i === 0 || i === n, edgeY = j === 0 || j === n;
+        pts.push([i * w / n + (edgeX ? 0 : (r() - 0.5) * 34), j * h / n + (edgeY ? 0 : (r() - 0.5) * 34)]);
+      }
+      // brzegi muszą się zgadzać po przeciwnych stronach (kafelek bez szwów)
+      for (let j = 0; j <= n; j++) pts[j * (n + 1) + n][1] = pts[j * (n + 1)][1] = j * h / n;
+      for (let i = 0; i <= n; i++) pts[n * (n + 1) + i][0] = pts[i][0] = i * w / n;
+      let facets = '';
+      const P = (i, j) => pts[j * (n + 1) + i];
+      for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+        const a = P(i, j), b = P(i + 1, j), c = P(i + 1, j + 1), d = P(i, j + 1);
+        for (const tri of (r() > 0.5 ? [[a, b, c], [a, c, d]] : [[a, b, d], [b, c, d]])) {
+          const l = r();
+          facets += `<path d='M${tri.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L')}Z' fill='${l > 0.5 ? '#fff' : '#000'}' fill-opacity='${(l > 0.5 ? (l - 0.5) * 0.05 : (0.5 - l) * 0.26).toFixed(3)}' stroke='#fff' stroke-opacity='.045' stroke-width='.6'/>`;
+        }
+      }
+      let cracks = '';
+      for (let k = 0; k < 2; k++) {
+        let x = 40 + r() * (w - 200), y = 40 + r() * (h - 80), d = `M${x.toFixed(1)} ${y.toFixed(1)}`, ang = (r() - 0.5) * 0.8;
+        for (let s = 0; s < 9; s++) { ang += (r() - 0.5) * 1.1; x += Math.cos(ang) * 16; y += Math.sin(ang) * 16; d += ` L${x.toFixed(1)} ${y.toFixed(1)}`; }
+        cracks += `<path d='${d}' fill='none' stroke='${t.a1}' stroke-width='.7' stroke-linecap='round' opacity='.35'/>`;
+      }
+      body = `<filter id='e' x='-20%' y='-20%' width='140%' height='140%'><feGaussianBlur stdDeviation='2.2'/></filter>${facets}<g filter='url(#e)'>${cracks}</g>${cracks.replace(/opacity='\.35'/g, "opacity='.22'")}`;
+    } else if (t.orn === 'drop') {
+      let bub = '';
+      for (let i = 0; i < 9; i++) { const x = (r() * w).toFixed(1), y = (r() * h).toFixed(1), s = (r() * 2 + 0.8).toFixed(2); bub += `<circle cx='${x}' cy='${y}' r='${s}' fill='none' stroke='${t.m[0]}' stroke-width='.5' opacity='.22'/>`; }
+      body = `<filter id='c' x='0' y='0' width='100%' height='100%'><feTurbulence type='turbulence' baseFrequency='.018' numOctaves='2' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .4  0 0 0 0 .85  0 0 0 0 1  -2.4 0 0 0 1.05'/><feGaussianBlur stdDeviation='.6'/></filter>
+<rect width='${w}' height='${h}' filter='url(#c)' opacity='.09'/>${bub}`;
+    }
+    return (texCache[key] = { url: svg(`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'>${body}</svg>`), w, h });
+  }
+
   /** Filtr przebarwiający szare, metalowe grafiki gry (kula HP, obramowania pasków doświadczenia) na metal stylu. */
   const metalFilter = (t, hud) => {
     const h = t.m[1].replace('#', ''); const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255);
@@ -5314,7 +5385,7 @@ ${emblem(t, 20, 49, 3.2)}${emblem(t, 322, 49, 3.2)}
     return `grayscale(1) sepia(1) hue-rotate(${Math.round(hue - 38)}deg) saturate(${(1 + s * 1.6).toFixed(2)}) brightness(${((hud ? 0.68 : 0.85) + l * (hud ? 0.3 : 0.45)).toFixed(2)})`;
   };
   // powierzchnia panelu: boczne pasy 11 px (gui/middle_graphics.png 0 11 fill)
-  const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' preserveAspectRatio='none'><defs><linearGradient id='s' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${raised ? t.bg1 : t.bg2}'/><stop offset='.35' stop-color='${raised ? t.bg0 : t.bg1}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect width='60' height='60' fill='url(#s)'/></svg>`);
+  const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' preserveAspectRatio='none'><defs><linearGradient id='s' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.m[0]}' stop-opacity='${raised ? '.015' : '.04'}'/><stop offset='.4' stop-color='${t.bg0}' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.35'/></linearGradient></defs><rect width='60' height='60' fill='url(#s)'/></svg>`);
   // pasek / nagłówek tabeli: boczne pasy 20 px (quest_bar.png, table_header.png 0 20 fill)
   // metalowa płyta (nagłówki tabel, paski na dole okien — zamiast drewna): jednolita w poziomie, więc pasuje do każdego cięcia
   const plate = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40' preserveAspectRatio='none'><defs><linearGradient id='p' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='.5' stop-color='${t.bg1}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient><linearGradient id='h' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.m[0]}' stop-opacity='.26'/><stop offset='.5' stop-color='${t.m[1]}' stop-opacity='.1'/><stop offset='1' stop-color='${t.m[2]}' stop-opacity='.2'/></linearGradient></defs><rect width='80' height='40' fill='url(#p)'/><rect width='80' height='40' fill='url(#h)'/><rect width='80' height='1' fill='${t.m[1]}' opacity='.55'/><rect y='39' width='80' height='1' fill='${t.m[2]}'/></svg>`);
@@ -5335,6 +5406,7 @@ ${emblem(t, 20, 49, 3.2)}${emblem(t, 322, 49, 3.2)}
     const IL = '.interface-layer';
     const body = '"Roboto", Arimo, Arial, sans-serif';
     const btn = (from, to, line, txt) => `background:linear-gradient(${from},${to})!important;color:${txt}!important;border-radius:3px!important;box-shadow:inset 0 0 0 1px ${line},inset 0 1px 0 ${t.m[0]}2e,0 1px 2px rgba(0,0,0,.55)!important;text-shadow:0 1px 1px rgba(0,0,0,.8)!important`;
+    const tx = texture(t), TX = `${tx.url} 0 0 / ${tx.w}px ${tx.h}px repeat`;
     const btnMain = btn(t.btn[0], t.btn[1], t.btnLine, t.btnText);
     const hover = `filter:brightness(1.18);box-shadow:inset 0 0 0 1px ${t.a1},0 0 10px ${t.glow}!important`;
     return `
@@ -5350,13 +5422,13 @@ ${emblem(t, 20, 49, 3.2)}${emblem(t, 322, 49, 3.2)}
 .button, .button *, .widget-button, .widget-button *, .tabs-nav .card, .tabs-nav .card *, .mt-mi, .mt-mi *{font-family:Arimo, Arial, sans-serif!important}
 
 /* — ramy ekranu: kolumny, górny i dolny pasek — */
-${IL} .left-column.main-column, ${IL} .left-column.main-column .new-chat-window, ${IL} .left-column.main-column .chat-input-wrapper{background-color:${t.bg1}!important}
-${IL} .right-column.main-column{background:${grain}, radial-gradient(ellipse at 50% 0%, ${t.edge}, transparent 45%), linear-gradient(${t.bg1},${t.bg0})!important}
+${IL} .left-column.main-column, ${IL} .right-column.main-column{background:${TX}, radial-gradient(ellipse at 50% 0%, ${t.edge}, transparent 45%), linear-gradient(${t.bg1},${t.bg0})!important}
+${IL} .left-column.main-column .new-chat-window, ${IL} .left-column.main-column .chat-input-wrapper{background-color:transparent!important}
 /* metalowe listwy przy kolumnie czatu i ekwipunku (w miejscu krawędzi gry, ta sama szerokość) */
 ${IL} .left-column.main-column > .border, ${IL} .right-column.main-column > .border{background:${railV(t)} 0 0 / 10px 96px repeat-y!important;opacity:1!important}
 /* górny i dolny pasek: tło stylu + metalowa krawędź od strony mapy (rysowana wewnątrz paska — nic nie wystaje) */
-${IL} .top.positioner > .bg{background:${railH(t, true)} 0 100% / 96px 5px repeat-x, linear-gradient(${t.bg1},${t.bg0})!important}
-${IL} .bottom.positioner > .bg{background:${railH(t, false)} 0 0 / 96px 5px repeat-x, linear-gradient(${t.bg0},${t.bg1})!important}
+${IL} .top.positioner > .bg{background:${railH(t, true)} 0 100% / 96px 5px repeat-x, ${TX}, linear-gradient(${t.bg2},${t.bg0})!important}
+${IL} .bottom.positioner > .bg{background:${railH(t, false)} 0 0 / 96px 5px repeat-x, ${TX}, linear-gradient(${t.bg0},${t.bg2})!important}
 /* metal wokół kuli HP, ramki pasków doświadczenia i wskaźników — ten sam rysunek, barwa metalu stylu */
 .bottom-panel .bottom-panel-graphic, .bottom-panel .hp-indicator-wrapper > .glass, .bottom-panel .exp-progress > .overlay, .bottom-panel .pointer-exp-graphic, .bottom-panel .pointer-ttl-graphic{filter:${metalFilter(t)}!important}
 .mt-hud-bg{filter:${metalFilter(t, true)}!important}
@@ -5390,13 +5462,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window[class*="loot"], .c-window.window-on-peak{box-shadow:0 12px 30px rgba(0,0,0,.6),0 0 0 1px ${t.a1}55,0 0 34px ${t.glow}!important}
 
 /* — powierzchnie interfejsu (border-image) — */
-[class*="interface-element-middle-"]{border-image-source:${surface(t, false)}!important;background-color:${t.bg1}!important}
-[class*="interface-element-middle-2"], [class*="interface-element-middle-3"]{border-image-source:${surface(t, true)}!important;background-color:${t.bg0}!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
+[class*="interface-element-middle-"]{border-image-source:${surface(t, false)}!important;background:${TX}, ${t.bg1}!important}
+[class*="interface-element-middle-2"], [class*="interface-element-middle-3"]{border-image-source:${surface(t, true)}!important;background:${TX}, ${t.bg0}!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
 .interface-element-bottom-bar-background-stretch, [class*="interface-element-header-1"]{border-image-source:${bar(t)}!important}
 [class*="interface-element-header-3"], .opt-header{background:linear-gradient(${t.bg2},${t.bg1})!important;color:${t.text}!important;box-shadow:inset 0 -1px 0 ${t.line}!important}
 .interface-element-active-card-background-stretch, .interface-element-active-card-border-image{border-image-source:${card(t, true)}!important}
 .interface-element-green-box-background{background:radial-gradient(ellipse 80% 70% at 50% 0, ${t.glow}, transparent 75%), linear-gradient(${t.bg2},${t.bg0})!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 1px 0 ${t.m[0]}26!important}
-.c-window:not(.transparent) > .content{background:radial-gradient(ellipse 70% 140px at 50% 0, ${t.glow}, transparent 70%), linear-gradient(${t.bg2}, ${t.bg1} 140px)!important;background-color:${t.bg1}!important}
+.c-window:not(.transparent) > .content{background:radial-gradient(ellipse 70% 140px at 50% 0, ${t.glow}, transparent 70%), ${TX}, linear-gradient(${t.bg2}, ${t.bg1} 140px)!important;background-color:${t.bg1}!important}
 
 /* — drewniane nagłówki tabel i belki gry → metalowa płyta w kolorach stylu — */
 .mt-plate{background-image:${plate(t)}!important;background-size:100% 100%!important;background-position:0 0!important;background-repeat:no-repeat!important;background-color:${t.bg1}!important;color:${t.text}!important;text-shadow:0 1px 1px #000!important}
@@ -5404,10 +5476,18 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .mt-plate *, .mt-plate-bi ~ *{color:${t.text}}
 
 /* nagłówki tabel (klany, członkowie, historia…) — klasy gry z drewnem */
-.c-window [class*="table-header-1"], .c-window .table-header, .c-window .table-header-wrapper, .c-window .header-sort, .c-window .hover-header, .c-window [class*="interface-element-table-header"]{background-image:${plate(t)}!important;background-size:100% 100%!important;background-position:0 0!important;background-repeat:no-repeat!important;background-color:${t.bg1}!important;border-image-source:${plate(t)}!important;color:${t.text}!important;text-shadow:0 1px 1px #000!important}
+.c-window table.table-header, .c-window .table-header-wrapper, .c-window table.table-header tr{background:none!important;border-image:none!important}
+.c-window td.table-header, .c-window th.table-header, .c-window div.table-header, .c-window .header-sort, .c-window .hover-header, .c-window div[class*="interface-element-table-header"]{background-image:${plate(t)}!important;background-size:100% 100%!important;background-position:0 0!important;background-repeat:no-repeat!important;background-color:${t.bg1}!important;border-image-source:${plate(t)}!important;color:${t.text}!important;text-shadow:0 1px 1px #000!important}
 .c-window [class*="table-header-1"]::before, .c-window [class*="table-header-1"]::after, .c-window .table-header::before, .c-window .table-header::after{background-image:none!important}
 .c-window .table-header *, .c-window [class*="table-header-1"] *{color:${t.text}!important}
 .c-window .table-header-wrapper{box-shadow:inset 0 -1px 0 ${t.m[2]}!important}
+.c-window td.table-header + td.table-header, .c-window .hover-header + .hover-header{box-shadow:inset 1px 0 0 ${t.m[2]}!important}
+.c-window .hover-header:hover{filter:brightness(1.2)}
+/* wiersze tabel: delikatne pasy na zmianę i cienkie linie zamiast jednolitej szarości */
+.c-window table.table-content tr, .c-window table.table-content tr.mt-bov{background-color:transparent!important}
+.c-window table.table-content tr:nth-child(even){background-color:${t.m[0]}08!important}
+.c-window table.table-content tr:hover{background-color:${t.a1}12!important}
+.c-window table.table-content td, .c-window table.table-content td.mt-bd{border-color:${t.line2}!important}
 
 /* — zakładki — */
 .tabs-nav .card{background:linear-gradient(${t.bg2},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 1px 0 ${t.m[0]}1f!important;text-shadow:0 1px 1px #000!important}
@@ -5695,7 +5775,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if ('ember' in c) { delete c.ember; config.save(); }
       bus.on('popup:shown', (labels) => tagMenu(labels));
       apply();
-      MP.motywnik = { apply, collectLook, THEMES };
+      MP.motywnik = { apply, collectLook, THEMES, texture };
     },
     onToggle() { apply(); },
   });
@@ -5755,5 +5835,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.1.5";
+MP.version = "3.1.6";
 })();
