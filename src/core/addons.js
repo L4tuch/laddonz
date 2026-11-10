@@ -23,7 +23,7 @@ const addons = {
   cfg(id) { return config.data.addons[id]; },
   on(id) { return !!(config.data.addons[id] && config.data.addons[id].enabled); },
 
-  ORDER: ['napad', 'wakeup', 'bratan', 'wrogowie', 'ktotu', 'ktozlapie', 'cook', 'podpis', 'pokazeq', 'jakibon', 'taxi', 'autof', 'szybka', 'ulepszarka', 'minichat', 'motywnik'],
+  ORDER: ['napad', 'wakeup', 'bratan', 'wrogowie', 'ktotu', 'ktozlapie', 'cook', 'podpis', 'pokazeq', 'jakibon', 'taxi', 'autof', 'szybka', 'ulepszarka', 'minichat'],
 
   initAll() {
     this.list.sort((a, b) => this.ORDER.indexOf(a.id) - this.ORDER.indexOf(b.id));

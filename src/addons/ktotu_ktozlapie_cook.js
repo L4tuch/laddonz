@@ -330,8 +330,28 @@
     });
   }
 
+  let lastPress = 0;
+  /** Zaproszenie jak gracz. Gdy w menu nie ma „Zaproś do grupy" (wisi stare zaproszenie, np. do AFK),
+   *  najpierw je anulujemy i zapraszamy od nowa. */
+  async function invite(p) {
+    if (await menus.choosePlayerOption(p.id, /^zapro[śs] do grupy/i)) return 'ok';
+    const labels = await menus.playerMenuLabels(p.id);
+    const cancel = labels.find((l) => /(anuluj|cofnij|odwo[łl]aj).*zaprosz/i.test(l));
+    if (cancel) {
+      await menus.choosePlayerOption(p.id, new RegExp('^' + cancel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i'));
+      await sleep(400);
+      if (await menus.choosePlayerOption(p.id, /^zapro[śs] do grupy/i)) return 'ok';
+    }
+    const r = await net.send('partyInvite', { id: p.id }, { src: 'Let\'s Cook' });
+    return r.ok ? 'cmd' : 'fail';
+  }
+
   function inviteAll() {
     const h = game.hero();
+    // dwa szybkie naciśnięcia klawisza = zaproś jeszcze raz także tych, których zapraszałeś przed chwilą
+    const force = now() - lastPress < 1500;
+    lastPress = now();
+    if (force) invited = {};
     const party = new Set(game.partyMembers());
     // ktoś, kto dołączył do grupy albo grupa została rozwiązana — zapomnij o wcześniejszym zaproszeniu
     for (const id of Object.keys(invited)) if (party.has(Number(id))) delete invited[id];
@@ -341,15 +361,15 @@
       return cfg.everyone || (cfg.friends && isFriendP(p)) || (cfg.clan && p.isClan) || (cfg.allies && p.isAlly) || nickIn(cfg.always, p.nick);
     });
     const inParty = matching.filter((p) => party.has(p.id));
-    const recent = matching.filter((p) => !party.has(p.id) && invited[p.id] > now() - 10000);   // ta sama osoba nie częściej niż co 10 s
-    const l = matching.filter((p) => !party.has(p.id) && !(invited[p.id] > now() - 10000));
+    const recent = matching.filter((p) => !party.has(p.id) && invited[p.id] > now() - 4000);   // ta sama osoba nie częściej niż co 4 s
+    const l = matching.filter((p) => !party.has(p.id) && !(invited[p.id] > now() - 4000));
     const room = Math.max(0, cfg.maxParty - Math.max(1, party.size));
     const pick = l.slice(0, room || l.length);
     if (!pick.length) {
       const total = game.others().length;
       const why = [];
       if (inParty.length) why.push(`już w grupie: ${inParty.map((p) => p.nick).join(', ')}`);
-      if (recent.length) why.push(`zaproszeni przed chwilą: ${recent.map((p) => p.nick).join(', ')}`);
+      if (recent.length) why.push(`zaproszeni przed chwilą: ${recent.map((p) => p.nick).join(', ')} (naciśnij klawisz 2× szybko, żeby zaprosić ponownie)`);
       if (l.length && !room) why.push('grupa jest pełna');
       toast(why.length ? `Let's Cook: ${why.join('; ')}` : total ? `Let's Cook: nikt z ${total} graczy na mapie nie pasuje do ustawień` : 'Let\'s Cook: brak graczy na mapie', 'warn', 2500);
       return;
@@ -358,8 +378,7 @@
     (async () => {
       for (const p of pick) {
         invited[p.id] = now();
-        const ok = await menus.choosePlayerOption(p.id, /^zapro[śs] do grupy/i);
-        if (!ok) await net.send('partyInvite', { id: p.id }, { src: 'Let\'s Cook' });
+        await invite(p);
         await sleep(250);
       }
     })();

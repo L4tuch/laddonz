@@ -132,6 +132,18 @@ const menus = {
     return { label: '', fn: null };
   },
 
+  /** Napisy w menu gracza (bez pokazywania menu). */
+  async playerMenuLabels(id) {
+    const raw = game.otherRaw(id);
+    if (!raw || !this.hooked) return [];
+    const fn = ['oncontextmenu', 'createMenu'].map((n) => raw[n]).find((f) => typeof f === 'function');
+    if (!fn) return [];
+    const got = new Promise((res) => { this.capturing = res; setTimeout(() => { if (this.capturing === res) { this.capturing = null; res(null); } }, 400); });
+    try { fn.call(raw, { clientX: 0, clientY: 0, pageX: 0, pageY: 0, button: 2, preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {}, target: document.body }); } catch { this.capturing = null; return []; }
+    const menu = await got;
+    return menu ? menu.map((m) => this.entryParts(m).label.trim()).filter(Boolean) : [];
+  },
+
   /** To samo dla gracza na mapie: menu gracza (jak prawy klik na nim) → opcja, bez pokazywania menu. */
   async choosePlayerOption(id, re) {
     const raw = game.otherRaw(id);

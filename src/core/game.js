@@ -208,6 +208,9 @@ const game = {
         if (typeof p.isParty === 'function' && !p.isParty()) { game._partyCache = []; return []; }
         // okno grupy w grze: elementy członków mają klasę other-party-id-<id> (sprawdzone diagnostyką)
         const domIds = $$('[class*="other-party-id-"]').map((n) => Number((String(n.className).match(/other-party-id-(\d+)/) || [])[1])).filter(Boolean);
+        // okno grupy pokazuje tylko faktycznych członków — jeśli jest, to ono decyduje (dane gry potrafią trzymać
+        // zaproszonych, którzy nie przyjęli, albo osoby po wylogowaniu)
+        if (domIds.length) return [...new Set(domIds)];
         if (typeof p.getMembers === 'function') {
           const m = p.getMembers();
           const list = m instanceof Map ? [...m.keys()] : Array.isArray(m) ? m : Object.keys(m || {});
