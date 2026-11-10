@@ -42,7 +42,7 @@
     this.removeColorMark = (k) => { this.mark = null; };
     this.showEq = () => {
       const w = document.createElement('div'); w.className = 'c-window border-window showeq-window';
-      w.style.cssText='position:fixed;left:50px;top:50px;width:200px;height:200px;background:#222'; const pos={1:[1,0],2:[0,1],15:[2,1],777:[1,2],888:[2,2]}; w.innerHTML = '<div class="close-button"></div>' + [1,2,15,777,888].map(i => '<div class="item item-id-'+i+'-showeq'+(i===888?' item-tpl-555':'')+'" '+(i===777?'data-item-type="t-leg"':'')+' style="position:absolute;width:32px;height:32px;left:'+(10+pos[i][0]*40)+'px;top:'+(30+pos[i][1]*40)+'px"><canvas class="icon" width="32" height="32"></canvas></div>').join(''); w.querySelector('.close-button').onclick = () => { w.style.display='none'; }; if (this._w) { this._w.remove(); }
+      w.style.cssText='position:fixed;left:50px;top:50px;width:200px;height:200px;background:#222'; const pos={1:[1,0],2:[0,1],15:[2,1],777:[1,2],888:[2,2]}; const list = this.d.id===105 ? [] : (this.d.id===103 ? [2] : [1,2,15,777,888]); w.innerHTML = '<div class="close-button"></div><div class="slots" style="position:absolute;left:10px;top:30px;width:118px;height:158px">' + list.map(i => '<div class="item item-id-'+i+'-showeq'+(i===888?' item-tpl-555':'')+'" '+(i===777?'data-item-type="t-leg"':'')+' style="position:absolute;width:32px;height:32px;left:'+(pos[i][0]*40)+'px;top:'+(pos[i][1]*40)+'px"><canvas class="icon" width="32" height="32"></canvas></div>').join('') + '</div>'; w.querySelector('.close-button').onclick = () => { w.style.display='none'; }; if (this._w) { this._w.remove(); }
       setTimeout(() => document.body.appendChild(w), 200);
     };
   }

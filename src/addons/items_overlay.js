@@ -178,7 +178,7 @@ MP.itemDeco = itemDeco;
  */
 (() => {
   let cfg, cache = {}, tip = null, hoverId = null, lastReq = 0;
-  let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null;
+  let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null, lastGrid = null;
   const seenItems = new Map();      // dane przedmiotów/szablonów, które przeszły przez grę (id → obiekt, 'tpl:<nr>' → obiekt)
 
   function hide() {
@@ -338,8 +338,13 @@ MP.itemDeco = itemDeco;
       raw.showEq();
       while (now() - t0 < 3000) {
         await sleep(25);
-        w = $$('.showeq-window').find((n) => shown(n) && n.querySelector('[class*="-showeq"]') && before.get(n) !== true + '#' + sigOf(n));
-        if (w) break;
+        w = $$('.showeq-window').find((n) => shown(n) && before.get(n) !== true + '#' + sigOf(n));
+        if (w) {
+          // okno się pokazało — czekamy chwilę na przedmioty (gracz z pustym EQ nie ma żadnych)
+          const tw = now();
+          while (!w.querySelector('[class*="-showeq"]') && now() - tw < 600) await sleep(25);
+          break;
+        }
       }
       if (w) {
         const els = $$('[class*="item-id-"]', w).filter((n) => /item-id-\d+-showeq/.test(String(n.className)));
@@ -347,9 +352,16 @@ MP.itemDeco = itemDeco;
         const tpls = els.map((n) => Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0);
         dbg.ids = ids; dbg.tpls = tpls;
         const rects = els.map((n) => n.getBoundingClientRect());
+        // pole slotów w oknie gry (wspólny rodzic przedmiotów) — dzięki temu pojedynczy przedmiot stoi na swoim miejscu
+        let box = els[0] ? els[0].parentElement : null;
+        while (box && box !== w && !els.every((x) => box.contains(x))) box = box.parentElement;
+        const br = box ? box.getBoundingClientRect() : null;
+        dbg.grid = br ? { x: br.left, y: br.top, w: br.width, h: br.height } : null;
+        lastGrid = dbg.grid;
         const lookup = (i) => lookupRaw(ids[i], tpls[i], els[i], seen, dbg);
         let found = els.map((n, i) => lookup(i));
         if (!found.every(Boolean)) { await sleep(120); dbg.src = {}; found = els.map((n, i) => lookup(i)); }
+        const gridInfo = dbg.grid;
         items = ids.map((iid, i) => {
           let it;
           if (found[i]) { it = game.normItem(found[i]); it.id = iid; (dbg.items = dbg.items || []).push({ name: found[i].name, legbon: it.legbon, rarity: it.rarity, stat: String(found[i].stat || '').slice(0, 160) }); }
@@ -361,7 +373,7 @@ MP.itemDeco = itemDeco;
             try { const c = n.querySelector('canvas.icon, canvas'); if (c) img = c.toDataURL(); } catch {}
             it = { id: iid, name: '', icon: img, rarity: rarityFromEl(n), legbon: null, stats: {} };
           }
-          it.pos = { x: rects[i].left, y: rects[i].top, w: rects[i].width || 32 };
+          it.pos = { x: rects[i].left, y: rects[i].top, w: rects[i].width || 32, grid: gridInfo };
           return it;
         });
       } else dbg.noWindow = true;
@@ -465,7 +477,8 @@ MP.itemDeco = itemDeco;
       it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null);
     const withPos = items.filter((i) => i.pos && i.pos.w);
     if (withPos.length !== items.length || !items.length) return el('div', { class: 'mp-eqgrid' }, items.map(cell));
-    const minX = Math.min(...withPos.map((i) => i.pos.x)), minY = Math.min(...withPos.map((i) => i.pos.y));
+    const g = withPos[0].pos.grid;
+    const minX = g ? g.x : Math.min(...withPos.map((i) => i.pos.x)), minY = g ? g.y : Math.min(...withPos.map((i) => i.pos.y));
     const step = (vals) => {
       const u = [...new Set(vals.map((v) => Math.round(v)))].sort((a, b) => a - b);
       let m = Infinity;
@@ -476,12 +489,20 @@ MP.itemDeco = itemDeco;
     const S = 36;
     let maxC = 0, maxR = 0;
     const box = el('div', { class: 'mp-eqlayout' });
+    const taken = new Set();
     for (const it of withPos) {
-      const c = Math.round((it.pos.x - minX) / ux), r = Math.round((it.pos.y - minY) / uy);
+      const c = Math.max(0, Math.round((it.pos.x - minX) / ux)), r = Math.max(0, Math.round((it.pos.y - minY) / uy));
       maxC = Math.max(maxC, c); maxR = Math.max(maxR, r);
+      taken.add(c + ':' + r);
       const n = cell(it);
       n.style.left = c * S + 'px'; n.style.top = r * S + 'px';
       box.appendChild(n);
+    }
+    if (g) { maxC = Math.max(maxC, Math.round(g.w / ux) - 1); maxR = Math.max(maxR, Math.round(g.h / uy) - 1); }
+    // puste miejsca na sloty — delikatne pola, żeby było widać układ także przy niepełnym EQ
+    for (let r = 0; r <= maxR; r++) for (let c = 0; c <= maxC; c++) {
+      if (taken.has(c + ':' + r)) continue;
+      box.insertBefore(el('div', { class: 'mp-eqcell empty', style: { left: c * S + 'px', top: r * S + 'px' } }), box.firstChild);
     }
     box.style.width = (maxC + 1) * S - 2 + 'px';
     box.style.height = (maxR + 1) * S - 2 + 'px';
@@ -513,7 +534,7 @@ MP.itemDeco = itemDeco;
     eqBox.innerHTML = '';
     if (items === 'own-window') eqBox.appendChild(el('div', { class: 'mp-dim mp-eqload' }, 'Masz otwarte okno ekwipunku z gry.'));
     else if (!items) eqBox.appendChild(el('div', { class: 'mp-warnc mp-eqload' }, 'Nie udało się pobrać.'));
-    else if (!items.length) eqBox.appendChild(el('div', { class: 'mp-dim mp-eqload' }, 'Brak założonych przedmiotów.'));
+    else if (!items.length) { eqBox.appendChild(el('div', { class: 'mp-dim mp-eqload' }, 'Brak założonych przedmiotów.')); sumBox.innerHTML = ''; }
     else { eqBox.appendChild(layoutGrid(items)); sumBox.innerHTML = ''; sumBox.appendChild(summaryEl(items)); }
     place();
   }

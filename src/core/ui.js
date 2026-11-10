@@ -41,9 +41,23 @@ const ui = {
     }, { capture: true, passive: false });
   },
 
+  THEMES: {
+    fiolet:   { name: 'Fiolet (domyślny)', accent: '#7c5cff', bg: '16,17,28' },
+    ocean:    { name: 'Ocean',             accent: '#3fa2ff', bg: '10,20,34' },
+    szmaragd: { name: 'Szmaragd',          accent: '#2ecc8f', bg: '10,26,22' },
+    rubin:    { name: 'Rubin',             accent: '#ff4d6d', bg: '30,12,18' },
+    bursztyn: { name: 'Bursztyn',          accent: '#ffb020', bg: '28,20,8' },
+    roz:      { name: 'Róż',               accent: '#ff6ec7', bg: '28,12,26' },
+    grafit:   { name: 'Grafit',            accent: '#a3adbd', bg: '18,18,20' },
+    noc:      { name: 'Północ',            accent: '#6d8bff', bg: '6,8,16' },
+  },
+
   applyTheme() {
     const g = config.data.global;
-    document.documentElement.style.setProperty('--mp-accent', g.accent || '#7c5cff');
+    const t = this.THEMES[g.theme] || this.THEMES.fiolet;
+    g.accent = t.accent;
+    document.documentElement.style.setProperty('--mp-bg', t.bg);
+    document.documentElement.style.setProperty('--mp-accent', t.accent);
     document.documentElement.style.setProperty('--mp-glass', String(g.glass ?? 0.55));
   },
 
@@ -275,7 +289,12 @@ const ui = {
       { key: 'minInterval', type: 'number', label: 'Minimalny odstęp między komendami panelu (ms)', min: 150, max: 5000, hint: 'Dotyczy wszystkich dodatków naraz. Nie schodź poniżej 250 ms.' },
       { key: 'panelKey', type: 'key', label: 'Skrót otwierający panel' },
       { key: 'perCharacter', type: 'bool', label: 'Osobne ustawienia dla każdej postaci', hint: 'Zmiana zadziała po odświeżeniu gry.' },
-      { key: 'accent', type: 'color', label: 'Kolor akcentu' },
+      { key: 'theme', type: 'custom', render: (obj, onSave) => el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } },
+        el('div', { class: 'lb' }, 'Motyw okien'),
+        el('div', { class: 'mp-themes' }, Object.entries(this.THEMES).map(([k, t]) => el('div', {
+          class: 'mp-theme' + ((obj.theme || 'fiolet') === k ? ' on' : ''), style: { '--t-accent': t.accent, background: `rgba(${t.bg},.85)` },
+          onclick: () => { obj.theme = k; onSave(); this.renderAll(); quickbar.draw(); },
+        }, el('div', { class: 'sw', style: { background: `linear-gradient(135deg, ${t.accent}55, rgba(${t.bg},1))` } }, el('i')), el('div', { class: 'nm' }, t.name))))) },
       { key: 'glass', type: 'range', label: 'Przezroczystość tła', min: 0.2, max: 0.95, step: 0.05 },
       { key: 'menuSelector', type: 'textarea', label: 'Selektor menu prawego przycisku w grze', hint: 'Zapas, gdy opcje (np. „Dobij") nie pojawiają się w menu gracza.' },
     ];

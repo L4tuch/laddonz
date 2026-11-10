@@ -3,8 +3,8 @@
  * Wszystkie klasy mają prefiks mp- żeby nie gryzły się z grą.
  */
 const CSS = `
-:root{--mp-accent:#7c5cff;--mp-glass:.55;--mp-fg:#eef0ff;--mp-dim:#a6abc8;--mp-line:rgba(255,255,255,.10);--mp-ok:#3ddc97;--mp-warn:#ffb547;--mp-bad:#ff5d7a}
-.mp-glass{background:rgba(16,17,28,var(--mp-glass));-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);color:var(--mp-fg);font:13px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+:root{--mp-bg:16,17,28;--mp-accent:#7c5cff;--mp-glass:.55;--mp-fg:#eef0ff;--mp-dim:#a6abc8;--mp-line:rgba(255,255,255,.10);--mp-ok:#3ddc97;--mp-warn:#ffb547;--mp-bad:#ff5d7a}
+.mp-glass{background:rgba(var(--mp-bg),var(--mp-glass));-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);color:var(--mp-fg);font:13px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
 .mp-glass *{box-sizing:border-box}
 .mp-ico{display:inline-flex;align-items:center;justify-content:center;flex:none}
 .mp-ico svg{display:block}
@@ -96,6 +96,15 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-mono{font-family:Consolas,monospace;font-size:11.5px;word-break:break-all}
 .mp-dim{color:var(--mp-dim)}
 .mp-okc{color:var(--mp-ok)}.mp-badc{color:var(--mp-bad)}.mp-warnc{color:var(--mp-warn)}
+
+/* motywy */
+.mp-themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:4px}
+.mp-theme{cursor:pointer;border-radius:12px;padding:8px;border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:6px}
+.mp-theme:hover{border-color:rgba(255,255,255,.3)}
+.mp-theme.on{box-shadow:0 0 0 2px var(--t-accent);border-color:transparent}
+.mp-theme .sw{height:26px;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;padding:0 6px}
+.mp-theme .sw i{width:12px;height:12px;border-radius:50%;background:var(--t-accent);box-shadow:0 0 8px var(--t-accent)}
+.mp-theme .nm{font-size:12px;font-weight:600}
 
 /* Hey WakeUP! — podglądy stylów */
 .mp-wk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
@@ -205,6 +214,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 #mp-eqtip.gamey .mp-eqcell.unique{border-color:#e6c84a}
 #mp-eqtip .mp-eqlayout{position:relative;margin:4px auto 6px}
 #mp-eqtip .mp-eqlayout .mp-eqcell{position:absolute;width:34px;height:34px}
+#mp-eqtip .mp-eqcell.empty{background:rgba(255,255,255,.025)!important;border:1px dashed rgba(255,255,255,.07)!important;box-shadow:none!important}
 #mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
 #mp-eqtip.gamey .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px}
 .mp-eqgrid{display:grid;grid-template-columns:repeat(6,40px);gap:5px;margin:6px 0}

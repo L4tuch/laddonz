@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.6.2
+// @version      1.6.3
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -40,7 +40,7 @@ function el(tag, attrs, ...kids) {
     for (const [k, v] of Object.entries(attrs)) {
       if (v == null || v === false) continue;
       if (k === 'class') n.className = v;
-      else if (k === 'style' && typeof v === 'object') Object.assign(n.style, v);
+      else if (k === 'style' && typeof v === 'object') { for (const [sk, sv] of Object.entries(v)) { if (sv == null) continue; if (sk.startsWith('--')) n.style.setProperty(sk, sv); else n.style[sk] = sv; } }
       else if (k === 'html') n.innerHTML = v;
       else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
       else n.setAttribute(k, v === true ? '' : v);
@@ -891,8 +891,8 @@ MP.icon = icon;
  * Wszystkie klasy mają prefiks mp- żeby nie gryzły się z grą.
  */
 const CSS = `
-:root{--mp-accent:#7c5cff;--mp-glass:.55;--mp-fg:#eef0ff;--mp-dim:#a6abc8;--mp-line:rgba(255,255,255,.10);--mp-ok:#3ddc97;--mp-warn:#ffb547;--mp-bad:#ff5d7a}
-.mp-glass{background:rgba(16,17,28,var(--mp-glass));-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);color:var(--mp-fg);font:13px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+:root{--mp-bg:16,17,28;--mp-accent:#7c5cff;--mp-glass:.55;--mp-fg:#eef0ff;--mp-dim:#a6abc8;--mp-line:rgba(255,255,255,.10);--mp-ok:#3ddc97;--mp-warn:#ffb547;--mp-bad:#ff5d7a}
+.mp-glass{background:rgba(var(--mp-bg),var(--mp-glass));-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 60px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);color:var(--mp-fg);font:13px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
 .mp-glass *{box-sizing:border-box}
 .mp-ico{display:inline-flex;align-items:center;justify-content:center;flex:none}
 .mp-ico svg{display:block}
@@ -984,6 +984,15 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-mono{font-family:Consolas,monospace;font-size:11.5px;word-break:break-all}
 .mp-dim{color:var(--mp-dim)}
 .mp-okc{color:var(--mp-ok)}.mp-badc{color:var(--mp-bad)}.mp-warnc{color:var(--mp-warn)}
+
+/* motywy */
+.mp-themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:4px}
+.mp-theme{cursor:pointer;border-radius:12px;padding:8px;border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:6px}
+.mp-theme:hover{border-color:rgba(255,255,255,.3)}
+.mp-theme.on{box-shadow:0 0 0 2px var(--t-accent);border-color:transparent}
+.mp-theme .sw{height:26px;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;padding:0 6px}
+.mp-theme .sw i{width:12px;height:12px;border-radius:50%;background:var(--t-accent);box-shadow:0 0 8px var(--t-accent)}
+.mp-theme .nm{font-size:12px;font-weight:600}
 
 /* Hey WakeUP! — podglądy stylów */
 .mp-wk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
@@ -1093,6 +1102,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 #mp-eqtip.gamey .mp-eqcell.unique{border-color:#e6c84a}
 #mp-eqtip .mp-eqlayout{position:relative;margin:4px auto 6px}
 #mp-eqtip .mp-eqlayout .mp-eqcell{position:absolute;width:34px;height:34px}
+#mp-eqtip .mp-eqcell.empty{background:rgba(255,255,255,.025)!important;border:1px dashed rgba(255,255,255,.07)!important;box-shadow:none!important}
 #mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
 #mp-eqtip.gamey .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px}
 .mp-eqgrid{display:grid;grid-template-columns:repeat(6,40px);gap:5px;margin:6px 0}
@@ -1605,9 +1615,23 @@ const ui = {
     }, { capture: true, passive: false });
   },
 
+  THEMES: {
+    fiolet:   { name: 'Fiolet (domyślny)', accent: '#7c5cff', bg: '16,17,28' },
+    ocean:    { name: 'Ocean',             accent: '#3fa2ff', bg: '10,20,34' },
+    szmaragd: { name: 'Szmaragd',          accent: '#2ecc8f', bg: '10,26,22' },
+    rubin:    { name: 'Rubin',             accent: '#ff4d6d', bg: '30,12,18' },
+    bursztyn: { name: 'Bursztyn',          accent: '#ffb020', bg: '28,20,8' },
+    roz:      { name: 'Róż',               accent: '#ff6ec7', bg: '28,12,26' },
+    grafit:   { name: 'Grafit',            accent: '#a3adbd', bg: '18,18,20' },
+    noc:      { name: 'Północ',            accent: '#6d8bff', bg: '6,8,16' },
+  },
+
   applyTheme() {
     const g = config.data.global;
-    document.documentElement.style.setProperty('--mp-accent', g.accent || '#7c5cff');
+    const t = this.THEMES[g.theme] || this.THEMES.fiolet;
+    g.accent = t.accent;
+    document.documentElement.style.setProperty('--mp-bg', t.bg);
+    document.documentElement.style.setProperty('--mp-accent', t.accent);
     document.documentElement.style.setProperty('--mp-glass', String(g.glass ?? 0.55));
   },
 
@@ -1839,7 +1863,12 @@ const ui = {
       { key: 'minInterval', type: 'number', label: 'Minimalny odstęp między komendami panelu (ms)', min: 150, max: 5000, hint: 'Dotyczy wszystkich dodatków naraz. Nie schodź poniżej 250 ms.' },
       { key: 'panelKey', type: 'key', label: 'Skrót otwierający panel' },
       { key: 'perCharacter', type: 'bool', label: 'Osobne ustawienia dla każdej postaci', hint: 'Zmiana zadziała po odświeżeniu gry.' },
-      { key: 'accent', type: 'color', label: 'Kolor akcentu' },
+      { key: 'theme', type: 'custom', render: (obj, onSave) => el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } },
+        el('div', { class: 'lb' }, 'Motyw okien'),
+        el('div', { class: 'mp-themes' }, Object.entries(this.THEMES).map(([k, t]) => el('div', {
+          class: 'mp-theme' + ((obj.theme || 'fiolet') === k ? ' on' : ''), style: { '--t-accent': t.accent, background: `rgba(${t.bg},.85)` },
+          onclick: () => { obj.theme = k; onSave(); this.renderAll(); quickbar.draw(); },
+        }, el('div', { class: 'sw', style: { background: `linear-gradient(135deg, ${t.accent}55, rgba(${t.bg},1))` } }, el('i')), el('div', { class: 'nm' }, t.name))))) },
       { key: 'glass', type: 'range', label: 'Przezroczystość tła', min: 0.2, max: 0.95, step: 0.05 },
       { key: 'menuSelector', type: 'textarea', label: 'Selektor menu prawego przycisku w grze', hint: 'Zapas, gdy opcje (np. „Dobij") nie pojawiają się w menu gracza.' },
     ];
@@ -2922,7 +2951,7 @@ MP.itemDeco = itemDeco;
  */
 (() => {
   let cfg, cache = {}, tip = null, hoverId = null, lastReq = 0;
-  let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null;
+  let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null, lastGrid = null;
   const seenItems = new Map();      // dane przedmiotów/szablonów, które przeszły przez grę (id → obiekt, 'tpl:<nr>' → obiekt)
 
   function hide() {
@@ -3082,8 +3111,13 @@ MP.itemDeco = itemDeco;
       raw.showEq();
       while (now() - t0 < 3000) {
         await sleep(25);
-        w = $$('.showeq-window').find((n) => shown(n) && n.querySelector('[class*="-showeq"]') && before.get(n) !== true + '#' + sigOf(n));
-        if (w) break;
+        w = $$('.showeq-window').find((n) => shown(n) && before.get(n) !== true + '#' + sigOf(n));
+        if (w) {
+          // okno się pokazało — czekamy chwilę na przedmioty (gracz z pustym EQ nie ma żadnych)
+          const tw = now();
+          while (!w.querySelector('[class*="-showeq"]') && now() - tw < 600) await sleep(25);
+          break;
+        }
       }
       if (w) {
         const els = $$('[class*="item-id-"]', w).filter((n) => /item-id-\d+-showeq/.test(String(n.className)));
@@ -3091,9 +3125,16 @@ MP.itemDeco = itemDeco;
         const tpls = els.map((n) => Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0);
         dbg.ids = ids; dbg.tpls = tpls;
         const rects = els.map((n) => n.getBoundingClientRect());
+        // pole slotów w oknie gry (wspólny rodzic przedmiotów) — dzięki temu pojedynczy przedmiot stoi na swoim miejscu
+        let box = els[0] ? els[0].parentElement : null;
+        while (box && box !== w && !els.every((x) => box.contains(x))) box = box.parentElement;
+        const br = box ? box.getBoundingClientRect() : null;
+        dbg.grid = br ? { x: br.left, y: br.top, w: br.width, h: br.height } : null;
+        lastGrid = dbg.grid;
         const lookup = (i) => lookupRaw(ids[i], tpls[i], els[i], seen, dbg);
         let found = els.map((n, i) => lookup(i));
         if (!found.every(Boolean)) { await sleep(120); dbg.src = {}; found = els.map((n, i) => lookup(i)); }
+        const gridInfo = dbg.grid;
         items = ids.map((iid, i) => {
           let it;
           if (found[i]) { it = game.normItem(found[i]); it.id = iid; (dbg.items = dbg.items || []).push({ name: found[i].name, legbon: it.legbon, rarity: it.rarity, stat: String(found[i].stat || '').slice(0, 160) }); }
@@ -3105,7 +3146,7 @@ MP.itemDeco = itemDeco;
             try { const c = n.querySelector('canvas.icon, canvas'); if (c) img = c.toDataURL(); } catch {}
             it = { id: iid, name: '', icon: img, rarity: rarityFromEl(n), legbon: null, stats: {} };
           }
-          it.pos = { x: rects[i].left, y: rects[i].top, w: rects[i].width || 32 };
+          it.pos = { x: rects[i].left, y: rects[i].top, w: rects[i].width || 32, grid: gridInfo };
           return it;
         });
       } else dbg.noWindow = true;
@@ -3209,7 +3250,8 @@ MP.itemDeco = itemDeco;
       it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null);
     const withPos = items.filter((i) => i.pos && i.pos.w);
     if (withPos.length !== items.length || !items.length) return el('div', { class: 'mp-eqgrid' }, items.map(cell));
-    const minX = Math.min(...withPos.map((i) => i.pos.x)), minY = Math.min(...withPos.map((i) => i.pos.y));
+    const g = withPos[0].pos.grid;
+    const minX = g ? g.x : Math.min(...withPos.map((i) => i.pos.x)), minY = g ? g.y : Math.min(...withPos.map((i) => i.pos.y));
     const step = (vals) => {
       const u = [...new Set(vals.map((v) => Math.round(v)))].sort((a, b) => a - b);
       let m = Infinity;
@@ -3220,12 +3262,20 @@ MP.itemDeco = itemDeco;
     const S = 36;
     let maxC = 0, maxR = 0;
     const box = el('div', { class: 'mp-eqlayout' });
+    const taken = new Set();
     for (const it of withPos) {
-      const c = Math.round((it.pos.x - minX) / ux), r = Math.round((it.pos.y - minY) / uy);
+      const c = Math.max(0, Math.round((it.pos.x - minX) / ux)), r = Math.max(0, Math.round((it.pos.y - minY) / uy));
       maxC = Math.max(maxC, c); maxR = Math.max(maxR, r);
+      taken.add(c + ':' + r);
       const n = cell(it);
       n.style.left = c * S + 'px'; n.style.top = r * S + 'px';
       box.appendChild(n);
+    }
+    if (g) { maxC = Math.max(maxC, Math.round(g.w / ux) - 1); maxR = Math.max(maxR, Math.round(g.h / uy) - 1); }
+    // puste miejsca na sloty — delikatne pola, żeby było widać układ także przy niepełnym EQ
+    for (let r = 0; r <= maxR; r++) for (let c = 0; c <= maxC; c++) {
+      if (taken.has(c + ':' + r)) continue;
+      box.insertBefore(el('div', { class: 'mp-eqcell empty', style: { left: c * S + 'px', top: r * S + 'px' } }), box.firstChild);
     }
     box.style.width = (maxC + 1) * S - 2 + 'px';
     box.style.height = (maxR + 1) * S - 2 + 'px';
@@ -3257,7 +3307,7 @@ MP.itemDeco = itemDeco;
     eqBox.innerHTML = '';
     if (items === 'own-window') eqBox.appendChild(el('div', { class: 'mp-dim mp-eqload' }, 'Masz otwarte okno ekwipunku z gry.'));
     else if (!items) eqBox.appendChild(el('div', { class: 'mp-warnc mp-eqload' }, 'Nie udało się pobrać.'));
-    else if (!items.length) eqBox.appendChild(el('div', { class: 'mp-dim mp-eqload' }, 'Brak założonych przedmiotów.'));
+    else if (!items.length) { eqBox.appendChild(el('div', { class: 'mp-dim mp-eqload' }, 'Brak założonych przedmiotów.')); sumBox.innerHTML = ''; }
     else { eqBox.appendChild(layoutGrid(items)); sumBox.innerHTML = ''; sumBox.appendChild(summaryEl(items)); }
     place();
   }
@@ -3752,5 +3802,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.6.2";
+MP.version = "1.6.3";
 })();

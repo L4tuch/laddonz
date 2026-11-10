@@ -17,7 +17,7 @@ function el(tag, attrs, ...kids) {
     for (const [k, v] of Object.entries(attrs)) {
       if (v == null || v === false) continue;
       if (k === 'class') n.className = v;
-      else if (k === 'style' && typeof v === 'object') Object.assign(n.style, v);
+      else if (k === 'style' && typeof v === 'object') { for (const [sk, sv] of Object.entries(v)) { if (sv == null) continue; if (sk.startsWith('--')) n.style.setProperty(sk, sv); else n.style[sk] = sv; } }
       else if (k === 'html') n.innerHTML = v;
       else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
       else n.setAttribute(k, v === true ? '' : v);
