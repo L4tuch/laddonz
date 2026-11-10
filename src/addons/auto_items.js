@@ -442,7 +442,7 @@
     if (!slots().length) { toast('Ulepszarka: najpierw wskaż przedmiot do ulepszania', 'warn'); return; }
     const c = net.cmd('enhance');
     if (!c.t || !c.verified) { toast('Ulepszarka: ulepsz raz ręcznie w oknie rzemiosła — wtedy się nauczy', 'warn'); return; }
-    if (cfg.usages && cfg.usages.day === new Date().toDateString() && cfg.usages.limit && cfg.usages.count >= cfg.usages.limit) { toast('Ulepszarka: wykorzystano dzisiejszy limit ulepszeń', 'warn'); return; }
+    if (usagesLeft() === 0) { limitMsg(); return; }
     running = true;
     hushUntil = now() + 120000;
     try {
@@ -516,43 +516,68 @@
   }
   const maxFor = (it) => { const m = store.get('up:maxlvl', {}) || {}; return Math.min(MAX_LVL, m[it && it.rarity] != null ? m[it.rarity] : MAX_LVL); };
 
+  /** Ile ulepszeń zostało na dziś (null = nie wiadomo). Gra liczy każdy zużyty składnik. */
+  function usagesLeft() {
+    const u = cfg.usages;
+    if (!u || !u.limit || u.day !== new Date().toDateString()) return null;
+    return Math.max(0, u.limit - u.count);
+  }
+  const limitMsg = () => toast(`Ulepszarka: na dziś koniec — wykorzystano dzienny limit ulepszeń (${cfg.usages.count}/${cfg.usages.limit}). Limit odnowi się jutro`, 'warn', 6000);
+
   async function sendAll(p) {
-    let n = 0, failed = false;
+    let n = 0, failed = false, limitHit = false;
     const steps = [];
-    const saveSteps = () => store.set('up:last', { t: new Date().toISOString(), steps: steps.slice(-20) });
+    const saveSteps = () => store.set('up:last', { t: new Date().toISOString(), steps: steps.slice(-30) });
+    const preview = async (target, list) => {
+      const r = await net.send('enhancePreview', { item: target.id, ingredients: list.map((i) => i.id).join(',') }, { src: 'Ulepszarka', onResponse: maxResp({ target }) });
+      steps.push({ a: 'preview', item: target.id, n: list.length, ok: r.ok, resp: short(r.data) }); saveSteps();
+      return r;
+    };
+    const pvOf = (r) => r && r.data && r.data.enhancement && r.data.enhancement.progress_preview;
     try {
       outer: for (const o of p) {
         // każdy składnik sprawdzony jeszcze raz tuż przed wysłaniem
-        const fresh = o.list.filter((i) => { const f = game.itemById(i.id); return f && f.st === 0 && !NEVER.includes(f.rarity) && !targetIds().has(f.id); });
-        for (let k = 0; k < fresh.length; k += 16) {
-          const part = fresh.slice(k, k + 16);
-          const ids = part.map((i) => i.id).join(',');
+        let rest = o.list.filter((i) => { const f = game.itemById(i.id); return f && f.st === 0 && !NEVER.includes(f.rarity) && !targetIds().has(f.id); });
+        while (rest.length) {
+          const left = usagesLeft();
+          if (left === 0) { limitHit = true; break outer; }
+          let part = rest.slice(0, Math.min(16, left == null ? 16 : left));
           // dokładnie tak jak gra: najpierw podgląd, potem ulepszenie; na pytanie gry „Tak" klika Ulepszarka
-          const rp = await net.send('enhancePreview', { item: o.target.id, ingredients: ids }, { src: 'Ulepszarka' });
-          steps.push({ a: 'preview', item: o.target.id, n: part.length, ok: rp.ok, err: rp.error, resp: short(rp.data) }); saveSteps();
+          const rp = await preview(o.target, part);
           if (isMaxedResp(rp.data)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }   // przedmiot już na maksimum — sam znika z listy
           if (!rp.ok || badResp(rp.data)) { failed = true; break outer; }
-          // podgląd gry zwraca listę składników, które PRZYJMUJE (np. bez tych o za niskim poziomie) — wysyłamy tylko je,
-          // a odrzucone zapamiętujemy, żeby więcej ich nie proponować do tego przedmiotu
-          const pv = rp.data && rp.data.enhancement && rp.data.enhancement.progress_preview;
-          let useIds = part.map((i) => i.id);
+          // podgląd zwraca składniki, które gra PRZYJMUJE — odrzucone (np. za niski poziom) zapamiętujemy i pomijamy
+          let pv = pvOf(rp);
           if (pv && Array.isArray(pv.ingredients)) {
             const acc = new Set(pv.ingredients.map(Number));
-            const rej = useIds.filter((id) => !acc.has(id));
-            if (rej.length) markRejected(o.target.id, rej);
-            useIds = useIds.filter((id) => acc.has(id));
+            const rej = part.filter((i) => !acc.has(i.id)).map((i) => i.id);
+            if (rej.length) { markRejected(o.target.id, rej); rest = rest.filter((i) => !rej.includes(i.id)); part = part.filter((i) => acc.has(i.id)); }
           }
-          if (!useIds.length) continue;
+          if (!part.length) continue;
+          // nie przepalamy: jeśli te składniki dają więcej, niż brakuje do następnego poziomu — bierzemy najmniej,
+          // ile trzeba, żeby go osiągnąć (szukanie połówkowe na podglądach, nic nie zużywają)
+          const reach = (x) => x && Number(x.current) + Number(x.gained) >= Number(x.max);
+          if (pv && Number(pv.max) > 0 && reach(pv) && part.length > 1) {
+            let lo = 1, hi = part.length;
+            while (lo < hi) {
+              const mid = (lo + hi) >> 1;
+              const t = pvOf(await preview(o.target, part.slice(0, mid)));
+              if (reach(t)) hi = mid; else lo = mid + 1;
+              await sleep(150);
+            }
+            part = part.slice(0, lo);
+            steps.push({ a: 'trim', n: lo }); saveSteps();
+          }
+          const useIds = part.map((i) => i.id);
           const okIds = useIds.join(',');
-          await sleep(350);
+          await sleep(300);
           ask.arm();
           const r = await net.send('enhance', { item: o.target.id, ingredients: okIds }, { src: 'Ulepszarka', onResponse: maxResp(o) });
-          steps.push({ a: 'progress', item: o.target.id, n: part.length, ok: r.ok, err: r.error, resp: short(r.data) }); saveSteps();
+          steps.push({ a: 'progress', item: o.target.id, n: part.length, ok: r.ok, resp: short(r.data) }); saveSteps();
           if (isMaxedResp(r.data)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }
           if (!r.ok || badResp(r.data)) { failed = true; break outer; }
           let gone = await waitGone(useIds, 3500);
           if (!gone) {
-            // gra zadała pytanie (w odpowiedzi jest numer pytania), a okienka nie udało się kliknąć — odpowiadamy „Tak" tak jak gra po kliknięciu
             if (msgIds(r.data).includes(Q_SURE)) {   // tylko na znane pytanie „czy na pewno"
               await net.send('enhanceAnswer', { item: o.target.id, ingredients: okIds, q: Q_SURE }, { src: 'Ulepszarka', onResponse: maxResp(o) });
               steps.push({ a: 'answer', q: Q_SURE }); saveSteps();
@@ -560,19 +585,21 @@
             gone = await waitGone(useIds, 5000);
           }
           steps.push({ a: 'gone', n: gone }); saveSteps();
-          if (!gone) { failed = true; break outer; }
+          if (!gone) { if (usagesLeft() === 0) limitHit = true; else failed = true; break outer; }
           n += gone;
+          rest = rest.filter((i) => !useIds.includes(i.id));
           const sl = slots().find((x) => Number(x.id) === o.target.id);
-          if (sl && sl.prog && sl.prog.lvl >= maxFor(o.target)) { removeMaxed(o.target.id, o.target.name); continue outer; }   // osiągnął maksimum — sam znika z listy
           if (!sl) continue outer;
-          await sleep(600);
+          if (sl.prog && sl.prog.lvl >= maxFor(o.target)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }   // osiągnął maksimum
+          await sleep(500);
         }
       }
     } finally {
       ask.disarm();
-      net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Zużyto ${n} przedmiotów na ulepszanie${failed ? ' (przerwano)' : ''}` });
-      if (failed) toast(n ? `Ulepszarka: zużyto ${n}, potem gra przestała przyjmować ulepszenie — przerwałam` : 'Ulepszarka: gra nie przyjęła ulepszenia — przerwałam', 'bad');
-      else toast(`Ulepszarka: ulepszono — zużyto ${n} przedmiotów`, 'ok');
+      net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Zużyto ${n} przedmiotów na ulepszanie${failed ? ' (przerwano)' : ''}${limitHit ? ' (dzienny limit)' : ''}` });
+      if (limitHit) limitMsg();
+      else if (failed) toast(n ? `Ulepszarka: zużyto ${n}, potem gra przestała przyjmować ulepszenie — przerwałam` : 'Ulepszarka: gra nie przyjęła ulepszenia — przerwałam', 'bad');
+      else if (n) toast(`Ulepszarka: ulepszono — zużyto ${n} przedmiotów`, 'ok');
       rr();
     }
   }
@@ -600,7 +627,7 @@
     const i = slots().findIndex((s) => Number(s.id) === Number(id));
     if (i < 0) return;
     slots().splice(i, 1); config.save();
-    toast(why ? `Ulepszarka: „${name}" — ${why} — usunięty z listy` : `Ulepszarka: „${name}" osiągnął maksymalny poziom — usunięty z listy`, 'ok');
+    toast(why ? `Ulepszarka: „${name}" — ${why} — zdjęto z listy` : `Ulepszarka: Przedmiot osiągnął maksymalny poziom — zdjęto z listy „${name}"`, 'ok', 5000);
     net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `„${name}" maksymalnie ulepszony — usunięty z listy` });
     rr();
   }
@@ -690,7 +717,7 @@
       const it = game.itemById(s.id);
       if (it && isMaxed(it)) {
         slots().splice(i, 1); changed = true;
-        toast(`Ulepszarka: „${s.name}" osiągnął maksymalny poziom — usunięty z listy`, 'ok');
+        toast(`Ulepszarka: Przedmiot osiągnął maksymalny poziom — zdjęto z listy „${s.name}"`, 'ok', 5000);
         net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `„${s.name}" maksymalnie ulepszony — usunięty z listy` });
       }
     }
@@ -705,7 +732,8 @@
   let freeBlockSig = '', freeNag = 0;
   const bagSig = () => game.bag().map((i) => i.id).join(',');
   async function freeWatch() {
-    if (!cfg || !cfg.enabled || running || !(Number(cfg.freeAt) > 0) || !slots().length) return;
+    if (!cfg || !cfg.enabled || running || !cfg.freeAuto || !slots().length) return;
+    if (usagesLeft() === 0) return;
     if (game.inBattle() || document.querySelector('.mp-modal-bg')) return;
     const free = game.freeBagSlots();
     if (free == null || free > Number(cfg.freeAt)) { freeBlockSig = ''; return; }
@@ -815,7 +843,7 @@
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
     desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Ulepszasz przyciskiem albo klawiszem (okno Rzemiosło → Ulepszanie otwiera się samo) — to zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Każdy typ składników może być przypisany tylko do jednego ulepszanego przedmiotu.',
-    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, freeAt: 0 },
+    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
       !net.cmd('enhance').verified ? { type: 'info', text: 'Ulepsz raz ręcznie w oknie rzemiosła — Ulepszarka sama się nauczy.' } : null,
@@ -823,7 +851,8 @@
     settings: [
       { group: 'Ustawienia', key: 'key', type: 'key', label: 'Klawisz: ulepsz teraz' },
       { group: 'Ustawienia', key: 'confirm', type: 'bool', label: 'Pokazuj listę przedmiotów przed ulepszeniem', hint: 'Lista zużywanych przedmiotów z ich rzadkością (zwykły, unikat, heroiczny…).' },
-      { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAt', type: 'number', label: 'Ulepsz, gdy w torbie zostanie tyle wolnych miejsc', min: 0, max: 100, hint: '0 = wyłączone. Np. 3 — gdy zostaną 3 wolne miejsca (lub mniej), Ulepszarka sama ulepszy wszystkie wybrane przedmioty pasującymi składnikami. Nie działa w trakcie walki.' },
+      { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAuto', type: 'bool', label: 'Włączone', rerender: true },
+      { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAt', type: 'number', show: (c) => c.freeAuto, label: 'Ulepsz, gdy w torbie zostanie tyle wolnych miejsc (0 = torba pełna)', min: 0, max: 100, hint: 'Gdy zostanie tyle wolnych miejsc (lub mniej), Ulepszarka sama ulepszy wszystkie wybrane przedmioty. 0 = dopiero gdy torba jest pełna. Nie działa w trakcie walki.' },
       { group: 'Ochrona', key: 'protectNames', type: 'list', label: 'Nigdy nie używaj (nazwy)', placeholder: 'nazwa + Enter' },
     ],
     render(box, c, rerender) {
@@ -843,9 +872,9 @@
         box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));
       }
       if (cfg.usages && cfg.usages.limit && cfg.usages.day === new Date().toDateString()) box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, `Dzisiejsze ulepszenia: ${cfg.usages.count} / ${cfg.usages.limit}`));
-      if (Number(cfg.freeAt) > 0) {
+      if (cfg.freeAuto) {
         const f = game.freeBagSlots();
-        box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, f == null ? 'Nie udało się odczytać wolnych miejsc w torbie.' : `Wolne miejsca w torbie teraz: ${f} · ulepszę przy ${cfg.freeAt} lub mniej`));
+        box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, f == null ? 'Nie udało się odczytać wolnych miejsc w torbie.' : `Wolne miejsca w torbie teraz: ${f} · ulepszę przy ${Number(cfg.freeAt) ? cfg.freeAt + ' lub mniej' : 'pełnej torbie'}`));
       }
       box.appendChild(el('div', { class: 'mp-btns' },
         slots().length ? el('button', { class: 'mp-btn pri', onclick: () => run() }, cfg.key ? `Ulepsz teraz (${cfg.key})` : 'Ulepsz teraz') : null,
@@ -864,6 +893,7 @@
       { const u = new Set(); slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => !u.has(t)); sl.types.forEach((t) => u.add(t)); }); }   // typ składników tylko u jednego przedmiotu
       watchPointer();
       // wyrzuciło z gry w trakcie ulepszania? — automatyczne ulepszanie wstrzymane, dopóki go nie wznowisz
+      if (c.freeAuto === undefined) { c.freeAuto = Number(c.freeAt) > 0; config.save(); }
       store.del('up:inflight'); if (cfg.autoPaused) { delete cfg.autoPaused; config.save(); }
       // stara komenda z dopisaną odpowiedzią (powodowała wyrzucenie) — usuwamy
       try { if ((config.data.commands || {}).enhance) net.resetCmd('enhance'); } catch {}   // komenda jest wbudowana — żadnych nauczonych zamienników
