@@ -601,6 +601,37 @@
     setTimeout(() => { if (m.isConnected) m.style.opacity = '0'; }, Math.max(500, E.dur * 1000 - 700));
   }
 
+  /* ── napis pod oknem łupów: klimatyczne zdanie + „Zdobyłeś: nazwy legend" ── */
+  const FLAVOR = {
+    thor: ['Grom z jasnego nieba!', 'Thor błogosławi Twój łup!', 'Piorun trafił w dziesiątkę!', 'Niebo pękło na pół!'],
+    smoke: ['Z dymu wyłania się legenda…', 'Mgła opada, a w niej…', 'Z popiołów powstaje…', 'Czarny dym skrywał skarb…'],
+    kasyno: ['JACKPOT! Bank rozbity!', 'Trzy siódemki!', 'Wielka wygrana!', 'Kasyno płaci podwójnie!'],
+    disco: ['Parkiet płonie!', 'Impreza roku!', 'Kula disco wskazała zwycięzcę!', 'DJ, puść to jeszcze raz!'],
+  };
+  function lootNames(win) {
+    const out = [];
+    for (const it of $$('.item', win)) {
+      if (!it.dataset.mpLg) continue;
+      const n = it.dataset.mpName || (game.itemById(game.itemIdFromEl(it)) || {}).name;
+      if (n && !out.includes(n)) out.push(n);
+    }
+    return out;
+  }
+  function showCaption(win, me, st) {
+    if (!win || cfg.names === false) return;
+    const names = lootNames(win); if (!names.length) return;
+    const r = win.getBoundingClientRect();
+    const cc = cfg.custom || {};
+    const fl = st === 'wlasny' ? (cc.capText || 'Legenda!') : (FLAVOR[st] || FLAVOR.thor)[Math.floor(Math.random() * 4)];
+    const cap = el('div', { class: 'mp-lg-cap ' + st, style: { left: r.left + r.width / 2 + 'px', top: Math.min(innerHeight - 70, r.bottom + 10) + 'px', '--lgc': st === 'wlasny' ? (cc.color || '#ff9a1f') : STYLES[st].col } },
+      el('div', { class: 'mp-lg-cap-f' }, fl),
+      el('div', { class: 'mp-lg-cap-n' }, (names.length > 1 ? 'Zdobyłeś legendy: ' : 'Zdobyłeś: '), names.map((n, i) => el('span', null, i ? ', ' : '', el('b', null, n)))));
+    document.body.appendChild(cap);
+    me.cap = cap;
+    requestAnimationFrame(() => cap.classList.add('on'));
+    setTimeout(() => { if (cap.isConnected) cap.classList.remove('on'); }, Math.max(1500, me.dur * 1000 - 800));
+  }
+
   /* ═════════════════ odtwarzanie ═════════════════ */
   let run = null;
   /** Okna łupu gry: po klasie albo po nagłówku „Łup…" (okno gry .c-window). */
@@ -713,6 +744,7 @@
     if (!run) return;
     cancelAnimationFrame(run.raf); run.cvs.forEach((c) => c.remove()); if (run.fake) run.fake.remove();
     if (run.media) run.media.remove();
+    if (run.cap) run.cap.remove();
     (run.pops || []).forEach((b) => b.remove());
     $$('.item[data-mp-lg]').forEach((x) => { if (x.style.opacity === '0') x.style.opacity = ''; });
     if (run.win) run.win.classList.remove('mp-lg-win', 'thor', 'smoke', 'kasyno', 'disco', 'wlasny');
@@ -744,24 +776,69 @@
   }
   /** Okno łupów do testu — zbudowane z tych samych elementów co okno gry, więc wygląda jak ono (także w Motywniku). */
   function fakeLoot() {
+    usedNames = new Set();
     const tpl = store.get('legenda:lootTpl', null);
     if (tpl && tpl.html) try { const f = fakeFromTpl(tpl); if (f) return f; } catch (e) { console.warn('[L4Tools] wzór okna łupów', e); }
     return fakeBuilt();
   }
+  /** Test: 2–5 przedmiotów, w tym losowo 1–3 legendy, reszta zwykłe / unikaty / heroiki. */
   function randomRars() {
-    const n = 2 + Math.floor(Math.random() * 3);
-    const rars = Array.from({ length: n }, () => ['common', 'common', 'unique', 'heroic', 'legendary'][Math.floor(Math.random() * 5)]);
-    if (!rars.includes('legendary')) rars[Math.floor(Math.random() * n)] = 'legendary';
+    const legs = 1 + Math.floor(Math.random() * 3);
+    const n = Math.min(5, legs + 1 + Math.floor(Math.random() * 3));
+    const rars = Array.from({ length: n - legs }, () => ['common', 'common', 'unique', 'heroic'][Math.floor(Math.random() * 4)]);
+    for (let i = 0; i < legs; i++) rars.splice(Math.floor(Math.random() * (rars.length + 1)), 0, 'legendary');
     return rars;
   }
+
+  /*
+   * Szablony legend z gry do testu: gdy w grze widać legendę (torba, ekwipunek, podgląd EQ innych graczy, łup),
+   * zapamiętujemy jej nazwę i obrazek. Test pokazuje wtedy prawdziwe legendy z gry, nie wymyślone.
+   */
+  const LEG_FALLBACK = ['Sygnet geotermalny', 'Czaszka Przeznaczenia', 'Buciory lidera szajki'];
+  function iconOf(n, raw) {
+    const cv = n.querySelector('canvas');
+    if (cv && cv.width) { try { return cv.toDataURL('image/png'); } catch {} }
+    const img = n.querySelector('img'); if (img && img.src) return img.src;
+    const bg = getComputedStyle(n).backgroundImage; const m = bg && bg.match(/url\("?(.*?)"?\)/); if (m) return m[1];
+    try { const ip = (W.CFG && (W.CFG.a_ipath || W.CFG.ipath || W.CFG.r_ipath)) || ''; if (raw && raw.icon && ip) return ip + raw.icon; } catch {}
+    return null;
+  }
+  function collectLegends() {
+    const list = store.get('legenda:legTpl', []);
+    let changed = false;
+    for (const n of $$('.item[class*="item-id-"]')) {
+      if (n.closest('.mp-lg-fake, .mp-lg-pop, #mp-panel')) continue;
+      const id = game.itemIdFromEl(n), it = id && game.itemById(id);
+      if (!it || it.rarity !== 'legendary' || !it.name || list.some((x) => x.name === it.name)) continue;
+      let raw = null; try { raw = E().items.getItemById(id); } catch {}
+      const img = iconOf(n, raw); if (!img) continue;
+      list.push({ name: it.name, img }); changed = true;
+      if (list.length > 24) list.shift();
+    }
+    if (changed) store.set('legenda:legTpl', list);
+  }
+  let usedNames = new Set();
+  const pickName = (arr, f = (x) => x) => { const free = arr.filter((x) => !usedNames.has(f(x))); const src = free.length ? free : arr; const v = src[Math.floor(Math.random() * src.length)]; usedNames.add(f(v)); return v; };
+  function legendFromTpl() {
+    const list = store.get('legenda:legTpl', []);
+    if (!list.length) return null;
+    const t = pickName(list, (x) => x.name);
+    const it = el('div', { class: 'item mp-lg-tpl-item', style: { width: '32px', height: '32px' } }, el('img', { src: t.img, alt: '', draggable: 'false', style: { width: '32px', height: '32px', display: 'block', pointerEvents: 'none' } }));
+    it.dataset.mpName = t.name;
+    return it;
+  }
   function testItem(r, bag) {
+    if (r === 'legendary') {
+      const t = legendFromTpl();
+      if (t) { t.title = t.dataset.mpName; t.dataset.mpLg = '1'; return t; }
+    }
     let pool = bag[r];
     if (!pool || !pool.length) pool = [].concat(bag.legendary, bag.heroic, bag.unique, bag.common);   // brak takiej rzadkości w torbie — dowolny przedmiot
     let it;
     if (pool && pool.length) { it = cloneItem(pool[Math.floor(Math.random() * pool.length)]); it.style.position = it.style.left = it.style.top = it.style.transform = ''; it.querySelectorAll('.amount, small, .cl-icon').forEach((n) => n.remove()); }
     else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1], width: '32px', height: '32px' } });
     it.title = RAR[r][0];
-    if (r === 'legendary') it.dataset.mpLg = '1'; else delete it.dataset.mpLg;
+    if (r === 'legendary') { it.dataset.mpLg = '1'; it.dataset.mpName = pickName(LEG_FALLBACK); } else { delete it.dataset.mpLg; delete it.dataset.mpName; }
     return it;
   }
   /** Okno łupów z zapamiętanego wzoru gry: te same elementy i klasy, tylko inne przedmioty. */
@@ -792,9 +869,7 @@
     return f;
   }
   function fakeBuilt() {
-    const n = 3 + Math.floor(Math.random() * 3);
-    const rars = Array.from({ length: n }, () => ['common', 'common', 'unique', 'heroic', 'legendary'][Math.floor(Math.random() * 5)]);
-    if (!rars.includes('legendary')) rars[Math.floor(Math.random() * n)] = 'legendary';
+    const rars = randomRars();
     const bag = bagByRarity();
     const cards = rars.map((r) => {
       const pool = bag[r];
@@ -872,6 +947,7 @@
       if (opts.test && !fake) $$('.mp-lg-hl', win).forEach((h) => { if (!before.has(h)) h.classList.add('test'); });
     }
     showMedia(E);
+    me.dur = dur; showCaption(win, me, E.style);
     if (win && fieldSpec().item === 'pop') FOUNTAINS(dur).forEach((ft) => setTimeout(() => { if (run === me) popItems(win, me); }, ft * 1000 + 250));
     // przy teście panel przygasa, żeby było widać cały efekt
     if (me.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .3s'; g.style.opacity = '0.12'; });
@@ -1059,7 +1135,10 @@
       const HL = [['ring', 'Obwódka w okienku'], ['glow', 'Obwódka + poświata'], ['pulse', 'Pulsujące tło'], ['none', 'Bez wyróżnienia']];
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Wyróżnienie okienka z legendą'),
         el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Okno łupu zostaje takie jak w grze — wyróżnione jest tylko okienko z legendą, w kolorach wybranego stylu. Wyróżnienie mieści się w okienku, więc kilka legend obok siebie nie nachodzi na siebie.'),
-        el('div', { class: 'mp-btns' }, HL.map(([v, l]) => el('button', { class: 'mp-upchip' + ((c.hlMode || 'ring') === v ? ' on' : ''), onclick: () => { c.hlMode = v; config.save(); rerender(); } }, l)))));
+        el('div', { class: 'mp-btns' }, HL.map(([v, l]) => el('button', { class: 'mp-upchip' + ((c.hlMode || 'ring') === v ? ' on' : ''), onclick: () => { c.hlMode = v; config.save(); rerender(); } }, l))),
+        el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
+          el('button', { class: 'mp-upchip' + (c.names !== false ? ' on' : ''), onclick: () => { c.names = c.names === false; config.save(); rerender(); } }, c.names !== false ? 'Napis pod oknem: „Zdobyłeś: …" — włączony' : 'Napis pod oknem: wyłączony')),
+        el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, `Test pokazuje 1–3 legendy. Szablony legend z gry zapamiętane do testu: ${store.get('legenda:legTpl', []).length} (zbierają się same, gdy widzisz legendy — w torbie, ekwipunku albo podglądzie EQ innych graczy).`)));
 
       // dźwięk wybranego stylu
       const k = c.style, S = STYLES[k];
@@ -1142,12 +1221,15 @@
           r.addEventListener('change', () => config.save());
           return el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '120px' } }, label), r, o);
         };
+        const capIn = el('input', { class: 'mp-in', type: 'text', maxlength: 60, value: cc.capText || 'Legenda!', placeholder: 'Legenda!' });
+        capIn.addEventListener('change', () => { cc.capText = capIn.value.trim() || 'Legenda!'; config.save(); });
         const txt = el('input', { class: 'mp-in', type: 'text', maxlength: 24, value: cc.text || 'LEGENDA!', placeholder: 'LEGENDA!' });
         txt.addEventListener('change', () => { cc.text = txt.value.trim() || 'LEGENDA!'; config.save(); });
         box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Pole z legendą i napis'),
           selRow('Obwódka pola', 'ring', [['thor', 'Błyskawica (niebieska)'], ['smoke', 'Czarno-czerwona'], ['kasyno', 'Złota'], ['disco', 'Neonowa (tęcza)'], ['wlasny', 'W moim kolorze']], 'wlasny'),
           selRow('Efekt legendy', 'itemFx', [['glow', 'Świeci moim kolorem'], ['bolts', 'Pioruny w legendę'], ['fade', 'Pojawia się i znika'], ['pop', 'Wyskakuje i kręci się'], ['hue', 'Świeci zmieniając kolory']], 'glow'),
           el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '120px' } }, 'Tekst napisu'), txt),
+          el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '120px' } }, 'Zdanie pod oknem'), capIn),
           selRow('Czcionka napisu', 'font', [['Cinzel', 'Klasyczna (Cinzel)'], ['Bungee', 'Kasynowa (Bungee)'], ['Monoton', 'Neonowa (Monoton)']], 'Cinzel'),
           rangeRow('Intensywność', 'intensity', 30, 250, 10, 100, '%'),
           rangeRow('Przyciemnienie', 'dim', 0, 85, 5, 35, '%')));
@@ -1161,6 +1243,7 @@
       c.sounds = c.sounds || {};
       if (!document.querySelector(`link[href="${FONTS}"]`)) document.head.appendChild(el('link', { rel: 'stylesheet', href: FONTS }));
       bus.on('data', onData);
+      setInterval(() => { try { collectLegends(); } catch {} }, 5000);
       const scan = debounce(scanDom, 80);
       new MutationObserver(() => { if (cfg.enabled) scan(); }).observe(document.body, { childList: true, subtree: true });
       MP.legenda = { play, stop: stopFx, STYLES, SOUND, debug: () => { const t = store.get('legenda:lootTpl', null); return { rozmiary: store.get('legenda:lootSizes', {}), wzor: t ? t.html.slice(0, 9000) : null, rodzic: t && t.parent }; } };

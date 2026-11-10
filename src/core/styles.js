@@ -175,6 +175,16 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 @keyframes mpLgItemGlow{0%,100%{filter:drop-shadow(0 0 3px var(--lgg))}50%{filter:drop-shadow(0 0 8px var(--lgg)) brightness(1.12)}}
 .item.mp-lg-fx-bolts{animation:mpLgItemBolt 2.1s steps(1) infinite}
 @keyframes mpLgItemBolt{0%,100%{filter:drop-shadow(0 0 3px #6fb2ff)}20%{filter:drop-shadow(0 0 9px #cfe8ff) brightness(1.4)}23%{filter:drop-shadow(0 0 3px #6fb2ff)}61%{filter:drop-shadow(0 0 8px #cfe8ff) brightness(1.3)}64%{filter:drop-shadow(0 0 3px #6fb2ff)}}
+.mp-lg-cap{position:fixed;transform:translate(-50%,8px) scale(.92);opacity:0;transition:opacity .6s,transform .7s cubic-bezier(.2,1.4,.4,1);z-index:2147483003;pointer-events:none;text-align:center;padding:7px 18px 8px;border-radius:8px;background:linear-gradient(rgba(10,10,14,.82),rgba(4,4,8,.88));box-shadow:0 0 0 1px color-mix(in srgb,var(--lgc) 60%,transparent),0 6px 22px rgba(0,0,0,.6),0 0 18px color-mix(in srgb,var(--lgc) 35%,transparent);color:#f2f2f2;font:13px Arimo,Arial,sans-serif;max-width:min(520px,90vw);white-space:normal}
+.mp-lg-cap.on{opacity:1;transform:translate(-50%,0) scale(1)}
+.mp-lg-cap-f{font:900 15px Cinzel,Georgia,serif;letter-spacing:.6px;color:var(--lgc);text-shadow:0 0 10px var(--lgc);margin-bottom:2px}
+.mp-lg-cap-n b{color:#ff9a3c;text-shadow:0 0 8px rgba(255,120,30,.8)}
+.mp-lg-cap.kasyno .mp-lg-cap-f{font:16px Bungee,Impact,sans-serif;color:#ffd34d;text-shadow:0 2px 0 #6b4503,0 0 12px #ffc83a}
+.mp-lg-cap.disco .mp-lg-cap-f{font:16px Monoton,Impact,sans-serif;animation:mpLgCapHue 2s linear infinite}
+@keyframes mpLgCapHue{0%{color:#ff2bd6;text-shadow:0 0 10px #ff2bd6}33%{color:#00e5ff;text-shadow:0 0 10px #00e5ff}66%{color:#ffe600;text-shadow:0 0 10px #ffe600}100%{color:#ff2bd6;text-shadow:0 0 10px #ff2bd6}}
+.mp-lg-cap.thor .mp-lg-cap-f{animation:mpLgCapThor 2.3s steps(1) infinite}
+@keyframes mpLgCapThor{0%,100%{text-shadow:0 0 10px #6fb2ff}31%{text-shadow:0 0 18px #fff,0 0 30px #6fb2ff}34%{text-shadow:0 0 10px #6fb2ff}}
+.mp-lg-cap.smoke{background:linear-gradient(rgba(14,6,6,.85),rgba(2,2,2,.9))}.mp-lg-cap.smoke .mp-lg-cap-f{color:#e9ecef;text-shadow:0 0 12px #ff2a1a}
 .mp-lg-pop{position:fixed;z-index:2147483002;pointer-events:none;perspective:300px}
 .mp-mt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .mp-mt-card{cursor:pointer;border-radius:10px;padding:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18)}
