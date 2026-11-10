@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.2.2
+// @version      3.3.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -959,6 +959,7 @@ const ICON_PATHS = {
   napad: '<path d="M4 20l7-7"/><path d="M14.5 3.5l6 6-8.5 8.5-6-6z"/><path d="M3 17l4 4"/><path d="M16 6l2 2"/>',
   wakeup: '<path d="M6 16V11a6 6 0 1112 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 004 0"/><path d="M3 7.5c.6-1.6 1.6-3 3-4"/><path d="M21 7.5c-.6-1.6-1.6-3-3-4"/>',
   wrogowie: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/>',
+  pogromca: '<path d="M4 20l7-7M14.5 3.5l6 6-9 9-6-6z"/><path d="M14 4l-2-2M20 10l2 2M3 21l2-2"/>',
   legenda: '<path d="M12 2.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16l-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/><path d="M12 6.5v3M9.8 10.2l1.4 1.2M14.2 10.2l-1.4 1.2"/>',
   motywnik: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.6 1.7-1.6H16a5 5 0 0 0 5-5C21 6.3 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
   bratan: '<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6z"/><path d="M8.5 12.5l2.3 2.3 4.7-5"/>',
@@ -1087,6 +1088,27 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-btn[disabled]{opacity:.45;pointer-events:none}
 .mp-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .mp-upslot{padding:10px}
+#mp-pt{position:fixed;z-index:2147470000;min-width:250px;max-width:340px;border:1px solid;border-radius:6px;font-family:Arimo,Arial,sans-serif;font-size:12.8px;user-select:none;overflow:hidden}
+.mp-pt-h{display:flex;align-items:center;gap:8px;padding:6px 8px 5px 10px;border-bottom:1px solid;cursor:move;background:rgba(0,0,0,.18)}
+.mp-pt-h b{font-size:1.05em;letter-spacing:.3px;flex:1}
+.mp-pt-r{font-size:.85em;opacity:.7}
+.mp-pt-x{all:unset;cursor:pointer;width:18px;text-align:center;font-size:16px;line-height:16px;opacity:.7}.mp-pt-x:hover{opacity:1}
+.mp-pt-b{padding:4px 8px 8px;max-height:60vh;overflow:auto}
+.mp-pt-s{font-size:.8em;text-transform:uppercase;letter-spacing:.8px;margin:6px 0 4px;padding-bottom:2px;border-bottom:1px solid}
+.mp-pt-w{margin:4px 0 7px}
+.mp-pt-wn{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:3px}
+.mp-pt-wn > span:first-child{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-pt-hp{width:56px;height:5px;border-radius:3px;background:rgba(0,0,0,.45);overflow:hidden}.mp-pt-hp i{display:block;height:100%;background:linear-gradient(90deg,#c0281e,#ff5a3c)}
+.mp-pt-es{display:flex;flex-wrap:wrap;gap:4px}
+.mp-pt-e{display:inline-flex;align-items:center;gap:5px;padding:2px 7px 2px 5px;border-radius:10px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 60%,transparent);font-size:.92em}
+.mp-pt-dot{width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 6px var(--c)}
+.mp-pt-n{color:var(--c)}
+.mp-pt-t{opacity:.85;font-variant-numeric:tabular-nums}
+.mp-pt-e.soon{animation:mpPtBlink 1s ease-in-out infinite}
+.mp-pt-c{margin:2px 0 4px;padding:3px 7px;border-radius:4px;background:color-mix(in srgb,var(--c) 18%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 70%,transparent);color:var(--c);font-size:.95em}
+.mp-pt-c.soon{animation:mpPtBlink .7s ease-in-out infinite;font-weight:700}
+.mp-pt-none{font-size:.88em;font-style:italic}
+@keyframes mpPtBlink{0%,100%{filter:none}50%{filter:brightness(1.6);box-shadow:inset 0 0 0 1px var(--c),0 0 10px var(--c)}}
 .mp-lg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .mp-lg-card{position:relative;cursor:pointer;border-radius:12px;padding:8px 8px 10px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.2);display:flex;flex-direction:column;gap:4px}
 .mp-lg-card:hover{border-color:rgba(255,255,255,.3)}.mp-lg-card.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 0 18px color-mix(in srgb,var(--c) 35%,transparent)}
@@ -1106,35 +1128,36 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-row{display:flex;align-items:center;gap:10px;margin:6px 0}
 .mp-lg-row .mp-range{flex:1}
 @property --mpa{syntax:'<angle>';inherits:false;initial-value:0deg}
-.mp-lg-hl{position:absolute;inset:-3px;border-radius:5px;pointer-events:none;z-index:6;--lgc:#8fc4ff}
+.mp-lg-hl{position:absolute;inset:0;border-radius:4px;pointer-events:none;z-index:6;--lgc:#8fc4ff}
 .mp-lg-hl::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:2px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:mpLgRing 2.2s linear infinite}
 .mp-lg-hl::after{content:'';position:absolute;inset:2px;border-radius:3px;overflow:hidden}
 @keyframes mpLgRing{to{--mpa:360deg}}
-.mp-lg-hl.thor{animation:mpLgThor 1.6s infinite}
-.mp-lg-hl.thor::before{background:conic-gradient(from var(--mpa),transparent 0 18%,#4f9dff 26%,#fff 30%,#4f9dff 34%,transparent 42% 68%,#4f9dff 76%,#fff 80%,#4f9dff 84%,transparent 92%);animation-duration:.9s}
-@keyframes mpLgThor{0%,100%{box-shadow:0 0 8px 2px rgba(79,157,255,.7),inset 0 0 8px rgba(111,178,255,.6)}7%{box-shadow:0 0 20px 6px rgba(190,225,255,.95),inset 0 0 14px rgba(255,255,255,.8)}10%{box-shadow:0 0 6px 1px rgba(79,157,255,.5),inset 0 0 6px rgba(111,178,255,.4)}13%{box-shadow:0 0 16px 5px rgba(160,205,255,.9),inset 0 0 12px rgba(255,255,255,.6)}}
-.mp-lg-hl.smoke{animation:mpLgSmoke2 3s ease-in-out infinite}
-.mp-lg-hl.smoke::before{background:conic-gradient(from var(--mpa),#0b0b0d,#8a8f98,#0b0b0d 35%,#d9dde3 50%,#0b0b0d 65%,#6b7078,#0b0b0d);animation-duration:4s}
-@keyframes mpLgSmoke2{0%,100%{box-shadow:0 0 10px 4px rgba(0,0,0,.85),0 0 22px 8px rgba(40,40,46,.6),inset 0 0 8px rgba(255,255,255,.18)}50%{box-shadow:0 0 16px 7px rgba(0,0,0,.9),0 0 34px 14px rgba(30,30,36,.55),inset 0 0 12px rgba(255,255,255,.3)}}
-.mp-lg-hl.kasyno{animation:mpLgGold 1.2s ease-in-out infinite}
-.mp-lg-hl.kasyno::before{background:conic-gradient(from var(--mpa),#8a5a05,#ffd34d,#fff6c4 12%,#ffd34d 20%,#b8860b 35%,#ffd34d 55%,#fff6c4 62%,#ffd34d 70%,#8a5a05);animation-duration:1.8s}
-.mp-lg-hl.kasyno::after{background:linear-gradient(115deg,transparent 35%,rgba(255,250,220,.75) 50%,transparent 65%) -150% 0/250% 100% no-repeat;animation:mpLgSweep 1.6s ease-in-out infinite}
-@keyframes mpLgGold{0%,100%{box-shadow:0 0 8px 2px rgba(255,200,60,.6)}50%{box-shadow:0 0 18px 6px rgba(255,214,90,.95)}}
+.mp-lg-hl.m-ring{animation:mpLgIn 1.6s ease-in-out infinite}
+.mp-lg-hl.m-glow{animation:mpLgOut 1.6s ease-in-out infinite}
+.mp-lg-hl.m-pulse{animation:mpLgBg 1.4s ease-in-out infinite}
+.mp-lg-hl.m-pulse::before{display:none}
+@keyframes mpLgIn{0%,100%{box-shadow:inset 0 0 6px color-mix(in srgb,var(--lgc) 55%,transparent)}50%{box-shadow:inset 0 0 14px var(--lgc)}}
+@keyframes mpLgOut{0%,100%{box-shadow:inset 0 0 6px color-mix(in srgb,var(--lgc) 55%,transparent),0 0 3px 0 var(--lgc)}50%{box-shadow:inset 0 0 14px var(--lgc),0 0 7px 1px var(--lgc)}}
+@keyframes mpLgBg{0%,100%{background:color-mix(in srgb,var(--lgc) 10%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lgc) 60%,transparent)}50%{background:color-mix(in srgb,var(--lgc) 28%,transparent);box-shadow:inset 0 0 0 1px var(--lgc),inset 0 0 12px var(--lgc)}}
+.mp-lg-hl.thor{--lgc:#6fb2ff}.mp-lg-hl.thor::before{background:conic-gradient(from var(--mpa),transparent 0 18%,#4f9dff 26%,#fff 30%,#4f9dff 34%,transparent 42% 68%,#4f9dff 76%,#fff 80%,#4f9dff 84%,transparent 92%);animation-duration:.9s}
+.mp-lg-hl.smoke{--lgc:#b9bec6}.mp-lg-hl.smoke::before{background:conic-gradient(from var(--mpa),#0b0b0d,#8a8f98,#0b0b0d 35%,#d9dde3 50%,#0b0b0d 65%,#6b7078,#0b0b0d);animation-duration:4s}
+.mp-lg-hl.kasyno{--lgc:#ffc83a}.mp-lg-hl.kasyno::before{background:conic-gradient(from var(--mpa),#8a5a05,#ffd34d,#fff6c4 12%,#ffd34d 20%,#b8860b 35%,#ffd34d 55%,#fff6c4 62%,#ffd34d 70%,#8a5a05);animation-duration:1.8s}
+.mp-lg-hl.kasyno::after{background:linear-gradient(115deg,transparent 35%,rgba(255,250,220,.6) 50%,transparent 65%) -150% 0/250% 100% no-repeat;animation:mpLgSweep 1.6s ease-in-out infinite}
 @keyframes mpLgSweep{0%{background-position:-150% 0}60%,100%{background-position:250% 0}}
-.mp-lg-hl.disco{animation:mpLgDisco 1s linear infinite}
-.mp-lg-hl.disco::before{background:conic-gradient(from var(--mpa),#ff2bd6,#ffe600,#7cff4f,#00e5ff,#a35bff,#ff2bd6);animation-duration:1.2s}
-@keyframes mpLgDisco{0%{box-shadow:0 0 14px 4px #ff2bd6}25%{box-shadow:0 0 14px 4px #00e5ff}50%{box-shadow:0 0 14px 4px #ffe600}75%{box-shadow:0 0 14px 4px #7cff4f}100%{box-shadow:0 0 14px 4px #ff2bd6}}
-.mp-lg-hl.wlasny{animation:mpLgOwn 1.4s ease-in-out infinite}
+.mp-lg-hl.disco{--lgc:#ff4fd8}.mp-lg-hl.disco::before{background:conic-gradient(from var(--mpa),#ff2bd6,#ffe600,#7cff4f,#00e5ff,#a35bff,#ff2bd6);animation-duration:1.2s}
 .mp-lg-hl.wlasny::before{background:conic-gradient(from var(--mpa),transparent,var(--lgc) 20%,#fff 25%,var(--lgc) 30%,transparent 50%,var(--lgc) 70%,#fff 75%,var(--lgc) 80%,transparent)}
-@keyframes mpLgOwn{0%,100%{box-shadow:0 0 8px 2px color-mix(in srgb,var(--lgc) 70%,transparent)}50%{box-shadow:0 0 18px 6px var(--lgc)}}
 .c-window.mp-lg-win, .mp-lg-win{animation:mpLgWin 1.3s ease-in-out infinite}
 .mp-lg-win.thor{animation:mpLgWinThor 1.6s infinite}
 @keyframes mpLgWin{0%,100%{filter:drop-shadow(0 0 6px var(--lgc))}50%{filter:drop-shadow(0 0 18px var(--lgc))}}
 @keyframes mpLgWinThor{0%,100%{filter:drop-shadow(0 0 6px #4f9dff)}7%{filter:drop-shadow(0 0 22px #cfe8ff)}10%{filter:drop-shadow(0 0 4px #4f9dff)}13%{filter:drop-shadow(0 0 16px #9fd0ff)}}
-.mp-lg-fake{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:260px;z-index:2147482000;pointer-events:none;background:linear-gradient(#2a2420,#14110f);border:2px solid #6b5a45;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.6);color:#eadfcf;font:13px Arial,sans-serif}
-.mp-lg-fake-h{text-align:center;padding:6px;border-bottom:1px solid #4a3f33;font-weight:700;letter-spacing:.5px}
-.mp-lg-fake-b{display:flex;gap:12px;align-items:center;padding:16px}
-.mp-lg-fake-it{width:40px;height:40px;border-radius:4px;background:radial-gradient(circle,#ffb35c,#a33d00);box-shadow:0 0 0 2px #ff8a1f,0 0 16px #ff8a1f}
+.mp-lg-fake{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2147482000;pointer-events:none;background:linear-gradient(#1d1a17,#100e0c);border:2px solid #6b5a45;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.6);color:#eadfcf;font:12.8px Arial,sans-serif;min-width:230px}
+.mp-lg-fake-h{text-align:center;padding:6px 10px;border-bottom:1px solid #4a3f33;font-weight:700;letter-spacing:.5px}
+.mp-lg-fake-b{display:flex;gap:6px;padding:12px;justify-content:center}
+.mp-lg-fake-card{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px 6px;border:1px solid #4a3f33;border-radius:4px;background:rgba(255,255,255,.03);width:62px}
+.mp-lg-fake-item{width:34px;height:34px;border-radius:3px;background:radial-gradient(circle at 40% 35%,color-mix(in srgb,var(--rc) 70%,#fff),color-mix(in srgb,var(--rc) 55%,#000));box-shadow:inset 0 0 0 2px var(--rc)}
+.mp-lg-fake-want{font-size:11px;opacity:.85}
+.mp-lg-fake-btns{display:flex;gap:4px}.mp-lg-fake-btns i{font-style:normal;width:18px;height:18px;line-height:18px;text-align:center;border-radius:3px;background:#2b2b2b;border:1px solid #555;font-size:11px}
+.mp-lg-fake-f{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 10px;border-top:1px solid #4a3f33;font-size:12px}.mp-lg-fake-f b{padding:3px 10px;border:1px solid #5b6b45;border-radius:3px;background:#24301b}
 .mp-mt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .mp-mt-card{cursor:pointer;border-radius:10px;padding:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18)}
 .mp-mt-card:hover{border-color:rgba(255,255,255,.3)}.mp-mt-card.on{border-color:var(--mp-accent);box-shadow:0 0 0 1px var(--mp-accent)}
@@ -1382,7 +1405,7 @@ const addons = {
   cfg(id) { return config.data.addons[id]; },
   on(id) { return !!(config.data.addons[id] && config.data.addons[id].enabled); },
 
-  ORDER: ['napad', 'wakeup', 'bratan', 'wrogowie', 'ktotu', 'ktozlapie', 'cook', 'podpis', 'pokazeq', 'jakibon', 'taxi', 'autof', 'szybka', 'ulepszarka', 'minichat', 'legenda', 'motywnik'],
+  ORDER: ['napad', 'wakeup', 'bratan', 'wrogowie', 'ktotu', 'ktozlapie', 'cook', 'podpis', 'pokazeq', 'jakibon', 'taxi', 'autof', 'szybka', 'ulepszarka', 'minichat', 'legenda', 'pogromca', 'motywnik'],
 
   initAll() {
     this.list.sort((a, b) => this.ORDER.indexOf(a.id) - this.ORDER.indexOf(b.id));
@@ -5533,6 +5556,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window table.table-content tr:hover:has(> td:not(:empty)){background-color:${t.a1}12!important}
 .c-window table.table-content td, .c-window table.table-content td.mt-bd{border-color:${t.line2}!important}
 
+/* — okno łupu: gładkie tło bez pionowych krawędzi paneli, okienka przedmiotów jako spokojne kafle — */
+.c-window.mt-loot > .content{background:linear-gradient(${t.bg2}, ${t.bg1} 90px)!important}
+.c-window.mt-loot [class*="interface-element-middle-"]{border-image-source:none!important;border-image:none!important;background:transparent!important;box-shadow:none!important}
+.c-window.mt-loot .content :has(> .item):not(.content):not(.inner-content){background-color:${t.bg0}!important;border-radius:4px}
+
 /* — zakładki — */
 .tabs-nav .card{background:linear-gradient(${t.bg2},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 1px 0 ${t.m[0]}1f!important;text-shadow:0 1px 1px #000!important}
 .tabs-nav .card:hover{color:${t.text}!important;box-shadow:inset 0 0 0 1px ${t.line},inset 0 1px 0 ${t.m[0]}2e!important}
@@ -5639,6 +5667,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     }
   }
   /* menu gry pod prawym przyciskiem (.popup-menu): ramka i każda pozycja w kolorach stylu */
+  /* okno łupu: rozpoznawane po nagłówku „Łup…" — dostaje spokojniejszy, gładki wygląd */
+  function tagLoot() {
+    if (!active()) return;
+    for (const w of $$('.c-window')) { const h = w.querySelector('.header-label .text, .header-label'); if (h && /^\s*łup/i.test(h.textContent || '')) w.classList.add('mt-loot'); }
+  }
   function tagPopups() {
     if (!active()) return;
     for (const m of $$('.popup-menu')) {
@@ -5670,7 +5703,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     fixText(document.body);
     mo = new MutationObserver((muts) => {
       for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1 && !skip(n)) queue.add(n);
-      if (queue.size && !qT) qT = setTimeout(() => { qT = null; const q = [...queue]; queue.clear(); q.forEach((n) => n.isConnected && fixText(n)); hudLayer(active()); tagPopups(); }, 150);
+      if (queue.size && !qT) qT = setTimeout(() => { qT = null; const q = [...queue]; queue.clear(); q.forEach((n) => n.isConnected && fixText(n)); hudLayer(active()); tagPopups(); tagLoot(); }, 150);
     });
     mo.observe(document.body, { childList: true, subtree: true });
     document.addEventListener('contextmenu', onCtx, true);
@@ -5679,7 +5712,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function stop() {
     if (mo) { mo.disconnect(); mo = null; }
     document.removeEventListener('contextmenu', onCtx, true);
-    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
+    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi', 'mt-loot'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
   }
   const active = () => !!(cfg && cfg.enabled && THEMES[cfg.theme] && !THEMES[cfg.theme].none);
 
@@ -5837,7 +5870,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if ('ember' in c) { delete c.ember; config.save(); }
       bus.on('popup:shown', (labels) => tagMenu(labels));
       apply();
-      MP.motywnik = { apply, collectLook, THEMES, texture };
+      MP.motywnik = { apply, collectLook, THEMES, texture, current: () => (active() ? THEMES[cfg.theme] : null) };
     },
     onToggle() { apply(); },
   });
@@ -5868,7 +5901,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   };
   const LAYERS = [
     ['flash', 'Rozbłysk'], ['bolts', 'Błyskawice'], ['smoke', 'Dym'], ['coins', 'Monety'],
-    ['ball', 'Kula disco'], ['beams', 'Światła'], ['neon', 'Neony'], ['glow', 'Poświata'], ['banner', 'Napis'],
+    ['ball', 'Kula disco'], ['beams', 'Światła'], ['neon', 'Neony'], ['glow', 'Poświata'], ['banner', 'Napis'], ['media', 'Moja animacja'],
   ];
   const PRESET_LAYERS = {
     thor: ['storm', 'bolts', 'flash', 'banner'],
@@ -6417,6 +6450,35 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     },
   };
 
+  /* ── własna grafika / animacja (GIF, PNG, WebP, MP4, WebM) — warstwa „Moja animacja" ── */
+  let mediaUrl = null, mediaType = '';
+  async function loadMedia() {
+    if (mediaUrl) return mediaUrl;
+    const rec = await idb.get('media:wlasny').catch(() => null);
+    if (!rec || !rec.data) return null;
+    mediaType = rec.type || '';
+    mediaUrl = URL.createObjectURL(new Blob([rec.data], { type: rec.type }));
+    return mediaUrl;
+  }
+  async function showMedia(E) {
+    if (!(E.custom && E.layers.includes('media'))) return;
+    const url = await loadMedia(); if (!url || !run) return;
+    const cc = cfg.custom || {}, size = Math.max(10, Math.min(100, Number(cc.mediaSize) || 45)) / 100, pos = cc.mediaPos || 'above';
+    const vid = /^video\//.test(mediaType);
+    const m = el(vid ? 'video' : 'img', { class: 'mp-lg-media', src: url });
+    if (vid) { m.muted = true; m.loop = true; m.playsInline = true; m.autoplay = true; }
+    const r = E.r, w = pos === 'full' ? E.W : Math.round(E.W * size);
+    Object.assign(m.style, { position: 'fixed', zIndex: '2147483001', pointerEvents: 'none', width: w + 'px', height: pos === 'full' ? '100vh' : 'auto', objectFit: pos === 'full' ? 'cover' : 'contain', opacity: '0', transition: 'opacity .5s, transform .6s cubic-bezier(.2,1.4,.4,1)', transform: 'scale(.7)' });
+    if (pos === 'full') Object.assign(m.style, { left: '0', top: '0', mixBlendMode: cc.mediaBlend ? 'screen' : 'normal' });
+    else if (pos === 'center') Object.assign(m.style, { left: (E.W - w) / 2 + 'px', top: '50%', translate: '0 -50%' });
+    else Object.assign(m.style, { left: Math.max(0, Math.min(E.W - w, r.left + r.width / 2 - w / 2)) + 'px', bottom: (E.H - r.top + 8) + 'px' });
+    document.body.appendChild(m);
+    run.media = m;
+    requestAnimationFrame(() => { m.style.opacity = '1'; m.style.transform = 'scale(1)'; });
+    if (vid) m.play().catch(() => {});
+    setTimeout(() => { if (m.isConnected) m.style.opacity = '0'; }, Math.max(500, E.dur * 1000 - 700));
+  }
+
   /* ═════════════════ odtwarzanie ═════════════════ */
   let run = null;
   /** Okna łupu gry: po klasie albo po nagłówku „Łup…" (okno gry .c-window). */
@@ -6428,22 +6490,36 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function lootWindow() { const ws = lootWindows(); return ws[ws.length - 1] || null; }
 
   /* ── podświetlenie legendarnych przedmiotów w oknie łupu (zostaje, dopóki okno jest otwarte) ── */
-  function hlClass() { return 'mp-lg-hl ' + (STYLES[cfg.style] ? cfg.style : 'thor'); }
+  function hlClass() { return 'mp-lg-hl ' + (STYLES[cfg.style] ? cfg.style : 'thor') + ' m-' + (cfg.hlMode || 'ring'); }
+  /** „Okienko" przedmiotu w oknie łupu: największy przodek kafelka, który zawiera tylko ten jeden przedmiot. */
+  function cardOf(it) {
+    let n = it;
+    const iw = it.getBoundingClientRect().width || 32;
+    while (n.parentElement) {
+      const p = n.parentElement;
+      if (p.matches('.c-window, .content, .inner-content, .mp-lg-fake, .mp-lg-fake-b, [class*="scroll"], body') || $$('.item', p).length > 1) break;
+      if (p.getBoundingClientRect().width > iw * 4.5) break;
+      n = p;
+    }
+    return n;
+  }
   function markItem(it) {
     if (!it) return;
-    let h = it.querySelector(':scope > .mp-lg-hl');
+    if ((cfg.hlMode || 'ring') === 'none') return;
+    const card = cardOf(it);
+    let h = card.querySelector(':scope > .mp-lg-hl');
     if (!h) {
-      if (getComputedStyle(it).position === 'static') it.style.position = 'relative';
-      h = el('div'); it.appendChild(h);
+      if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
+      h = el('div'); card.appendChild(h);
     }
     h.className = hlClass();
     h.style.setProperty('--lgc', cfg.style === 'wlasny' ? ((cfg.custom && cfg.custom.color) || '#ff9a1f') : STYLES[cfg.style] ? STYLES[cfg.style].col : '#8fc4ff');
   }
   function markWindow(win, test) {
     if (!win) return;
-    const items = $$('.item, .mp-lg-fake-it', win);
+    const items = $$('.item', win);
     let any = false;
-    for (const it of items) if (it.dataset.mpLg || it.classList.contains('mp-lg-fake-it')) { markItem(it); any = true; }
+    for (const it of items) if (it.dataset.mpLg) { markItem(it); any = true; }
     if (!any && test && items[0]) markItem(items[0]);
   }
   function canvas(z, before) {
@@ -6455,15 +6531,25 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function stopFx() {
     if (!run) return;
     cancelAnimationFrame(run.raf); run.cvs.forEach((c) => c.remove()); if (run.fake) run.fake.remove();
+    if (run.media) run.media.remove();
     if (run.win) run.win.classList.remove('mp-lg-win', 'thor', 'smoke', 'kasyno', 'disco', 'wlasny');
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
     if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
     try { run.stopSnd && run.stopSnd(); } catch {}
     run = null;
   }
-  /** Okno „na niby" do testu, gdy w grze nie ma otwartego okna łupu. */
+  /** Okno łupu „na niby" do testu: kilka losowych przedmiotów (zwykłe, unikaty, heroiki, legendy), jak w grze. */
+  const RAR = { common: ['Zwykły', '#9a9a9a'], unique: ['Unikatowy', '#e6c13b'], heroic: ['Heroiczny', '#3fa2ff'], legendary: ['Legendarny', '#ff8a1f'] };
   function fakeLoot() {
-    const f = el('div', { class: 'mp-lg-fake' }, el('div', { class: 'mp-lg-fake-h' }, 'Łup'), el('div', { class: 'mp-lg-fake-b' }, el('div', { class: 'mp-lg-fake-it' }), el('div', null, el('b', null, 'Przedmiot legendarny'), el('div', { class: 'mp-dim' }, 'test efektu'))));
+    const n = 3 + Math.floor(Math.random() * 3);
+    const rars = Array.from({ length: n }, () => ['common', 'common', 'unique', 'heroic', 'legendary'][Math.floor(Math.random() * 5)]);
+    if (!rars.includes('legendary')) rars[Math.floor(Math.random() * n)] = 'legendary';
+    const cards = rars.map((r) => {
+      const it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1] }, title: RAR[r][0] });
+      if (r === 'legendary') it.dataset.mpLg = '1';
+      return el('div', { class: 'mp-lg-fake-card' }, it, el('div', { class: 'mp-lg-fake-want' }, 'Chcę'), el('div', { class: 'mp-lg-fake-btns' }, el('i', null, '✓'), el('i', null, '✕')));
+    });
+    const f = el('div', { class: 'mp-lg-fake' }, el('div', { class: 'mp-lg-fake-h' }, 'Łupy'), el('div', { class: 'mp-lg-fake-b' }, cards), el('div', { class: 'mp-lg-fake-f' }, el('span', null, '10 s'), el('b', null, 'Potwierdź'), el('span', null, '10 m')));
     document.body.appendChild(f);
     return f;
   }
@@ -6490,17 +6576,17 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       dur, col: custom ? (cc.color || '#7c5cff') : STYLES[st].col, name: '', layers, style: custom ? 'wlasny' : st, custom,
       fade: (t) => Math.min(1, t / 0.3) * Math.min(1, Math.max(0, (dur - t) / 0.9)),
     };
-    const parts = layers.map((k) => L[k] && L[k](E)).filter(Boolean);
+    const parts = layers.map((k) => L[k] && L[k](E)).filter(Boolean);   // „media" to element strony, nie warstwa płótna
     const bx = back.getContext('2d'), fx = front.getContext('2d');
     const me = { cvs: [back, front], fake, raf: 0, stopSnd: null, dim: !!opts.test, test: !!opts.test, win: win && !fake ? win : null };
-    // okno łupu: świetlista ramka w stylu efektu na czas efektu + podświetlone legendy (zostają do zamknięcia okna)
+    // okno łupu zostaje jak w grze — wyróżniamy tylko okienka z legendami (zostają do zamknięcia okna)
     if (win) {
-      win.classList.add('mp-lg-win', st);
       win.style.setProperty('--lgc', E.col);
       const before = new Set($$('.mp-lg-hl', win));
       markWindow(win, !!opts.test);
       if (opts.test && !fake) $$('.mp-lg-hl', win).forEach((h) => { if (!before.has(h)) h.classList.add('test'); });
     }
+    showMedia(E);
     // przy teście panel przygasa, żeby było widać cały efekt
     if (me.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .3s'; g.style.opacity = '0.12'; });
     run = me;
@@ -6589,6 +6675,43 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   const svgI = (k) => el('span', { class: 'mp-lg-ico', html: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>` });
 
   let lastSnd = null;
+  const b64 = (buf) => { let s = ''; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+  const unb64 = (str) => { const s = atob(str); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; };
+  /** Eksport własnego efektu do pliku .json (ustawienia + Twoja animacja i dźwięk, jeśli są). */
+  async function exportOwn() {
+    const out = { l4tools: 'legenda', v: 1, custom: cfg.custom, dur: cfg.dur, volume: cfg.volume };
+    const m = await idb.get('media:wlasny').catch(() => null); if (m && m.data) out.media = { name: m.name, type: m.type, data: b64(m.data) };
+    const a = await idb.get('snd:wlasny').catch(() => null); if (a && a.data) out.sound = { name: a.name, size: a.size, data: b64(a.data) };
+    const link = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(out)], { type: 'application/json' })), download: 'legendarny-lup-efekt.json' });
+    document.body.appendChild(link); link.click(); link.remove();
+  }
+  function importOwn(done) {
+    const inp = el('input', { type: 'file', accept: '.json,application/json', style: { display: 'none' } });
+    inp.addEventListener('change', async () => {
+      const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+      try {
+        const o = JSON.parse(await f.text());
+        if (!o || o.l4tools !== 'legenda' || !o.custom) throw new Error('to nie jest plik efektu Legendarnego Łupu');
+        cfg.custom = Object.assign({}, cfg.custom, o.custom); if (o.dur) cfg.dur = o.dur;
+        if (o.media) { await idb.put('media:wlasny', { name: o.media.name, type: o.media.type, data: unb64(o.media.data) }); if (mediaUrl) URL.revokeObjectURL(mediaUrl); mediaUrl = null; }
+        if (o.sound) { await idb.put('snd:wlasny', { name: o.sound.name, size: o.sound.size, data: unb64(o.sound.data) }); delete bufCache.wlasny; }
+        cfg.style = 'wlasny'; config.save(); toast('Legendarny Łup: zaimportowano efekt'); done();
+      } catch (e) { toast('Legendarny Łup: nie udało się wczytać pliku — ' + e.message, 'warn'); }
+    });
+    document.body.appendChild(inp); inp.click();
+  }
+  function pickMedia(done) {
+    const inp = el('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,.gif,.png,.webp,.apng,.mp4,.webm', style: { display: 'none' } });
+    inp.addEventListener('change', async () => {
+      const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+      if (f.size > 25 * 1024 * 1024) { toast('Legendarny Łup: plik jest za duży (max 25 MB)', 'warn'); return; }
+      await idb.put('media:wlasny', { name: f.name, type: f.type || (/\.(mp4)$/i.test(f.name) ? 'video/mp4' : /\.webm$/i.test(f.name) ? 'video/webm' : 'image/gif'), data: await f.arrayBuffer() });
+      if (mediaUrl) URL.revokeObjectURL(mediaUrl); mediaUrl = null;
+      const cc = cfg.custom; if (!cc.layers.includes('media')) cc.layers = cc.layers.concat('media');
+      config.save(); toast(`Legendarny Łup: wgrano „${f.name}"`); done();
+    });
+    document.body.appendChild(inp); inp.click();
+  }
   async function ownInfo(key) { try { const r = await idb.get('snd:' + key); return r ? { name: r.name, size: r.size } : null; } catch { return null; } }
   function pickFile(key, done) {
     const inp = el('input', { type: 'file', accept: 'audio/*,.mp3,.ogg,.wav,.m4a', style: { display: 'none' } });
@@ -6610,7 +6733,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   defineAddon({
     id: 'legenda', name: 'Legendarny Łup', icon: 'legenda', color: ['#ff9a1f', '#ff3d6e'], renderFirst: true,
     desc: 'Gdy w łupie trafi się przedmiot legendarny — efekt na cały ekran z dźwiękiem: Thor, Smoke, Kasyno, Disco albo Twój własny. Każdy styl ma wbudowany dźwięk i może mieć Twój plik dźwiękowy. Przycisk „Test" pokazuje efekt od razu.',
-    defaults: { enabled: false, style: 'thor', volume: 0.7, dur: 15, sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
+    defaults: { enabled: false, style: 'thor', volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
     notes: () => [{ type: 'info', text: 'Wymaga włączonej opcji gry <b>Podświetlenie okna łupów</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy). Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
     render(box, c, rerender) {
@@ -6624,6 +6747,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
           el('button', { class: 'mp-btn mp-lg-test', onclick: (e) => { e.stopPropagation(); play(k, { test: true }); } }, 'Test')));
       }
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Styl efektu'), grid));
+      const HL = [['ring', 'Obwódka w okienku'], ['glow', 'Obwódka + poświata'], ['pulse', 'Pulsujące tło'], ['none', 'Bez wyróżnienia']];
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Wyróżnienie okienka z legendą'),
+        el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Okno łupu zostaje takie jak w grze — wyróżnione jest tylko okienko z legendą, w kolorach wybranego stylu. Wyróżnienie mieści się w okienku, więc kilka legend obok siebie nie nachodzi na siebie.'),
+        el('div', { class: 'mp-btns' }, HL.map(([v, l]) => el('button', { class: 'mp-upchip' + ((c.hlMode || 'ring') === v ? ' on' : ''), onclick: () => { c.hlMode = v; config.save(); rerender(); } }, l)))));
 
       // dźwięk wybranego stylu
       const k = c.style, S = STYLES[k];
@@ -6675,6 +6802,24 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         const chips = el('div', { class: 'mp-btns' }, LAYERS.map(([lk, ln]) => el('button', { class: 'mp-upchip' + (cc.layers.includes(lk) ? ' on' : ''), onclick: () => { cc.layers = cc.layers.includes(lk) ? cc.layers.filter((x) => x !== lk) : cc.layers.concat(lk); config.save(); rerender(); } }, ln)));
         const col = el('input', { class: 'mp-color', type: 'color', value: cc.color || '#ff9a1f' });
         col.addEventListener('change', () => { cc.color = col.value; config.save(); });
+        const minfo = el('div', { class: 'mp-dim', style: { margin: '4px 0' } }, '…');
+        idb.get('media:wlasny').then((m) => { minfo.textContent = m ? `Twoja animacja: ${m.name}` : 'Nie wgrano jeszcze animacji (GIF, PNG, WebP, MP4, WebM — do 25 MB).'; }).catch(() => {});
+        const posSel = el('select', { class: 'mp-in' }, [['above', 'Nad oknem łupu'], ['center', 'Na środku ekranu'], ['full', 'Cały ekran']].map(([v, l]) => { const o = el('option', { value: v }, l); if ((cc.mediaPos || 'above') === v) o.selected = true; return o; }));
+        posSel.addEventListener('change', () => { cc.mediaPos = posSel.value; config.save(); });
+        const ms = el('input', { class: 'mp-range', type: 'range', min: 10, max: 100, step: 5, value: cc.mediaSize || 45 });
+        const pm = () => ms.style.setProperty('--p', ((ms.value - 10) / 90) * 100 + '%'); pm();
+        ms.addEventListener('input', () => { pm(); cc.mediaSize = Number(ms.value); }); ms.addEventListener('change', () => config.save());
+        box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Twoje powiadomienie — import'),
+          el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Wgraj własną grafikę lub animację, która pojawi się przy legendzie (warstwa „Moja animacja”). Gotowy efekt możesz zapisać do pliku i wczytać na innym komputerze albo dać znajomym.'),
+          minfo,
+          el('div', { class: 'mp-btns' },
+            el('button', { class: 'mp-btn', onclick: () => pickMedia(rerender) }, 'Wgraj animację / grafikę'),
+            el('button', { class: 'mp-btn bad', onclick: async () => { await idb.del('media:wlasny').catch(() => {}); if (mediaUrl) URL.revokeObjectURL(mediaUrl); mediaUrl = null; cc.layers = cc.layers.filter((x) => x !== 'media'); config.save(); rerender(); } }, 'Usuń animację')),
+          el('div', { class: 'mp-lg-row', style: { marginTop: '8px' } }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Położenie'), posSel),
+          el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Wielkość'), ms),
+          el('div', { class: 'mp-btns' },
+            el('button', { class: 'mp-btn', onclick: () => importOwn(rerender) }, 'Importuj efekt (.json)'),
+            el('button', { class: 'mp-btn', onclick: exportOwn }, 'Eksportuj efekt (.json)'))));
         box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Twój efekt'),
           el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Warstwy efektu — włącz dowolne:'), chips,
           el('div', { class: 'mp-lg-row', style: { marginTop: '10px' } }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Kolor'), col)));
@@ -6690,6 +6835,237 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       MP.legenda = { play, stop: stopFx, STYLES, SOUND };
     },
     onToggle(on) { if (!on) stopFx(); },
+  });
+})();
+
+// ═══ src/addons/pogromca.js ═══
+/* ───────── Pogromca Tytanów ─────────
+ * Okienko w trakcie walki: jakie efekty działają na Twoją drużynę (albo na Ciebie solo) i na przeciwników,
+ * ile tur im zostało, oraz kiedy tytan / kolos / mob uderzy naładowanym atakiem.
+ * Pozytywne efekty — kolor „dobry", negatywne — czerwony; kolory dopasowane do Motywnika albo klasyczne.
+ *
+ * Skąd dane: gra nie opisuje efektów w jednym, znanym miejscu, więc czytamy kilka źródeł naraz:
+ *   1) dane wojowników w walce (Engine.battle i pakiety walki „f.w") — szukamy list efektów z czasem trwania,
+ *   2) dziennik walki („f.m") — komunikaty o nałożeniu efektu / ładowaniu ataku z liczbą tur.
+ * Przycisk „Zbierz dane walki" zapisuje surowe dane z prawdziwej walki, żeby dopasować odczyt do gry.
+ */
+(() => {
+  let cfg, win = null, preview = false, timer = null;
+  const PACKETS = [];               // ostatnie pakiety walki (do diagnozy)
+  const LOGS = [];                  // ostatnie linie dziennika walki
+  let state = { round: 0, w: {}, fromLog: {}, charge: {} };
+
+  /* ── klasyfikacja efektów ── */
+  const NEG = /osłab|oslab|trucizn|zatru|krwaw|ogłusz|oglusz|zamroż|zamroz|szadź|szadz|spowol|oślep|oslep|podpal|płon|plon|poraż|poraz|klątw|klatw|przebic|obniż|obniz|zmniejsz|redukc|unieruch|paraliż|paraliz|strach|rozbroj|wyzwani|prowok|kruch|rozdarc|zranien|odrętw|odretw|uśpien|uspien|chorob|-\s*\d/i;
+  const POS = /wzmoc|aura|furi|tarcz|regener|lecz|przyspiesz|ochron|odporn|zwiększ|zwieksz|błogosł|blogosl|kontratak|unik|odbic|barier|osłon|oslon|inspir|zryw|szał|szal|moc |siła|sila|\+\s*\d/i;
+  const kind = (name, hint) => {
+    if (hint === true || /^(good|buff|pos|positive|1)$/i.test(String(hint))) return 'pos';
+    if (hint === false || /^(bad|debuff|neg|negative|-1|0)$/i.test(String(hint))) return 'neg';
+    return NEG.test(name) ? 'neg' : POS.test(name) ? 'pos' : 'neu';
+  };
+
+  /* ── odczyt ze struktur gry (heurystyka: obiekty z nazwą i czasem trwania) ── */
+  const NAME_K = ['name', 'nazwa', 'n', 'label', 'title', 'txt', 'desc'];
+  const DUR_K = ['duration', 'dur', 'turns', 'turn', 'rounds', 'round', 'left', 'rest', 'remain', 'remaining', 'ttl', 'tury', 'tura', 'time', 't', 'count', 'cnt'];
+  const pick = (o, ks) => { for (const k of ks) if (o[k] !== undefined && o[k] !== null && o[k] !== '') return o[k]; return undefined; };
+  function effectsIn(obj, depth = 0, out = [], seen = new Set()) {
+    if (!obj || typeof obj !== 'object' || depth > 3 || seen.has(obj)) return out;
+    seen.add(obj);
+    const vals = Array.isArray(obj) ? obj : Object.values(obj);
+    for (const v of vals) {
+      if (!v || typeof v !== 'object') continue;
+      const nm = pick(v, NAME_K), du = pick(v, DUR_K);
+      if (typeof nm === 'string' && nm.length < 60 && du !== undefined && !isNaN(Number(du))) {
+        out.push({ name: nm.replace(/<[^>]+>/g, '').trim(), left: Number(du), k: kind(nm, pick(v, ['good', 'positive', 'buff', 'type', 'kind', 'negative'])) });
+      } else effectsIn(v, depth + 1, out, seen);
+    }
+    return out;
+  }
+  const CHARGE_K = /charge|special|spec|prepare|load|ultimate|countdown|attack_?in|nextattack|toattack/i;
+  function chargeIn(d) {
+    for (const [k, v] of Object.entries(d || {})) {
+      if (!CHARGE_K.test(k)) continue;
+      if (typeof v === 'number' && v >= 0 && v < 30) return { name: 'Naładowany atak', left: v };
+      if (v && typeof v === 'object') { const du = pick(v, DUR_K); if (du !== undefined && !isNaN(Number(du))) return { name: String(pick(v, NAME_K) || 'Naładowany atak'), left: Number(du) }; }
+    }
+    return null;
+  }
+
+  /* ── odczyt z dziennika walki ── */
+  const strip = (s) => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  function parseLog(line) {
+    const s = strip(line);
+    if (!s) return;
+    LOGS.push(s); if (LOGS.length > 80) LOGS.shift();
+    // „X ładuje / przygotowuje / kumuluje potężny atak … (za) 3 tur(y)"
+    let m = s.match(/^(.+?)\s+(?:ładuje|laduje|przygotowuje|kumuluje|szykuje|gromadzi)\b(.*?)(\d+)\s*(?:tur|rund)/i);
+    if (m) { state.charge[m[1].trim()] = { name: (m[2].replace(/\b(za|do|się|sie|w ciągu)\b/gi, '').trim() || 'Naładowany atak').slice(0, 40), left: Number(m[3]), at: state.round }; return; }
+    // „X … efekt Y … (na) 3 tur(y)" / „Y (3 tury)" przy imieniu
+    m = s.match(/^(.+?)\s+(?:otrzymuje|zyskuje|dostaje|jest pod wpływem|zostaje objęty|zostaje objęta|ma)\s+(?:efekt\s+)?[„"']?([^„"'(]{2,40}?)[”"']?\s*(?:na|\(|przez)\s*(\d+)\s*(?:tur|rund)/i);
+    if (m) { const who = m[1].trim(); (state.fromLog[who] = state.fromLog[who] || {})[m[2].trim()] = { left: Number(m[3]), at: state.round }; }
+  }
+
+  function onData(d) {
+    if (!d || !d.f) return;
+    const f = d.f;
+    if (f.init || f.init === 0) state = { round: 0, w: {}, fromLog: {}, charge: {} };
+    PACKETS.push(JSON.parse(JSON.stringify(f, (k, v) => (typeof v === 'string' && v.length > 300 ? v.slice(0, 300) + '…' : v)))); if (PACKETS.length > 40) PACKETS.shift();
+    const rnd = Number(f.round ?? f.r ?? f.turn ?? f.move);
+    if (!isNaN(rnd) && rnd > state.round) state.round = rnd;
+    if (f.w && typeof f.w === 'object') for (const [id, w] of Object.entries(f.w)) state.w[id] = Object.assign(state.w[id] || {}, w);
+    const logs = Array.isArray(f.m) ? f.m : f.m && typeof f.m === 'object' ? Object.values(f.m) : [];
+    logs.forEach(parseLog);
+    if (win && cfg.enabled && !preview && game.inBattle()) render();
+  }
+
+  /** Lista wojowników z efektami — z Engine.battle i z pakietów. */
+  function model() {
+    const out = {};
+    const h = game.hero();
+    const b = E() && E().battle;
+    let ws = b && (b.warriorsList || b.warriors);
+    try { if (typeof ws === 'function') ws = ws.call(b); } catch { ws = null; }
+    const arr = Array.isArray(ws) ? ws : Object.values(ws || {});
+    const add = (id, d) => {
+      if (!d) return;
+      const o = out[id] = out[id] || { id, name: '', team: null, hpp: null, eff: [], charge: null };
+      o.name = d.name || d.nick || o.name || String(id);
+      if (d.team !== undefined) o.team = d.team;
+      if (d.hpp !== undefined) o.hpp = Number(d.hpp);
+      o.eff = o.eff.concat(effectsIn(d));
+      o.charge = o.charge || chargeIn(d);
+    };
+    for (const w of arr) { const d = (w && (w.d || w)) || {}; add(String(d.id ?? w.id), Object.assign({}, d, w.d ? {} : w)); }
+    for (const [id, d] of Object.entries(state.w)) add(String(id), d);
+    // z dziennika: dopasowanie po imieniu
+    for (const o of Object.values(out)) {
+      const L = state.fromLog[o.name];
+      if (L) for (const [nm, v] of Object.entries(L)) { const left = v.left - Math.max(0, state.round - v.at); if (left > 0 && !o.eff.some((e) => e.name === nm)) o.eff.push({ name: nm, left, k: kind(nm) }); }
+      const C = state.charge[o.name];
+      if (C && !o.charge) { const left = C.left - Math.max(0, state.round - C.at); if (left >= 0) o.charge = { name: C.name, left }; }
+      // ten sam efekt z dwóch źródeł — jeden wpis
+      const seen = new Set(); o.eff = o.eff.filter((e) => { const k = e.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+    }
+    // drużyny: ta z bohaterem = „my"
+    const me = h && out[String(h.id)];
+    const myTeam = me ? me.team : null;
+    const allies = [], enemies = [];
+    for (const o of Object.values(out)) (myTeam !== null && o.team !== null ? (String(o.team) === String(myTeam) ? allies : enemies) : (Number(o.id) > 0 ? allies : enemies)).push(o);
+    return { allies, enemies };
+  }
+
+  /* ── wygląd: kolory Motywnika albo klasyczne Margonem ── */
+  function palette() {
+    const t = MP.motywnik && MP.motywnik.current && MP.motywnik.current();
+    if (t) return { bg: `linear-gradient(${t.bg2},${t.bg1})`, line: t.line, edge: t.m ? t.m[2] : t.line, text: t.text, dim: t.text2, head: t.head, pos: t.a1, neg: '#ff5a5a', neu: t.text2, chg: '#ffb020', glow: t.glow, chip: t.bg0 };
+    return { bg: 'linear-gradient(#2c2016,#1b130c)', line: '#7a5a34', edge: '#4a3420', text: '#f1e3c6', dim: '#c2a97f', head: 'Georgia, serif', pos: '#7fd36a', neg: '#ff6a5a', neu: '#d9c7a3', chg: '#ffb43a', glow: 'rgba(255,190,90,.15)', chip: 'rgba(0,0,0,.35)' };
+  }
+
+  function ensureWin() {
+    if (win && win.isConnected) return win;
+    const pos = store.get('win:pogromca', { x: innerWidth - 330, y: 140 });
+    win = el('div', { id: 'mp-pt', style: { left: pos.x + 'px', top: pos.y + 'px' } },
+      el('div', { class: 'mp-pt-h' }, el('b', null, 'Pogromca Tytanów'), el('span', { class: 'mp-pt-r' }), el('button', { class: 'mp-pt-x', title: 'Ukryj do końca walki', onclick: () => { win.style.display = 'none'; preview = false; } }, '×')),
+      el('div', { class: 'mp-pt-b' }));
+    document.body.appendChild(win);
+    makeDraggable(win, win.querySelector('.mp-pt-h'), (p) => store.set('win:pogromca', p));
+    return win;
+  }
+
+  function chip(e, P, warnAt) {
+    const c = e.k === 'pos' ? P.pos : e.k === 'neg' ? P.neg : P.neu;
+    const soon = e.left <= warnAt;
+    return el('div', { class: 'mp-pt-e' + (soon ? ' soon' : ''), style: { '--c': c, background: P.chip } },
+      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), el('span', { class: 'mp-pt-t' }, e.left === 1 ? '1 tura' : e.left > 1 && e.left < 5 ? `${e.left} tury` : `${e.left} tur`));
+  }
+  function row(o, P) {
+    const box = el('div', { class: 'mp-pt-w' },
+      el('div', { class: 'mp-pt-wn' }, el('span', null, o.name), o.hpp !== null && !isNaN(o.hpp) ? el('span', { class: 'mp-pt-hp' }, el('i', { style: { width: Math.max(0, Math.min(100, o.hpp)) + '%' } })) : null));
+    if (o.charge) {
+      const now1 = o.charge.left <= (cfg.warnAt ?? 1);
+      box.appendChild(el('div', { class: 'mp-pt-c' + (now1 ? ' soon' : ''), style: { '--c': P.chg } }, '⚡ ', el('b', null, o.charge.name), ' — ', o.charge.left <= 0 ? 'atakuje TERAZ' : `atak za ${o.charge.left} ${o.charge.left === 1 ? 'turę' : o.charge.left < 5 ? 'tury' : 'tur'}`));
+    }
+    const eff = o.eff.slice().sort((a, b) => a.left - b.left);
+    if (eff.length) box.appendChild(el('div', { class: 'mp-pt-es' }, eff.map((e) => chip(e, P, cfg.warnAt ?? 1))));
+    else if (!o.charge) box.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'brak efektów'));
+    return box;
+  }
+
+  function render(data) {
+    const w = ensureWin(), P = palette();
+    Object.assign(w.style, { background: P.bg, borderColor: P.line, color: P.text, boxShadow: `0 0 0 1px ${P.edge}, 0 10px 28px rgba(0,0,0,.6), 0 0 18px ${P.glow}`, fontSize: (cfg.scale || 100) * 0.128 + 'px' });
+    w.querySelector('.mp-pt-h b').style.fontFamily = P.head;
+    w.querySelector('.mp-pt-h').style.borderColor = P.line;
+    const { allies, enemies } = data || model();
+    w.querySelector('.mp-pt-r').textContent = state.round ? `tura ${state.round}` : preview ? 'podgląd' : '';
+    const B = w.querySelector('.mp-pt-b'); B.textContent = '';
+    const solo = allies.length <= 1;
+    const sec = (title, list) => { if (!list.length) return; B.appendChild(el('div', { class: 'mp-pt-s', style: { color: P.dim, borderColor: P.line } }, title)); list.forEach((o) => B.appendChild(row(o, P))); };
+    if (cfg.showAllies !== false) sec(solo ? 'Ty' : 'Twoja drużyna', allies);
+    if (cfg.showEnemies !== false) sec('Przeciwnicy', enemies);
+    if (!B.children.length) B.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'Brak danych o efektach w tej walce.'));
+    w.style.display = '';
+  }
+
+  function sample() {
+    return {
+      allies: [
+        { id: 1, name: 'Habiachi', hpp: 82, eff: [{ name: 'Aura ochrony', left: 3, k: 'pos' }, { name: 'Furia', left: 1, k: 'pos' }, { name: 'Trucizna', left: 2, k: 'neg' }] },
+        { id: 2, name: 'Nakuemease', hpp: 57, eff: [{ name: 'Szadź', left: 1, k: 'neg' }] },
+      ],
+      enemies: [
+        { id: -1, name: 'Tytan Ognia', hpp: 64, charge: { name: 'Erupcja', left: 2 }, eff: [{ name: 'Wyzwanie', left: 2, k: 'neg' }, { name: 'Osłabienie', left: 4, k: 'neg' }, { name: 'Wzmocnienie', left: 1, k: 'pos' }] },
+        { id: -2, name: 'Sługa tytana', hpp: 30, charge: { name: 'Naładowany atak', left: 1 }, eff: [] },
+      ],
+    };
+  }
+
+  function tick() {
+    if (!cfg.enabled) return;
+    if (preview) return;
+    if (game.inBattle()) render();
+    else if (win && win.style.display !== 'none') { win.style.display = 'none'; }
+  }
+
+  function collect() {
+    const b = E() && E().battle;
+    const shape = (o, d = 0) => { if (!o || typeof o !== 'object' || d > 2) return typeof o; const r = {}; for (const k of Object.keys(o).slice(0, 60)) { const v = o[k]; r[k] = typeof v === 'function' ? 'fn' : v && typeof v === 'object' ? shape(v, d + 1) : v; } return r; };
+    let ws = b && (b.warriorsList || b.warriors); try { if (typeof ws === 'function') ws = ws.call(b); } catch {}
+    const arr = Array.isArray(ws) ? ws : Object.values(ws || {});
+    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
+    const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
+    try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
+    toast(`Pogromca Tytanów: skopiowano dane walki (${PACKETS.length} pakietów) — wklej je w rozmowie`, 'ok', 5000);
+  }
+
+  defineAddon({
+    id: 'pogromca', name: 'Pogromca Tytanów', icon: 'pogromca', color: ['#ff6a3d', '#7a1fff'],
+    desc: 'W walce pokazuje okienko z efektami na Twojej drużynie (albo na Tobie solo) i na przeciwnikach: nazwa efektu i za ile tur zniknie. Przy tytanach, kolosach i mobach — kto ładuje atak i za ile uderzy. Pomaga trafić z szadzią, furią, aurą czy wyzwaniem. Pozytywne efekty mają kolor stylu, negatywne — czerwony.',
+    defaults: { enabled: false, showAllies: true, showEnemies: true, warnAt: 1, scale: 100 },
+    settings: [
+      { key: 'showAllies', type: 'bool', label: 'Pokazuj moją drużynę' },
+      { key: 'showEnemies', type: 'bool', label: 'Pokazuj przeciwników' },
+      { key: 'warnAt', type: 'number', label: 'Wyróżnij, gdy zostało tur', min: 0, max: 5, hint: 'Efekt lub atak, który kończy się za tyle tur (lub mniej), miga.' },
+      { key: 'scale', type: 'range', label: 'Wielkość okienka (%)', min: 80, max: 140, step: 5 },
+    ],
+    render(box) {
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Podgląd i dane'),
+        el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Okienko pokazuje się samo na czas walki i można je przesuwać. „Podgląd" pokazuje przykładowe efekty poza walką.'),
+        el('div', { class: 'mp-btns' },
+          el('button', { class: 'mp-btn pri', onclick: () => { preview = true; render(sample()); } }, 'Podgląd'),
+          el('button', { class: 'mp-btn', onclick: () => { preview = false; if (win) win.style.display = 'none'; } }, 'Ukryj'),
+          el('button', { class: 'mp-btn', onclick: collect }, 'Zbierz dane walki')),
+        MP.note('info', 'Po pierwszej walce z efektami (najlepiej z tytanem lub kolosem) kliknij <b>Zbierz dane walki</b> jeszcze w trakcie walki i wklej wynik w rozmowie — dopasuję odczyt dokładnie do tego, jak gra przesyła efekty.')));
+    },
+    init(c) {
+      cfg = c;
+      bus.on('data', onData);
+      bus.on('battle:start', () => { state = { round: 0, w: {}, fromLog: {}, charge: {} }; preview = false; });
+      bus.on('battle:end', () => { if (win && !preview) win.style.display = 'none'; });
+      timer = setInterval(tick, 500);
+      MP.pogromca = { render, sample, collect, state: () => state, preview: () => { preview = true; render(sample()); } };
+    },
+    onToggle(on) { if (!on && win) win.style.display = 'none'; },
   });
 })();
 
@@ -6747,5 +7123,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.2.2";
+MP.version = "3.3.0";
 })();

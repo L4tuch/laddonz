@@ -22,7 +22,7 @@
   };
   const LAYERS = [
     ['flash', 'Rozbłysk'], ['bolts', 'Błyskawice'], ['smoke', 'Dym'], ['coins', 'Monety'],
-    ['ball', 'Kula disco'], ['beams', 'Światła'], ['neon', 'Neony'], ['glow', 'Poświata'], ['banner', 'Napis'],
+    ['ball', 'Kula disco'], ['beams', 'Światła'], ['neon', 'Neony'], ['glow', 'Poświata'], ['banner', 'Napis'], ['media', 'Moja animacja'],
   ];
   const PRESET_LAYERS = {
     thor: ['storm', 'bolts', 'flash', 'banner'],
@@ -571,6 +571,35 @@
     },
   };
 
+  /* ── własna grafika / animacja (GIF, PNG, WebP, MP4, WebM) — warstwa „Moja animacja" ── */
+  let mediaUrl = null, mediaType = '';
+  async function loadMedia() {
+    if (mediaUrl) return mediaUrl;
+    const rec = await idb.get('media:wlasny').catch(() => null);
+    if (!rec || !rec.data) return null;
+    mediaType = rec.type || '';
+    mediaUrl = URL.createObjectURL(new Blob([rec.data], { type: rec.type }));
+    return mediaUrl;
+  }
+  async function showMedia(E) {
+    if (!(E.custom && E.layers.includes('media'))) return;
+    const url = await loadMedia(); if (!url || !run) return;
+    const cc = cfg.custom || {}, size = Math.max(10, Math.min(100, Number(cc.mediaSize) || 45)) / 100, pos = cc.mediaPos || 'above';
+    const vid = /^video\//.test(mediaType);
+    const m = el(vid ? 'video' : 'img', { class: 'mp-lg-media', src: url });
+    if (vid) { m.muted = true; m.loop = true; m.playsInline = true; m.autoplay = true; }
+    const r = E.r, w = pos === 'full' ? E.W : Math.round(E.W * size);
+    Object.assign(m.style, { position: 'fixed', zIndex: '2147483001', pointerEvents: 'none', width: w + 'px', height: pos === 'full' ? '100vh' : 'auto', objectFit: pos === 'full' ? 'cover' : 'contain', opacity: '0', transition: 'opacity .5s, transform .6s cubic-bezier(.2,1.4,.4,1)', transform: 'scale(.7)' });
+    if (pos === 'full') Object.assign(m.style, { left: '0', top: '0', mixBlendMode: cc.mediaBlend ? 'screen' : 'normal' });
+    else if (pos === 'center') Object.assign(m.style, { left: (E.W - w) / 2 + 'px', top: '50%', translate: '0 -50%' });
+    else Object.assign(m.style, { left: Math.max(0, Math.min(E.W - w, r.left + r.width / 2 - w / 2)) + 'px', bottom: (E.H - r.top + 8) + 'px' });
+    document.body.appendChild(m);
+    run.media = m;
+    requestAnimationFrame(() => { m.style.opacity = '1'; m.style.transform = 'scale(1)'; });
+    if (vid) m.play().catch(() => {});
+    setTimeout(() => { if (m.isConnected) m.style.opacity = '0'; }, Math.max(500, E.dur * 1000 - 700));
+  }
+
   /* ═════════════════ odtwarzanie ═════════════════ */
   let run = null;
   /** Okna łupu gry: po klasie albo po nagłówku „Łup…" (okno gry .c-window). */
@@ -582,22 +611,36 @@
   function lootWindow() { const ws = lootWindows(); return ws[ws.length - 1] || null; }
 
   /* ── podświetlenie legendarnych przedmiotów w oknie łupu (zostaje, dopóki okno jest otwarte) ── */
-  function hlClass() { return 'mp-lg-hl ' + (STYLES[cfg.style] ? cfg.style : 'thor'); }
+  function hlClass() { return 'mp-lg-hl ' + (STYLES[cfg.style] ? cfg.style : 'thor') + ' m-' + (cfg.hlMode || 'ring'); }
+  /** „Okienko" przedmiotu w oknie łupu: największy przodek kafelka, który zawiera tylko ten jeden przedmiot. */
+  function cardOf(it) {
+    let n = it;
+    const iw = it.getBoundingClientRect().width || 32;
+    while (n.parentElement) {
+      const p = n.parentElement;
+      if (p.matches('.c-window, .content, .inner-content, .mp-lg-fake, .mp-lg-fake-b, [class*="scroll"], body') || $$('.item', p).length > 1) break;
+      if (p.getBoundingClientRect().width > iw * 4.5) break;
+      n = p;
+    }
+    return n;
+  }
   function markItem(it) {
     if (!it) return;
-    let h = it.querySelector(':scope > .mp-lg-hl');
+    if ((cfg.hlMode || 'ring') === 'none') return;
+    const card = cardOf(it);
+    let h = card.querySelector(':scope > .mp-lg-hl');
     if (!h) {
-      if (getComputedStyle(it).position === 'static') it.style.position = 'relative';
-      h = el('div'); it.appendChild(h);
+      if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
+      h = el('div'); card.appendChild(h);
     }
     h.className = hlClass();
     h.style.setProperty('--lgc', cfg.style === 'wlasny' ? ((cfg.custom && cfg.custom.color) || '#ff9a1f') : STYLES[cfg.style] ? STYLES[cfg.style].col : '#8fc4ff');
   }
   function markWindow(win, test) {
     if (!win) return;
-    const items = $$('.item, .mp-lg-fake-it', win);
+    const items = $$('.item', win);
     let any = false;
-    for (const it of items) if (it.dataset.mpLg || it.classList.contains('mp-lg-fake-it')) { markItem(it); any = true; }
+    for (const it of items) if (it.dataset.mpLg) { markItem(it); any = true; }
     if (!any && test && items[0]) markItem(items[0]);
   }
   function canvas(z, before) {
@@ -609,15 +652,25 @@
   function stopFx() {
     if (!run) return;
     cancelAnimationFrame(run.raf); run.cvs.forEach((c) => c.remove()); if (run.fake) run.fake.remove();
+    if (run.media) run.media.remove();
     if (run.win) run.win.classList.remove('mp-lg-win', 'thor', 'smoke', 'kasyno', 'disco', 'wlasny');
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
     if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
     try { run.stopSnd && run.stopSnd(); } catch {}
     run = null;
   }
-  /** Okno „na niby" do testu, gdy w grze nie ma otwartego okna łupu. */
+  /** Okno łupu „na niby" do testu: kilka losowych przedmiotów (zwykłe, unikaty, heroiki, legendy), jak w grze. */
+  const RAR = { common: ['Zwykły', '#9a9a9a'], unique: ['Unikatowy', '#e6c13b'], heroic: ['Heroiczny', '#3fa2ff'], legendary: ['Legendarny', '#ff8a1f'] };
   function fakeLoot() {
-    const f = el('div', { class: 'mp-lg-fake' }, el('div', { class: 'mp-lg-fake-h' }, 'Łup'), el('div', { class: 'mp-lg-fake-b' }, el('div', { class: 'mp-lg-fake-it' }), el('div', null, el('b', null, 'Przedmiot legendarny'), el('div', { class: 'mp-dim' }, 'test efektu'))));
+    const n = 3 + Math.floor(Math.random() * 3);
+    const rars = Array.from({ length: n }, () => ['common', 'common', 'unique', 'heroic', 'legendary'][Math.floor(Math.random() * 5)]);
+    if (!rars.includes('legendary')) rars[Math.floor(Math.random() * n)] = 'legendary';
+    const cards = rars.map((r) => {
+      const it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1] }, title: RAR[r][0] });
+      if (r === 'legendary') it.dataset.mpLg = '1';
+      return el('div', { class: 'mp-lg-fake-card' }, it, el('div', { class: 'mp-lg-fake-want' }, 'Chcę'), el('div', { class: 'mp-lg-fake-btns' }, el('i', null, '✓'), el('i', null, '✕')));
+    });
+    const f = el('div', { class: 'mp-lg-fake' }, el('div', { class: 'mp-lg-fake-h' }, 'Łupy'), el('div', { class: 'mp-lg-fake-b' }, cards), el('div', { class: 'mp-lg-fake-f' }, el('span', null, '10 s'), el('b', null, 'Potwierdź'), el('span', null, '10 m')));
     document.body.appendChild(f);
     return f;
   }
@@ -644,17 +697,17 @@
       dur, col: custom ? (cc.color || '#7c5cff') : STYLES[st].col, name: '', layers, style: custom ? 'wlasny' : st, custom,
       fade: (t) => Math.min(1, t / 0.3) * Math.min(1, Math.max(0, (dur - t) / 0.9)),
     };
-    const parts = layers.map((k) => L[k] && L[k](E)).filter(Boolean);
+    const parts = layers.map((k) => L[k] && L[k](E)).filter(Boolean);   // „media" to element strony, nie warstwa płótna
     const bx = back.getContext('2d'), fx = front.getContext('2d');
     const me = { cvs: [back, front], fake, raf: 0, stopSnd: null, dim: !!opts.test, test: !!opts.test, win: win && !fake ? win : null };
-    // okno łupu: świetlista ramka w stylu efektu na czas efektu + podświetlone legendy (zostają do zamknięcia okna)
+    // okno łupu zostaje jak w grze — wyróżniamy tylko okienka z legendami (zostają do zamknięcia okna)
     if (win) {
-      win.classList.add('mp-lg-win', st);
       win.style.setProperty('--lgc', E.col);
       const before = new Set($$('.mp-lg-hl', win));
       markWindow(win, !!opts.test);
       if (opts.test && !fake) $$('.mp-lg-hl', win).forEach((h) => { if (!before.has(h)) h.classList.add('test'); });
     }
+    showMedia(E);
     // przy teście panel przygasa, żeby było widać cały efekt
     if (me.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .3s'; g.style.opacity = '0.12'; });
     run = me;
@@ -743,6 +796,43 @@
   const svgI = (k) => el('span', { class: 'mp-lg-ico', html: `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>` });
 
   let lastSnd = null;
+  const b64 = (buf) => { let s = ''; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+  const unb64 = (str) => { const s = atob(str); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; };
+  /** Eksport własnego efektu do pliku .json (ustawienia + Twoja animacja i dźwięk, jeśli są). */
+  async function exportOwn() {
+    const out = { l4tools: 'legenda', v: 1, custom: cfg.custom, dur: cfg.dur, volume: cfg.volume };
+    const m = await idb.get('media:wlasny').catch(() => null); if (m && m.data) out.media = { name: m.name, type: m.type, data: b64(m.data) };
+    const a = await idb.get('snd:wlasny').catch(() => null); if (a && a.data) out.sound = { name: a.name, size: a.size, data: b64(a.data) };
+    const link = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(out)], { type: 'application/json' })), download: 'legendarny-lup-efekt.json' });
+    document.body.appendChild(link); link.click(); link.remove();
+  }
+  function importOwn(done) {
+    const inp = el('input', { type: 'file', accept: '.json,application/json', style: { display: 'none' } });
+    inp.addEventListener('change', async () => {
+      const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+      try {
+        const o = JSON.parse(await f.text());
+        if (!o || o.l4tools !== 'legenda' || !o.custom) throw new Error('to nie jest plik efektu Legendarnego Łupu');
+        cfg.custom = Object.assign({}, cfg.custom, o.custom); if (o.dur) cfg.dur = o.dur;
+        if (o.media) { await idb.put('media:wlasny', { name: o.media.name, type: o.media.type, data: unb64(o.media.data) }); if (mediaUrl) URL.revokeObjectURL(mediaUrl); mediaUrl = null; }
+        if (o.sound) { await idb.put('snd:wlasny', { name: o.sound.name, size: o.sound.size, data: unb64(o.sound.data) }); delete bufCache.wlasny; }
+        cfg.style = 'wlasny'; config.save(); toast('Legendarny Łup: zaimportowano efekt'); done();
+      } catch (e) { toast('Legendarny Łup: nie udało się wczytać pliku — ' + e.message, 'warn'); }
+    });
+    document.body.appendChild(inp); inp.click();
+  }
+  function pickMedia(done) {
+    const inp = el('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,.gif,.png,.webp,.apng,.mp4,.webm', style: { display: 'none' } });
+    inp.addEventListener('change', async () => {
+      const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+      if (f.size > 25 * 1024 * 1024) { toast('Legendarny Łup: plik jest za duży (max 25 MB)', 'warn'); return; }
+      await idb.put('media:wlasny', { name: f.name, type: f.type || (/\.(mp4)$/i.test(f.name) ? 'video/mp4' : /\.webm$/i.test(f.name) ? 'video/webm' : 'image/gif'), data: await f.arrayBuffer() });
+      if (mediaUrl) URL.revokeObjectURL(mediaUrl); mediaUrl = null;
+      const cc = cfg.custom; if (!cc.layers.includes('media')) cc.layers = cc.layers.concat('media');
+      config.save(); toast(`Legendarny Łup: wgrano „${f.name}"`); done();
+    });
+    document.body.appendChild(inp); inp.click();
+  }
   async function ownInfo(key) { try { const r = await idb.get('snd:' + key); return r ? { name: r.name, size: r.size } : null; } catch { return null; } }
   function pickFile(key, done) {
     const inp = el('input', { type: 'file', accept: 'audio/*,.mp3,.ogg,.wav,.m4a', style: { display: 'none' } });
@@ -764,7 +854,7 @@
   defineAddon({
     id: 'legenda', name: 'Legendarny Łup', icon: 'legenda', color: ['#ff9a1f', '#ff3d6e'], renderFirst: true,
     desc: 'Gdy w łupie trafi się przedmiot legendarny — efekt na cały ekran z dźwiękiem: Thor, Smoke, Kasyno, Disco albo Twój własny. Każdy styl ma wbudowany dźwięk i może mieć Twój plik dźwiękowy. Przycisk „Test" pokazuje efekt od razu.',
-    defaults: { enabled: false, style: 'thor', volume: 0.7, dur: 15, sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
+    defaults: { enabled: false, style: 'thor', volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
     notes: () => [{ type: 'info', text: 'Wymaga włączonej opcji gry <b>Podświetlenie okna łupów</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy). Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
     render(box, c, rerender) {
@@ -778,6 +868,10 @@
           el('button', { class: 'mp-btn mp-lg-test', onclick: (e) => { e.stopPropagation(); play(k, { test: true }); } }, 'Test')));
       }
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Styl efektu'), grid));
+      const HL = [['ring', 'Obwódka w okienku'], ['glow', 'Obwódka + poświata'], ['pulse', 'Pulsujące tło'], ['none', 'Bez wyróżnienia']];
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Wyróżnienie okienka z legendą'),
+        el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Okno łupu zostaje takie jak w grze — wyróżnione jest tylko okienko z legendą, w kolorach wybranego stylu. Wyróżnienie mieści się w okienku, więc kilka legend obok siebie nie nachodzi na siebie.'),
+        el('div', { class: 'mp-btns' }, HL.map(([v, l]) => el('button', { class: 'mp-upchip' + ((c.hlMode || 'ring') === v ? ' on' : ''), onclick: () => { c.hlMode = v; config.save(); rerender(); } }, l)))));
 
       // dźwięk wybranego stylu
       const k = c.style, S = STYLES[k];
@@ -829,6 +923,24 @@
         const chips = el('div', { class: 'mp-btns' }, LAYERS.map(([lk, ln]) => el('button', { class: 'mp-upchip' + (cc.layers.includes(lk) ? ' on' : ''), onclick: () => { cc.layers = cc.layers.includes(lk) ? cc.layers.filter((x) => x !== lk) : cc.layers.concat(lk); config.save(); rerender(); } }, ln)));
         const col = el('input', { class: 'mp-color', type: 'color', value: cc.color || '#ff9a1f' });
         col.addEventListener('change', () => { cc.color = col.value; config.save(); });
+        const minfo = el('div', { class: 'mp-dim', style: { margin: '4px 0' } }, '…');
+        idb.get('media:wlasny').then((m) => { minfo.textContent = m ? `Twoja animacja: ${m.name}` : 'Nie wgrano jeszcze animacji (GIF, PNG, WebP, MP4, WebM — do 25 MB).'; }).catch(() => {});
+        const posSel = el('select', { class: 'mp-in' }, [['above', 'Nad oknem łupu'], ['center', 'Na środku ekranu'], ['full', 'Cały ekran']].map(([v, l]) => { const o = el('option', { value: v }, l); if ((cc.mediaPos || 'above') === v) o.selected = true; return o; }));
+        posSel.addEventListener('change', () => { cc.mediaPos = posSel.value; config.save(); });
+        const ms = el('input', { class: 'mp-range', type: 'range', min: 10, max: 100, step: 5, value: cc.mediaSize || 45 });
+        const pm = () => ms.style.setProperty('--p', ((ms.value - 10) / 90) * 100 + '%'); pm();
+        ms.addEventListener('input', () => { pm(); cc.mediaSize = Number(ms.value); }); ms.addEventListener('change', () => config.save());
+        box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Twoje powiadomienie — import'),
+          el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Wgraj własną grafikę lub animację, która pojawi się przy legendzie (warstwa „Moja animacja”). Gotowy efekt możesz zapisać do pliku i wczytać na innym komputerze albo dać znajomym.'),
+          minfo,
+          el('div', { class: 'mp-btns' },
+            el('button', { class: 'mp-btn', onclick: () => pickMedia(rerender) }, 'Wgraj animację / grafikę'),
+            el('button', { class: 'mp-btn bad', onclick: async () => { await idb.del('media:wlasny').catch(() => {}); if (mediaUrl) URL.revokeObjectURL(mediaUrl); mediaUrl = null; cc.layers = cc.layers.filter((x) => x !== 'media'); config.save(); rerender(); } }, 'Usuń animację')),
+          el('div', { class: 'mp-lg-row', style: { marginTop: '8px' } }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Położenie'), posSel),
+          el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Wielkość'), ms),
+          el('div', { class: 'mp-btns' },
+            el('button', { class: 'mp-btn', onclick: () => importOwn(rerender) }, 'Importuj efekt (.json)'),
+            el('button', { class: 'mp-btn', onclick: exportOwn }, 'Eksportuj efekt (.json)'))));
         box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Twój efekt'),
           el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Warstwy efektu — włącz dowolne:'), chips,
           el('div', { class: 'mp-lg-row', style: { marginTop: '10px' } }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Kolor'), col)));

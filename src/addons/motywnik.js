@@ -305,6 +305,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window table.table-content tr:hover:has(> td:not(:empty)){background-color:${t.a1}12!important}
 .c-window table.table-content td, .c-window table.table-content td.mt-bd{border-color:${t.line2}!important}
 
+/* — okno łupu: gładkie tło bez pionowych krawędzi paneli, okienka przedmiotów jako spokojne kafle — */
+.c-window.mt-loot > .content{background:linear-gradient(${t.bg2}, ${t.bg1} 90px)!important}
+.c-window.mt-loot [class*="interface-element-middle-"]{border-image-source:none!important;border-image:none!important;background:transparent!important;box-shadow:none!important}
+.c-window.mt-loot .content :has(> .item):not(.content):not(.inner-content){background-color:${t.bg0}!important;border-radius:4px}
+
 /* — zakładki — */
 .tabs-nav .card{background:linear-gradient(${t.bg2},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 1px 0 ${t.m[0]}1f!important;text-shadow:0 1px 1px #000!important}
 .tabs-nav .card:hover{color:${t.text}!important;box-shadow:inset 0 0 0 1px ${t.line},inset 0 1px 0 ${t.m[0]}2e!important}
@@ -411,6 +416,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     }
   }
   /* menu gry pod prawym przyciskiem (.popup-menu): ramka i każda pozycja w kolorach stylu */
+  /* okno łupu: rozpoznawane po nagłówku „Łup…" — dostaje spokojniejszy, gładki wygląd */
+  function tagLoot() {
+    if (!active()) return;
+    for (const w of $$('.c-window')) { const h = w.querySelector('.header-label .text, .header-label'); if (h && /^\s*łup/i.test(h.textContent || '')) w.classList.add('mt-loot'); }
+  }
   function tagPopups() {
     if (!active()) return;
     for (const m of $$('.popup-menu')) {
@@ -442,7 +452,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     fixText(document.body);
     mo = new MutationObserver((muts) => {
       for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1 && !skip(n)) queue.add(n);
-      if (queue.size && !qT) qT = setTimeout(() => { qT = null; const q = [...queue]; queue.clear(); q.forEach((n) => n.isConnected && fixText(n)); hudLayer(active()); tagPopups(); }, 150);
+      if (queue.size && !qT) qT = setTimeout(() => { qT = null; const q = [...queue]; queue.clear(); q.forEach((n) => n.isConnected && fixText(n)); hudLayer(active()); tagPopups(); tagLoot(); }, 150);
     });
     mo.observe(document.body, { childList: true, subtree: true });
     document.addEventListener('contextmenu', onCtx, true);
@@ -451,7 +461,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function stop() {
     if (mo) { mo.disconnect(); mo = null; }
     document.removeEventListener('contextmenu', onCtx, true);
-    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
+    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi', 'mt-loot'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
   }
   const active = () => !!(cfg && cfg.enabled && THEMES[cfg.theme] && !THEMES[cfg.theme].none);
 
@@ -609,7 +619,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if ('ember' in c) { delete c.ember; config.save(); }
       bus.on('popup:shown', (labels) => tagMenu(labels));
       apply();
-      MP.motywnik = { apply, collectLook, THEMES, texture };
+      MP.motywnik = { apply, collectLook, THEMES, texture, current: () => (active() ? THEMES[cfg.theme] : null) };
     },
     onToggle() { apply(); },
   });

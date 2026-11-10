@@ -35,6 +35,7 @@ const ORDER = [
   'src/addons/wrogowie.js',
   'src/addons/motywnik.js',
   'src/addons/legenda.js',
+  'src/addons/pogromca.js',
   'src/main.js',
 ];
 
