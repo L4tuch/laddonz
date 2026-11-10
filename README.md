@@ -31,7 +31,7 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 | 🚕 | **Fake Taxi** | Włączony = automatycznie przyjmuje przywołania („…przyzywa do siebie swoją drużynę!") od członków grupy; opcjonalnie od znajomych, klanu i z listy nicków. Okno z pytaniem w ogóle się nie pokazuje. |
 | ⚡ | **Auto f** | Włącz/wyłącz: gdy włączony, każda walka od razu przechodzi na szybką walkę (np. przy kolosie, gdy odchodzisz od komputera). |
 | ✋ | **Szybka rączka** | Prawy klik na przedmiocie → „Użyj po walce" — po walce przedmiot jest używany od razu (jak „Użyj" z menu). Ikonka zegara na przedmiocie. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". |
-| ✦ | **Ulepszarka** | Przeciągasz (albo wskazujesz) przedmiot do ulepszania i wybierasz, czym go karmić: rzadkość (zwykłe / unikaty / heroiki — nigdy legendy) i typy (hełm, pierścień, naszyjnik…). Każdy typ składników może karmić tylko jeden przedmiot — gdy wszystkie typy są zajęte, kolejnego przedmiotu nie dodasz. Ulepszasz przyciskiem „Ulepsz teraz" albo klawiszem — zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Okno rzemiosła zamyka się samo. |
+| ✦ | **Ulepszarka** | Przeciągasz (albo wskazujesz) przedmiot do ulepszania i wybierasz, czym go karmić: rzadkość (zwykłe / unikaty / heroiki — nigdy legendy) i typy (hełm, pierścień, naszyjnik…). Każdy typ składników może karmić tylko jeden przedmiot — gdy wszystkie typy są zajęte, kolejnego przedmiotu nie dodasz. Ulepszasz przyciskiem „Ulepsz teraz" albo klawiszem — zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Okno rzemiosła zamyka się samo. Opcjonalnie ulepsza sama, gdy w torbie zostanie N wolnych miejsc. |
 | 💬 | **MiniChat** | Rozmiar, czcionka i przezroczystość czatu, zwijanie pod klawisz. |
 
 **Czego Ulepszarka nigdy nie użyje:** założonych przedmiotów, legend, artefaktów, przedmiotów ulepszonych, innych ulepszanych celów, podpisanych w Podpisowniku, z kolejki Szybkiej rączki i oznaczonych „Chroń przed Ulepszarką".
@@ -78,10 +78,9 @@ Panel komunikuje się z grą tymi samymi komendami, które wysyła sama gra. Cz�
 
 1. Otwórz panel → **Ogólne** → włącz **Tryb próbny**. Pobaw się dodatkami i sprawdź w zakładce **Log**, co panel *by* wysłał.
 2. Wejdź w **Diagnostyka** → sekcja *Punkty zaczepienia*. Wszystko powinno mieć ✔. Jeśli coś ma ✘, zapisz które — to miejsce do poprawki w `src/core/game.js`.
-> **Ulepszarka uczy się sama:** wystarczy raz ręcznie ulepszyć przedmiot w grze — panel to zauważy, sprawdzi, że przedmiot naprawdę zniknął, i od razu odblokuje dodatek. Podsłuch poniżej jest potrzebny tylko w razie problemów.
+> **Ulepszarka działa od razu** — komenda ulepszania jest wbudowana (sprawdzona w grze). Gdyby gra kiedyś ją zmieniła, wystarczy raz ręcznie ulepszyć przedmiot w oknie rzemiosła — panel zauważy nowy sposób i sam go zapamięta.
 
 3. Dla każdej komendy ze statusem **do ustawienia** / **zablokowana** wykonaj daną akcję **ręcznie w grze** (opis jest przy komendzie), np.:
-   - *Ulepszenie przedmiotu* → ulepsz ręcznie dowolny przedmiot jednym składnikiem,
    - *Zmiana zestawu* → przełącz zestaw ekwipunku,
    - *Podgląd EQ gracza* → kliknij u kogoś „Pokaż ekwipunek".
 4. Zaraz po tym w sekcji **Podsłuch** pojawi się wysłana przez grę komenda. Przy niej wybierz z listy **Przypisz do…** właściwą akcję. Panel pokaże szablon (np. `…&id={id}`) — zatwierdź.

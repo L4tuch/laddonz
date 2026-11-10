@@ -19,7 +19,8 @@ const DEFAULT_COMMANDS = {
   eqSet:        { t: '', destructive: false, label: 'Zmiana zestawu', how: 'Przełącz ręcznie zestaw ekwipunku.' },
   otherEq:      { t: '', destructive: false, label: 'Podgląd EQ gracza', how: 'Kliknij u gracza „Pokaż ekwipunek".' },
   friendAdd:    { t: '', destructive: false, label: 'Dodanie do znajomych', how: 'Dodaj ręcznie kogoś do znajomych.' },
-  enhance:      { t: '', destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
+  // potwierdzone w grze (raport z okna rzemiosła): gra najpierw pyta (pytanie 1001012), potem wysyła to samo z answer1001012=1
+  enhance:      { t: 'enhancement&action=progress&item={item}&ingredients={ingredients}&answer1001012=1', verified: true, destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
 };
 
 const net = {
@@ -38,6 +39,13 @@ const net = {
     const base = DEFAULT_COMMANDS[name] || { t: '', destructive: true };
     const over = (config.data.commands || {})[name] || {};
     return Object.assign({ verified: false }, base, over);
+  },
+
+  /** Powrót do komendy wbudowanej (kasuje własną/nauczoną). */
+  resetCmd(name) {
+    if (config.data.commands) delete config.data.commands[name];
+    config.save();
+    bus.emit('commands:changed');
   },
 
   setCmd(name, template, verified = true) {
@@ -113,13 +121,12 @@ const net = {
       const before = bagIds();
       const rec = { t: now(), task: t, extra: args && args.length > 1 ? args.slice(1).map((x) => { try { return typeof x === 'function' ? 'fn' : JSON.stringify(x).slice(0, 200); } catch { return String(x); } }) : undefined };
       this.learnLog.unshift(rec); if (this.learnLog.length > 30) this.learnLog.length = 30;
-      if (this.cmd('enhance').verified) return;
       setTimeout(() => {
         const after = bagIds();
         const gone = [...before].filter((id) => !after.has(id));
         rec.gone = gone;
         bus.emit('learnlog');
-        if (!gone.length || this.cmd('enhance').verified) return;
+        if (!gone.length) return;
         // parametry komendy: lista/pojedyncze id zużytych → {ingredients}, istniejący przedmiot → {item}
         let item = 0, ing = 0;
         const tpl = t.replace(/=([0-9,]+)(?=&|$)/g, (m, v) => {
@@ -129,10 +136,10 @@ const net = {
           return m;
         });
         rec.tpl = tpl;
-        if (item !== 1 || ing !== 1) return;
+        if (item !== 1 || ing !== 1 || tpl === this.cmd('enhance').t) return;   // ta sama co wbudowana → nic do zmiany
         this.setCmd('enhance', tpl, true);
         this.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Nauczono komendy ulepszania: ' + tpl });
-        toast('Ulepszarka: gotowe — nauczyłam się ulepszania, możesz już z niej korzystać', 'ok');
+        toast('Ulepszarka: gra ulepsza teraz inaczej — zapamiętałam nowy sposób', 'ok');
         bus.emit('cmd:learned', 'enhance');
       }, 1800);
     } catch {}

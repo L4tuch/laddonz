@@ -177,6 +177,28 @@ const game = {
   equipped() { return this.heroItems().filter((i) => i.st > 0 && i.loc === 'g'); },
   bag() { return this.heroItems().filter((i) => i.st === 0); },
 
+  /**
+   * Wolne miejsca w torbach. Najpierw pytamy grę (funkcje typu getFreeSlots…), potem liczymy sami:
+   * pojemność założonych toreb (statystyka „bag") minus przedmioty w torbach. null = nie wiadomo.
+   */
+  freeBagSlots() {
+    const tryFns = (o) => {
+      if (!o) return null;
+      for (const n of ['getFreeSlots', 'getFreeSlotsAmount', 'getEmptySlots', 'countFreeSlots', 'getFreeBagSlots', 'freeSlots']) {
+        try { if (typeof o[n] === 'function') { const v = Number(o[n]()); if (!isNaN(v)) return v; } } catch {}
+      }
+      return null;
+    };
+    try {
+      for (const k of ['heroEquipment', 'bags', 'items', 'hero']) { const v = tryFns(E()[k]); if (v != null) return v; }
+    } catch {}
+    const all = this.heroItems();
+    const cap = all.filter((i) => i.st > 0 && i.stats.bag != null).reduce((a, i) => a + (parseInt(i.stats.bag, 10) || 0), 0);
+    if (!cap) return null;
+    const used = all.filter((i) => i.st === 0 && (i.loc === 'g' || !i.loc)).length;
+    return Math.max(0, cap - used);
+  },
+
   /** Członkowie grupy (id). Uzupełniane też z odpowiedzi serwera (net.js → partyCache). */
   partyMembers() {
     try {
