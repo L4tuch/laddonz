@@ -275,13 +275,13 @@
  * albo z menu przedmiotu. Pod każdym wybierasz, jakimi przedmiotami go karmić: rzadkość (zwykłe / unikaty /
  * heroiki — legend NIGDY) i typy (hełm, pierścień, naszyjnik…). Każdy typ składników może karmić tylko jeden
  * przedmiot; gdy wszystkie typy są zajęte, nie da się dodać kolejnego przedmiotu.
- * Włączona: po każdej walce NOWE przedmioty z łupu pasujące do ustawień trafiają do ulepszania. Przedmioty,
- * które już leżały w torbie, są ruszane tylko przyciskiem „Ulepsz teraz" (z listą do potwierdzenia).
+ * Ulepszanie odpala TY — przyciskiem albo klawiszem. To zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz.
+ * Domyślnie przed ulepszeniem pokazuje listę zużywanych przedmiotów (z rzadkością) — można to wyłączyć.
  * Twarde bezpieczniki: nigdy założone, legendy, artefakty, ulepszane cele, podpisane w Podpisowniku,
- * z kolejki Szybkiej rączki ani chronione; komenda ulepszania musi być zweryfikowana.
+ * z kolejki Szybkiej rączki ani chronione.
  */
 (() => {
-  let cfg, running = false, known = new Set(), pickSlot = null, dragId = null;
+  let cfg, running = false, pickSlot = null, dragId = null;
   const RAR = [['common', 'Zwykłe'], ['unique', 'Unikaty'], ['heroic', 'Heroiki']];
   const TYPES = [
     ['helm', 'Hełm', [9]], ['neck', 'Naszyjnik', [13]], ['ring', 'Pierścień', [12]], ['gloves', 'Rękawice', [11]],
@@ -294,7 +294,20 @@
 
   const slots = () => (Array.isArray(cfg.slots) ? cfg.slots : (cfg.slots = []));
   const targetIds = () => new Set(slots().map((s) => Number(s.id)));
-  function snapshot() { known = new Set(game.heroItems().map((i) => i.id)); }
+  const RAR_PL = { common: 'zwykły', unique: 'unikat', heroic: 'heroiczny', legendary: 'legendarny', upgraded: 'ulepszony', artefact: 'artefakt' };
+  /** Okno rzemiosła z gry (ulepszanie) — zamykane po ulepszeniu. */
+  function closeCraft() {
+    try {
+      for (const w of $$('[class*="window"]')) {
+        if (!isVisible(w) || w.closest('.mp-glass')) continue;
+        const head = ((w.querySelector('[class*="header"], [class*="title"]') || {}).textContent || '');
+        if (!/rzemios|ulepsza/i.test(head)) continue;
+        const x = w.querySelector('[class*="close"]');
+        if (x) { x.click(); return true; }
+      }
+    } catch {}
+    return false;
+  }
 
   /** Składniki dla danego celu (bez przydziału do innych celów). */
   function fits(i, s) {
@@ -302,52 +315,130 @@
     const t = typeOf(i.cl);
     return !!t && s.types.includes(t);
   }
-  function candidates(onlyNew) {
+  function candidates() {
     const queue = new Set((addons.cfg('szybka')?.queue || []).map((q) => Number(q.id)));
     const tg = targetIds();
     return game.bag().filter((i) => {
       if (i.st !== 0 || tg.has(i.id) || NEVER.includes(i.rarity)) return false;
-      if (onlyNew && known.has(i.id)) return false;
       if (MP.podpis && MP.podpis.isSigned(i.id)) return false;
       if (queue.has(i.id) || cfg.protect.includes(i.id) || nickIn(cfg.protectNames, i.name)) return false;
       return true;
     });
   }
   /** Przydział: każdy składnik do pierwszego celu, któremu pasuje. */
-  function plan(onlyNew) {
+  function plan() {
     const out = slots().map((s) => ({ s, target: game.itemById(s.id), list: [] }));
-    for (const i of candidates(onlyNew)) { const o = out.find((o) => o.target && fits(i, o.s)); if (o) o.list.push(i); }
+    for (const i of candidates()) { const o = out.find((o) => o.target && fits(i, o.s)); if (o) o.list.push(i); }
     return out.filter((o) => o.target && o.list.length);
   }
 
-  async function run(src) {
-    if (running || game.inBattle()) return;
-    if (!slots().length) { if (src === 'btn') toast('Ulepszarka: najpierw wskaż przedmiot do ulepszania', 'warn'); return; }
+  /** Odpowiedź gry „maksymalny poziom" → przedmiot znika z listy. */
+  const maxResp = (o) => (data) => {
+    let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
+    if (/maksymaln|max(imum)? ?(lvl|level|poziom)/i.test(txt)) {
+      const i = slots().findIndex((s) => Number(s.id) === o.target.id);
+      if (i >= 0) { slots().splice(i, 1); config.save(); toast(`Ulepszarka: „${o.target.name}" jest już maksymalnie ulepszony — usunięto z listy`, 'ok'); rr(); }
+    }
+  };
+  async function run() {
+    if (running) return;
+    if (game.inBattle()) { toast('Ulepszarka: najpierw skończ walkę', 'warn'); return; }
+    dropMaxed();
+    if (!slots().length) { toast('Ulepszarka: najpierw wskaż przedmiot do ulepszania', 'warn'); return; }
     const c = net.cmd('enhance');
-    if (!c.t || !c.verified) { if (src === 'btn') toast('Ulepszarka: najpierw raz ulepsz coś ręcznie w grze — wtedy się nauczy', 'warn'); return; }
-    const p = plan(src === 'auto');
-    if (!p.length) { if (src === 'btn') toast('Ulepszarka: brak pasujących przedmiotów', 'info'); return; }
-    if (src === 'btn') {
-      const items = []; p.forEach((o) => o.list.forEach((i) => items.push(`${i.name} (${i.rarity}) → ${o.target.name}`)));
-      const ok = await confirmBox({ title: 'Ulepszyć teraz?', danger: true, okText: 'Ulepsz', countdown: 2, html: `Zużyję <b>${items.length}</b> przedmiotów:`, items });
+    if (!c.t || !c.verified) { toast('Ulepszarka: najpierw raz ulepsz coś ręcznie w oknie rzemiosła — wtedy się nauczy', 'warn'); return; }
+    const p = plan();
+    if (!p.length) { toast('Ulepszarka: brak pasujących przedmiotów', 'info'); return; }
+    if (cfg.confirm) {
+      const items = []; p.forEach((o) => o.list.forEach((i) => items.push(el('span', null, i.name, ' ', el('span', { class: 'mp-rar ' + i.rarity }, RAR_PL[i.rarity] || i.rarity), el('span', { class: 'mp-dim' }, ' → ' + o.target.name)))));
+      const ok = await confirmBox({ title: 'Ulepszyć teraz?', okText: 'Ulepsz', html: `Zużyję <b>${items.length}</b> przedmiotów:`, items });
       if (!ok) return;
     }
     running = true;
     let n = 0;
+    const used = [];
     try {
       for (const o of p) {
         // każdy składnik sprawdzony jeszcze raz tuż przed wysłaniem
         const fresh = o.list.filter((i) => { const f = game.itemById(i.id); return f && f.st === 0 && !NEVER.includes(f.rarity) && !targetIds().has(f.id); });
         for (let k = 0; k < fresh.length; k += 10) {
           const part = fresh.slice(k, k + 10);
-          if (c.t.includes('{ingredients}')) await net.send('enhance', { item: o.target.id, ingredients: part.map((i) => i.id).join(',') }, { src: 'Ulepszarka' });
-          else for (const i of part) { await net.send('enhance', { item: o.target.id, id: i.id, ingredients: i.id }, { src: 'Ulepszarka' }); await sleep(250); }
-          n += part.length;
+          if (c.t.includes('{ingredients}')) await net.send('enhance', { item: o.target.id, ingredients: part.map((i) => i.id).join(',') }, { src: 'Ulepszarka', onResponse: maxResp(o) });
+          else for (const i of part) { await net.send('enhance', { item: o.target.id, id: i.id, ingredients: i.id }, { src: 'Ulepszarka', onResponse: maxResp(o) }); await sleep(250); }
+          n += part.length; used.push(...part.map((i) => i.id));
         }
       }
-      net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Zużyto ${n} przedmiotów na ulepszanie` });
-      if (src === 'btn') toast(`Ulepszarka: użyto ${n} przedmiotów`, 'ok');
-    } finally { running = false; snapshot(); rr(); }
+      net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Wysłano ${n} przedmiotów do ulepszenia` });
+      // sprawdzenie: czy przedmioty naprawdę zniknęły? Jeśli nie — zapamiętana komenda jest zła, uczymy się od nowa
+      setTimeout(() => {
+        const bag = new Set(game.heroItems().map((i) => i.id));
+        const gone = used.filter((id) => !bag.has(id)).length;
+        if (cfg.closeCraft) closeCraft();
+        dropMaxed();
+        if (!gone && used.length) {
+          net.setCmd('enhance', '', false);
+          toast('Ulepszarka: gra nie przyjęła ulepszenia. Ulepsz raz ręcznie w oknie rzemiosła, żebym nauczyła się jeszcze raz', 'bad');
+        } else toast(`Ulepszarka: ulepszono — zużyto ${gone} przedmiotów`, 'ok');
+        rr();
+      }, 1500);
+    } finally { running = false; rr(); }
+  }
+
+  /*
+   * Maksymalnie ulepszony przedmiot → sam znika z listy. Poziom ulepszenia czytamy ze statystyk przedmiotu
+   * (np. enhancement_upgrade_lvl), a gdy ich brak — z opisu przedmiotu („+5", „maksymalny poziom ulepszenia").
+   */
+  const MAX_LVL = 5;
+  function enhLevel(it) {
+    if (!it) return null;
+    for (const [k, v] of Object.entries(it.stats || {})) {
+      if (/enhanc.*(lvl|level)|upgrade_?lvl|upg_?lvl|enh_?lvl/i.test(k)) { const n = parseInt(v, 10); if (!isNaN(n)) return n; }
+    }
+    return null;
+  }
+  function isMaxed(it) {
+    const lvl = enhLevel(it);
+    if (lvl != null) return lvl >= MAX_LVL;
+    try {
+      const f = it.raw && (it.raw.getTipContent || it.raw.getTipData);
+      if (typeof f === 'function') {
+        let t = f.call(it.raw); if (t && typeof t === 'object') t = JSON.stringify(t);
+        const txt = String(t || '').replace(/<[^>]+>/g, ' ');
+        if (/maksymaln\w* (poziom\w* )?ulepsz|ulepszon\w* maksymalnie|max(imum)? (enhancement|upgrade)/i.test(txt)) return true;
+      }
+    } catch {}
+    return false;
+  }
+  function dropMaxed() {
+    if (!cfg) return false;
+    let changed = false;
+    for (let i = slots().length - 1; i >= 0; i--) {
+      const s = slots()[i];
+      const it = game.itemById(s.id);
+      if (it && isMaxed(it)) {
+        slots().splice(i, 1); changed = true;
+        toast(`Ulepszarka: „${s.name}" jest już maksymalnie ulepszony — usunięto z listy`, 'ok');
+        net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `„${s.name}" maksymalnie ulepszony — usunięty z listy` });
+      }
+    }
+    if (changed) { config.save(); rr(); }
+    return changed;
+  }
+
+  /** Raport do wysłania twórcy, gdy samouczenie nie zadziała. */
+  function report() {
+    const E0 = W.Engine || {};
+    const r = {
+      wersja: MP.version, komenda: net.cmd('enhance'),
+      cele: slots().map((sl) => { const it = game.itemById(sl.id); return { nazwa: sl.name, staty: it ? it.stats : null, poziom: enhLevel(it) }; }),
+      ruchyPrzyRzemiosle: net.learnLog.slice(0, 15),
+      engine: Object.keys(E0).filter((k) => /craft|enhanc|recip|rzem/i.test(k)),
+      okna: $$('[class*="window"]').filter(isVisible).map((w) => String(w.className).slice(0, 80) + ' | ' + ((w.querySelector('[class*="header"], [class*="title"]') || {}).textContent || '').trim().slice(0, 40)).slice(0, 12),
+    };
+    const txt = JSON.stringify(r, null, 1);
+    const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
+    try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
+    toast('Ulepszarka: raport skopiowany — wklej go w rozmowie', 'ok');
   }
 
   /* ── wybór celu ── */
@@ -361,6 +452,7 @@
     const t = typeOf(it.cl);
     if (!t) { toast(`Ulepszarka: „${it.name}" nie da się ulepszać`, 'warn'); return; }
     if (targetIds().has(it.id)) { toast(`Ulepszarka: „${it.name}" już jest ulepszany`, 'info'); return; }
+    if (isMaxed(it)) { toast(`Ulepszarka: „${it.name}" jest już maksymalnie ulepszony`, 'info'); return; }
     const free = freeTypes();
     if (!free.length) { toast('Ulepszarka: wszystkie typy przedmiotów są już zajęte — odznacz jakiś typ w innym ulepszanym przedmiocie', 'warn'); return; }
     slots().push({ id: it.id, name: it.name, icon: it.icon, type: t, rar: { common: true, unique: false, heroic: false }, types: free.includes(t) ? [t] : [] });
@@ -401,7 +493,7 @@
   function chip(label, on, fn, taken) { return el('button', { class: 'mp-upchip' + (on ? ' on' : '') + (taken ? ' taken' : ''), title: taken ? 'Ten typ karmi już: ' + taken : '', onclick: taken ? () => toast(`Ulepszarka: ten typ jest już używany do ulepszania „${taken}"`, 'warn') : fn }, label); }
   function slotEl(s, idx) {
     const it = game.itemById(s.id);
-    const cnt = candidates(false).filter((i) => fits(i, s)).length;
+    const cnt = candidates().filter((i) => fits(i, s)).length;
     return el('div', { class: 'mp-card mp-upslot' },
       el('div', { class: 'mp-uphead' },
         el('div', { class: 'mp-updrop has', title: 'Przeciągnij tu inny przedmiot tego typu, żeby go podmienić', onclick: startPick },
@@ -421,17 +513,22 @@
   }
 
   defineAddon({
-    id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], risk: 'destructive', renderFirst: true,
-    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Włączona: po walce nowe pasujące przedmioty z łupu idą na ulepszanie. To, co już było w torbie, tylko przyciskiem „Ulepsz teraz". Każdy typ składników może być przypisany tylko do jednego ulepszanego przedmiotu.',
-    defaults: { slots: [], protect: [], protectNames: [] },
+    id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
+    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Ulepszasz przyciskiem albo klawiszem — to zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Każdy typ składników może być przypisany tylko do jednego ulepszanego przedmiotu.',
+    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, closeCraft: true },
+    keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
-      !net.cmd('enhance').verified ? { type: 'info', text: 'Jednorazowo: ulepsz w grze ręcznie dowolny przedmiot (choćby jednym składnikiem). Ulepszarka sama to zauważy i od razu będzie gotowa — pojawi się komunikat.' } : null,
+      !net.cmd('enhance').verified ? { type: 'info', text: 'Jednorazowo: ulepsz w oknie rzemiosła ręcznie dowolny przedmiot (choćby jednym składnikiem). Ulepszarka sama to zauważy i od razu będzie gotowa — pojawi się komunikat. Jeśli komunikat się nie pojawi, kliknij niżej „Kopiuj raport" i wklej go w rozmowie.' } : null,
     ],
     settings: [
+      { group: 'Ustawienia', key: 'key', type: 'key', label: 'Klawisz: ulepsz teraz' },
+      { group: 'Ustawienia', key: 'confirm', type: 'bool', label: 'Pokazuj listę przedmiotów przed ulepszeniem', hint: 'Lista zużywanych przedmiotów z ich rzadkością (zwykły, unikat, heroiczny…).' },
+      { group: 'Ustawienia', key: 'closeCraft', type: 'bool', label: 'Zamykaj okno rzemiosła po ulepszeniu' },
       { group: 'Ochrona', key: 'protectNames', type: 'list', label: 'Nigdy nie używaj (nazwy)', placeholder: 'nazwa + Enter' },
     ],
     render(box, c, rerender) {
       rr = () => { if (box.isConnected) rerender(); };
+      if (dropMaxed()) return;
       slots().forEach((s, i) => box.appendChild(slotEl(s, i)));
       const free = freeTypes();
       if (free.length) {
@@ -445,7 +542,11 @@
       } else {
         box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));
       }
-      if (slots().length) box.appendChild(el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn pri', onclick: () => run('btn') }, 'Ulepsz teraz…')));
+      const learned = net.cmd('enhance').verified;
+      box.appendChild(el('div', { class: 'mp-btns' },
+        slots().length ? el('button', { class: 'mp-btn pri', onclick: () => run() }, cfg.key ? `Ulepsz teraz (${cfg.key})` : 'Ulepsz teraz') : null,
+        el('button', { class: 'mp-btn', title: 'Gdy ulepszanie nie działa — skopiuj i wklej w rozmowie', onclick: report }, 'Kopiuj raport'),
+        learned ? el('button', { class: 'mp-btn', title: 'Zapomnij komendę i naucz się od nowa (ulepsz raz ręcznie)', onclick: () => { net.setCmd('enhance', '', false); rr(); } }, 'Naucz od nowa') : null));
     },
     init(c) {
       cfg = c;
@@ -458,9 +559,9 @@
       }
       if (!Array.isArray(c.protect)) c.protect = [];
       { const u = new Set(); slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => !u.has(t)); sl.types.forEach((t) => u.add(t)); }); }   // typ składników tylko u jednego przedmiotu
-      snapshot();
       watchPointer();
-      MP.ulepszarka = { addTarget, plan, run, typeOf };
+      setInterval(() => { if (cfg.enabled && !running) dropMaxed(); }, 5000);
+      MP.ulepszarka = { addTarget, plan, run, typeOf, closeCraft, report, dropMaxed, enhLevel };
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
         const it = game.itemById(id);
@@ -469,10 +570,7 @@
         if (it && it.st === 0) out.push(cfg.protect.includes(id) ? { label: 'Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: 'Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
         return out;
       });
-      bus.on('battle:start', () => snapshot());
       bus.on('cmd:learned', () => rr());
-      bus.on('battle:end', () => { if (cfg.enabled) setTimeout(() => run('auto'), rnd(900, 1400)); });
     },
-    onToggle(on) { if (on) snapshot(); },
   });
 })();

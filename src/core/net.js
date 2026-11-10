@@ -93,22 +93,43 @@ const net = {
   _lastSniff: { task: '', t: 0 },
 
   /**
-   * Samouczenie komend „zużywających" (ulepszanie): gdy SAM ręcznie ulepszysz przedmiot w grze, panel zapamiętuje
-   * komendę — ale uznaje ją dopiero, gdy użyte składniki faktycznie zniknęły z torby (czyli to było prawdziwe ulepszenie,
-   * a nie np. podgląd). Bez zaglądania do Diagnostyki.
+   * Samouczenie ulepszania: gdy SAM ulepszysz przedmiot w oknie rzemiosła, panel patrzy, które przedmioty
+   * zniknęły z torby po wysłanej komendzie. Jeśli komenda zawierała ulepszany przedmiot i dokładnie te zużyte —
+   * zapamiętuje ją jako szablon. Wszystko, co gra wysłała przy otwartym oknie rzemiosła, trafia też do
+   * learnLog (raport „Kopiuj raport" w Ulepszarce), gdyby gra robiła to inaczej.
    */
-  autoLearn(t) {
+  learnLog: [],
+  craftOpen() {
     try {
+      return $$('[class*="window"]').some((w) => isVisible(w) && /rzemios|ulepsza|crafting|enhanc/i.test(((w.querySelector('[class*="header"], [class*="title"]') || {}).textContent || '') + ' ' + w.className));
+    } catch { return false; }
+  },
+  autoLearn(t, args) {
+    try {
+      const head = t.split('&')[0];
+      const craft = this.craftOpen() || /enhanc|upgrad|ulepsz|craft/i.test(head);
+      if (!craft) return;
+      const bagIds = () => new Set(game.heroItems().map((i) => i.id));
+      const before = bagIds();
+      const rec = { t: now(), task: t, extra: args && args.length > 1 ? args.slice(1).map((x) => { try { return typeof x === 'function' ? 'fn' : JSON.stringify(x).slice(0, 200); } catch { return String(x); } }) : undefined };
+      this.learnLog.unshift(rec); if (this.learnLog.length > 30) this.learnLog.length = 30;
       if (this.cmd('enhance').verified) return;
-      if (!/enhanc|upgrad|ulepsz/i.test(t.split('&')[0])) return;   // tylko komendy ulepszania
-      const tpl = templatize('enhance', t);
-      if (!tpl.includes('{item}') || !tpl.includes('{ingredients}')) return;
-      const target = Number((t.match(/=(\d+)(?=&|$)/g) || []).map((x) => x.slice(1)).find((id) => game.itemById(id)));
-      const ids = [...t.matchAll(/=((?:\d+,)*\d+)(?=&|$)/g)].flatMap((m) => m[1].split(',')).map(Number).filter((id) => id !== target && game.itemById(id));
-      if (!ids.length) return;
       setTimeout(() => {
-        const gone = ids.some((id) => !game.itemById(id));
-        if (!gone || this.cmd('enhance').verified) return;
+        const after = bagIds();
+        const gone = [...before].filter((id) => !after.has(id));
+        rec.gone = gone;
+        bus.emit('learnlog');
+        if (!gone.length || this.cmd('enhance').verified) return;
+        // parametry komendy: lista/pojedyncze id zużytych → {ingredients}, istniejący przedmiot → {item}
+        let item = 0, ing = 0;
+        const tpl = t.replace(/=([0-9,]+)(?=&|$)/g, (m, v) => {
+          const ids = v.split(',').filter(Boolean).map(Number);
+          if (ids.length && ids.every((id) => gone.includes(id))) { ing++; return '={ingredients}'; }
+          if (ids.length === 1 && after.has(ids[0]) && !item) { item++; return '={item}'; }
+          return m;
+        });
+        rec.tpl = tpl;
+        if (item !== 1 || ing !== 1) return;
         this.setCmd('enhance', tpl, true);
         this.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Nauczono komendy ulepszania: ' + tpl });
         toast('Ulepszarka: gotowe — nauczyłam się ulepszania, możesz już z niej korzystać', 'ok');
@@ -136,7 +157,7 @@ const net = {
               if (self.sniff.length > 40) self.sniff.length = 40;
               bus.emit('sniff');
             }
-            self.autoLearn(t);
+            self.autoLearn(t, args);
           }
         }
         const g = self.checkGuards(t);

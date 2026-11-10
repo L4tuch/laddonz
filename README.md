@@ -6,12 +6,12 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 
 - **Jedno naciśnięcie = jedna akcja.** Przytrzymanie klawisza nic nie spamuje, skróty nie działają podczas pisania na czacie.
 - **Automaty są domyślnie wyłączone** (oznaczone w panelu literą **A** i żółtą plakietką). Włączasz je świadomie, po ostrzeżeniu.
-- **Nic nie jest zużywane bez Twojej zgody.** Ulepszarka pyta przy włączeniu i przy „Ulepsz teraz"; po walce zużywa tylko nowe przedmioty z łupu pasujące do Twoich ustawień.
+- **Nic nie jest zużywane bez Twojej zgody.** Ulepszarka ulepsza tylko na Twoje polecenie (przycisk albo klawisz) i domyślnie pokazuje listę zużywanych przedmiotów z ich rzadkością.
 - **Komendy usuwania i ulepszania są zablokowane**, dopóki sam ich nie „pokażesz" panelowi (patrz: [Pierwsze uruchomienie](#4-pierwsze-uruchomienie--weryfikacja-komend)).
 - **Wszystko przechodzi przez jedną kolejkę** z minimalnym odstępem (domyślnie 300 ms) i jest zapisywane w zakładce **Log**.
 - **Tryb próbny** (Ogólne → Tryb próbny): panel niczego nie wysyła, tylko zapisuje w logu, co by zrobił.
 
-> ⚠️ Żaden dodatek firm trzecich nie jest oficjalnie zatwierdzony przez Garmory. Funkcje automatyczne (Dobijarka, Auto f, Fake Taxi, automat Szybkiej rączki i Ulepszarki, auto-zaproszenia) to dokładnie ten rodzaj rzeczy, za który najłatwiej o bana. Używasz ich na własne ryzyko.
+> ⚠️ Żaden dodatek firm trzecich nie jest oficjalnie zatwierdzony przez Garmory. Funkcje automatyczne (Dobijarka, Auto f, Fake Taxi, automat Szybkiej rączki, auto-zaproszenia) to dokładnie ten rodzaj rzeczy, za który najłatwiej o bana. Używasz ich na własne ryzyko.
 
 ---
 
@@ -31,7 +31,7 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 | 🚕 | **Fake Taxi** | Włączony = automatycznie przyjmuje przywołania („…przyzywa do siebie swoją drużynę!") od członków grupy; opcjonalnie od znajomych, klanu i z listy nicków. Okno z pytaniem w ogóle się nie pokazuje. |
 | ⚡ | **Auto f** | Włącz/wyłącz: gdy włączony, każda walka od razu przechodzi na szybką walkę (np. przy kolosie, gdy odchodzisz od komputera). |
 | ✋ | **Szybka rączka** | Prawy klik na przedmiocie → „Użyj po walce" — po walce przedmiot jest używany od razu (jak „Użyj" z menu). Ikonka zegara na przedmiocie. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". |
-| ✦ | **Ulepszarka** | Przeciągasz (albo wskazujesz) przedmiot do ulepszania i wybierasz, czym go karmić: rzadkość (zwykłe / unikaty / heroiki — nigdy legendy) i typy (hełm, pierścień, naszyjnik…). Każdy typ składników może karmić tylko jeden przedmiot — gdy wszystkie typy są zajęte, kolejnego przedmiotu nie dodasz. Włączona: po walce nowe pasujące przedmioty z łupu idą na ulepszanie; to, co już było w torbie — tylko przyciskiem „Ulepsz teraz". |
+| ✦ | **Ulepszarka** | Przeciągasz (albo wskazujesz) przedmiot do ulepszania i wybierasz, czym go karmić: rzadkość (zwykłe / unikaty / heroiki — nigdy legendy) i typy (hełm, pierścień, naszyjnik…). Każdy typ składników może karmić tylko jeden przedmiot — gdy wszystkie typy są zajęte, kolejnego przedmiotu nie dodasz. Ulepszasz przyciskiem „Ulepsz teraz" albo klawiszem — zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Okno rzemiosła zamyka się samo. |
 | 💬 | **MiniChat** | Rozmiar, czcionka i przezroczystość czatu, zwijanie pod klawisz. |
 
 **Czego Ulepszarka nigdy nie użyje:** założonych przedmiotów, legend, artefaktów, przedmiotów ulepszonych, innych ulepszanych celów, podpisanych w Podpisowniku, z kolejki Szybkiej rączki i oznaczonych „Chroń przed Ulepszarką".
