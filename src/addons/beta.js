@@ -335,9 +335,17 @@
       if (!btn) return;
       const n = shieldNode();
       if (n) {
-        const r = n.getBoundingClientRect(), sz = btn.offsetWidth || 24;
-        let x = r.right + 3; if (x + sz > innerWidth - 2) x = r.left - sz - 3;
-        btn.style.left = Math.round(x) + 'px'; btn.style.top = Math.round(r.top + (r.height - sz) / 2) + 'px';
+        // pod miejscem na tarczę gra ma srebrną ikonkę tarczy — stawiamy się zaraz pod nią
+        const r = n.getBoundingClientRect(), sz = btn.offsetWidth || 22;
+        let below = null;
+        btn.style.visibility = 'hidden';
+        try {
+          const probe = document.elementFromPoint(r.left + r.width / 2, r.bottom + Math.min(r.height * 0.5, 14));
+          if (probe && probe !== document.body) { const q = probe.getBoundingClientRect(); if (q.height < 60 && q.width < 60 && q.top >= r.bottom - 2) below = q; }
+        } catch {}
+        btn.style.visibility = '';
+        const ref = below || { left: r.left, width: r.width, bottom: r.bottom + r.height * 0.85 };
+        btn.style.left = Math.round(ref.left + ref.width / 2 - sz / 2) + 'px'; btn.style.top = Math.round(ref.bottom + 2) + 'px';
         btn.classList.remove('mp-bers-free');
       } else {
         const hud = $$('.hud-container').find(isVisible);
@@ -369,7 +377,7 @@
     }
     defineAddon({
       id: 'berserk', beta: true, name: 'Podręczny Berserk', icon: 'berserk', color: ['#ff4b2b', '#ff9f1a'],
-      desc: 'Mała ikonka obok tarczy w Twoim ekwipunku — kliknięcie włącza albo wyłącza berserka (automatyczną agresję wobec potworów) tą samą komendą co ustawienia gry. Świeci na pomarańczowo = włączony, szara = wyłączony.',
+      desc: 'Mała ikonka pod srebrną tarczą w Twoim ekwipunku — kliknięcie włącza albo wyłącza berserka (automatyczną agresję wobec potworów) tą samą komendą co ustawienia gry. Świeci na pomarańczowo = włączony, szara = wyłączony.',
       defaults: { on: false, setId: DEF_ID },
       settings: [],
       render(box, c, rerender) {
@@ -399,6 +407,8 @@
     const lootIds = new Map();          // id przedmiotu z okna łupów → { r, key }
     const DB = { e2: "Mushita|23|p;Kotołak Tropiciel|27|;Shae Phu|30|m;Zorg Jednooki Baron|33|h;Władca Rzek|37|m;Gobbos|40|b;Tyrtajos|42|w;Szczęt alias Gładki|47|w;Tollok Shimger|47|w;Razuglag Oklash|51|m;Agar|51|w;Foverk Turrim|57|b;Owadzia Matka|58|t;Vari Kruger|66|m;Furruk Kozug|66|m;Jotun|70|w;Tollok Atamatu|73|h;Tollok Utumutu|73|h;Lisz|75|m;Grabarz świątynny|80|w;Podły zbrojmistrz|82|w;Wielka Stopa|82|m;Choukker|84|w;Nadzorczyni krasnoludów|88|w;Morthen|89|w;Żelazoręki Ohydziarz|92|p;Leśne Widmo|92|t;Goplana|93|p;Gnom Figlid|96|m;Centaur Zyfryd|99|h;Kambion|101|b;Jertek Moxos|105|w;Miłośnik łowców|108|w;Miłośnik rycerzy|108|w;Miłośnik magii|108|w;Łowca Czaszek|112|m;Ozirus Władca Hieroglifów|115|m;Morski Potwór|118|t;Krab pustelnik|124|b;Borgoros Garamir III|124|w;Stworzyciel|125|b;Poskramiacz hydr|128|m;Pogromczyni Mantikor|128|h;Pogromca gryfów|128|w;Ifryt|128|m;Młody Jack Truciciel|131|w;Henry Kaprawe Oko|131|w;Helga Opiekunka Rumu|131|t;Eol|135|h;Grubber Ochlaj|136|w;Mistrz Worundriel|139|w;Wójt Fistuła|144|b;Teściowa Rumcajsa|145|m;Berserker Amuno|148|w;Fodug Zolash|150|m;Goons Asterus|154|h;Adariel|155|m;Burkog Lorulk|160|w;Sheba Orcza Szamanka|160|m;Duch władcy klanów|165|p;Bragarth myśliwy dusz|170|h;Fursharag pożeracz umysłów|170|m;Ziuggrael strażnik królowej|170|w;Królowa Śniegu|175|m;Lusgrathera królowa pramatka|175|m;Chryzoprenia|177|p;Wrzosera|177|w;Cantedewia|177|t;Ogr Stalowy Pazur|183|w;Torunia Ankelwald|186|p;Pięknotka Mięsożerna|189|h;Breheret żelazny łeb|192|w;Cerasus|193|h;Mysiur myświórowy król|197|m;Sadolia Nadzorczyni Hurys|200|b;Bergermona Krwawa Hrabina|204|h;Sataniel skrytobójca|204|h;Annaniel Wysysacz Marzeń|204|m;Gothardus kolekcjoner głów|204|w;Zufulus smakosz serc|205|m;Czempion Furboli|210|w;Arachniregina Colosseus|214|b;Rycerz z za małym mieczem|214|w;Aldiphrin Ilythirahel|218|m;Marlloth Malignitas|220|b;Arytodam olbrzymi|226|w;Mocny Maddoks|231|m;Fangaj|235|h;Luna|237|p;Noumenia|237|b;Dendroculus|240|w;Silvanasus|241|m;Tolypeutes|245|w;Cuaitl Citlalin|250|w;Yaotl|258|h;Quetzalcoatl|260|m;Wabicielka|260|b;Pogardliwa Sybilla|263|m;Chopesz|267|b;Fovos|270|m;Neferkar Set|274|w;Chaegd Agnrakh|280|w;Vaenra Charkhaam|280|m;Terrozaur|280|b;Mazurnik Przybrzeżny|284|w;Nymphemonia|287|h;Zorin|300|b;Furion|300|h;Artenius|300|m", e3: "Tarmus Wuden|43|p;Vonaros|64|m;Wyznawca Ciemnych Mocy|83|b;Szkielet Władcy Żywiołów|114|m;Erktos|300|w", heros: "Domina Ecclesiae|21|b;Mietek Żul|25|w;Mroczny Patryk|35|w;Karmazynowy Mściciel|45|m;Złodziej|51|h;Zły Przewodnik|63|w;Opętany Paladyn|74|p;Piekielny Kościej|85|w;Koziec Mąciciel Ścieżek|94|m;Kochanka Nocy|102|m;Książę Kasim|116|b;Święty Braciszek|123|b;Złoty Roger|135|t;Baca bez Łowiec|144|h;Czarująca Atalia|157|m;Obłąkany Łowca Orków|165|w;Lichwiarz Grauhaz|177|w;Viviana Nandin|184|h;Przeraza|194|m;Demonis Pan Nicości|205|m;Mulher Ma|214|b;Vapor Veneno|231|w;Dęborożec|244|w;Tepeyollotl|258|b;Widmo Triady|265|m;Negthotep Czarny Kapłan|271|h;Młody Smok|282|m", kolos: "Mamlambo|36|b;Regulus Mętnooki|63|w;Amaimon Soploręki|83|b;Umibozu|114|b;Vashkar|144|h;Hydrokora Chimeryczna|167|w;Lulukav|190|m;Arachin Podstępny|213|b;Reuzen|244|w;Wernoradzki Drakolisz|279|m", tytan: "Dziewicza Orlica|51|;Zabójczy Królik|70|;Renegat Baulus|101|;Piekielny Arcymag|131|;Versus Zoons|154|;Łowczyni Wspomnień|177|;Przyzywacz Demonów|204|;Maddok Magua|231|;Tezcatlipoca|258|;Barbatos Smoczy Strażnik|285|;Tanroth|300|" };
     const NPC_IMG = 'https://micc.garmory-cdn.cloud/obrazki/npc/';
+    // grafiki elit II z margohelp.pl (ścieżki względem obrazki/npc/e2/)
+    const ICONS = new Map("Mushita|st-puma;Kotołak Tropiciel|../e1/kotolak_lowca;Shae Phu|demonszef;Zorg Jednooki Baron|zbir-e2-zorg;Władca Rzek|gobmag2;Gobbos|gobsamurai;Tyrtajos|dzik;Szczęt alias Gładki|zbir-szczet;Tollok Shimger|tollok_shimger;Razuglag Oklash|razuglag;Agar|glut_agar;Foverk Turrim|kobold07;Owadzia Matka|zadlak-e2-owadzia-matka;Vari Kruger|gnoll11;Furruk Kozug|gnoll12;Jotun|kam_olbrzym-b;Tollok Atamatu|tollok_jask_atamatu;Tollok Utumutu|tollok_jask_utumatu;Lisz|lisz_demilisze;Grabarz świątynny|nieu_mnich_grabarz;Podły zbrojmistrz|magaz_zbrojmistrz;Wielka Stopa|wlochacze_wielka_stopa;Choukker|dlawiciel5;Nadzorczyni krasnoludów|nadzorczyni_krasnoludow;Morthen|krasnolud_boss;Żelazoręki Ohydziarz|ugrape2;Leśne Widmo|lesne_widmo;Goplana|goplana;Gnom Figlid|gnom_figlid;Centaur Zyfryd|cent-zyfryd;Kambion|kambion;Jertek Moxos|moloch-jertek;Miłośnik łowców|blotniaki_milosnik_lowcow;Miłośnik rycerzy|blotniaki_milosnik_rycerzy;Miłośnik magii|blotniaki_milosnik_magii;Łowca Czaszek|alghul-czaszka-1a;Ozirus Władca Hieroglifów|mumia-ozirus;Morski Potwór|osmiornica-1b;Krab pustelnik|krab_big3;Borgoros Garamir III|ingotia_minotaur-7a;Stworzyciel|stworzyciel;Poskramiacz hydr|zagajnik02;Pogromczyni Mantikor|zagajnik03;Pogromca gryfów|zagajnik01;Ifryt|magradit_ifryt;Młody Jack Truciciel|pirat01;Henry Kaprawe Oko|../e1/pirat5b;Helga Opiekunka Rumu|pirat-2b;Eol|piaskowy_potwor-6a;Grubber Ochlaj|grubber-ochlaj;Mistrz Worundriel|worundriel02;Wójt Fistuła|goral-e2-wojt-fistula;Teściowa Rumcajsa|goral-e2-tesciowa-rumcajsa;Berserker Amuno|amuno;Fodug Zolash|fodug_zolash;Goons Asterus|goons_asterus-1a;Adariel|tri_adariel;Burkog Lorulk|orkczd;Sheba Orcza Szamanka|r_orc_sheba;Duch władcy klanów|duch_wladcy_kl;Bragarth myśliwy dusz|praork_low_elita;Fursharag pożeracz umysłów|praork_mag_elita;Ziuggrael strażnik królowej|praork_woj_elita;Królowa Śniegu|krolowa-sniegu;Lusgrathera królowa pramatka|prakrolowa;Chryzoprenia|chryzoprenia;Wrzosera|wrzosera-1b;Cantedewia|cantedewia-1a;Ogr Stalowy Pazur|ogr_drapak;Torunia Ankelwald|thuz-patr1;Pięknotka Mięsożerna|zmutowana-roslinka;Breheret żelazny łeb|draki-breheret-1b;Cerasus|cerasus-1a;Mysiur myświórowy król|krolszczur;Sadolia Nadzorczyni Hurys|sekta-sadolia;Bergermona Krwawa Hrabina|sekta-bergermona;Sataniel skrytobójca|sekta-sataniel;Annaniel Wysysacz Marzeń|sekta-annaniel;Gothardus kolekcjoner głów|sekta-gothardus;Zufulus smakosz serc|sekta-zufulus;Czempion Furboli|forbol03;Arachniregina Colosseus|regina-e2;Rycerz z za małym mieczem|pajeczy16;Aldiphrin Ilythirahel|drow-aldiphrin;Marlloth Malignitas|drider-marlloth;Arytodam olbrzymi|arytodam_olbrzymi-1b;Mocny Maddoks|mocny_maddoks-1a;Fangaj|grzyb-humanoid-1b;Luna|elgary_luna-1b;Noumenia|elgary_noumenia-1a;Dendroculus|dendroculus;Silvanasus|silvanasus;Tolypeutes|bolita;Cuaitl Citlalin|maho-cuaitl;Yaotl|mahoplowca;Quetzalcoatl|quetzalcoatl-1a;Pogardliwa Sybilla|tri2_witch_e2;Chopesz|chopesh2;Fovos|fovos-1;Neferkar Set|neferkar_set-1a;Chaegd Agnrakh|bar_smokoszef;Vaenra Charkhaam|bar_smoczyca;Terrozaur|terrorzaur_pus;Mazurnik Przybrzeżny|mazurnik_przybrzezny-1a;Nymphemonia|nymphemonia;Zorin|wl-mrozu01;Furion|wl-mrozu02;Artenius|wl-mrozu03;Tanroth|../tyt/ice_king".split(';').map((r) => { const [n, f] = r.split('|'); return [n.toLowerCase(), NPC_IMG + ('e2/' + f).replace(/^e2\/\.\.\//, '') + '.gif']; }));
     const typeOf = (w) => {
       const wt = Number(w.wt) || 0, ty = Number(w.type);
       if (ty === 0 && wt > 29 && wt < 80) return 'e3';
@@ -422,6 +432,7 @@
       for (const [t, list] of Object.entries(DB)) for (const row of list.split(';')) {
         const [n, lvl, prof] = row.split('|'); const k = keyOf(n);
         if (!m[k]) m[k] = { n, lvl: Number(lvl) || 0, prof: prof || '', t, k: 0, d: {}, m: {} };
+        if (!m[k].icon && ICONS.has(k)) m[k].icon = ICONS.get(k);
       }
     }
     const iconUrl = (ic) => { ic = String(ic || ''); if (!ic) return ''; if (/^https?:/.test(ic)) return ic; ic = ic.replace(/^\/+/, '').replace(/^obrazki\//, ''); return (/^npc\//.test(ic) ? 'https://micc.garmory-cdn.cloud/obrazki/' : NPC_IMG) + ic; };
@@ -433,7 +444,7 @@
       if (w.lvl) o.lvl = Number(w.lvl);
       if (w.prof) o.prof = String(w.prof).length === 1 ? w.prof : (PROF[String(w.prof).toLowerCase()] || '');
       if (RANK[t] > (RANK[o.t] || 0)) o.t = t;
-      const ic = w.icon || icons.get(k); if (ic) o.icon = iconUrl(ic);
+      const ic = w.icon || icons.get(k); if (ICONS.has(k)) o.icon = ICONS.get(k); else if (ic) o.icon = iconUrl(ic);
       return o;
     }
     const totals = () => (cfg.totals = cfg.totals || { kills: {}, loot: {}, caught: {}, since: now() });
@@ -490,7 +501,8 @@
       let list = Object.values(mobs()).filter((o) => (f.type === 'all' || o.t === f.type)
         && (!q || o.n.toLowerCase().includes(q))
         && (!o.lvl || (o.lvl >= (Number(f.min) || 1) && o.lvl <= (Number(f.max) || 1e4)))
-        && (f.show === 'all' || (f.show === 'killed' ? o.k > 0 : !o.k)));
+        && o.k > 0
+        && (f.show === 'all' || (f.show === 'loot' ? (o.d.u || o.d.h || o.d.l) : !(o.d.u || o.d.h || o.d.l))));
       const by = { kills: (o) => o.k, lvl: (o) => o.lvl || 0, name: (o) => o.n.toLowerCase(), loot: (o) => (o.d.u || 0) + (o.d.h || 0) * 10 + (o.d.l || 0) * 100 }[f.sort] || ((o) => o.k);
       list.sort((a, b) => { const x = by(a), y = by(b); const c = x < y ? -1 : x > y ? 1 : 0; return c ? (f.dir === 'asc' ? c : -c) : (a.lvl || 0) - (b.lvl || 0) || a.n.localeCompare(b.n); });
       return list;
@@ -500,7 +512,7 @@
       if (!win) return;
       const box = win.querySelector('.mp-lu-list'); const st = box.scrollTop; box.textContent = '';
       const list = rows();
-      if (!list.length) box.appendChild(el('div', { class: 'mp-lu-empty' }, 'Brak potworów dla tych filtrów.'));
+      if (!list.length) box.appendChild(el('div', { class: 'mp-lu-empty' }, Object.values(mobs()).some((o) => o.k) ? 'Brak ubitych potworów dla tych filtrów.' : 'Jeszcze nic nie ubiłeś — potwory pojawią się tu po pierwszym ubiciu.'));
       for (const o of list) {
         const ic = o.icon ? el('div', { class: 'mp-lu-ic', style: { backgroundImage: `url("${o.icon}")` } }) : el('div', { class: 'mp-lu-ic none' }, (o.n[0] || '?').toUpperCase());
         box.appendChild(el('div', { class: 'mp-lu-row' + (o.k ? '' : ' zero') }, ic,
@@ -536,7 +548,7 @@
           el('span', { class: 'mp-lu-x', title: 'Zamknij', onclick: () => open(false) }, '×'));
         win = el('div', { id: 'mp-lu', style: { left: p.x + 'px', top: p.y + 'px' } }, head,
           el('div', { class: 'mp-lu-fl' }, inp('q', 'Nazwa potworka', 'auto'), inp('min', '1', '46px', true), inp('max', '300', '52px', true)),
-          el('div', { class: 'mp-lu-fl' }, sel('type', TYPES), sel('show', [['all', 'Wszystkie'], ['killed', 'Ubite'], ['notkilled', 'Nieubite']]),
+          el('div', { class: 'mp-lu-fl' }, sel('type', TYPES), sel('show', [['all', 'Wszystkie'], ['loot', 'Z łupem'], ['noloot', 'Bez łupu']]),
             sel('sort', [['kills', 'Sortuj wg zabić'], ['lvl', 'Sortuj wg poziomu'], ['name', 'Sortuj wg nazwy'], ['loot', 'Sortuj wg łupów']]), sel('dir', [['desc', 'Malejąco'], ['asc', 'Rosnąco']])),
           el('div', { class: 'mp-lu-list' }));
         document.body.appendChild(win);
@@ -549,7 +561,7 @@
     const toggleWin = () => open(!(win && win.style.display !== 'none'));
     defineAddon({
       id: 'licznik', beta: true, name: 'Licznik Ubić', icon: 'licznik', color: ['#e74c3c', '#8e44ad'],
-      desc: 'Okno z listą potworów (wszystkie elity II są wpisane od razu, reszta dopisuje się po ubiciu): nazwa, rodzaj, poziom, ile razy ubity i co z niego wypadło — żółte unikaty, niebieskie heroiki, pomarańczowe legendy, a w nawiasie ile z nich złapałeś Ty. Szukanie po nazwie, zakres poziomów, filtr rodzaju i sortowanie. Okno otwierasz klawiszem, przyciskiem poniżej albo ikonką na pasku skrótów.',
+      desc: 'Okno z listą potworów, które już ubiłeś (z grafikami): nazwa, rodzaj, poziom, ile razy ubity i co z niego wypadło — żółte unikaty, niebieskie heroiki, pomarańczowe legendy, a w nawiasie ile z nich złapałeś Ty. Szukanie po nazwie, zakres poziomów, filtr rodzaju i sortowanie. Okno otwierasz klawiszem, przyciskiem poniżej albo ikonką na pasku skrótów.',
       defaults: { key: '', open: false, mobs: null, totals: null, f: null },
       settings: [{ key: 'key', type: 'key', label: 'Klawisz: otwórz/zamknij okno licznika' }],
       quick: () => toggleWin(),
@@ -567,6 +579,7 @@
       init(c) {
         cfg = c;
         // przeniesienie starych liczników (wersja 1.0.0)
+        if (cfg.stats && cfg.stats.names) { seed(); for (const [nm, v] of Object.entries(cfg.stats.names)) { const mm = nm.match(/^(.*) \((\d+)\)$/); const n = mm ? mm[1] : nm; const k = keyOf(n); const o = mobs()[k] = mobs()[k] || { n, t: 'elita', k: 0, d: {}, m: {} }; o.k += Number(v) || 0; if (mm) o.lvl = Number(mm[2]); } }
         if (cfg.stats && !cfg.totals) { cfg.totals = { kills: cfg.stats.kills || {}, loot: cfg.stats.loot || {}, caught: cfg.stats.caught || {}, since: cfg.stats.since || now() }; delete cfg.stats; }
         seed();
         bus.on('data', onData);
