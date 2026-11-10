@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.1.7
+// @version      3.1.8
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -5204,25 +5204,25 @@ MP.itemDeco = itemDeco;
       btn: ['#2b2e35', '#1b1d22'], btnLine: '#3d424c', btnText: '#f1f3f6', head: '"Roboto", Arial, sans-serif', fonts: ['Roboto:wght@400;500;700'],
     },
     zorza: {
-      m: ['#e3f8ff', '#86bfe6', '#27466e'], orn: 'star', star: '#f2fdff', name: 'Zorza', desc: 'Nocny granat i świecące pasma zorzy: turkus, błękit, fiolet.',
+      m: ['#e3f8ff', '#86bfe6', '#27466e'], orn: 'star', xp: ['#119682', '#4ff5d2'], star: '#f2fdff', name: 'Zorza', desc: 'Nocny granat i świecące pasma zorzy: turkus, błękit, fiolet.',
       bg0: '#050b16', bg1: '#0a1426', bg2: '#10203a', line: '#22426a', line2: '#152c4a', a1: '#2ef2c4', a2: '#8a5cff', a3: '#3fa9ff', text: '#e6f3ff', text2: '#8fb0cc',
       glow: 'rgba(46,242,196,.30)', edge: 'rgba(63,169,255,.22)', tint: 'grayscale(1) brightness(.5) sepia(1) hue-rotate(170deg) saturate(2.4)', blend: '#0e2340',
       btn: ['#13405a', '#0b2539'], btnLine: 'rgba(46,242,196,.55)', btnText: '#e2fff8', head: '"Exo 2", "Roboto", Arial, sans-serif', fonts: ['Roboto:wght@400;500;700', 'Exo+2:wght@600;700'],
     },
     neon: {
-      m: ['#ffe0f8', '#d65bdc', '#4a1660'], orn: 'diamond', name: 'Neon', desc: 'Ciemny fiolet, różowy i turkusowy neon z poświatą.',
+      m: ['#ffe0f8', '#d65bdc', '#4a1660'], orn: 'diamond', xp: ['#b0129a', '#ff5ce4'], name: 'Neon', desc: 'Ciemny fiolet, różowy i turkusowy neon z poświatą.',
       bg0: '#07040f', bg1: '#0e0819', bg2: '#170d29', line: '#4a2470', line2: '#25133e', a1: '#ff2bd6', a2: '#00e5ff', text: '#f5ecff', text2: '#ab9cc9',
       glow: 'rgba(255,43,214,.38)', edge: 'rgba(0,229,255,.28)', tint: 'grayscale(1) brightness(.45) sepia(1) hue-rotate(245deg) saturate(3)', blend: '#1d0f33',
       btn: ['#251238', '#140a22'], btnLine: '#ff2bd6', btnText: '#ffe8fb', head: '"Rajdhani", "Roboto", Arial, sans-serif', fonts: ['Roboto:wght@400;500;700', 'Rajdhani:wght@600;700'],
     },
     obsydian: {
-      m: ['#ffd2a6', '#b06a3c', '#3e2617'], orn: 'ember', name: 'Obsydian', desc: 'Czerń i ciemny metal, bardzo subtelny żar.',
+      m: ['#ffd2a6', '#b06a3c', '#3e2617'], orn: 'ember', xp: ['#b9471a', '#ff8a3d'], name: 'Obsydian', desc: 'Czerń i ciemny metal, bardzo subtelny żar.',
       bg0: '#0a0908', bg1: '#131110', bg2: '#1b1816', line: '#3c3530', line2: '#26211e', a1: '#ff8a3d', a2: '#b9471a', text: '#eee6dc', text2: '#a69c91',
       glow: 'rgba(255,120,50,.18)', edge: 'rgba(255,110,40,.10)', tint: 'grayscale(1) brightness(.5) sepia(.55) hue-rotate(-12deg) saturate(1.3)', blend: '#1e1713',
       btn: ['#2b2623', '#1a1715'], btnLine: 'rgba(205,100,45,.6)', btnText: '#f6ece1', head: '"Marcellus SC", "Roboto", Georgia, serif', fonts: ['Roboto:wght@400;500;700', 'Marcellus+SC'],
     },
     glebia: {
-      m: ['#dafcff', '#5bb9cf', '#143f50'], orn: 'drop', name: 'Głębia', desc: 'Ciemny ocean i chłodne, błękitne światło.',
+      m: ['#dafcff', '#5bb9cf', '#143f50'], orn: 'drop', xp: ['#1580b0', '#5fd0ff'], name: 'Głębia', desc: 'Ciemny ocean i chłodne, błękitne światło.',
       bg0: '#04101a', bg1: '#081b2a', bg2: '#0c273b', line: '#185070', line2: '#0f364c', a1: '#38bdf8', a2: '#22d3ee', text: '#e3f6ff', text2: '#8db7cc',
       glow: 'rgba(56,189,248,.28)', edge: 'rgba(34,211,238,.18)', tint: 'grayscale(1) brightness(.5) sepia(1) hue-rotate(160deg) saturate(2.2)', blend: '#0b2438',
       btn: ['#10405d', '#0a283c'], btnLine: 'rgba(56,189,248,.6)', btnText: '#e6f8ff', head: '"Exo 2", "Roboto", Arial, sans-serif', fonts: ['Roboto:wght@400;500;700', 'Exo+2:wght@600;700'],
@@ -5506,7 +5506,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .widget-button:hover{${hover}}
 
 /* — menu prawego przycisku — */
-.mt-menu{background:${t.bg1}!important;box-shadow:0 0 0 1px ${t.line},0 10px 26px rgba(0,0,0,.65),0 0 16px ${t.glow}!important;border-image:none!important}
+.mt-menu{background:${t.bg1}!important;box-shadow:0 0 0 1px ${t.m[2]},0 10px 26px rgba(0,0,0,.65),0 0 16px ${t.glow}!important;border-image-source:none!important;border-color:${t.line}!important}
+.mt-menu .mt-mi{border-image-source:none!important}
 .mt-mi{${btnMain}}
 .mt-mi:hover{${hover}}
 #mp-ctx{background:${t.bg1}!important;border-color:${t.line}!important}
@@ -5588,7 +5589,21 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       }
     }
   }
+  /* menu gry pod prawym przyciskiem (.popup-menu): ramka i każda pozycja w kolorach stylu */
+  function tagPopups() {
+    if (!active()) return;
+    for (const m of $$('.popup-menu')) {
+      m.classList.add('mt-menu');
+      for (const n of $$('*', m)) {
+        if (n.closest('.mt-mi') || !(n.textContent || '').trim()) continue;
+        const cs = getComputedStyle(n);
+        const bg = cs.backgroundImage !== 'none' || (tone(cs.backgroundColor) || { a: 0 }).a > 0.05;
+        if (bg) n.classList.add('mt-mi');
+      }
+    }
+  }
   function tagMenu(labels) {
+    [0, 40, 150, 400].forEach((ms) => setTimeout(tagPopups, ms));
     if (!active() || !labels || !labels.length) return;
     setTimeout(() => {
       const leaves = labels.map((l) => $$('body *').find((n) => !n.children.length && (n.textContent || '').trim() === String(l).trim() && isVisible(n) && !skip(n))).filter(Boolean);
@@ -5599,19 +5614,22 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (box && box !== document.body) { box.classList.add('mt-menu'); rows.forEach((r) => r.classList.add('mt-mi')); }
     }, 0);
   }
+  const onCtx = () => [30, 120, 350].forEach((ms) => setTimeout(tagPopups, ms));
   let queue = new Set(), qT = null;
   function start() {
     if (mo) return;
     fixText(document.body);
     mo = new MutationObserver((muts) => {
       for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1 && !skip(n)) queue.add(n);
-      if (queue.size && !qT) qT = setTimeout(() => { qT = null; const q = [...queue]; queue.clear(); q.forEach((n) => n.isConnected && fixText(n)); hudLayer(active()); }, 150);
+      if (queue.size && !qT) qT = setTimeout(() => { qT = null; const q = [...queue]; queue.clear(); q.forEach((n) => n.isConnected && fixText(n)); hudLayer(active()); tagPopups(); }, 150);
     });
     mo.observe(document.body, { childList: true, subtree: true });
+    document.addEventListener('contextmenu', onCtx, true);
     [1200, 4000].forEach((ms) => setTimeout(() => { fixText(document.body); hudLayer(active()); }, ms));
   }
   function stop() {
     if (mo) { mo.disconnect(); mo = null; }
+    document.removeEventListener('contextmenu', onCtx, true);
     ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
   }
   const active = () => !!(cfg && cfg.enabled && THEMES[cfg.theme] && !THEMES[cfg.theme].none);
@@ -5830,5 +5848,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.1.7";
+MP.version = "3.1.8";
 })();
