@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      2.0.4
+// @version      2.0.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1458,10 +1458,10 @@ const menus = {
 
   add(type, fn) { this.providers[type].push(fn); },
 
-  entriesFor(type, id) {
+  entriesFor(type, id, menu) {
     const out = [];
     for (const p of this.providers[type]) {
-      try { (p(id) || []).forEach((e) => e && out.push(e)); } catch (e) { console.warn(e); }
+      try { (p(id, menu) || []).forEach((e) => e && out.push(e)); } catch (e) { console.warn(e); }
     }
     return out;
   },
@@ -1554,7 +1554,7 @@ const menus = {
     if (!tgt && this.last && now() - this.last.t < 1500) tgt = this.last;
     if (!tgt) tgt = this.guessPlayerFromMenu(menu);
     if (!tgt) return;
-    const add = this.entriesFor(tgt.type, tgt.id);
+    const add = this.entriesFor(tgt.type, tgt.id, menu);
     add.forEach((x) => menu.push(this.toGameEntry(menu, x)));
     if (add.length) this.lastInject = now();
   },
@@ -1759,17 +1759,12 @@ const menus = {
     const o = this.origPopup;
     if (o && entries.length) {
       setTimeout(() => {
-        let shown = false;
         try {
-          const lbl0 = entries[0].label;
-          const count = () => $$('body *').filter((n) => !n.children.length && (n.textContent || '').trim() === lbl0 && isVisible(n) && !n.closest('#mp-ctx')).length;
-          const before = count();
-          const menu = entries.map((e) => [e.label, () => { try { e.fn(); } catch (err) { console.warn(err); } }]);
           const ev = { clientX: x, clientY: y, pageX: x, pageY: y, x, y, button: 2, which: 3, type: 'contextmenu', target: document.body, currentTarget: document.body, preventDefault() {}, stopPropagation() {} };
-          o.fn.call(o.obj, menu, ev);
-          shown = count() > before;   // gra narysowała nowe menu
+          o.fn.call(o.obj, entries.map((e) => [e.label, () => { try { e.fn(); } catch (err) { console.warn(err); } }]), ev);
+          return;                     // gra przyjęła menu — nie pokazujemy drugiego
         } catch {}
-        if (!shown) this.showOwn(x, y, entries, title);
+        this.showOwn(x, y, entries, title);
       }, 60);
       return;
     }
@@ -4168,7 +4163,7 @@ MP.itemDeco = itemDeco;
     const list = buildList().filter((b) => b.id !== cur);
     menus.showGame(x, y, [
       ...list.map((b) => ({ label: `${b.id}. ${b.name}${S.set && S.set.id === b.id ? ' (wybrany)' : ''}`, fn: () => armSet(b) })),
-      ...(S.set ? [{ label: 'Nie zmieniaj po walce', fn: () => armSet(null) }] : []),
+      ...(S.set ? [{ label: 'Anuluj zmianę po walce', fn: () => armSet(null) }] : []),
     ], 'Zmień po walce na…');
   }
   /** Pozycje listy zestawów, którą gra pokazuje po kliknięciu numeru („2. Zestaw 2"). */
@@ -4231,10 +4226,26 @@ MP.itemDeco = itemDeco;
       e.preventDefault(); e.stopPropagation();
       armSet({ id: Number(m[1]), name: m[2].trim() });
     }, true);
-    menus.add('build', () => (cfg.enabled ? [{ label: 'Zmień po walce…', fn: () => { const b = buildBtn(); const r = b ? b.getBoundingClientRect() : { right: 200, top: 200 }; openSetMenu(r.right + 4, r.top); } }] : []));
+    menus.add('build', () => (cfg.enabled ? [...(S.set ? [{ label: 'Anuluj zmianę po walce', fn: () => armSet(null) }] : []), { label: 'Zmień po walce…', fn: () => { const b = buildBtn(); const r = b ? b.getBoundingClientRect() : { right: 200, top: 200 }; openSetMenu(r.right + 4, r.top); } }] : []));
     setInterval(() => { if (S.set && !$('.mp-setclock')) markSet(); }, 1500);
   }
 
+  /**
+   * „Użyj po walce" tylko dla przedmiotów, których da się użyć (mikstury, teleporty, zwoje…).
+   * Nigdy: neutralne, ekwipunek do założenia, torby, klucze itp.
+   */
+  function usable(it, menu) {
+    if (!it) return false;
+    let typ = '';
+    try { const f = it.raw && (it.raw.getTipContent || it.raw.getTipData); let t = typeof f === 'function' ? f.call(it.raw) : ''; if (t && typeof t === 'object') t = JSON.stringify(t); typ = ((String(t || '').replace(/<[^>]+>/g, ' ').match(/Typ:\s*([^\s]+)/i) || [])[1] || '').toLowerCase(); } catch {}
+    if (/neutral|torb|klucz|quest|zadan|walut|przepis/.test(typ)) return false;
+    // gra sama ma w menu „Użyj"/„Teleportuj"… → na pewno da się użyć
+    try { if (Array.isArray(menu) && menu.some((m) => /^(u[żz]yj|teleportuj|przywo[łl]aj|wypij|zjedz|otw[óo]rz)/i.test(menus.entryParts(m).label.trim()))) return true; } catch {}
+    if (/lecz|konsump|teleport|zw[óo]j|b[łl]ogos|mikst|odnaw|u[żz]ytk|wzmacn/.test(typ)) return true;
+    const st = it.stats || {};
+    if (st.teleport != null || st.custom_teleport != null || st.leczy != null || st.perheal != null || st.fullheal != null) return true;
+    return false;
+  }
   function queued(id) { return cfg.queue.find((q) => q.id === Number(id)); }
   function toggleQueue(id) {
     const it = game.itemById(id);
@@ -4292,7 +4303,7 @@ MP.itemDeco = itemDeco;
       if (!t) return;
       e.preventDefault(); e.stopPropagation();
       menus.showGame(e.clientX, e.clientY, [
-        { label: S.disbandArmed ? 'Anuluj „rozwiąż po walce"' : 'Rozwiąż grupę po walce', fn: armDisband },
+        { label: S.disbandArmed ? 'Anuluj rozwiązanie grupy po walce' : 'Rozwiąż grupę po walce', fn: armDisband },
         { label: 'Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka' })) },
       ], 'Grupa');
     }, true);
@@ -4316,10 +4327,11 @@ MP.itemDeco = itemDeco;
       cfg = c;
       if (!c._v17) { c._v17 = true; delete c.auto; delete c.key; config.save(); }
       document.getElementById('mp-szybka-ind')?.remove();
-      menus.add('item', (id) => {
+      menus.add('item', (id, menu) => {
         if (!cfg.enabled) return [];
-        return queued(id) ? [{ label: 'Nie używaj po walce', fn: () => toggleQueue(id) }]
-          : [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
+        if (queued(id)) return [{ label: 'Anuluj użycie po walce', fn: () => toggleQueue(id) }];
+        if (!usable(game.itemById(id), menu)) return [];
+        return [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
       });
       itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka Rączka: zostanie użyty po walce' } : null));
       // od razu po zakończeniu walki
@@ -4977,8 +4989,9 @@ MP.itemDeco = itemDeco;
         if (!cfg.enabled) return [];
         const it = game.itemById(id);
         const out = [];
-        if (it && typeOf(it.cl) && !targetIds().has(it.id) && freeTypes().length) out.push({ label: 'Ulepszaj w Ulepszarce', fn: () => addTarget(id) });
-        if (it && it.st === 0) out.push(cfg.protect.includes(id) ? { label: 'Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: 'Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
+        if (!it || !isEquipment(it)) return [];      // mikstury, neutralne, zwoje itp. — bez opcji Ulepszarki
+        if (!targetIds().has(it.id) && freeTypes().length && !isMaxed(it)) out.push({ label: 'Ulepszaj w Ulepszarce', fn: () => addTarget(id) });
+        if (it.st === 0) out.push(cfg.protect.includes(id) ? { label: 'Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: 'Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
         return out;
       });
       bus.on('cmd:learned', () => rr());
@@ -5040,5 +5053,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "2.0.4";
+MP.version = "2.0.5";
 })();

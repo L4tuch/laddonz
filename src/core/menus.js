@@ -16,10 +16,10 @@ const menus = {
 
   add(type, fn) { this.providers[type].push(fn); },
 
-  entriesFor(type, id) {
+  entriesFor(type, id, menu) {
     const out = [];
     for (const p of this.providers[type]) {
-      try { (p(id) || []).forEach((e) => e && out.push(e)); } catch (e) { console.warn(e); }
+      try { (p(id, menu) || []).forEach((e) => e && out.push(e)); } catch (e) { console.warn(e); }
     }
     return out;
   },
@@ -112,7 +112,7 @@ const menus = {
     if (!tgt && this.last && now() - this.last.t < 1500) tgt = this.last;
     if (!tgt) tgt = this.guessPlayerFromMenu(menu);
     if (!tgt) return;
-    const add = this.entriesFor(tgt.type, tgt.id);
+    const add = this.entriesFor(tgt.type, tgt.id, menu);
     add.forEach((x) => menu.push(this.toGameEntry(menu, x)));
     if (add.length) this.lastInject = now();
   },
@@ -317,17 +317,12 @@ const menus = {
     const o = this.origPopup;
     if (o && entries.length) {
       setTimeout(() => {
-        let shown = false;
         try {
-          const lbl0 = entries[0].label;
-          const count = () => $$('body *').filter((n) => !n.children.length && (n.textContent || '').trim() === lbl0 && isVisible(n) && !n.closest('#mp-ctx')).length;
-          const before = count();
-          const menu = entries.map((e) => [e.label, () => { try { e.fn(); } catch (err) { console.warn(err); } }]);
           const ev = { clientX: x, clientY: y, pageX: x, pageY: y, x, y, button: 2, which: 3, type: 'contextmenu', target: document.body, currentTarget: document.body, preventDefault() {}, stopPropagation() {} };
-          o.fn.call(o.obj, menu, ev);
-          shown = count() > before;   // gra narysowała nowe menu
+          o.fn.call(o.obj, entries.map((e) => [e.label, () => { try { e.fn(); } catch (err) { console.warn(err); } }]), ev);
+          return;                     // gra przyjęła menu — nie pokazujemy drugiego
         } catch {}
-        if (!shown) this.showOwn(x, y, entries, title);
+        this.showOwn(x, y, entries, title);
       }, 60);
       return;
     }

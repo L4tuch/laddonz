@@ -244,7 +244,7 @@
     const list = buildList().filter((b) => b.id !== cur);
     menus.showGame(x, y, [
       ...list.map((b) => ({ label: `${b.id}. ${b.name}${S.set && S.set.id === b.id ? ' (wybrany)' : ''}`, fn: () => armSet(b) })),
-      ...(S.set ? [{ label: 'Nie zmieniaj po walce', fn: () => armSet(null) }] : []),
+      ...(S.set ? [{ label: 'Anuluj zmianę po walce', fn: () => armSet(null) }] : []),
     ], 'Zmień po walce na…');
   }
   /** Pozycje listy zestawów, którą gra pokazuje po kliknięciu numeru („2. Zestaw 2"). */
@@ -307,10 +307,26 @@
       e.preventDefault(); e.stopPropagation();
       armSet({ id: Number(m[1]), name: m[2].trim() });
     }, true);
-    menus.add('build', () => (cfg.enabled ? [{ label: 'Zmień po walce…', fn: () => { const b = buildBtn(); const r = b ? b.getBoundingClientRect() : { right: 200, top: 200 }; openSetMenu(r.right + 4, r.top); } }] : []));
+    menus.add('build', () => (cfg.enabled ? [...(S.set ? [{ label: 'Anuluj zmianę po walce', fn: () => armSet(null) }] : []), { label: 'Zmień po walce…', fn: () => { const b = buildBtn(); const r = b ? b.getBoundingClientRect() : { right: 200, top: 200 }; openSetMenu(r.right + 4, r.top); } }] : []));
     setInterval(() => { if (S.set && !$('.mp-setclock')) markSet(); }, 1500);
   }
 
+  /**
+   * „Użyj po walce" tylko dla przedmiotów, których da się użyć (mikstury, teleporty, zwoje…).
+   * Nigdy: neutralne, ekwipunek do założenia, torby, klucze itp.
+   */
+  function usable(it, menu) {
+    if (!it) return false;
+    let typ = '';
+    try { const f = it.raw && (it.raw.getTipContent || it.raw.getTipData); let t = typeof f === 'function' ? f.call(it.raw) : ''; if (t && typeof t === 'object') t = JSON.stringify(t); typ = ((String(t || '').replace(/<[^>]+>/g, ' ').match(/Typ:\s*([^\s]+)/i) || [])[1] || '').toLowerCase(); } catch {}
+    if (/neutral|torb|klucz|quest|zadan|walut|przepis/.test(typ)) return false;
+    // gra sama ma w menu „Użyj"/„Teleportuj"… → na pewno da się użyć
+    try { if (Array.isArray(menu) && menu.some((m) => /^(u[żz]yj|teleportuj|przywo[łl]aj|wypij|zjedz|otw[óo]rz)/i.test(menus.entryParts(m).label.trim()))) return true; } catch {}
+    if (/lecz|konsump|teleport|zw[óo]j|b[łl]ogos|mikst|odnaw|u[żz]ytk|wzmacn/.test(typ)) return true;
+    const st = it.stats || {};
+    if (st.teleport != null || st.custom_teleport != null || st.leczy != null || st.perheal != null || st.fullheal != null) return true;
+    return false;
+  }
   function queued(id) { return cfg.queue.find((q) => q.id === Number(id)); }
   function toggleQueue(id) {
     const it = game.itemById(id);
@@ -368,7 +384,7 @@
       if (!t) return;
       e.preventDefault(); e.stopPropagation();
       menus.showGame(e.clientX, e.clientY, [
-        { label: S.disbandArmed ? 'Anuluj „rozwiąż po walce"' : 'Rozwiąż grupę po walce', fn: armDisband },
+        { label: S.disbandArmed ? 'Anuluj rozwiązanie grupy po walce' : 'Rozwiąż grupę po walce', fn: armDisband },
         { label: 'Rozwiąż grupę teraz', fn: () => (MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka' })) },
       ], 'Grupa');
     }, true);
@@ -392,10 +408,11 @@
       cfg = c;
       if (!c._v17) { c._v17 = true; delete c.auto; delete c.key; config.save(); }
       document.getElementById('mp-szybka-ind')?.remove();
-      menus.add('item', (id) => {
+      menus.add('item', (id, menu) => {
         if (!cfg.enabled) return [];
-        return queued(id) ? [{ label: 'Nie używaj po walce', fn: () => toggleQueue(id) }]
-          : [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
+        if (queued(id)) return [{ label: 'Anuluj użycie po walce', fn: () => toggleQueue(id) }];
+        if (!usable(game.itemById(id), menu)) return [];
+        return [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
       });
       itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka Rączka: zostanie użyty po walce' } : null));
       // od razu po zakończeniu walki
@@ -1053,8 +1070,9 @@
         if (!cfg.enabled) return [];
         const it = game.itemById(id);
         const out = [];
-        if (it && typeOf(it.cl) && !targetIds().has(it.id) && freeTypes().length) out.push({ label: 'Ulepszaj w Ulepszarce', fn: () => addTarget(id) });
-        if (it && it.st === 0) out.push(cfg.protect.includes(id) ? { label: 'Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: 'Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
+        if (!it || !isEquipment(it)) return [];      // mikstury, neutralne, zwoje itp. — bez opcji Ulepszarki
+        if (!targetIds().has(it.id) && freeTypes().length && !isMaxed(it)) out.push({ label: 'Ulepszaj w Ulepszarce', fn: () => addTarget(id) });
+        if (it.st === 0) out.push(cfg.protect.includes(id) ? { label: 'Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: 'Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
         return out;
       });
       bus.on('cmd:learned', () => rr());
