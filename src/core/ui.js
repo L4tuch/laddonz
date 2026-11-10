@@ -125,7 +125,7 @@ const ui = {
         const sw = switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, sw), true);
         const row = el('div', { class: 'mp-row' + (this.sel === a.id ? ' sel' : '') + (cfg.enabled ? '' : ' off'), onclick: (e) => { if (e.target.closest('.mp-sw')) return; this.sel = a.id; draw(); this.renderMain(); } },
           el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 18)),
-          el('div', { class: 'nm' }, a.name, a.beta ? el('span', { class: 'mp-beta', title: 'BETA — dodatek w fazie testów' }, 'B') : null),
+          el('div', { class: 'nm mp-nmb' }, el('span', { class: 'mp-nmt' }, a.name), a.beta ? el('span', { class: 'mp-beta', title: 'BETA — dodatek w fazie testów' }, 'B') : null),
           sw);
         list.appendChild(row);
       }

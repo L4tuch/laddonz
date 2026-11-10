@@ -106,9 +106,11 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-pt-cd{font-size:.82em;opacity:.8;font-weight:400;margin-top:1px}
 .mp-pt-none{font-size:.88em;font-style:italic}
 @keyframes mpPtBlink{0%,100%{filter:none}50%{filter:brightness(1.6);box-shadow:inset 0 0 0 1px var(--c),0 0 10px var(--c)}}
-.mp-beta{display:inline-flex;align-items:center;justify-content:center;min-width:15px;height:15px;padding:0 3px;margin-left:6px;border-radius:4px;background:linear-gradient(135deg,#ffb020,#ff6a00);color:#1b1000;font:800 10px/1 Arial,sans-serif;vertical-align:middle;box-shadow:0 0 6px rgba(255,140,0,.55)}
-.mp-beta.big{height:18px;padding:0 6px;font-size:11px;letter-spacing:.5px}
-.mp-beta-txt{color:#ffb020}
+.mp-beta{display:inline-flex;align-items:center;justify-content:center;height:16px;min-width:16px;padding:0 4px;margin-left:7px;border-radius:5px;background:color-mix(in srgb,var(--mp-accent) 18%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mp-accent) 55%,transparent);color:color-mix(in srgb,var(--mp-accent) 45%,#fff);font:700 9.5px/1 Inter,system-ui,sans-serif;letter-spacing:.4px;vertical-align:middle;text-transform:uppercase}
+.mp-row.off .mp-beta{opacity:.7}
+.mp-nmb{display:flex!important;align-items:center;min-width:0}.mp-nmt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.mp-nmb .mp-beta{flex-shrink:0;margin-left:6px}
+.mp-beta.big{height:19px;padding:0 7px;font-size:10.5px;letter-spacing:.8px;border-radius:6px}
+.mp-beta-txt{color:color-mix(in srgb,var(--mp-accent) 40%,#fff);font-weight:600}
 .mp-fbtn{position:fixed;z-index:2147470500;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;background:radial-gradient(circle at 35% 30%,#3a3d44,#15161a);color:#8a8f98;box-shadow:0 0 0 2px #2a2d33,0 4px 10px rgba(0,0,0,.6);transition:color .3s,box-shadow .3s}
 .mp-fbtn:hover{filter:brightness(1.2)}
 .mp-fbtn.mp-bers.on{color:#fff;background:radial-gradient(circle at 35% 30%,#ff7a3c,#8a1a00);box-shadow:0 0 0 2px #ffb070,0 0 16px 4px rgba(255,90,30,.75);animation:mpBers 1.2s ease-in-out infinite}
