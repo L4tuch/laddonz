@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.7.9
+// @version      1.8.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1111,8 +1111,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 /* styl jak dymek gry: ciemne tło, szara ramka, wyśrodkowany nagłówek */
 #mp-eqtip.gamey{background:rgba(12,12,12,.93)!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:2px solid #5d5d5d!important;border-radius:3px;box-shadow:0 0 0 1px #000,0 4px 14px rgba(0,0,0,.6)!important;padding:6px 8px;font:12px/1.35 Arial,sans-serif;color:#e8e8e8;width:auto;min-width:200px}
 #mp-eqtip.gamey .mp-eqhead{display:none}
-.mp-eq-on .tip-wrapper.normal-tip{clip-path:inset(0 0 100% 0)!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
-.mp-eq-on .tip-wrapper.normal-tip *{visibility:hidden!important}
+.mp-eq-on .tip-wrapper:not(.mp-glass){clip-path:inset(0 0 100% 0)!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+.mp-eq-on .tip-wrapper:not(.mp-glass) *{visibility:hidden!important}
 #mp-eqtip .mp-clone{text-align:center;position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:none!important;border:0!important;box-shadow:none!important;background:transparent!important;margin:0 0 4px!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;clip-path:none!important;max-width:none!important;width:auto!important;pointer-events:none!important}
 #mp-eqtip.gamey{max-width:360px;height:auto!important;max-height:92vh;overflow:hidden}
 /* izolacja od stylów gry (gra ma własne klasy o podobnych nazwach) */
@@ -3641,7 +3641,7 @@ MP.itemDeco = itemDeco;
     if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass gamey' }); document.body.appendChild(tip); }
     const same = hoverId === id && !!anchor === !!anc;
     anchor = anc || null;
-    document.body.classList.toggle('mp-eq-on', !!anchor);      // chowa dymek gry — nasze okno go zastępuje
+    document.body.classList.add('mp-eq-on');      // chowa dymek gry (mapa i lista graczy) — nasze okno go zastępuje
     tip.style.display = 'block';
     if (!same) { hoverId = id; build(id); fill(id); }
     place(x, y);
@@ -4222,5 +4222,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.7.9";
+MP.version = "1.8.0";
 })();

@@ -610,7 +610,7 @@ MP.itemDeco = itemDeco;
     if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass gamey' }); document.body.appendChild(tip); }
     const same = hoverId === id && !!anchor === !!anc;
     anchor = anc || null;
-    document.body.classList.toggle('mp-eq-on', !!anchor);      // chowa dymek gry — nasze okno go zastępuje
+    document.body.classList.add('mp-eq-on');      // chowa dymek gry (mapa i lista graczy) — nasze okno go zastępuje
     tip.style.display = 'block';
     if (!same) { hoverId = id; build(id); fill(id); }
     place(x, y);
