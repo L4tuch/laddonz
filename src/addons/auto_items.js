@@ -1,64 +1,3 @@
-/* ───────── Śmieciara ─────────
- * Usuwa TYLKO przedmioty, którym minęła ważność. Zawsze pokazuje listę do potwierdzenia.
- * Bezpieczniki: nigdy założone, nigdy podpisane, ponowne sprawdzenie ważności tuż przed usunięciem,
- * komenda usuwania musi być zweryfikowana (Diagnostyka).
- */
-(() => {
-  let cfg, running = false;
-
-  function scan() {
-    return game.bag().filter((i) => i.expired && i.st === 0 && !(MP.podpis && MP.podpis.isSigned(i.id)) && !nickIn(cfg.keep, i.name));
-  }
-
-  async function run() {
-    if (running) return;
-    if (game.inBattle()) { toast('Śmieciara: najpierw skończ walkę', 'warn'); return; }
-    const list = scan();
-    if (!list.length) { toast('Śmieciara: brak przedmiotów po terminie ważności', 'ok'); return; }
-    const c = net.cmd('destroyItem');
-    if (!c.t || !c.verified) {
-      await confirmBox({ title: 'Śmieciara jest zablokowana', okText: 'OK', html: `Znalazłam <b>${list.length}</b> przedmiotów po terminie, ale komenda usuwania nie jest jeszcze zweryfikowana.<br><br>Usuń ręcznie JEDEN bezwartościowy przedmiot, a potem w <b>Diagnostyka → Podsłuch</b> przypisz go do „Usunięcie przedmiotu".`, items: list.map((i) => i.name) });
-      return;
-    }
-    const ok = await confirmBox({
-      title: `Usunąć ${list.length} przedmiotów?`, danger: true, okText: 'Usuń', countdown: 3,
-      html: 'Te przedmioty <b>straciły ważność</b>. Operacji nie da się cofnąć.', items: list.map((i) => `${i.name} — ważny do ${new Date(i.expires * 1000).toLocaleString()}`),
-    });
-    if (!ok) return;
-    running = true;
-    let n = 0;
-    try {
-      for (const i of list) {
-        const fresh = game.itemById(i.id);                       // ponowna kontrola tuż przed usunięciem
-        if (!fresh || !fresh.expired || fresh.st !== 0) continue;
-        const r = await net.send('destroyItem', { id: i.id }, { src: 'Śmieciara' });
-        if (r.ok) n++;
-        await sleep(350);
-      }
-    } finally { running = false; }
-    toast(`Śmieciara: usunięto ${n} z ${list.length}`, 'ok');
-  }
-
-  defineAddon({
-    id: 'smieciara', name: 'Śmieciara', icon: 'smieciara', color: ['#8b93a7', '#555d70'], risk: 'destructive',
-    desc: 'Usuwa z ekwipunku wszystkie przedmioty, które straciły ważność — zawsze po pokazaniu listy i Twoim potwierdzeniu.',
-    defaults: { key: '', keep: [] },
-    keys: [{ key: 'key', label: 'sprzątnij', fn: () => run() }],
-    notes: () => [!net.cmd('destroyItem').verified ? { type: 'bad', text: 'Usuwanie zablokowane, dopóki nie zweryfikujesz komendy w Diagnostyce. Do tego czasu Śmieciara tylko pokazuje listę.' } : null],
-    settings: [
-      { key: 'key', type: 'key', label: 'Klawisz: sprzątnij przeterminowane' },
-      { key: 'keep', type: 'list', label: 'Nigdy nie usuwaj (dokładna nazwa)', placeholder: 'nazwa + Enter' },
-    ],
-    render(box) {
-      const l = scan();
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, `Teraz po terminie: ${l.length}`),
-        l.length ? el('ul', { style: { margin: 0, paddingLeft: '18px' } }, l.map((i) => el('li', null, i.name))) : el('div', { class: 'mp-dim' }, 'Nic.'),
-        el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn bad', onclick: () => run() }, 'Sprzątnij…'))));
-    },
-    init(c) { cfg = c; },
-  });
-})();
-
 /* ───────── Fake Taxi ─────────
  * Automatycznie przyjmuje przywołania („Gracz X przyzywa do siebie swoją drużynę! Czy chcesz się teleportować…")
  * od wybranych osób: domyślnie od członków grupy, opcjonalnie od znajomych, klanu i z listy nicków.
@@ -334,8 +273,8 @@
 /* ───────── Ulepszarka ─────────
  * Wskazujesz przedmiot(y) do ulepszania — przeciągając go do okienka, klikając okienko i potem przedmiot,
  * albo z menu przedmiotu. Pod każdym wybierasz, jakimi przedmiotami go karmić: rzadkość (zwykłe / unikaty /
- * heroiki — legend NIGDY) i typy (hełm, pierścień, naszyjnik…). Ulepszanych może być naraz tyle przedmiotów,
- * ile jest typów — po jednym na typ.
+ * heroiki — legend NIGDY) i typy (hełm, pierścień, naszyjnik…). Każdy typ składników może karmić tylko jeden
+ * przedmiot; gdy wszystkie typy są zajęte, nie da się dodać kolejnego przedmiotu.
  * Włączona: po każdej walce NOWE przedmioty z łupu pasujące do ustawień trafiają do ulepszania. Przedmioty,
  * które już leżały w torbie, są ruszane tylko przyciskiem „Ulepsz teraz" (z listą do potwierdzenia).
  * Twarde bezpieczniki: nigdy założone, legendy, artefakty, ulepszane cele, podpisane w Podpisowniku,
@@ -385,7 +324,7 @@
     if (running || game.inBattle()) return;
     if (!slots().length) { if (src === 'btn') toast('Ulepszarka: najpierw wskaż przedmiot do ulepszania', 'warn'); return; }
     const c = net.cmd('enhance');
-    if (!c.t || !c.verified) { if (src === 'btn') toast('Ulepszarka: zweryfikuj komendę ulepszania w Diagnostyce', 'bad'); return; }
+    if (!c.t || !c.verified) { if (src === 'btn') toast('Ulepszarka: najpierw raz ulepsz coś ręcznie w grze — wtedy się nauczy', 'warn'); return; }
     const p = plan(src === 'auto');
     if (!p.length) { if (src === 'btn') toast('Ulepszarka: brak pasujących przedmiotów', 'info'); return; }
     if (src === 'btn') {
@@ -412,19 +351,19 @@
   }
 
   /* ── wybór celu ── */
+  /** Typy składników zajęte przez inne ulepszane przedmioty (każdy typ może karmić tylko jeden przedmiot). */
+  function usedTypes(except) { const u = new Set(); slots().forEach((s) => { if (s !== except) s.types.forEach((t) => u.add(t)); }); return u; }
+  const freeTypes = (except) => { const u = usedTypes(except); return TYPES.map((t) => t[0]).filter((k) => !u.has(k)); };
   function addTarget(id) {
     pickSlot = null; document.body.classList.remove('mp-up-picking');
     const it = game.itemById(id);
     if (!it) { toast('Ulepszarka: to nie jest Twój przedmiot', 'warn'); return; }
     const t = typeOf(it.cl);
     if (!t) { toast(`Ulepszarka: „${it.name}" nie da się ulepszać`, 'warn'); return; }
-    const same = slots().find((s) => s.type === t);
-    if (same && Number(same.id) !== it.id) {
-      // ten sam typ → podmiana celu w tym okienku
-      Object.assign(same, { id: it.id, name: it.name, icon: it.icon });
-    } else if (!same) {
-      slots().push({ id: it.id, name: it.name, icon: it.icon, type: t, rar: { common: true, unique: false, heroic: false }, types: [t] });
-    }
+    if (targetIds().has(it.id)) { toast(`Ulepszarka: „${it.name}" już jest ulepszany`, 'info'); return; }
+    const free = freeTypes();
+    if (!free.length) { toast('Ulepszarka: wszystkie typy przedmiotów są już zajęte — odznacz jakiś typ w innym ulepszanym przedmiocie', 'warn'); return; }
+    slots().push({ id: it.id, name: it.name, icon: it.icon, type: t, rar: { common: true, unique: false, heroic: false }, types: free.includes(t) ? [t] : [] });
     config.save();
     toast(`Ulepszarka: ulepszam „${it.name}"`, 'ok');
     rr();
@@ -459,7 +398,7 @@
     document.addEventListener('drop', (e) => { if (e.target.closest && e.target.closest('.mp-updrop') && dragId) { e.preventDefault(); const id = dragId; dragId = null; addTarget(id); } }, true);
   }
 
-  function chip(label, on, fn) { return el('button', { class: 'mp-upchip' + (on ? ' on' : ''), onclick: fn }, label); }
+  function chip(label, on, fn, taken) { return el('button', { class: 'mp-upchip' + (on ? ' on' : '') + (taken ? ' taken' : ''), title: taken ? 'Ten typ karmi już: ' + taken : '', onclick: taken ? () => toast(`Ulepszarka: ten typ jest już używany do ulepszania „${taken}"`, 'warn') : fn }, label); }
   function slotEl(s, idx) {
     const it = game.itemById(s.id);
     const cnt = candidates(false).filter((i) => fits(i, s)).length;
@@ -473,16 +412,20 @@
       el('div', { class: 'mp-uplab' }, 'Ulepszam przedmiotami'),
       el('div', { class: 'mp-chips' }, RAR.map(([k, l]) => chip(l, s.rar[k], () => { s.rar[k] = !s.rar[k]; config.save(); rr(); }))),
       el('div', { class: 'mp-uplab' }, 'Typy przedmiotów'),
-      el('div', { class: 'mp-chips' }, TYPES.map(([k, l]) => chip(l, s.types.includes(k), () => { s.types = s.types.includes(k) ? s.types.filter((x) => x !== k) : s.types.concat(k); config.save(); rr(); }))),
+      el('div', { class: 'mp-chips' }, TYPES.map(([k, l]) => {
+        const owner = slots().find((o) => o !== s && o.types.includes(k));
+        return chip(l, s.types.includes(k), () => { s.types = s.types.includes(k) ? s.types.filter((x) => x !== k) : s.types.concat(k); config.save(); rr(); }, owner && owner.name);
+      })),
+      !s.types.length ? el('div', { class: 'mp-warnc', style: { marginTop: '6px' } }, 'Wybierz przynajmniej jeden typ — inaczej ten przedmiot nie będzie ulepszany.') : null,
       el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, `Pasujące w torbie teraz: ${cnt}`));
   }
 
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], risk: 'destructive', renderFirst: true,
-    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Włączona: po walce nowe pasujące przedmioty z łupu idą na ulepszanie. To, co już było w torbie, tylko przyciskiem „Ulepsz teraz". Naraz po jednym ulepszanym przedmiocie na każdy typ.',
+    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Włączona: po walce nowe pasujące przedmioty z łupu idą na ulepszanie. To, co już było w torbie, tylko przyciskiem „Ulepsz teraz". Każdy typ składników może być przypisany tylko do jednego ulepszanego przedmiotu.',
     defaults: { slots: [], protect: [], protectNames: [] },
     notes: () => [
-      !net.cmd('enhance').verified ? { type: 'bad', text: 'Ulepszanie zablokowane, dopóki nie zweryfikujesz komendy: ulepsz ręcznie przedmiot jednym składnikiem, potem Diagnostyka → Podsłuch → „Ulepszenie przedmiotu".' } : null,
+      !net.cmd('enhance').verified ? { type: 'info', text: 'Jednorazowo: ulepsz w grze ręcznie dowolny przedmiot (choćby jednym składnikiem). Ulepszarka sama to zauważy i od razu będzie gotowa — pojawi się komunikat.' } : null,
     ],
     settings: [
       { group: 'Ochrona', key: 'protectNames', type: 'list', label: 'Nigdy nie używaj (nazwy)', placeholder: 'nazwa + Enter' },
@@ -490,15 +433,17 @@
     render(box, c, rerender) {
       rr = () => { if (box.isConnected) rerender(); };
       slots().forEach((s, i) => box.appendChild(slotEl(s, i)));
-      const used = new Set(slots().map((s) => s.type));
-      if (used.size < TYPES.length) {
+      const free = freeTypes();
+      if (free.length) {
         box.appendChild(el('div', { class: 'mp-card' },
           el('div', { class: 'mp-uphead' },
             el('div', { class: 'mp-updrop', title: 'Przeciągnij tu przedmiot albo kliknij i wskaż go w ekwipunku', onclick: startPick }, icon('plus', 18)),
             el('div', { style: { flex: 1 } },
               el('b', null, slots().length ? 'Dodaj kolejny przedmiot' : 'Wybierz przedmiot do ulepszania'),
               el('div', { class: 'mp-dim' }, 'Przeciągnij go tutaj albo kliknij okienko, a potem przedmiot. Możesz też: prawy klik na przedmiocie → „Ulepszaj w Ulepszarce".'))),
-          slots().length ? el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, 'Wolne typy: ' + TYPES.filter((t) => !used.has(t[0])).map((t) => t[1]).join(', ')) : null));
+          slots().length ? el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, 'Wolne typy do ulepszania: ' + TYPES.filter((t) => free.includes(t[0])).map((t) => t[1]).join(', ')) : null));
+      } else {
+        box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));
       }
       if (slots().length) box.appendChild(el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn pri', onclick: () => run('btn') }, 'Ulepsz teraz…')));
     },
@@ -512,6 +457,7 @@
         config.save();
       }
       if (!Array.isArray(c.protect)) c.protect = [];
+      { const u = new Set(); slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => !u.has(t)); sl.types.forEach((t) => u.add(t)); }); }   // typ składników tylko u jednego przedmiotu
       snapshot();
       watchPointer();
       MP.ulepszarka = { addTarget, plan, run, typeOf };
@@ -519,11 +465,12 @@
         if (!cfg.enabled) return [];
         const it = game.itemById(id);
         const out = [];
-        if (it && typeOf(it.cl) && !targetIds().has(it.id)) out.push({ label: 'Ulepszaj w Ulepszarce', fn: () => addTarget(id) });
+        if (it && typeOf(it.cl) && !targetIds().has(it.id) && freeTypes().length) out.push({ label: 'Ulepszaj w Ulepszarce', fn: () => addTarget(id) });
         if (it && it.st === 0) out.push(cfg.protect.includes(id) ? { label: 'Zdejmij ochronę przed Ulepszarką', fn: () => { cfg.protect = cfg.protect.filter((x) => x !== id); config.save(); } } : { label: 'Chroń przed Ulepszarką', fn: () => { cfg.protect.push(id); config.save(); } });
         return out;
       });
       bus.on('battle:start', () => snapshot());
+      bus.on('cmd:learned', () => rr());
       bus.on('battle:end', () => { if (cfg.enabled) setTimeout(() => run('auto'), rnd(900, 1400)); });
     },
     onToggle(on) { if (on) snapshot(); },

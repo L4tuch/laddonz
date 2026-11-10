@@ -6,7 +6,7 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 
 - **Jedno naciśnięcie = jedna akcja.** Przytrzymanie klawisza nic nie spamuje, skróty nie działają podczas pisania na czacie.
 - **Automaty są domyślnie wyłączone** (oznaczone w panelu literą **A** i żółtą plakietką). Włączasz je świadomie, po ostrzeżeniu.
-- **Nic nie jest usuwane bez potwierdzenia.** Śmieciara zawsze pokazuje listę przedmiotów i odlicza 2–3 s na przycisku. Ulepszarka pyta przy włączeniu i przy „Ulepsz teraz"; po walce zużywa tylko nowe przedmioty z łupu pasujące do Twoich ustawień.
+- **Nic nie jest zużywane bez Twojej zgody.** Ulepszarka pyta przy włączeniu i przy „Ulepsz teraz"; po walce zużywa tylko nowe przedmioty z łupu pasujące do Twoich ustawień.
 - **Komendy usuwania i ulepszania są zablokowane**, dopóki sam ich nie „pokażesz" panelowi (patrz: [Pierwsze uruchomienie](#4-pierwsze-uruchomienie--weryfikacja-komend)).
 - **Wszystko przechodzi przez jedną kolejkę** z minimalnym odstępem (domyślnie 300 ms) i jest zapisywane w zakładce **Log**.
 - **Tryb próbny** (Ogólne → Tryb próbny): panel niczego nie wysyła, tylko zapisuje w logu, co by zrobił.
@@ -28,16 +28,14 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 | ✎ | **Podpisownik** | Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny). |
 | 🎒 | **Pokaż EQ** | Najedź na gracza (domyślnie z Shift) → jego ekwipunek + podsumowanie bonusów legendarnych. |
 | ★ | **Jaki To Bon** | Skrót bonusu legendarnego w rogu przedmiotu (OR, CBK, DA…). Skróty edytowalne. |
-| 🗑 | **Śmieciara** | Usuwa tylko przedmioty po terminie ważności, po potwierdzeniu listy. |
 | 🚕 | **Fake Taxi** | Włączony = automatycznie przyjmuje przywołania („…przyzywa do siebie swoją drużynę!") od członków grupy; opcjonalnie od znajomych, klanu i z listy nicków. Okno z pytaniem w ogóle się nie pokazuje. |
 | ⚡ | **Auto f** | Włącz/wyłącz: gdy włączony, każda walka od razu przechodzi na szybką walkę (np. przy kolosie, gdy odchodzisz od komputera). |
 | ✋ | **Szybka rączka** | Prawy klik na przedmiocie → „Użyj po walce" — po walce przedmiot jest używany od razu (jak „Użyj" z menu). Ikonka zegara na przedmiocie. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". |
-| ✦ | **Ulepszarka** | Przeciągasz (albo wskazujesz) przedmiot do ulepszania i wybierasz, czym go karmić: rzadkość (zwykłe / unikaty / heroiki — nigdy legendy) i typy (hełm, pierścień, naszyjnik…). Po jednym ulepszanym przedmiocie na typ. Włączona: po walce nowe pasujące przedmioty z łupu idą na ulepszanie; to, co już było w torbie — tylko przyciskiem „Ulepsz teraz". |
+| ✦ | **Ulepszarka** | Przeciągasz (albo wskazujesz) przedmiot do ulepszania i wybierasz, czym go karmić: rzadkość (zwykłe / unikaty / heroiki — nigdy legendy) i typy (hełm, pierścień, naszyjnik…). Każdy typ składników może karmić tylko jeden przedmiot — gdy wszystkie typy są zajęte, kolejnego przedmiotu nie dodasz. Włączona: po walce nowe pasujące przedmioty z łupu idą na ulepszanie; to, co już było w torbie — tylko przyciskiem „Ulepsz teraz". |
 | 💬 | **MiniChat** | Rozmiar, czcionka i przezroczystość czatu, zwijanie pod klawisz. |
 
 **Czego Ulepszarka nigdy nie użyje:** założonych przedmiotów, legend, artefaktów, przedmiotów ulepszonych, innych ulepszanych celów, podpisanych w Podpisowniku, z kolejki Szybkiej rączki i oznaczonych „Chroń przed Ulepszarką".
 
-**Czego Śmieciara nigdy nie usunie:** przedmiotów z ważnym terminem, założonych, podpisanych i z listy „Nigdy nie usuwaj". Tuż przed każdym usunięciem ważność jest sprawdzana jeszcze raz.
 
 ---
 
@@ -80,8 +78,9 @@ Panel komunikuje się z grą tymi samymi komendami, które wysyła sama gra. Cz�
 
 1. Otwórz panel → **Ogólne** → włącz **Tryb próbny**. Pobaw się dodatkami i sprawdź w zakładce **Log**, co panel *by* wysłał.
 2. Wejdź w **Diagnostyka** → sekcja *Punkty zaczepienia*. Wszystko powinno mieć ✔. Jeśli coś ma ✘, zapisz które — to miejsce do poprawki w `src/core/game.js`.
+> **Ulepszarka uczy się sama:** wystarczy raz ręcznie ulepszyć przedmiot w grze — panel to zauważy, sprawdzi, że przedmiot naprawdę zniknął, i od razu odblokuje dodatek. Podsłuch poniżej jest potrzebny tylko w razie problemów.
+
 3. Dla każdej komendy ze statusem **do ustawienia** / **zablokowana** wykonaj daną akcję **ręcznie w grze** (opis jest przy komendzie), np.:
-   - *Usunięcie przedmiotu* → usuń ręcznie jeden bezwartościowy przedmiot,
    - *Ulepszenie przedmiotu* → ulepsz ręcznie dowolny przedmiot jednym składnikiem,
    - *Zmiana zestawu* → przełącz zestaw ekwipunku,
    - *Podgląd EQ gracza* → kliknij u kogoś „Pokaż ekwipunek".

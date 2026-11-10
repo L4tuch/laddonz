@@ -19,7 +19,6 @@ const DEFAULT_COMMANDS = {
   eqSet:        { t: '', destructive: false, label: 'Zmiana zestawu', how: 'Przełącz ręcznie zestaw ekwipunku.' },
   otherEq:      { t: '', destructive: false, label: 'Podgląd EQ gracza', how: 'Kliknij u gracza „Pokaż ekwipunek".' },
   friendAdd:    { t: '', destructive: false, label: 'Dodanie do znajomych', how: 'Dodaj ręcznie kogoś do znajomych.' },
-  destroyItem:  { t: '', destructive: true, label: 'Usunięcie przedmiotu', how: 'Usuń ręcznie JEDEN bezwartościowy przedmiot.' },
   enhance:      { t: '', destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
 };
 
@@ -93,6 +92,31 @@ const net = {
   _depth: 0,
   _lastSniff: { task: '', t: 0 },
 
+  /**
+   * Samouczenie komend „zużywających" (ulepszanie): gdy SAM ręcznie ulepszysz przedmiot w grze, panel zapamiętuje
+   * komendę — ale uznaje ją dopiero, gdy użyte składniki faktycznie zniknęły z torby (czyli to było prawdziwe ulepszenie,
+   * a nie np. podgląd). Bez zaglądania do Diagnostyki.
+   */
+  autoLearn(t) {
+    try {
+      if (this.cmd('enhance').verified) return;
+      if (!/enhanc|upgrad|ulepsz/i.test(t.split('&')[0])) return;   // tylko komendy ulepszania
+      const tpl = templatize('enhance', t);
+      if (!tpl.includes('{item}') || !tpl.includes('{ingredients}')) return;
+      const target = Number((t.match(/=(\d+)(?=&|$)/g) || []).map((x) => x.slice(1)).find((id) => game.itemById(id)));
+      const ids = [...t.matchAll(/=((?:\d+,)*\d+)(?=&|$)/g)].flatMap((m) => m[1].split(',')).map(Number).filter((id) => id !== target && game.itemById(id));
+      if (!ids.length) return;
+      setTimeout(() => {
+        const gone = ids.some((id) => !game.itemById(id));
+        if (!gone || this.cmd('enhance').verified) return;
+        this.setCmd('enhance', tpl, true);
+        this.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Nauczono komendy ulepszania: ' + tpl });
+        toast('Ulepszarka: gotowe — nauczyłam się ulepszania, możesz już z niej korzystać', 'ok');
+        bus.emit('cmd:learned', 'enhance');
+      }, 1800);
+    } catch {}
+  },
+
   isTask(x) { return typeof x === 'string' && /^[a-z_0-9]+&[a-z_0-9]+=/i.test(x); },
 
   wrapTaskFn(obj, name, label) {
@@ -112,6 +136,7 @@ const net = {
               if (self.sniff.length > 40) self.sniff.length = 40;
               bus.emit('sniff');
             }
+            self.autoLearn(t);
           }
         }
         const g = self.checkGuards(t);

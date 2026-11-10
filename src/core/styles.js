@@ -91,6 +91,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-uplab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.6;margin:10px 0 5px}
 .mp-upchip{all:unset;cursor:pointer;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);color:inherit;opacity:.75}
 .mp-upchip:hover{opacity:1}
+.mp-upchip.taken{opacity:.3;text-decoration:line-through;cursor:not-allowed}
 .mp-upchip.on{background:var(--mp-accent);border-color:var(--mp-accent);color:#fff;opacity:1}
 .mp-up-picking [class*="item-id-"]{cursor:crosshair!important;outline:1px dashed var(--mp-accent)}
 .mp-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}

@@ -15,12 +15,7 @@ const quickbar = {
     this.draw();
     // gra potrafi przebudować interfejs (zmiana rozdzielczości) — pilnujemy, żeby pasek był w ekranie
     window.addEventListener('resize', debounce(() => this.place(), 200));
-    // klik poza oknem szybkich ustawień je zamyka
-    document.addEventListener('mousedown', (e) => {
-      if (!this.pop) return;
-      if (this.pop.contains(e.target) || (this.bar && this.bar.contains(e.target)) || (e.target.closest && e.target.closest('.mp-modal-bg'))) return;
-      this.closePop();
-    }, true);
+    // okno szybkich ustawień zostaje otwarte, dopóki sam go nie zamkniesz (X albo ponowny klik w ikonkę)
   },
 
   /** Na pasku są tylko dodatki dodane do skrótów (przycisk „Dodaj do skrótów" przy włączonym dodatku). */
@@ -114,7 +109,10 @@ const quickbar = {
       const w = 360;
       const left = r.left > w + 20 ? r.left - w - 8 : r.right + 8;
       P.style.left = left + 'px';
-      P.style.top = clamp(anchor ? anchor.getBoundingClientRect().top - 20 : r.top, 8, innerHeight - 200) + 'px';
+      // okno zawsze mieści się w ekranie: przesuwamy je w górę, gdy jest wysokie
+      const want = clamp(anchor ? anchor.getBoundingClientRect().top - 20 : (parseFloat(P.style.top) || r.top), 8, innerHeight - 200);
+      const h = Math.min(P.scrollHeight, innerHeight * 0.78);
+      P.style.top = Math.max(8, Math.min(want, innerHeight - h - 8)) + 'px';
     }
     this.draw();
   },
