@@ -95,7 +95,7 @@ const menus = {
           // tryb „przechwycenia": panel prosi grę o menu przedmiotu, żeby wybrać z niego opcję (np. „Użyj") — menu się nie pokazuje
           if (menu && self.capturing) { const r = self.capturing; self.capturing = null; r(menu); return; }
           if (menu) self.inject(menu, args);
-        } catch (e) { console.warn('[laddonz] menu', e); }
+        } catch (e) { console.warn('[L4Scripts] menu', e); }
         return f.apply(this, args);
       };
       w.__mpMenu = true;

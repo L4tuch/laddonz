@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         laddonz — legalne dodatki (NI)
+// @name         L4Scripts — dodatki (NI)
 // @namespace    https://github.com/__GITHUB_USER__/__GITHUB_REPO__
 // @version      __VERSION__
-// @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
+// @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       __GITHUB_USER__
 // @match        https://*.margonem.pl/*
 // @match        https://*.margonem.com/*
@@ -13,7 +13,7 @@
 // @run-at       document-idle
 // @grant        none
 // @noframes
-// @updateURL    https://raw.githubusercontent.com/__GITHUB_USER__/__GITHUB_REPO__/main/dist/laddonz.user.js
-// @downloadURL  https://raw.githubusercontent.com/__GITHUB_USER__/__GITHUB_REPO__/main/dist/laddonz.user.js
+// @updateURL    https://raw.githubusercontent.com/__GITHUB_USER__/__GITHUB_REPO__/refs/heads/main/dist/laddonz.user.js
+// @downloadURL  https://raw.githubusercontent.com/__GITHUB_USER__/__GITHUB_REPO__/refs/heads/main/dist/laddonz.user.js
 // @supportURL   https://github.com/__GITHUB_USER__/__GITHUB_REPO__/issues
 // ==/UserScript==

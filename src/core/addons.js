@@ -32,7 +32,7 @@ const addons = {
       for (const k of a.keys || []) {
         keys.bind({ label: `${a.name}: ${k.label}`, get: () => (cfg.enabled ? cfg[k.key] || '' : ''), fn: k.fn });
       }
-      try { a.init && a.init(cfg); } catch (e) { console.warn('[laddonz] init', a.id, e); }
+      try { a.init && a.init(cfg); } catch (e) { console.warn('[L4Scripts] init', a.id, e); }
       if (cfg.enabled) { try { a.onToggle && a.onToggle(true, cfg); } catch (e) { console.warn(e); } }
     }
     config.save();

@@ -477,9 +477,10 @@
         if (!it) continue;
         // składnik próbny: przedmiot z ekwipunku w torbie o poziomie co najmniej takim jak ulepszany (niższy gra odrzuca)
         const tl = lvlOf(it);
-        const probe = game.bag()
-          .filter((i) => isEquipment(i) && ['common', 'unique', 'heroic'].includes(i.rarity) && !targetIds().has(i.id) && !(MP.podpis && MP.podpis.isSigned(i.id)) && lvlOf(i) >= tl && !isRejected(it.id, i.id))
-          .sort((a, b) => lvlOf(a) - lvlOf(b))[0];
+        const pool = game.bag().filter((i) => isEquipment(i) && ['common', 'unique', 'heroic'].includes(i.rarity) && !targetIds().has(i.id) && !(MP.podpis && MP.podpis.isSigned(i.id)));
+        // najlepiej składnik o poziomie ≥ ulepszanego (taki gra przyjmuje); gdy brak — najwyższy dostępny
+        const probe = pool.filter((i) => lvlOf(i) >= tl && !isRejected(it.id, i.id)).sort((a, b) => lvlOf(a) - lvlOf(b))[0]
+          || pool.sort((a, b) => lvlOf(b) - lvlOf(a))[0];
         if (!probe) continue;
         const r = await net.send('enhancePreview', { item: it.id, ingredients: probe.id }, { src: 'Ulepszarka' });
         const steps = (store.get('up:last', {}) || {}).steps || [];

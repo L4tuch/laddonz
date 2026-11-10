@@ -75,7 +75,7 @@ const net = {
       try {
         const r = g(task);
         if (r && r.block) return r;
-      } catch (e) { console.warn('[laddonz] guard error', e); }
+      } catch (e) { console.warn('[L4Scripts] guard error', e); }
     }
     return null;
   },

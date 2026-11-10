@@ -11,7 +11,7 @@ const store = {
     } catch { return def; }
   },
   set(key, val) {
-    try { localStorage.setItem(this.PREFIX + key, JSON.stringify(val)); } catch (e) { console.warn('[laddonz] zapis nieudany', e); }
+    try { localStorage.setItem(this.PREFIX + key, JSON.stringify(val)); } catch (e) { console.warn('[L4Scripts] zapis nieudany', e); }
   },
   del(key) { try { localStorage.removeItem(this.PREFIX + key); } catch {} },
 };
@@ -68,7 +68,7 @@ const config = {
   export() { return JSON.stringify(this.data, null, 2); },
   import(json) {
     const obj = JSON.parse(json);
-    if (!obj || typeof obj !== 'object' || !obj.addons) throw new Error('To nie wygląda na plik konfiguracji laddonz.');
+    if (!obj || typeof obj !== 'object' || !obj.addons) throw new Error('To nie wygląda na plik konfiguracji L4Scripts.');
     this.data = deepMerge(structuredClone(this.defaults), obj);
     this.save();
   },

@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         laddonz — legalne dodatki (NI)
+// @name         L4Scripts — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.9.7
-// @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
+// @version      1.9.8
+// @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
 // @match        https://*.margonem.com/*
@@ -13,8 +13,8 @@
 // @run-at       document-idle
 // @grant        none
 // @noframes
-// @updateURL    https://raw.githubusercontent.com/L4tuch/laddonz/main/dist/laddonz.user.js
-// @downloadURL  https://raw.githubusercontent.com/L4tuch/laddonz/main/dist/laddonz.user.js
+// @updateURL    https://raw.githubusercontent.com/L4tuch/laddonz/refs/heads/main/dist/laddonz.user.js
+// @downloadURL  https://raw.githubusercontent.com/L4tuch/laddonz/refs/heads/main/dist/laddonz.user.js
 // @supportURL   https://github.com/L4tuch/laddonz/issues
 // ==/UserScript==
 
@@ -85,7 +85,7 @@ const bus = {
   off(ev, fn) { this.map.get(ev)?.delete(fn); },
   emit(ev, ...a) {
     for (const fn of this.map.get(ev) || []) {
-      try { fn(...a); } catch (e) { console.warn('[laddonz] błąd w obsłudze', ev, e); }
+      try { fn(...a); } catch (e) { console.warn('[L4Scripts] błąd w obsłudze', ev, e); }
     }
   },
 };
@@ -106,7 +106,7 @@ const store = {
     } catch { return def; }
   },
   set(key, val) {
-    try { localStorage.setItem(this.PREFIX + key, JSON.stringify(val)); } catch (e) { console.warn('[laddonz] zapis nieudany', e); }
+    try { localStorage.setItem(this.PREFIX + key, JSON.stringify(val)); } catch (e) { console.warn('[L4Scripts] zapis nieudany', e); }
   },
   del(key) { try { localStorage.removeItem(this.PREFIX + key); } catch {} },
 };
@@ -163,7 +163,7 @@ const config = {
   export() { return JSON.stringify(this.data, null, 2); },
   import(json) {
     const obj = JSON.parse(json);
-    if (!obj || typeof obj !== 'object' || !obj.addons) throw new Error('To nie wygląda na plik konfiguracji laddonz.');
+    if (!obj || typeof obj !== 'object' || !obj.addons) throw new Error('To nie wygląda na plik konfiguracji L4Scripts.');
     this.data = deepMerge(structuredClone(this.defaults), obj);
     this.save();
   },
@@ -524,7 +524,7 @@ const keys = {
         if (b.get() !== c) continue;
         if (b.when && !b.when()) continue;
         e.preventDefault(); e.stopPropagation();
-        try { b.fn(e); } catch (err) { console.warn('[laddonz] skrót', b.label, err); }
+        try { b.fn(e); } catch (err) { console.warn('[L4Scripts] skrót', b.label, err); }
         return;
       }
     }, true);
@@ -629,7 +629,7 @@ const net = {
       try {
         const r = g(task);
         if (r && r.block) return r;
-      } catch (e) { console.warn('[laddonz] guard error', e); }
+      } catch (e) { console.warn('[L4Scripts] guard error', e); }
     }
     return null;
   },
@@ -1324,7 +1324,7 @@ const addons = {
       for (const k of a.keys || []) {
         keys.bind({ label: `${a.name}: ${k.label}`, get: () => (cfg.enabled ? cfg[k.key] || '' : ''), fn: k.fn });
       }
-      try { a.init && a.init(cfg); } catch (e) { console.warn('[laddonz] init', a.id, e); }
+      try { a.init && a.init(cfg); } catch (e) { console.warn('[L4Scripts] init', a.id, e); }
       if (cfg.enabled) { try { a.onToggle && a.onToggle(true, cfg); } catch (e) { console.warn(e); } }
     }
     config.save();
@@ -1535,7 +1535,7 @@ const menus = {
           // tryb „przechwycenia": panel prosi grę o menu przedmiotu, żeby wybrać z niego opcję (np. „Użyj") — menu się nie pokazuje
           if (menu && self.capturing) { const r = self.capturing; self.capturing = null; r(menu); return; }
           if (menu) self.inject(menu, args);
-        } catch (e) { console.warn('[laddonz] menu', e); }
+        } catch (e) { console.warn('[L4Scripts] menu', e); }
         return f.apply(this, args);
       };
       w.__mpMenu = true;
@@ -1832,7 +1832,7 @@ const ui = {
 
   launcher() {
     const p = config.data.global.launcher || { x: 16, y: 120 };
-    const b = el('div', { id: 'mp-launcher', class: 'mp-glass', title: `laddonz (${config.data.global.panelKey || 'brak skrótu'})`, style: { left: p.x + 'px', top: p.y + 'px' } }, icon('logo', 24));
+    const b = el('div', { id: 'mp-launcher', class: 'mp-glass', title: `L4Scripts (${config.data.global.panelKey || 'brak skrótu'})`, style: { left: p.x + 'px', top: p.y + 'px' } }, icon('logo', 24));
     document.body.appendChild(b);
     const moved = makeDraggable(b, b, (pos) => { config.data.global.launcher = pos; config.save(); });
     b.addEventListener('click', () => { if (!moved()) this.toggle(); });
@@ -1857,7 +1857,7 @@ const ui = {
     if (!['addons', 'general'].includes(this.tab)) this.tab = 'addons';
     const head = el('div', { class: 'mp-head' },
       el('div', { class: 'mp-tile', style: { background: grad([config.data.global.accent, '#3fa2ff']) } }, icon('logo', 18)),
-      el('div', null, el('div', { class: 'mp-title' }, 'laddonz'), el('div', { class: 'mp-sub' }, this.subtitle())),
+      el('div', null, el('div', { class: 'mp-title' }, 'L4Scripts'), el('div', { class: 'mp-sub' }, this.subtitle())),
       el('div', { class: 'mp-sp' }),
       el('div', { class: 'mp-tabs' }, tabs.map(([id, ic, lb]) => el('button', { class: 'mp-tab' + (this.tab === id ? ' on' : ''), onclick: () => { this.tab = id; this.renderAll(); } }, icon(ic, 15), lb))),
       el('button', { class: 'mp-x', title: 'Zamknij', onclick: () => this.close() }, icon('close', 18)));
@@ -2092,7 +2092,7 @@ const ui = {
     M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Coś nie działa?'),
       el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Skopiuj raport i wklej go w rozmowie z twórcą — są w nim ostatnie ruchy dodatków i odpowiedzi gry (bez haseł i danych konta).'),
       el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => copyReport() }, 'Kopiuj raport'))));
-    M.appendChild(el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, `laddonz v${MP.version}. Kod otwarty — sprawdź, co robi każdy dodatek, zanim go włączysz.`));
+    M.appendChild(el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, `L4Scripts v${MP.version}. Kod otwarty — sprawdź, co robi każdy dodatek, zanim go włączysz.`));
   },
 };
 
@@ -2297,7 +2297,7 @@ const quickbar = {
       });
       this.bar.appendChild(t);
     }
-    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Pełny panel laddonz', onclick: () => ui.toggle() }, icon('logo', 15)));
+    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Pełny panel L4Scripts', onclick: () => ui.toggle() }, icon('logo', 15)));
     this.place();
   },
 
@@ -3563,7 +3563,7 @@ MP.itemDeco = itemDeco;
           return it;
         });
       } else dbg.noWindow = true;
-    } catch (e) { console.warn('[laddonz] showEq', e); dbg.error = String(e); }
+    } catch (e) { console.warn('[L4Scripts] showEq', e); dbg.error = String(e); }
     finally { off(); }
     // zamykanie okna gry w tle — nie każemy czekać na podgląd
     const userOpened = userEqClick >= t0 - 150;
@@ -3802,7 +3802,7 @@ MP.itemDeco = itemDeco;
       }
     };
 
-    /* LISTA GRACZY (w grze i w laddonz) */
+    /* LISTA GRACZY (w grze i w L4Scripts) */
     const listRow = (t) => t && t.closest && t.closest('.one-other, .tw-list-item, .mp-prow');
     const playerFromRow = (row) => {
       if (row.dataset && row.dataset.pid) return game.otherById(row.dataset.pid);
@@ -3852,7 +3852,7 @@ MP.itemDeco = itemDeco;
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
-      { key: 'listHover', type: 'bool', label: 'Najechanie na gracza na liście graczy (w grze i w laddonz)' },
+      { key: 'listHover', type: 'bool', label: 'Najechanie na gracza na liście graczy (w grze i w L4Scripts)' },
       { key: 'needShift', type: 'bool', label: 'Na mapie tylko z wciśniętym Shift' },
       { adv: true, key: 'cacheSec', type: 'number', label: 'Pamiętaj wynik przez (s)', min: 10, max: 1800 },
       { adv: true, key: 'tipSelector', type: 'text', label: 'Selektor dymka gracza w grze', hint: 'Domyślnie .tip-wrapper.normal-tip' },
@@ -4349,9 +4349,10 @@ MP.itemDeco = itemDeco;
         if (!it) continue;
         // składnik próbny: przedmiot z ekwipunku w torbie o poziomie co najmniej takim jak ulepszany (niższy gra odrzuca)
         const tl = lvlOf(it);
-        const probe = game.bag()
-          .filter((i) => isEquipment(i) && ['common', 'unique', 'heroic'].includes(i.rarity) && !targetIds().has(i.id) && !(MP.podpis && MP.podpis.isSigned(i.id)) && lvlOf(i) >= tl && !isRejected(it.id, i.id))
-          .sort((a, b) => lvlOf(a) - lvlOf(b))[0];
+        const pool = game.bag().filter((i) => isEquipment(i) && ['common', 'unique', 'heroic'].includes(i.rarity) && !targetIds().has(i.id) && !(MP.podpis && MP.podpis.isSigned(i.id)));
+        // najlepiej składnik o poziomie ≥ ulepszanego (taki gra przyjmuje); gdy brak — najwyższy dostępny
+        const probe = pool.filter((i) => lvlOf(i) >= tl && !isRejected(it.id, i.id)).sort((a, b) => lvlOf(a) - lvlOf(b))[0]
+          || pool.sort((a, b) => lvlOf(b) - lvlOf(a))[0];
         if (!probe) continue;
         const r = await net.send('enhancePreview', { item: it.id, ingredients: probe.id }, { src: 'Ulepszarka' });
         const steps = (store.get('up:last', {}) || {}).steps || [];
@@ -4749,7 +4750,7 @@ MP.itemDeco = itemDeco;
   W.addEventListener('unhandledrejection', (e) => logErr('promise: ' + (e.reason && (e.reason.message || e.reason))));
   const t0 = now();
   while (!game.ready()) {
-    if (now() - t0 > 120000) { console.warn('[laddonz] Nie wykryto gry (nowy interfejs) — panel nie startuje.'); return; }
+    if (now() - t0 > 120000) { console.warn('[L4Scripts] Nie wykryto gry (nowy interfejs) — panel nie startuje.'); return; }
     await sleep(500);
   }
   await sleep(800);
@@ -4768,12 +4769,12 @@ MP.itemDeco = itemDeco;
   itemDeco.start();
   ui.start();
   quickbar.start();
-  console.log(`%c[laddonz] v${MP.version} gotowy — ${addons.list.length} dodatków. Panel: ${config.data.global.panelKey}`, 'color:#7c5cff;font-weight:bold');
+  console.log(`%c[L4Scripts] v${MP.version} gotowy — ${addons.list.length} dodatków. Panel: ${config.data.global.panelKey}`, 'color:#7c5cff;font-weight:bold');
   if (!store.get('welcomed', false)) {
     store.set('welcomed', true);
-    toast(`laddonz gotowy — kliknij ikonkę albo naciśnij ${config.data.global.panelKey}`, 'ok', 6000);
+    toast(`L4Scripts gotowy — kliknij ikonkę albo naciśnij ${config.data.global.panelKey}`, 'ok', 6000);
   }
 })();
 
-MP.version = "1.9.7";
+MP.version = "1.9.8";
 })();

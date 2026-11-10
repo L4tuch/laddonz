@@ -1,4 +1,4 @@
-# laddonz — legalne dodatki do Margonem (nowy interfejs)
+# L4Scripts — dodatki do Margonem (nowy interfejs)
 
 Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel konfiguracyjny z ikonką dla każdego dodatku.
 
@@ -60,7 +60,7 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
    - **Brave:** wejdź w `brave://extensions` → włącz **Tryb dewelopera** w prawym górnym rogu; jeśli przy Tampermonkey jest przełącznik **Zezwalaj na skrypty użytkownika**, włącz go też.
 3. Otwórz w przeglądarce adres (z Twoim loginem):
    ```
-   https://raw.githubusercontent.com/L4tuch/laddonz/main/dist/laddonz.user.js
+   https://raw.githubusercontent.com/L4tuch/laddonz/refs/heads/main/dist/laddonz.user.js
    ```
 4. Tampermonkey pokaże ekran instalacji → **Zainstaluj**.
 5. Wejdź do gry. Po wczytaniu postaci po lewej pojawi się szklana ikonka ⬡. Panel otwierasz ikonką albo klawiszem **F8**.
@@ -77,7 +77,7 @@ Nic nie trzeba ustawiać — komendy gry są wbudowane. Włącz potrzebne dodatk
 
 ## 5. Gdy coś nie działa
 
-- **Panel się nie pokazuje:** sprawdź, czy grasz na nowym interfejsie i czy w Tampermonkey skrypt jest włączony (zielony przełącznik). F12 → Konsola → szukaj wpisów `[laddonz]`.
+- **Panel się nie pokazuje:** sprawdź, czy grasz na nowym interfejsie i czy w Tampermonkey skrypt jest włączony (zielony przełącznik). F12 → Konsola → szukaj wpisów `[L4Scripts]`.
 - **Liczby/plakietki nie pojawiają się na oknie (łup, czat, ikona grupy, przywołanie):** gra mogła zmienić nazwę klasy okna. F12 → strzałka „wskaż element" → kliknij okno → skopiuj jego klasę (np. `.loot-wnd`) do pola *Selektor…* w ustawieniach dodatku.
 - **Menu prawego przycisku nie ma nowych opcji:** zapasowo **Alt + prawy klik** na przedmiocie zawsze otwiera menu panelu, a Dobij jest też dostępne w oknie „Gracze na mapie+".
 - **Kopia ustawień:** Ogólne → Eksportuj / Importuj.

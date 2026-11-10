@@ -63,7 +63,7 @@ const ui = {
 
   launcher() {
     const p = config.data.global.launcher || { x: 16, y: 120 };
-    const b = el('div', { id: 'mp-launcher', class: 'mp-glass', title: `laddonz (${config.data.global.panelKey || 'brak skrótu'})`, style: { left: p.x + 'px', top: p.y + 'px' } }, icon('logo', 24));
+    const b = el('div', { id: 'mp-launcher', class: 'mp-glass', title: `L4Scripts (${config.data.global.panelKey || 'brak skrótu'})`, style: { left: p.x + 'px', top: p.y + 'px' } }, icon('logo', 24));
     document.body.appendChild(b);
     const moved = makeDraggable(b, b, (pos) => { config.data.global.launcher = pos; config.save(); });
     b.addEventListener('click', () => { if (!moved()) this.toggle(); });
@@ -88,7 +88,7 @@ const ui = {
     if (!['addons', 'general'].includes(this.tab)) this.tab = 'addons';
     const head = el('div', { class: 'mp-head' },
       el('div', { class: 'mp-tile', style: { background: grad([config.data.global.accent, '#3fa2ff']) } }, icon('logo', 18)),
-      el('div', null, el('div', { class: 'mp-title' }, 'laddonz'), el('div', { class: 'mp-sub' }, this.subtitle())),
+      el('div', null, el('div', { class: 'mp-title' }, 'L4Scripts'), el('div', { class: 'mp-sub' }, this.subtitle())),
       el('div', { class: 'mp-sp' }),
       el('div', { class: 'mp-tabs' }, tabs.map(([id, ic, lb]) => el('button', { class: 'mp-tab' + (this.tab === id ? ' on' : ''), onclick: () => { this.tab = id; this.renderAll(); } }, icon(ic, 15), lb))),
       el('button', { class: 'mp-x', title: 'Zamknij', onclick: () => this.close() }, icon('close', 18)));
@@ -323,7 +323,7 @@ const ui = {
     M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Coś nie działa?'),
       el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Skopiuj raport i wklej go w rozmowie z twórcą — są w nim ostatnie ruchy dodatków i odpowiedzi gry (bez haseł i danych konta).'),
       el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => copyReport() }, 'Kopiuj raport'))));
-    M.appendChild(el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, `laddonz v${MP.version}. Kod otwarty — sprawdź, co robi każdy dodatek, zanim go włączysz.`));
+    M.appendChild(el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, `L4Scripts v${MP.version}. Kod otwarty — sprawdź, co robi każdy dodatek, zanim go włączysz.`));
   },
 };
 
