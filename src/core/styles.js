@@ -188,6 +188,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 #mp-eqtip.gamey .mp-eqcell.legendary{border-color:#ff8a1c}
 #mp-eqtip.gamey .mp-eqcell.heroic{border-color:#3fa2ff}
 #mp-eqtip.gamey .mp-eqcell.unique{border-color:#e6c84a}
+#mp-eqtip .mp-eqlayout{position:relative;margin:4px auto 6px}
+#mp-eqtip .mp-eqlayout .mp-eqcell{position:absolute;width:34px;height:34px}
 #mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
 #mp-eqtip.gamey .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px}
 .mp-eqgrid{display:grid;grid-template-columns:repeat(6,40px);gap:5px;margin:6px 0}

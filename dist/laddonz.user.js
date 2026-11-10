@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.5.5
+// @version      1.5.6
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1053,6 +1053,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 #mp-eqtip.gamey .mp-eqcell.legendary{border-color:#ff8a1c}
 #mp-eqtip.gamey .mp-eqcell.heroic{border-color:#3fa2ff}
 #mp-eqtip.gamey .mp-eqcell.unique{border-color:#e6c84a}
+#mp-eqtip .mp-eqlayout{position:relative;margin:4px auto 6px}
+#mp-eqtip .mp-eqlayout .mp-eqcell{position:absolute;width:34px;height:34px}
 #mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
 #mp-eqtip.gamey .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px}
 .mp-eqgrid{display:grid;grid-template-columns:repeat(6,40px);gap:5px;margin:6px 0}
@@ -2788,59 +2790,61 @@ MP.itemDeco = itemDeco;
     return 'common';
   }
 
+  const shown = (n) => n && n.isConnected && getComputedStyle(n).display !== 'none' && n.getBoundingClientRect().width > 0;
+  const sigOf = (n) => $$('[class*="-showeq"]', n).map((x) => x.className).join('|');
+
   async function fetchRaw(id) {
     const raw = game.otherRaw(id);
     if (!raw || typeof raw.showEq !== 'function') return null;
+    // jeśli sam masz otwarte okno „Ekwipunek Postaci" — nie ruszamy go
+    if ($$('.showeq-window').some((n) => shown(n) && getComputedStyle(n).visibility !== 'hidden')) return null;
+    const before = new Map($$('.showeq-window').map((n) => [n, shown(n) + '#' + sigOf(n)]));
     const hideCss = el('style', null, '.showeq-window{visibility:hidden!important;pointer-events:none!important}');
-    const already = $$('.showeq-window');
     document.head.appendChild(hideCss);
     const seen = {};
     const off = bus.on('data', (d) => collectItems(d, seen));      // odpowiedź serwera z przedmiotami gracza
     let items = null;
     const dbg = { id, ids: [], fromStore: 0, fromData: 0, fromDom: 0 };
-    try { const M = E().showEqManager; dbg.mgr = M ? Object.keys(M).slice(0, 30) : null; } catch {}
     try {
       raw.showEq();
       const t0 = now();
       let w = null;
+      // okno nowe ALBO to samo okno gry, które się pokazało / zmieniło zawartość (gra używa go ponownie)
       while (now() - t0 < 3000) {
-        await sleep(60);
-        w = $$('.showeq-window').find((n) => !already.includes(n) && n.querySelector('[class*="-showeq"]'));
+        await sleep(40);
+        w = $$('.showeq-window').find((n) => shown(n) && n.querySelector('[class*="-showeq"]') && before.get(n) !== true + '#' + sigOf(n));
         if (w) break;
       }
       if (w) {
+        await sleep(30);
         const els = $$('[class*="item-id-"]', w).filter((n) => /item-id-\d+-showeq/.test(String(n.className)));
         const ids = els.map((n) => Number(String(n.className).match(/item-id-(\d+)-showeq/)[1]));
         dbg.ids = ids;
-        // dane przedmiotów mogą dojść chwilę po narysowaniu okna — czekamy do ~0,6 s
+        // rozmieszczenie jak w oknie gry (hełm, błogosławieństwo, pierścienie…) — okno jest niewidoczne, ale ma układ
+        const rects = els.map((n) => n.getBoundingClientRect());
         const lookup = (iid) => {
           let it = null;
-          try { const I = E().items; it = I.getItemById(iid) || I.getItemById(String(iid)) || I.getItemById(iid + '-showeq'); } catch {}
+          try { const I = E().items; it = I.getItemById(iid) || I.getItemById(String(iid)); } catch {}
           if (it) { dbg.fromStore++; return it; }
           if (seen[String(iid)]) { dbg.fromData++; return seen[String(iid)]; }
           return null;
         };
-        let found = [];
-        for (let i = 0; i < 6; i++) {
-          dbg.fromStore = dbg.fromData = 0;
-          found = ids.map(lookup);
-          if (found.every(Boolean)) break;
-          await sleep(100);
-        }
+        let found = ids.map(lookup);
+        for (let i = 0; i < 4 && !found.every(Boolean); i++) { await sleep(80); dbg.fromStore = dbg.fromData = 0; found = ids.map(lookup); }
         items = ids.map((iid, i) => {
-          if (found[i]) return game.normItem(found[i]);
-          // zapas: tylko to, co widać w oknie — rzadkość i ikonka skopiowana z płótna gry
-          dbg.fromDom++;
-          const n = els[i];
-          let img = '';
-          try { const c = n.querySelector('canvas.icon, canvas'); if (c) img = c.toDataURL(); } catch {}
-          return { id: iid, name: (n.getAttribute('data-name') || ''), icon: img, rarity: rarityFromEl(n), legbon: null, stats: {} };
+          let it;
+          if (found[i]) it = game.normItem(found[i]);
+          else {
+            dbg.fromDom++;
+            const n = els[i];
+            let img = '';
+            try { const c = n.querySelector('canvas.icon, canvas'); if (c) img = c.toDataURL(); } catch {}
+            it = { id: iid, name: '', icon: img, rarity: rarityFromEl(n), legbon: null, stats: {} };
+          }
+          it.pos = { x: rects[i].left, y: rects[i].top, w: rects[i].width || 32 };
+          return it;
         });
-        const close = w.querySelector('.close-button, [class*="close-button"], .close, [class*="close"]');
-        if (close) close.click();
-        // gdyby okno gry nie zamknęło się kliknięciem — usuwamy je, żeby nigdy nie wyskoczyło na ekran
-        for (let i = 0; i < 10 && w.isConnected; i++) await sleep(50);
-        if (w.isConnected) w.remove();
+        await closeGameWindow(w);
       } else dbg.noWindow = true;
     } catch (e) { console.warn('[laddonz] showEq', e); dbg.error = String(e); }
     finally { off(); hideCss.remove(); }
@@ -2848,11 +2852,20 @@ MP.itemDeco = itemDeco;
     return items;
   }
 
+  /** Zamyka okno gry tak, jak zrobiłby to gracz. NIGDY go nie usuwa — gra używa tego okna ponownie. */
+  async function closeGameWindow(w) {
+    const cands = $$('.close-button, [class*="close-button"], .close, [class*="close"]', w);
+    for (const c of cands) {
+      try { c.click(); } catch {}
+      for (let i = 0; i < 6; i++) { if (!shown(w)) return; await sleep(30); }
+    }
+  }
+
   async function fetchEq(id) {
     const c = cache[id];
     if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
     if (busy) { wanted = id; return 'wait'; }
-    const gap = 700 - (now() - lastReq);            // nie częściej niż ~1,5 zapytania na sekundę
+    const gap = 400 - (now() - lastReq);            // nie częściej niż ~2,5 zapytania na sekundę
     if (gap > 0) await sleep(gap);
     if (hoverId !== id) return 'stale';
     busy = true; lastReq = now();
@@ -2887,14 +2900,44 @@ MP.itemDeco = itemDeco;
     loading.remove();
     if (!items) { tip.appendChild(el('div', { class: 'mp-warnc' }, 'Nie udało się pobrać — spróbuj za chwilę.')); return; }
     if (!items.length) { tip.appendChild(el('div', { class: 'mp-dim' }, 'Brak przedmiotów.')); return; }
-    const grid = el('div', { class: 'mp-eqgrid' }, items.slice(0, 18).map((it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: `${it.name} (${it.rarity})` },
-      el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }), it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon)) : null)));
+    const grid = layoutGrid(items);
     const sum = {};
     items.forEach((i) => { if (i.legbon) sum[i.legbon] = (sum[i.legbon] || 0) + 1; });
     tip.append(grid, el('div', { class: 'mp-eqsum', style: { fontSize: '12px' } },
       el('div', null, 'Legendy: ', el('b', null, String(items.filter((i) => i.rarity === 'legendary').length)), ' · Heroiki: ', el('b', null, String(items.filter((i) => i.rarity === 'heroic').length))),
       Object.keys(sum).length ? el('div', { style: { marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px' } }, Object.entries(sum).map(([k, n]) => el('span', { class: 'mp-chip', style: { padding: '2px 8px' }, title: MP.legName(k) }, `${MP.legAbbr(k)} ×${n}`))) : el('div', { class: 'mp-dim' }, 'Brak bonusów legendarnych')));
     if (anchor) place();
+  }
+
+  /** Siatka w układzie okna gry: pozycje przedmiotów przeliczone na komórki 34 px. */
+  function layoutGrid(items) {
+    const cell = (it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: it.name ? `${it.name} (${it.rarity})` : it.rarity },
+      it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
+      it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon)) : null);
+    const withPos = items.filter((i) => i.pos && i.pos.w);
+    if (withPos.length !== items.length || !items.length) return el('div', { class: 'mp-eqgrid' }, items.map(cell));
+    const minX = Math.min(...withPos.map((i) => i.pos.x)), minY = Math.min(...withPos.map((i) => i.pos.y));
+    // rozstaw slotów w oknie gry = najmniejsza różnica między kolumnami/wierszami
+    const step = (vals) => {
+      const u = [...new Set(vals.map((v) => Math.round(v)))].sort((a, b) => a - b);
+      let m = Infinity;
+      for (let i = 1; i < u.length; i++) { const d = u[i] - u[i - 1]; if (d >= 10 && d < m) m = d; }
+      return isFinite(m) ? m : withPos[0].pos.w + 2;
+    };
+    const ux = step(withPos.map((i) => i.pos.x)), uy = step(withPos.map((i) => i.pos.y));
+    const S = 36;                                          // nasz rozstaw
+    let maxC = 0, maxR = 0;
+    const box = el('div', { class: 'mp-eqlayout' });
+    for (const it of withPos) {
+      const c = Math.round((it.pos.x - minX) / ux), r = Math.round((it.pos.y - minY) / uy);
+      maxC = Math.max(maxC, c); maxR = Math.max(maxR, r);
+      const n = cell(it);
+      n.style.left = c * S + 'px'; n.style.top = r * S + 'px';
+      box.appendChild(n);
+    }
+    box.style.width = (maxC + 1) * S - 2 + 'px';
+    box.style.height = (maxR + 1) * S - 2 + 'px';
+    return box;
   }
 
   function show(id, x, y, force, anc) {
@@ -3385,5 +3428,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.5.5";
+MP.version = "1.5.6";
 })();

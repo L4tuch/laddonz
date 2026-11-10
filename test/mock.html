@@ -40,8 +40,7 @@
     this.onhover = () => {};
     this.showEq = () => {
       const w = document.createElement('div'); w.className = 'c-window border-window showeq-window';
-      w.innerHTML = '<div class="close-button"></div>' + [1,2,15].map(i => '<div class="item item-id-'+i+'-showeq"></div>').join('') + '<div class="item item-id-777-showeq" data-item-type="t-leg"><canvas class="icon" width="32" height="32"></canvas></div>';
-      w.querySelector('.close-button').onclick = () => w.remove();
+      w.style.cssText='position:fixed;left:50px;top:50px;width:200px;height:200px;background:#222'; const pos={1:[1,0],2:[0,1],15:[2,1],777:[1,2]}; w.innerHTML = '<div class="close-button"></div>' + [1,2,15,777].map(i => '<div class="item item-id-'+i+'-showeq" '+(i===777?'data-item-type="t-leg"':'')+' style="position:absolute;width:32px;height:32px;left:'+(10+pos[i][0]*40)+'px;top:'+(30+pos[i][1]*40)+'px"><canvas class="icon" width="32" height="32"></canvas></div>').join(''); w.querySelector('.close-button').onclick = () => { w.style.display='none'; }; if (this._w) { this._w.remove(); }
       setTimeout(() => document.body.appendChild(w), 200);
     };
   }
