@@ -76,6 +76,6 @@
     cb && cb(resp);
   };
   const eq = document.getElementById('eq');
-  Object.values(ITEMS).forEach(i => { const d = document.createElement('div'); d.className = 'item item-id-' + i.id; d.textContent = i.name.split(' ')[0]; eq.appendChild(d); });
+  Object.values(ITEMS).forEach(i => { const d = document.createElement('div'); d.className = 'item item-id-' + i.id; d.textContent = i.name.split(' ')[0]; d.addEventListener('contextmenu', (e) => { e.preventDefault(); /*USE_MENU*/ Engine.interface.showPopupMenu([['Użyj', () => _g('use-real&id=' + i.id)], ['Wyrzuć', () => {}], ['Zniszcz', () => {}]], e); }); eq.appendChild(d); });
 </script>
 </body></html>

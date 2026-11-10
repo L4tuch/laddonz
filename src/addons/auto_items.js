@@ -132,9 +132,9 @@
 })();
 
 /* ───────── Szybka rączka ─────────
- * Prawy klik na przedmiocie → „Użyj po walce": przedmiot zostanie użyty zaraz po zakończeniu walki
- * (teleporty, mikstury, przywołania…). Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".
- * Wykonanie po walce to AUTOMAT — domyślnie wyłączony; bez niego kolejkę odpalasz klawiszem.
+ * Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty
+ * (teleporty, mikstury, przywołania…) — tak, jakbyś sam kliknął na nim „Użyj". Bez klawiszy i konfiguracji.
+ * Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".
  */
 (() => {
   let cfg;
@@ -144,47 +144,35 @@
   function toggleQueue(id) {
     const it = game.itemById(id);
     const i = cfg.queue.findIndex((q) => q.id === Number(id));
-    if (i >= 0) { cfg.queue.splice(i, 1); toast('Szybka rączka: usunięto z kolejki', 'info', 1500); }
-    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, tp: !!(it && (it.stats.teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka rączka: „${it ? it.name : id}" po walce`, 'ok', 1600); }
-    config.save(); bus.emit('deco'); indicator();
+    if (i >= 0) { cfg.queue.splice(i, 1); toast(`Szybka rączka: „${it ? it.name : id}" nie zostanie użyty po walce`); }
+    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, tp: !!(it && (it.stats.teleport || it.stats.custom_teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka rączka: „${it ? it.name : id}" zostanie użyty po walce`); }
+    config.save(); bus.emit('deco');
   }
 
-  async function runQueue(src) {
+  /** Użycie przedmiotu jak przez gracza: menu przedmiotu → „Użyj". Zapas: komenda użycia (podsłuchana albo domyślna). */
+  async function useItem(id) {
+    const node = $$(`.item.item-id-${id}`).find((n) => !/-showeq/.test(String(n.className)));
+    if (node && await menus.chooseItemOption(node, /^(u[żz]yj|teleportuj|przywo[łl]aj|wypij|zjedz|otw[óo]rz)/i)) return true;
+    const r = await net.send('useItem', { id }, { src: 'Szybka rączka' });
+    return r.ok;
+  }
+
+  async function runQueue() {
     if (game.inBattle()) return;
     const items = cfg.queue.slice().sort((a, b) => a.tp - b.tp);   // teleporty na końcu (zmieniają mapę)
     for (const q of items) {
-      const it = game.itemById(q.id);
-      if (!it) { cfg.queue = cfg.queue.filter((x) => x.id !== q.id); continue; }
-      await net.send('useItem', { id: q.id }, { src: 'Szybka rączka' });
       cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
-      await sleep(400);
+      if (!game.itemById(q.id)) continue;
+      await useItem(q.id);
+      await sleep(450);
     }
     if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? await MP.cook.disband() : await net.send('partyDisband', {}, { src: 'Szybka rączka' }); }
-    config.save(); bus.emit('deco'); indicator();
-    if (src === 'key' && !items.length) toast('Szybka rączka: kolejka pusta', 'info', 1400);
+    config.save(); bus.emit('deco');
   }
 
   function armDisband() {
     S.disbandArmed = !S.disbandArmed;
-    toast(S.disbandArmed ? 'Grupa zostanie rozwiązana po walce' : 'Anulowano rozwiązanie grupy po walce', S.disbandArmed ? 'ok' : 'info');
-    indicator();
-  }
-
-  /* mały wskaźnik: co czeka na koniec walki */
-  function indicator() {
-    let n = document.getElementById('mp-szybka-ind');
-    const cnt = cfg.queue.length + (S.disbandArmed ? 1 : 0);
-    if (!cfg.enabled || !cnt) { n && n.remove(); return; }
-    if (!n) {
-      const p = store.get('win:szybka-ind', { x: innerWidth - 230, y: 120 });
-      n = el('div', { id: 'mp-szybka-ind', class: 'mp-glass', style: { position: 'fixed', zIndex: 2147482994, left: p.x + 'px', top: p.y + 'px', padding: '6px 10px', borderRadius: '11px', display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px', cursor: 'move' } });
-      makeDraggable(n, n, (pos) => store.set('win:szybka-ind', pos));
-      document.body.appendChild(n);
-    }
-    n.innerHTML = '';
-    n.append(el('div', { class: 'mp-tile', style: { width: '22px', height: '22px', borderRadius: '7px', background: grad(['#40e0d0', '#1a9e9e']) } }, icon('szybka', 13)),
-      el('div', null, el('b', null, 'Po walce: '), [cfg.queue.length ? `${cfg.queue.length} przedm.` : null, S.disbandArmed ? 'rozwiąż grupę' : null].filter(Boolean).join(' + '),
-        cfg.auto ? null : el('span', { class: 'mp-dim' }, ` (klawisz ${cfg.key || '—'})`)));
+    toast(S.disbandArmed ? 'Grupa zostanie rozwiązana po walce' : 'Anulowano rozwiązanie grupy po walce');
   }
 
   /* prawy klik na ikonie grupy → nasze menu */
@@ -205,38 +193,33 @@
 
   defineAddon({
     id: 'szybka', name: 'Szybka rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'], risk: 'auto',
-    desc: 'Prawy klik na przedmiocie → „Użyj po walce" (teleporty, mikstury, przywołania…). Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".',
-    defaults: { key: '', auto: true, queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
-    keys: [{ key: 'key', label: 'wykonaj kolejkę', fn: () => runQueue('key') }],
-    notes: () => [{ type: 'info', text: 'Bez trybu automatycznego kolejka czeka na Twój klawisz — wtedy to nadal Twoje kliknięcie. Jeśli menu na ikonie grupy się nie pokazuje, wpisz jej klasę (F12) w „Selektor ikony grupy".' }],
+    desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".',
+    defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
-      { key: 'key', type: 'key', label: 'Klawisz: wykonaj kolejkę teraz' },
-      { key: 'auto', type: 'bool', auto: true, label: 'Wykonuj automatycznie po zakończeniu walki', confirm: 'To automatyzacja — przedmioty będą używane (a grupa rozwiązywana) bez Twojego kliknięcia. Na własne ryzyko.', countdown: 2 },
-      { key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy' },
+      { group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
     ],
     render(box, c, rerender) {
       const tb = el('tbody', null, c.queue.map((q, i) => el('tr', null, el('td', null, q.name, q.tp ? el('span', { class: 'mp-dim' }, ' (teleport)') : null),
-        el('td', null, el('button', { class: 'mp-mini', onclick: () => { c.queue.splice(i, 1); config.save(); bus.emit('deco'); indicator(); rerender(); } }, '×')))));
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Kolejka „po walce"'),
-        c.queue.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Pusta — prawy klik na przedmiocie → „Użyj po walce" (lub Alt + prawy klik).'),
-        el('div', { class: 'mp-btns' },
-          el('button', { class: 'mp-btn ' + (S.disbandArmed ? 'bad' : ''), onclick: () => { armDisband(); rerender(); } }, S.disbandArmed ? 'Anuluj: rozwiąż grupę po walce' : 'Rozwiąż grupę po walce'),
-          el('button', { class: 'mp-btn pri', onclick: () => runQueue('key') }, 'Wykonaj teraz'))));
+        el('td', null, el('button', { class: 'mp-mini', onclick: () => { c.queue.splice(i, 1); config.save(); bus.emit('deco'); rerender(); } }, '×')))));
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Czeka na koniec walki'),
+        c.queue.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Nic — prawy klik na przedmiocie → „Użyj po walce".'),
+        S.disbandArmed ? el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, 'Po walce: rozwiązanie grupy') : null));
     },
     init(c) {
       cfg = c;
+      if (!c._v17) { c._v17 = true; delete c.auto; delete c.key; config.save(); }
+      document.getElementById('mp-szybka-ind')?.remove();
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
         return queued(id) ? [{ label: 'Nie używaj po walce', fn: () => toggleQueue(id) }]
           : [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
       });
-      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: 'PW', title: 'Szybka rączka: użyj po walce' } : null));
-      bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => runQueue('auto'), rnd(500, 900)); });
+      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka rączka: zostanie użyty po walce' } : null));
+      bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0)) setTimeout(() => runQueue(), rnd(400, 700)); });
       if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
       hookPartyIcon();
-      setTimeout(indicator, 1500);
     },
-    onToggle() { indicator(); bus.emit('deco'); },
+    onToggle() { bus.emit('deco'); },
   });
 })();
 

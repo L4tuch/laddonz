@@ -11,11 +11,11 @@ const itemDeco = {
       const want = [];
       for (const p of this.painters) { try { const r = p(node, it, id); if (r) want.push(...[].concat(r)); } catch {} }
       const have = Array.from(node.querySelectorAll(':scope > .mp-ibadge:not(.chance)'));
-      const sig = want.map((w) => w.cls + '|' + w.text).join(';');
+      const sig = want.map((w) => w.cls + '|' + (w.text || w.icon)).join(';');
       if (node.dataset.mpSig === sig && have.length === want.length) continue;
       have.forEach((h) => h.remove());
       if (want.length && getComputedStyle(node).position === 'static') node.style.position = 'relative';
-      want.forEach((w) => node.appendChild(el('div', { class: 'mp-ibadge ' + w.cls, title: w.title || '' }, w.text)));
+      want.forEach((w) => node.appendChild(el('div', { class: 'mp-ibadge ' + w.cls, title: w.title || '' }, w.icon ? icon(w.icon, 11) : w.text)));
       node.dataset.mpSig = sig;
     }
   },
@@ -206,7 +206,7 @@ MP.itemDeco = itemDeco;
  */
 (() => {
   let cfg, cache = {}, tip = null, hoverId = null, lastReq = 0;
-  let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null, lastGrid = null;
+  let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null, lastGrid = null, lastAnchorRect = null;
   const seenItems = new Map();      // dane przedmiotów/szablonów, które przeszły przez grę (id → obiekt, 'tpl:<nr>' → obiekt)
 
   function hide() {
@@ -485,14 +485,16 @@ MP.itemDeco = itemDeco;
 
   function place(x, y) {
     if (!tip) return;
-    if (anchor && anchor.isConnected) {
+    if (anchor && anchor.isConnected && anchor.getBoundingClientRect().width > 0) {
       const r = anchor.getBoundingClientRect();
+      lastAnchorRect = r;
       tip.style.minWidth = Math.min(260, Math.round(r.width)) + 'px';
       const h = tip.offsetHeight || 200, wd = tip.offsetWidth || r.width;
       tip.style.left = clamp(r.left, 4, innerWidth - wd - 4) + 'px';
       tip.style.top = clamp(r.top, 4, Math.max(4, innerHeight - h - 4)) + 'px';
       return;
     }
+    if (anchor && lastAnchorRect) return;   // dymek gry chwilowo zniknął — zostajemy w tym samym miejscu
     tip.style.minWidth = '';
     tip.style.left = clamp(x, 4, innerWidth - (tip.offsetWidth || 260) - 4) + 'px';
     tip.style.top = clamp(y, 4, innerHeight - (tip.offsetHeight || 200) - 4) + 'px';
@@ -595,7 +597,7 @@ MP.itemDeco = itemDeco;
   function show(id, x, y, force, anc) {
     if (!cfg.enabled && !force) return;
     if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass gamey' }); document.body.appendChild(tip); }
-    const same = hoverId === id && anchor === (anc || null);
+    const same = hoverId === id && !!anchor === !!anc;
     anchor = anc || null;
     document.body.classList.toggle('mp-eq-on', !!anchor);      // chowa dymek gry — nasze okno go zastępuje
     tip.style.display = 'block';
@@ -604,7 +606,7 @@ MP.itemDeco = itemDeco;
   }
 
   function watchHover() {
-    let mx = 0, my = 0, shift = false, src = null, tipNode = null;
+    let mx = 0, my = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
     const want = (id, from, anc) => {
       if (!cfg.enabled) return;
       if (from === 'map' && (!cfg.mapHover || (cfg.needShift && !shift))) return;
@@ -634,7 +636,12 @@ MP.itemDeco = itemDeco;
           if (p) { tipNode = n; break; }
         }
       }
-      if (p) want(p.id, 'map', tipNode); else stop('map');
+      // gra potrafi na ułamek sekundy przerysować/odświeżyć swój dymek — chowamy dopiero, gdy dymka nie ma przez 250 ms
+      if (p) { lastMapSeen = now(); clearTimeout(graceT); want(p.id, 'map', tipNode); }
+      else if (src === 'map') {
+        if (now() - lastMapSeen > 250) stop('map');
+        else { clearTimeout(graceT); graceT = setTimeout(mapCheck, 260); }
+      }
     };
 
     /* LISTA GRACZY (w grze i w laddonz) */

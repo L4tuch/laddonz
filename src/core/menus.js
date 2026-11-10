@@ -37,6 +37,7 @@ const menus = {
       if (p) this.setLast('player', p.id);
     }, true);
     document.addEventListener('contextmenu', (e) => {
+      if (this.silent) return;
       const it = e.target.closest && e.target.closest('.item[class*="item-id-"], [data-item-id]');
       if (it) {
         const id = game.itemIdFromEl(it);
@@ -91,6 +92,8 @@ const menus = {
       const w = function (...args) {
         try {
           const menu = args.find((a) => Array.isArray(a) && a.length && a.every((m) => Array.isArray(m) || (m && typeof m === 'object')));
+          // tryb „przechwycenia": panel prosi grę o menu przedmiotu, żeby wybrać z niego opcję (np. „Użyj") — menu się nie pokazuje
+          if (menu && self.capturing) { const r = self.capturing; self.capturing = null; r(menu); return; }
           if (menu) self.inject(menu, args);
         } catch (e) { console.warn('[laddonz] menu', e); }
         return f.apply(this, args);
@@ -112,6 +115,42 @@ const menus = {
     if (add.length) this.lastInject = now();
   },
   lastInject: 0,
+  capturing: null,
+
+  /** Etykieta i akcja pozycji menu gry (format [tekst, fn] albo obiekt). */
+  entryParts(m) {
+    if (Array.isArray(m)) return { label: String(m[0] || ''), fn: m.find((x) => typeof x === 'function') };
+    if (m && typeof m === 'object') {
+      const label = m.text || m.label || m.name || m.txt || '';
+      const fn = ['callback', 'fn', 'action', 'onclick', 'click'].map((k) => m[k]).find((x) => typeof x === 'function');
+      return { label: String(label), fn };
+    }
+    return { label: '', fn: null };
+  },
+
+  /**
+   * Wybiera opcję z menu przedmiotu tak, jak zrobiłby to gracz (prawy klik → opcja), bez pokazywania menu.
+   * Zwraca true, jeśli opcja została wywołana.
+   */
+  async chooseItemOption(node, re) {
+    if (!node || !this.hooked) return false;
+    const got = new Promise((res) => { this.capturing = res; setTimeout(() => { if (this.capturing === res) { this.capturing = null; res(null); } }, 400); });
+    const r = node.getBoundingClientRect();
+    const opt = { bubbles: true, cancelable: true, view: W, button: 2, buttons: 2, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
+    this.silent = true;
+    try {
+      node.dispatchEvent(new MouseEvent('mousedown', opt));
+      node.dispatchEvent(new MouseEvent('mouseup', opt));
+      node.dispatchEvent(new MouseEvent('contextmenu', opt));
+    } finally { this.silent = false; }
+    const menu = await got;
+    if (!menu) return false;
+    for (const m of menu) {
+      const { label, fn } = this.entryParts(m);
+      if (fn && re.test(label.trim())) { fn(); return true; }
+    }
+    return false;
+  },
 
   playerFromArgs(args) {
     const strs = [];

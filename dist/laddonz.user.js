@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.6.7
+// @version      1.6.8
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -873,6 +873,7 @@ const ICON_PATHS = {
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 018 0v3"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   pin: '<path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z"/><path d="M12 14v7"/>',
   drag: '<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>',
 };
@@ -1074,7 +1075,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-ibadge.bon{top:-2px;right:-2px}
 .mp-ibadge.sig{bottom:-3px;left:50%;transform:translateX(-50%);max-width:60px;overflow:hidden;text-overflow:ellipsis;color:#bfe3ff;border-color:rgba(120,190,255,.5)}
 .mp-ibadge.chance{bottom:-14px;left:50%;transform:translateX(-50%);color:#9dffcf;border-color:rgba(61,220,151,.5);font-size:10px}
-.mp-ibadge.queued{top:-2px;left:-2px;color:#fff;background:var(--mp-accent);border-color:transparent}
+.mp-ibadge.queued{top:-3px;left:-3px;color:#fff;background:var(--mp-accent);border-color:rgba(0,0,0,.5);padding:1px;border-radius:50%;line-height:0}
+.mp-ibadge.queued .mp-ico{display:block}
 
 /* Pokaż EQ */
 #mp-eqtip{position:fixed;z-index:2147483150;border-radius:14px;padding:10px;width:290px;pointer-events:none}
@@ -1351,6 +1353,7 @@ const menus = {
       if (p) this.setLast('player', p.id);
     }, true);
     document.addEventListener('contextmenu', (e) => {
+      if (this.silent) return;
       const it = e.target.closest && e.target.closest('.item[class*="item-id-"], [data-item-id]');
       if (it) {
         const id = game.itemIdFromEl(it);
@@ -1405,6 +1408,8 @@ const menus = {
       const w = function (...args) {
         try {
           const menu = args.find((a) => Array.isArray(a) && a.length && a.every((m) => Array.isArray(m) || (m && typeof m === 'object')));
+          // tryb „przechwycenia": panel prosi grę o menu przedmiotu, żeby wybrać z niego opcję (np. „Użyj") — menu się nie pokazuje
+          if (menu && self.capturing) { const r = self.capturing; self.capturing = null; r(menu); return; }
           if (menu) self.inject(menu, args);
         } catch (e) { console.warn('[laddonz] menu', e); }
         return f.apply(this, args);
@@ -1426,6 +1431,42 @@ const menus = {
     if (add.length) this.lastInject = now();
   },
   lastInject: 0,
+  capturing: null,
+
+  /** Etykieta i akcja pozycji menu gry (format [tekst, fn] albo obiekt). */
+  entryParts(m) {
+    if (Array.isArray(m)) return { label: String(m[0] || ''), fn: m.find((x) => typeof x === 'function') };
+    if (m && typeof m === 'object') {
+      const label = m.text || m.label || m.name || m.txt || '';
+      const fn = ['callback', 'fn', 'action', 'onclick', 'click'].map((k) => m[k]).find((x) => typeof x === 'function');
+      return { label: String(label), fn };
+    }
+    return { label: '', fn: null };
+  },
+
+  /**
+   * Wybiera opcję z menu przedmiotu tak, jak zrobiłby to gracz (prawy klik → opcja), bez pokazywania menu.
+   * Zwraca true, jeśli opcja została wywołana.
+   */
+  async chooseItemOption(node, re) {
+    if (!node || !this.hooked) return false;
+    const got = new Promise((res) => { this.capturing = res; setTimeout(() => { if (this.capturing === res) { this.capturing = null; res(null); } }, 400); });
+    const r = node.getBoundingClientRect();
+    const opt = { bubbles: true, cancelable: true, view: W, button: 2, buttons: 2, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
+    this.silent = true;
+    try {
+      node.dispatchEvent(new MouseEvent('mousedown', opt));
+      node.dispatchEvent(new MouseEvent('mouseup', opt));
+      node.dispatchEvent(new MouseEvent('contextmenu', opt));
+    } finally { this.silent = false; }
+    const menu = await got;
+    if (!menu) return false;
+    for (const m of menu) {
+      const { label, fn } = this.entryParts(m);
+      if (fn && re.test(label.trim())) { fn(); return true; }
+    }
+    return false;
+  },
 
   playerFromArgs(args) {
     const strs = [];
@@ -2789,11 +2830,11 @@ const itemDeco = {
       const want = [];
       for (const p of this.painters) { try { const r = p(node, it, id); if (r) want.push(...[].concat(r)); } catch {} }
       const have = Array.from(node.querySelectorAll(':scope > .mp-ibadge:not(.chance)'));
-      const sig = want.map((w) => w.cls + '|' + w.text).join(';');
+      const sig = want.map((w) => w.cls + '|' + (w.text || w.icon)).join(';');
       if (node.dataset.mpSig === sig && have.length === want.length) continue;
       have.forEach((h) => h.remove());
       if (want.length && getComputedStyle(node).position === 'static') node.style.position = 'relative';
-      want.forEach((w) => node.appendChild(el('div', { class: 'mp-ibadge ' + w.cls, title: w.title || '' }, w.text)));
+      want.forEach((w) => node.appendChild(el('div', { class: 'mp-ibadge ' + w.cls, title: w.title || '' }, w.icon ? icon(w.icon, 11) : w.text)));
       node.dataset.mpSig = sig;
     }
   },
@@ -2984,7 +3025,7 @@ MP.itemDeco = itemDeco;
  */
 (() => {
   let cfg, cache = {}, tip = null, hoverId = null, lastReq = 0;
-  let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null, lastGrid = null;
+  let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null, lastGrid = null, lastAnchorRect = null;
   const seenItems = new Map();      // dane przedmiotów/szablonów, które przeszły przez grę (id → obiekt, 'tpl:<nr>' → obiekt)
 
   function hide() {
@@ -3263,14 +3304,16 @@ MP.itemDeco = itemDeco;
 
   function place(x, y) {
     if (!tip) return;
-    if (anchor && anchor.isConnected) {
+    if (anchor && anchor.isConnected && anchor.getBoundingClientRect().width > 0) {
       const r = anchor.getBoundingClientRect();
+      lastAnchorRect = r;
       tip.style.minWidth = Math.min(260, Math.round(r.width)) + 'px';
       const h = tip.offsetHeight || 200, wd = tip.offsetWidth || r.width;
       tip.style.left = clamp(r.left, 4, innerWidth - wd - 4) + 'px';
       tip.style.top = clamp(r.top, 4, Math.max(4, innerHeight - h - 4)) + 'px';
       return;
     }
+    if (anchor && lastAnchorRect) return;   // dymek gry chwilowo zniknął — zostajemy w tym samym miejscu
     tip.style.minWidth = '';
     tip.style.left = clamp(x, 4, innerWidth - (tip.offsetWidth || 260) - 4) + 'px';
     tip.style.top = clamp(y, 4, innerHeight - (tip.offsetHeight || 200) - 4) + 'px';
@@ -3373,7 +3416,7 @@ MP.itemDeco = itemDeco;
   function show(id, x, y, force, anc) {
     if (!cfg.enabled && !force) return;
     if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass gamey' }); document.body.appendChild(tip); }
-    const same = hoverId === id && anchor === (anc || null);
+    const same = hoverId === id && !!anchor === !!anc;
     anchor = anc || null;
     document.body.classList.toggle('mp-eq-on', !!anchor);      // chowa dymek gry — nasze okno go zastępuje
     tip.style.display = 'block';
@@ -3382,7 +3425,7 @@ MP.itemDeco = itemDeco;
   }
 
   function watchHover() {
-    let mx = 0, my = 0, shift = false, src = null, tipNode = null;
+    let mx = 0, my = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
     const want = (id, from, anc) => {
       if (!cfg.enabled) return;
       if (from === 'map' && (!cfg.mapHover || (cfg.needShift && !shift))) return;
@@ -3412,7 +3455,12 @@ MP.itemDeco = itemDeco;
           if (p) { tipNode = n; break; }
         }
       }
-      if (p) want(p.id, 'map', tipNode); else stop('map');
+      // gra potrafi na ułamek sekundy przerysować/odświeżyć swój dymek — chowamy dopiero, gdy dymka nie ma przez 250 ms
+      if (p) { lastMapSeen = now(); clearTimeout(graceT); want(p.id, 'map', tipNode); }
+      else if (src === 'map') {
+        if (now() - lastMapSeen > 250) stop('map');
+        else { clearTimeout(graceT); graceT = setTimeout(mapCheck, 260); }
+      }
     };
 
     /* LISTA GRACZY (w grze i w laddonz) */
@@ -3617,9 +3665,9 @@ MP.itemDeco = itemDeco;
 })();
 
 /* ───────── Szybka rączka ─────────
- * Prawy klik na przedmiocie → „Użyj po walce": przedmiot zostanie użyty zaraz po zakończeniu walki
- * (teleporty, mikstury, przywołania…). Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".
- * Wykonanie po walce to AUTOMAT — domyślnie wyłączony; bez niego kolejkę odpalasz klawiszem.
+ * Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty
+ * (teleporty, mikstury, przywołania…) — tak, jakbyś sam kliknął na nim „Użyj". Bez klawiszy i konfiguracji.
+ * Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".
  */
 (() => {
   let cfg;
@@ -3629,47 +3677,35 @@ MP.itemDeco = itemDeco;
   function toggleQueue(id) {
     const it = game.itemById(id);
     const i = cfg.queue.findIndex((q) => q.id === Number(id));
-    if (i >= 0) { cfg.queue.splice(i, 1); toast('Szybka rączka: usunięto z kolejki', 'info', 1500); }
-    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, tp: !!(it && (it.stats.teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka rączka: „${it ? it.name : id}" po walce`, 'ok', 1600); }
-    config.save(); bus.emit('deco'); indicator();
+    if (i >= 0) { cfg.queue.splice(i, 1); toast(`Szybka rączka: „${it ? it.name : id}" nie zostanie użyty po walce`); }
+    else { cfg.queue.push({ id: Number(id), name: it ? it.name : '#' + id, tp: !!(it && (it.stats.teleport || it.stats.custom_teleport || /telepor|zwój|kamień/i.test(it.name))) }); toast(`Szybka rączka: „${it ? it.name : id}" zostanie użyty po walce`); }
+    config.save(); bus.emit('deco');
   }
 
-  async function runQueue(src) {
+  /** Użycie przedmiotu jak przez gracza: menu przedmiotu → „Użyj". Zapas: komenda użycia (podsłuchana albo domyślna). */
+  async function useItem(id) {
+    const node = $$(`.item.item-id-${id}`).find((n) => !/-showeq/.test(String(n.className)));
+    if (node && await menus.chooseItemOption(node, /^(u[żz]yj|teleportuj|przywo[łl]aj|wypij|zjedz|otw[óo]rz)/i)) return true;
+    const r = await net.send('useItem', { id }, { src: 'Szybka rączka' });
+    return r.ok;
+  }
+
+  async function runQueue() {
     if (game.inBattle()) return;
     const items = cfg.queue.slice().sort((a, b) => a.tp - b.tp);   // teleporty na końcu (zmieniają mapę)
     for (const q of items) {
-      const it = game.itemById(q.id);
-      if (!it) { cfg.queue = cfg.queue.filter((x) => x.id !== q.id); continue; }
-      await net.send('useItem', { id: q.id }, { src: 'Szybka rączka' });
       cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
-      await sleep(400);
+      if (!game.itemById(q.id)) continue;
+      await useItem(q.id);
+      await sleep(450);
     }
     if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? await MP.cook.disband() : await net.send('partyDisband', {}, { src: 'Szybka rączka' }); }
-    config.save(); bus.emit('deco'); indicator();
-    if (src === 'key' && !items.length) toast('Szybka rączka: kolejka pusta', 'info', 1400);
+    config.save(); bus.emit('deco');
   }
 
   function armDisband() {
     S.disbandArmed = !S.disbandArmed;
-    toast(S.disbandArmed ? 'Grupa zostanie rozwiązana po walce' : 'Anulowano rozwiązanie grupy po walce', S.disbandArmed ? 'ok' : 'info');
-    indicator();
-  }
-
-  /* mały wskaźnik: co czeka na koniec walki */
-  function indicator() {
-    let n = document.getElementById('mp-szybka-ind');
-    const cnt = cfg.queue.length + (S.disbandArmed ? 1 : 0);
-    if (!cfg.enabled || !cnt) { n && n.remove(); return; }
-    if (!n) {
-      const p = store.get('win:szybka-ind', { x: innerWidth - 230, y: 120 });
-      n = el('div', { id: 'mp-szybka-ind', class: 'mp-glass', style: { position: 'fixed', zIndex: 2147482994, left: p.x + 'px', top: p.y + 'px', padding: '6px 10px', borderRadius: '11px', display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px', cursor: 'move' } });
-      makeDraggable(n, n, (pos) => store.set('win:szybka-ind', pos));
-      document.body.appendChild(n);
-    }
-    n.innerHTML = '';
-    n.append(el('div', { class: 'mp-tile', style: { width: '22px', height: '22px', borderRadius: '7px', background: grad(['#40e0d0', '#1a9e9e']) } }, icon('szybka', 13)),
-      el('div', null, el('b', null, 'Po walce: '), [cfg.queue.length ? `${cfg.queue.length} przedm.` : null, S.disbandArmed ? 'rozwiąż grupę' : null].filter(Boolean).join(' + '),
-        cfg.auto ? null : el('span', { class: 'mp-dim' }, ` (klawisz ${cfg.key || '—'})`)));
+    toast(S.disbandArmed ? 'Grupa zostanie rozwiązana po walce' : 'Anulowano rozwiązanie grupy po walce');
   }
 
   /* prawy klik na ikonie grupy → nasze menu */
@@ -3690,38 +3726,33 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'szybka', name: 'Szybka rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'], risk: 'auto',
-    desc: 'Prawy klik na przedmiocie → „Użyj po walce" (teleporty, mikstury, przywołania…). Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".',
-    defaults: { key: '', auto: true, queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
-    keys: [{ key: 'key', label: 'wykonaj kolejkę', fn: () => runQueue('key') }],
-    notes: () => [{ type: 'info', text: 'Bez trybu automatycznego kolejka czeka na Twój klawisz — wtedy to nadal Twoje kliknięcie. Jeśli menu na ikonie grupy się nie pokazuje, wpisz jej klasę (F12) w „Selektor ikony grupy".' }],
+    desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce".',
+    defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
-      { key: 'key', type: 'key', label: 'Klawisz: wykonaj kolejkę teraz' },
-      { key: 'auto', type: 'bool', auto: true, label: 'Wykonuj automatycznie po zakończeniu walki', confirm: 'To automatyzacja — przedmioty będą używane (a grupa rozwiązywana) bez Twojego kliknięcia. Na własne ryzyko.', countdown: 2 },
-      { key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy' },
+      { group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
     ],
     render(box, c, rerender) {
       const tb = el('tbody', null, c.queue.map((q, i) => el('tr', null, el('td', null, q.name, q.tp ? el('span', { class: 'mp-dim' }, ' (teleport)') : null),
-        el('td', null, el('button', { class: 'mp-mini', onclick: () => { c.queue.splice(i, 1); config.save(); bus.emit('deco'); indicator(); rerender(); } }, '×')))));
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Kolejka „po walce"'),
-        c.queue.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Pusta — prawy klik na przedmiocie → „Użyj po walce" (lub Alt + prawy klik).'),
-        el('div', { class: 'mp-btns' },
-          el('button', { class: 'mp-btn ' + (S.disbandArmed ? 'bad' : ''), onclick: () => { armDisband(); rerender(); } }, S.disbandArmed ? 'Anuluj: rozwiąż grupę po walce' : 'Rozwiąż grupę po walce'),
-          el('button', { class: 'mp-btn pri', onclick: () => runQueue('key') }, 'Wykonaj teraz'))));
+        el('td', null, el('button', { class: 'mp-mini', onclick: () => { c.queue.splice(i, 1); config.save(); bus.emit('deco'); rerender(); } }, '×')))));
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Czeka na koniec walki'),
+        c.queue.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Nic — prawy klik na przedmiocie → „Użyj po walce".'),
+        S.disbandArmed ? el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, 'Po walce: rozwiązanie grupy') : null));
     },
     init(c) {
       cfg = c;
+      if (!c._v17) { c._v17 = true; delete c.auto; delete c.key; config.save(); }
+      document.getElementById('mp-szybka-ind')?.remove();
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
         return queued(id) ? [{ label: 'Nie używaj po walce', fn: () => toggleQueue(id) }]
           : [{ label: 'Użyj po walce', fn: () => toggleQueue(id) }];
       });
-      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', text: 'PW', title: 'Szybka rączka: użyj po walce' } : null));
-      bus.on('battle:end', () => { if (cfg.enabled && cfg.auto) setTimeout(() => runQueue('auto'), rnd(500, 900)); });
+      itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka rączka: zostanie użyty po walce' } : null));
+      bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0)) setTimeout(() => runQueue(), rnd(400, 700)); });
       if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
       hookPartyIcon();
-      setTimeout(indicator, 1500);
     },
-    onToggle() { indicator(); bus.emit('deco'); },
+    onToggle() { bus.emit('deco'); },
   });
 })();
 
@@ -3860,5 +3891,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.6.7";
+MP.version = "1.6.8";
 })();
