@@ -330,6 +330,15 @@ MP.itemDeco = itemDeco;
     }
     return null;
   }
+  /** Dowolny przedmiot z elementu DOM (np. łup): po id, a gdy go nie ma — po szablonie (item-tpl-N). */
+  MP.anyLookup = (n, id) => {
+    try {
+      hookItemFlow();
+      const tpl = Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0;
+      const r = lookupRaw(Number(id), tpl, n);
+      return r ? game.normItem(r) : null;
+    } catch { return null; }
+  };
   /** Dla Jaki To Bon: przedmiot z okna „Ekwipunek Postaci" gry (element .item-id-X-showeq). */
   const nodeCache = new Map();
   MP.eqLookup = (n) => {

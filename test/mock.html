@@ -16,7 +16,7 @@
 <div class="big-messages" style="position:absolute;top:40%;left:0;right:0;text-align:center;pointer-events:none"></div>
 <div class="new-chat-window chat-tpl">[Czat] Ktoś: siema<br>[Klan] Bratanek: lecimy na e2</div>
 <div class="eq" id="eq"></div>
-<div class="loot-wnd" id="loot"><div class="item item-id-900">łup</div><div class="item item-id-901">łup</div></div>
+<div class="loot-wnd" id="loot"><div class="item item-id-900">łup</div><div class="item item-id-901">łup</div><div class="item item-id-902">łup</div></div>
 <script>
   window.SENT = [];
   const now = Math.floor(Date.now()/1000);
@@ -32,6 +32,9 @@
     14: mkItem(14,'Przeterminowany talizman',22,0,'rarity=common;expires='+(now-3600)),
     15: mkItem(15,'Legendarny pas',13,0,'rarity=legendary;legbon=curse'),
     16: mkItem(16,'Mikstura życia',16,0,'leczy=5000'),
+    900: Object.assign(mkItem(900,'Topór wojownika',1,0,'reqp=w;rarity=heroic'),{loc:'l'}),
+    901: Object.assign(mkItem(901,'Neutralny hełm',9,0,'rarity=unique'),{loc:'l'}),
+    902: Object.assign(mkItem(902,'Ostrze',1,0,'reqp=bw'),{loc:'l'}),
     20: Object.assign(mkItem(20,'Kamień czerwonego smoka',16,0,'custom_teleport=1,33,10,12'),{tpl:900}),
     21: Object.assign(mkItem(21,'Kamień czerwonego smoka',16,0,'custom_teleport=1,33,10,12'),{tpl:900}),
     22: Object.assign(mkItem(22,'Kamień czerwonego smoka',16,0,'custom_teleport=1,40,5,5'),{tpl:900}),
@@ -39,7 +42,7 @@
   // jak w prawdziwej grze: metody przypięte do każdego gracza osobno, relacje jako liczby
   function Other(d){
     this.d=d;
-    this.oncontextmenu = () => Engine.interface.showPopupMenu([['Atakuj', ()=>{}], ['Pokaż ekwipunek', ()=>this.showEq()], ['Zaproś do grupy', ()=>{}]], {}, {});
+    this.oncontextmenu = () => Engine.interface.showPopupMenu([['Atakuj', ()=>{}], ['Pokaż ekwipunek', ()=>this.showEq()], ['Zaproś do grupy', ()=>_g('party&a=inv&id='+this.d.id+'&via=menu')]], {}, {});
     this.onhover = () => {};
     this.addColorMark = (c, k) => { this.mark = c; };
     this.removeColorMark = (k) => { this.mark = null; };

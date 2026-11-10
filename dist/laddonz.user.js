@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.7.0
+// @version      1.7.3
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -368,9 +368,12 @@ const game = {
     try {
       const p = E().party;
       if (p) {
+        // brak grupy według gry → pusto (nie ufamy zapamiętanym członkom po rozwiązaniu grupy)
+        if (typeof p.isParty === 'function' && !p.isParty()) { game._partyCache = []; return []; }
         if (typeof p.getMembers === 'function') {
           const m = p.getMembers();
-          const ids = (Array.isArray(m) ? m : Object.keys(m || {})).map((x) => Number(x && x.id ? x.id : x));
+          const list = m instanceof Map ? [...m.keys()] : Array.isArray(m) ? m : Object.keys(m || {});
+          const ids = list.map((x) => Number(x && typeof x === 'object' ? (x.id || (x.d && x.d.id)) : x));
           if (ids.length) return ids.filter(Boolean);
         }
         const m = p.members || (p.d && p.d.members);
@@ -769,6 +772,7 @@ const net = {
     this._lastData = data;
     try {
       if (data.party && data.party.members) game._partyCache = Object.keys(data.party.members).map(Number);
+      else if (data.party === null || (data.party && data.party.disband)) game._partyCache = [];
       if (data.f) {
         if (data.f.init || data.f.init === 0) battleWatch.set(true);
         if (data.f.endBattle || data.f.close || data.f.battleEnd) battleWatch.set(false);
@@ -1053,10 +1057,11 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-win .mp-wbody{padding:10px 12px;overflow:auto;max-height:60vh}
 
 /* menu kontekstowe */
-#mp-ctx{position:fixed;z-index:2147483100;border-radius:12px;padding:5px;min-width:170px}
-.mp-ctx-title{padding:5px 9px;color:var(--mp-dim);font-size:11.5px;border-bottom:1px solid var(--mp-line);margin-bottom:4px}
-.mp-ctx-item{all:unset;display:block;width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:12.5px}
-.mp-ctx-item:hover{background:color-mix(in srgb,var(--mp-accent) 35%,transparent)}
+/* menu w stylu menu gry: ciemne tło, tytuł, zielone przyciski */
+#mp-ctx{position:fixed;z-index:2147483100;min-width:180px;padding:4px;background:#2b2b2b;border:2px solid #5d5d5d;border-radius:4px;box-shadow:0 0 0 1px #000,0 6px 18px rgba(0,0,0,.6);font:12px/1.3 Arial,sans-serif;color:#eee;display:flex;flex-direction:column;gap:2px}
+.mp-ctx-title{padding:6px 10px 7px;text-align:center;font-weight:700;font-size:12.5px;color:#fff;background:linear-gradient(#3a3a3a,#2a2a2a);border-bottom:1px solid #555;margin:-4px -4px 3px}
+.mp-ctx-item{all:unset;display:block;box-sizing:border-box;text-align:center;padding:5px 12px;cursor:pointer;color:#fff;font:12px Arial,sans-serif;background:linear-gradient(#335e2a,#264a1f);border:1px solid #4f7e40;border-radius:2px;text-shadow:0 1px 1px #000}
+.mp-ctx-item:hover{background:linear-gradient(#447a38,#2f5d27);border-color:#79b263}
 
 /* powiadomienia — domyślnie jak komunikaty gry: żółty tekst na dole ekranu; Hey WakeUP! zmienia zmienne */
 #mp-toasts{position:fixed;left:50%;bottom:var(--mp-toast-bottom,140px);transform:translateX(-50%);z-index:2147483200;display:flex;flex-direction:column-reverse;gap:2px;align-items:center;pointer-events:none;max-width:70vw}
@@ -1091,6 +1096,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-ibadge{position:absolute;pointer-events:none;z-index:5;font:700 9px/1 "Segoe UI",system-ui,sans-serif;padding:2px 3px;border-radius:4px;background:rgba(10,10,18,.82);color:#ffd36b;border:1px solid rgba(255,211,107,.45);text-shadow:0 1px 1px #000;white-space:nowrap}
 .mp-ibadge.bon{top:-2px;right:-2px}
 .mp-ibadge.sig{bottom:-3px;left:50%;transform:translateX(-50%);max-width:60px;overflow:hidden;text-overflow:ellipsis;color:#bfe3ff;border-color:rgba(120,190,255,.5)}
+.mp-ibadge.chance.zero{color:#ff8b8b;border-color:rgba(255,93,122,.5)}
 .mp-ibadge.chance{bottom:-14px;left:50%;transform:translateX(-50%);color:#9dffcf;border-color:rgba(61,220,151,.5);font-size:10px}
 .mp-ibadge.queued{top:-3px;left:-3px;color:#fff;background:var(--mp-accent);border-color:rgba(0,0,0,.5);padding:1px;border-radius:50%;line-height:0}
 .mp-ibadge.queued .mp-ico{display:block}
@@ -1461,6 +1467,24 @@ const menus = {
     return { label: '', fn: null };
   },
 
+  /** To samo dla gracza na mapie: menu gracza (jak prawy klik na nim) → opcja, bez pokazywania menu. */
+  async choosePlayerOption(id, re) {
+    const raw = game.otherRaw(id);
+    if (!raw || !this.hooked) return false;
+    const fn = ['oncontextmenu', 'createMenu'].map((n) => raw[n]).find((f) => typeof f === 'function');
+    if (!fn) return false;
+    const got = new Promise((res) => { this.capturing = res; setTimeout(() => { if (this.capturing === res) { this.capturing = null; res(null); } }, 400); });
+    const ev = { clientX: 0, clientY: 0, pageX: 0, pageY: 0, button: 2, preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {}, target: document.body };
+    try { fn.call(raw, ev); } catch { this.capturing = null; return false; }
+    const menu = await got;
+    if (!menu) return false;
+    for (const m of menu) {
+      const { label, fn: f } = this.entryParts(m);
+      if (f && re.test(label.trim())) { f(); return true; }
+    }
+    return false;
+  },
+
   /**
    * Wybiera opcję z menu przedmiotu tak, jak zrobiłby to gracz (prawy klik → opcja), bez pokazywania menu.
    * Zwraca true, jeśli opcja została wywołana.
@@ -1625,10 +1649,15 @@ const menus = {
   /** Własne, szklane menu panelu. */
   showOwn(x, y, entries, title) {
     $('#mp-ctx')?.remove();
-    const m = el('div', { id: 'mp-ctx', class: 'mp-glass', style: { left: x + 'px', top: y + 'px' } },
+    const m = el('div', { id: 'mp-ctx' },
       title ? el('div', { class: 'mp-ctx-title' }, title) : null,
       entries.map((e) => el('button', { class: 'mp-ctx-item', onclick: () => { m.remove(); e.fn(); } }, e.label)));
+    m.style.left = '-9999px'; m.style.top = '0px';
     document.body.appendChild(m);
+    // zawsze w całości na ekranie (np. ikona grupy w prawym górnym rogu)
+    const w = m.offsetWidth, h = m.offsetHeight;
+    m.style.left = clamp(x + w > innerWidth - 6 ? x - w : x, 6, innerWidth - w - 6) + 'px';
+    m.style.top = clamp(y + h > innerHeight - 6 ? y - h : y, 6, innerHeight - h - 6) + 'px';
     const close = (ev) => { if (!m.contains(ev.target)) { m.remove(); document.removeEventListener('mousedown', close, true); } };
     setTimeout(() => document.addEventListener('mousedown', close, true), 0);
   },
@@ -2709,14 +2738,16 @@ function parseProtection(data) {
 })();
 
 /* ───────── Kto złapie ─────────
- * W oknie łupu pod każdym przedmiotem pokazuje Twoją szansę na złapanie: 1 / liczba graczy z Twojej drużyny,
- * którzy brali udział w walce (tylko oni dostają łup). Bez ustawień.
+ * Pod każdym przedmiotem w oknie łupu: Twoja szansa na złapanie.
+ * Liczeni są tylko gracze z Twojej drużyny, którzy brali udział w walce — i tylko ci, którzy MOGĄ ten przedmiot
+ * dostać: przedmiot z wymaganiem profesji (np. tylko wojownik) dzielą między siebie tylko wojownicy,
+ * przedmiot bez wymagań (np. neutralny) — wszyscy. Gdy Twoja profesja nie pasuje: 0%. Bez ustawień.
  */
 (() => {
-  let cfg, last = { n: 0, ids: [], t: 0 };
+  let cfg, last = { ids: [], prof: {}, t: 0 };
   const LOOT_SEL = '.loot-wnd, .loots-window, .loot-window, [class*="loot-window"], [class*="loots-window"]';
 
-  /** Gracze (bez NPC i towarzyszy) z drużyny bohatera w bieżącej walce. */
+  /** Gracze (bez NPC i towarzyszy) z drużyny bohatera w bieżącej walce: [{ id, prof }]. */
   function fighters() {
     const b = E() && E().battle;
     if (!b) return null;
@@ -2738,54 +2769,86 @@ function parseProtection(data) {
       if (t && /npc|pet|mob|companion|towarz/.test(t)) return false;
       return true;
     };
-    const ids = arr.filter((w) => (myTeam === undefined || f(w, 'team') === myTeam) && isPlayer(w)).map(idOf);
-    if (!ids.includes(h.id)) ids.push(h.id);
-    return [...new Set(ids)];
+    const sameTeam = (w) => myTeam === undefined || myTeam === null || String(f(w, 'team')) === String(myTeam);
+    const party = new Set(game.partyMembers());
+    const out = {};
+    for (const w of arr) {
+      const id = idOf(w);
+      if (!((sameTeam(w) && isPlayer(w)) || party.has(id))) continue;
+      const o = game.otherById(id);
+      out[id] = String(f(w, 'prof') || (o && o.prof) || (id === h.id ? h.prof : '') || '');
+    }
+    out[h.id] = h.prof || out[h.id] || '';
+    return out;
   }
 
-  /** Zapamiętujemy uczestników przez całą walkę — okno łupu pojawia się już po niej. */
+  /** Zbieramy wszystkich uczestników przez całą walkę (polegli też dostają łup). */
   function snapshot() {
-    const ids = fighters();
-    if (ids && ids.length) last = { n: ids.length, ids, t: now() };
+    const fs = fighters();
+    if (!fs) return;
+    const prof = Object.assign({}, last.prof);
+    for (const [id, p] of Object.entries(fs)) prof[id] = p || prof[id] || '';
+    last = { ids: Object.keys(prof).map(Number), prof, t: now() };
+  }
+  function participants() {
+    snapshot();
+    if (last.ids.length && now() - last.t < 5 * 60000) return last;
+    // nie udało się odczytać walki — członkowie grupy
+    const h = game.hero();
+    const ids = game.partyMembers().length ? game.partyMembers() : [h && h.id].filter(Boolean);
+    const prof = {};
+    ids.forEach((id) => { const o = game.otherById(id); prof[id] = id === (h && h.id) ? h.prof : (o ? o.prof : ''); });
+    return { ids, prof };
   }
 
-  function count() {
-    const ids = fighters();
-    if (ids && ids.length) { last = { n: ids.length, ids, t: now() }; return ids.length; }
-    if (last.n && now() - last.t < 5 * 60000) return last.n;
-    return 1;
+  /** Profesje, które mogą dostać przedmiot (statystyka „reqp", np. „wb"); null = bez wymagań. */
+  function reqProfs(node) {
+    const id = game.itemIdFromEl(node);
+    let it = id ? game.itemById(id) : null;
+    if (!it && MP.anyLookup) it = MP.anyLookup(node, id);
+    const r = it && it.stats ? (it.stats.reqp || it.stats.reqprof || '') : '';
+    return r ? String(r).toLowerCase().replace(/[^a-z]/g, '').split('') : null;
   }
 
   function decorate() {
     const wins = $$(LOOT_SEL).filter(isVisible);
     document.querySelectorAll('.mp-ibadge.chance').forEach((b) => { if (!wins.some((w) => w.contains(b))) b.remove(); });
     if (!wins.length) return;
-    const n = count();
-    const pct = Math.round(1000 / n) / 10;
+    const P = participants();
+    const h = game.hero();
     for (const w of wins) {
       for (const it of $$('.item', w)) {
+        const req = reqProfs(it);
+        const eligible = req ? P.ids.filter((id) => req.includes(String(P.prof[id] || '').toLowerCase())) : P.ids;
+        const meOk = !req || req.includes(String(h && h.prof || '').toLowerCase());
+        const n = Math.max(1, eligible.length);
+        const pct = meOk ? Math.round(1000 / n) / 10 : 0;
         if (getComputedStyle(it).position === 'static') it.style.position = 'relative';
         let b = it.querySelector(':scope > .mp-ibadge.chance');
         if (!b) { b = el('div', { class: 'mp-ibadge chance' }); it.appendChild(b); }
         b.textContent = `${pct}%`;
-        b.title = n === 1 ? 'Walczyłeś sam — przedmiot jest Twój' : `1 / ${n} graczy z Twojej drużyny w walce`;
+        b.classList.toggle('zero', !meOk);
+        const profNames = req ? req.map((p) => game.PROF_NAMES[p] || p).join(', ') : '';
+        b.title = !meOk ? `Tylko dla: ${profNames} — Twoja profesja nie może dostać tego przedmiotu`
+          : n === 1 ? (req ? `Tylko dla: ${profNames} — jesteś jedyną taką osobą w walce` : 'Przedmiot jest Twój')
+          : `1 / ${n} ${req ? `(${profNames} w walce)` : 'graczy z drużyny w walce'}`;
       }
     }
   }
 
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
-    desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu: liczone są tylko osoby z Twojej drużyny, które brały udział w walce — tylko one dostają łup.',
+    desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu. Liczone są tylko osoby z Twojej drużyny, które brały udział w walce i mogą dostać dany przedmiot: przedmiot dla jednej profesji dzielą tylko gracze tej profesji (gdy Twoja nie pasuje — 0%), a przedmiot bez wymagań — wszyscy.',
     defaults: { enabled: false },
     init(c) {
       cfg = c;
       if ('onlyOnMap' in c || 'lootSelector' in c) { delete c.onlyOnMap; delete c.lootSelector; config.save(); }
       const run = debounce(() => { if (cfg.enabled) decorate(); }, 120);
       new MutationObserver(run).observe(document.body, { childList: true, subtree: true });
-      bus.on('battle:start', () => { last = { n: 0, ids: [], t: 0 }; });
+      bus.on('battle:start', () => { last = { ids: [], prof: {}, t: 0 }; });
       setInterval(() => { if (cfg.enabled && game.ready() && E().battle && (game.inBattle() || (typeof E().battle.isBattleShow === 'function' && E().battle.isBattleShow()))) snapshot(); }, 500);
       bus.on('battle:end', () => { if (cfg.enabled) snapshot(); });
-      MP.ktozlapie = { fighters, last: () => last };
+      MP.ktozlapie = { fighters, participants };
     },
   });
 })();
@@ -2797,6 +2860,22 @@ function parseProtection(data) {
 (() => {
   let cfg, invited = {};
 
+  /** Nicki znajomych z listy znajomych gry (Engine.society) — dodatkowe źródło obok relacji gracza. */
+  let frCache = { t: 0, set: new Set() };
+  function friendNicks() {
+    if (now() - frCache.t < 5000) return frCache.set;
+    const out = new Set();
+    const walk = (o, d, inFr) => {
+      if (!o || typeof o !== 'object' || d > 4 || o instanceof Node) return;
+      if (inFr && typeof (o.nick || o.name) === 'string' && (o.id || o.id === 0 || o.nick)) out.add(String(o.nick || o.name).toLowerCase());
+      for (const [k, v] of Object.entries(o)) if (v && typeof v === 'object') walk(v, d + 1, inFr || /friend|przyjac|znajom|^fr$/i.test(k));
+    };
+    try { walk(E().society, 0, false); } catch {}
+    frCache = { t: now(), set: out };
+    return out;
+  }
+  const isFriendP = (p) => p.isFriend || friendNicks().has(String(p.nick).toLowerCase());
+
   function eligible() {
     const h = game.hero(); if (!h) return [];
     const inParty = new Set(game.partyMembers());
@@ -2805,7 +2884,7 @@ function parseProtection(data) {
       if (nickIn(cfg.never, p.nick)) return false;
       if (cfg.range > 0 && game.dist(h, p) > cfg.range) return false;
       if (cfg.everyone) return true;
-      return (cfg.friends && p.isFriend) || (cfg.clan && p.isClan) || (cfg.allies && p.isAlly) || nickIn(cfg.always, p.nick);
+      return (cfg.friends && isFriendP(p)) || (cfg.clan && p.isClan) || (cfg.allies && p.isAlly) || nickIn(cfg.always, p.nick);
     });
   }
 
@@ -2813,8 +2892,20 @@ function parseProtection(data) {
     const l = eligible().filter((p) => !(invited[p.id] > now() - 30000));   // tej samej osoby nie częściej niż co 30 s
     const room = Math.max(0, cfg.maxParty - Math.max(1, game.partyMembers().length));
     const pick = l.slice(0, room || l.length);
-    if (!pick.length) { toast('Let\'s Cook: nikogo do zaproszenia', 'warn', 1600); return; }
-    pick.forEach((p) => { invited[p.id] = now(); net.send('partyInvite', { id: p.id }, { src: 'Let\'s Cook' }); });
+    if (!pick.length) {
+      const total = game.others().length;
+      toast(total ? `Let's Cook: nikt z ${total} graczy na mapie nie pasuje do ustawień` : 'Let\'s Cook: brak graczy na mapie', 'warn', 1600);
+      return;
+    }
+    // jak gracz: menu gracza → „Zaproś do grupy"; zapas: komenda zaproszenia
+    (async () => {
+      for (const p of pick) {
+        invited[p.id] = now();
+        const ok = await menus.choosePlayerOption(p.id, /^zapro[śs] do grupy/i);
+        if (!ok) await net.send('partyInvite', { id: p.id }, { src: 'Let\'s Cook' });
+        await sleep(250);
+      }
+    })();
     toast(`Let's Cook: zapraszam ${pick.length} os.`, 'ok', 1800);
   }
 
@@ -2850,6 +2941,13 @@ function parseProtection(data) {
       box.appendChild(el('div', { class: 'mp-btns' },
         el('button', { class: 'mp-btn pri', onclick: () => inviteAll() }, 'Zaproś teraz'),
         el('button', { class: 'mp-btn', onclick: () => disband() }, 'Rozwiąż grupę')));
+      // podgląd: kogo by zaprosił i dlaczego — pomaga sprawdzić ustawienia
+      const ok = new Set(eligible().map((p) => p.id));
+      const party = new Set(game.partyMembers());
+      const rows = game.others().map((p) => el('tr', null, el('td', null, p.nick, el('span', { class: 'mp-dim' }, ` (${p.lvl}${p.prof})`)),
+        el('td', { class: 'mp-dim' }, [isFriendP(p) && 'znajomy', p.isClan && 'klan', p.isAlly && 'sojusz'].filter(Boolean).join(', ') || '—', el('span', { class: 'mp-mono' }, ` [rel ${p.relation || '?'}]`)),
+        el('td', null, party.has(p.id) ? el('span', { class: 'mp-dim' }, 'w grupie') : ok.has(p.id) ? el('span', { class: 'mp-okc' }, 'zaprosi') : el('span', { class: 'mp-dim' }, 'pominie'))));
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Gracze na mapie'), rows.length ? el('table', { class: 'mp-table' }, el('tbody', null, rows)) : el('div', { class: 'mp-dim' }, 'Brak graczy.')));
     },
     init(c) {
       cfg = c;
@@ -3192,6 +3290,15 @@ MP.itemDeco = itemDeco;
     }
     return null;
   }
+  /** Dowolny przedmiot z elementu DOM (np. łup): po id, a gdy go nie ma — po szablonie (item-tpl-N). */
+  MP.anyLookup = (n, id) => {
+    try {
+      hookItemFlow();
+      const tpl = Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0;
+      const r = lookupRaw(Number(id), tpl, n);
+      return r ? game.normItem(r) : null;
+    } catch { return null; }
+  };
   /** Dla Jaki To Bon: przedmiot z okna „Ekwipunek Postaci" gry (element .item-id-X-showeq). */
   const nodeCache = new Map();
   MP.eqLookup = (n) => {
@@ -3945,5 +4052,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.7.0";
+MP.version = "1.7.3";
 })();

@@ -124,14 +124,16 @@
 })();
 
 /* ───────── Kto złapie ─────────
- * W oknie łupu pod każdym przedmiotem pokazuje Twoją szansę na złapanie: 1 / liczba graczy z Twojej drużyny,
- * którzy brali udział w walce (tylko oni dostają łup). Bez ustawień.
+ * Pod każdym przedmiotem w oknie łupu: Twoja szansa na złapanie.
+ * Liczeni są tylko gracze z Twojej drużyny, którzy brali udział w walce — i tylko ci, którzy MOGĄ ten przedmiot
+ * dostać: przedmiot z wymaganiem profesji (np. tylko wojownik) dzielą między siebie tylko wojownicy,
+ * przedmiot bez wymagań (np. neutralny) — wszyscy. Gdy Twoja profesja nie pasuje: 0%. Bez ustawień.
  */
 (() => {
-  let cfg, last = { n: 0, ids: [], t: 0 };
+  let cfg, last = { ids: [], prof: {}, t: 0 };
   const LOOT_SEL = '.loot-wnd, .loots-window, .loot-window, [class*="loot-window"], [class*="loots-window"]';
 
-  /** Gracze (bez NPC i towarzyszy) z drużyny bohatera w bieżącej walce. */
+  /** Gracze (bez NPC i towarzyszy) z drużyny bohatera w bieżącej walce: [{ id, prof }]. */
   function fighters() {
     const b = E() && E().battle;
     if (!b) return null;
@@ -153,54 +155,86 @@
       if (t && /npc|pet|mob|companion|towarz/.test(t)) return false;
       return true;
     };
-    const ids = arr.filter((w) => (myTeam === undefined || f(w, 'team') === myTeam) && isPlayer(w)).map(idOf);
-    if (!ids.includes(h.id)) ids.push(h.id);
-    return [...new Set(ids)];
+    const sameTeam = (w) => myTeam === undefined || myTeam === null || String(f(w, 'team')) === String(myTeam);
+    const party = new Set(game.partyMembers());
+    const out = {};
+    for (const w of arr) {
+      const id = idOf(w);
+      if (!((sameTeam(w) && isPlayer(w)) || party.has(id))) continue;
+      const o = game.otherById(id);
+      out[id] = String(f(w, 'prof') || (o && o.prof) || (id === h.id ? h.prof : '') || '');
+    }
+    out[h.id] = h.prof || out[h.id] || '';
+    return out;
   }
 
-  /** Zapamiętujemy uczestników przez całą walkę — okno łupu pojawia się już po niej. */
+  /** Zbieramy wszystkich uczestników przez całą walkę (polegli też dostają łup). */
   function snapshot() {
-    const ids = fighters();
-    if (ids && ids.length) last = { n: ids.length, ids, t: now() };
+    const fs = fighters();
+    if (!fs) return;
+    const prof = Object.assign({}, last.prof);
+    for (const [id, p] of Object.entries(fs)) prof[id] = p || prof[id] || '';
+    last = { ids: Object.keys(prof).map(Number), prof, t: now() };
+  }
+  function participants() {
+    snapshot();
+    if (last.ids.length && now() - last.t < 5 * 60000) return last;
+    // nie udało się odczytać walki — członkowie grupy
+    const h = game.hero();
+    const ids = game.partyMembers().length ? game.partyMembers() : [h && h.id].filter(Boolean);
+    const prof = {};
+    ids.forEach((id) => { const o = game.otherById(id); prof[id] = id === (h && h.id) ? h.prof : (o ? o.prof : ''); });
+    return { ids, prof };
   }
 
-  function count() {
-    const ids = fighters();
-    if (ids && ids.length) { last = { n: ids.length, ids, t: now() }; return ids.length; }
-    if (last.n && now() - last.t < 5 * 60000) return last.n;
-    return 1;
+  /** Profesje, które mogą dostać przedmiot (statystyka „reqp", np. „wb"); null = bez wymagań. */
+  function reqProfs(node) {
+    const id = game.itemIdFromEl(node);
+    let it = id ? game.itemById(id) : null;
+    if (!it && MP.anyLookup) it = MP.anyLookup(node, id);
+    const r = it && it.stats ? (it.stats.reqp || it.stats.reqprof || '') : '';
+    return r ? String(r).toLowerCase().replace(/[^a-z]/g, '').split('') : null;
   }
 
   function decorate() {
     const wins = $$(LOOT_SEL).filter(isVisible);
     document.querySelectorAll('.mp-ibadge.chance').forEach((b) => { if (!wins.some((w) => w.contains(b))) b.remove(); });
     if (!wins.length) return;
-    const n = count();
-    const pct = Math.round(1000 / n) / 10;
+    const P = participants();
+    const h = game.hero();
     for (const w of wins) {
       for (const it of $$('.item', w)) {
+        const req = reqProfs(it);
+        const eligible = req ? P.ids.filter((id) => req.includes(String(P.prof[id] || '').toLowerCase())) : P.ids;
+        const meOk = !req || req.includes(String(h && h.prof || '').toLowerCase());
+        const n = Math.max(1, eligible.length);
+        const pct = meOk ? Math.round(1000 / n) / 10 : 0;
         if (getComputedStyle(it).position === 'static') it.style.position = 'relative';
         let b = it.querySelector(':scope > .mp-ibadge.chance');
         if (!b) { b = el('div', { class: 'mp-ibadge chance' }); it.appendChild(b); }
         b.textContent = `${pct}%`;
-        b.title = n === 1 ? 'Walczyłeś sam — przedmiot jest Twój' : `1 / ${n} graczy z Twojej drużyny w walce`;
+        b.classList.toggle('zero', !meOk);
+        const profNames = req ? req.map((p) => game.PROF_NAMES[p] || p).join(', ') : '';
+        b.title = !meOk ? `Tylko dla: ${profNames} — Twoja profesja nie może dostać tego przedmiotu`
+          : n === 1 ? (req ? `Tylko dla: ${profNames} — jesteś jedyną taką osobą w walce` : 'Przedmiot jest Twój')
+          : `1 / ${n} ${req ? `(${profNames} w walce)` : 'graczy z drużyny w walce'}`;
       }
     }
   }
 
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
-    desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu: liczone są tylko osoby z Twojej drużyny, które brały udział w walce — tylko one dostają łup.',
+    desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu. Liczone są tylko osoby z Twojej drużyny, które brały udział w walce i mogą dostać dany przedmiot: przedmiot dla jednej profesji dzielą tylko gracze tej profesji (gdy Twoja nie pasuje — 0%), a przedmiot bez wymagań — wszyscy.',
     defaults: { enabled: false },
     init(c) {
       cfg = c;
       if ('onlyOnMap' in c || 'lootSelector' in c) { delete c.onlyOnMap; delete c.lootSelector; config.save(); }
       const run = debounce(() => { if (cfg.enabled) decorate(); }, 120);
       new MutationObserver(run).observe(document.body, { childList: true, subtree: true });
-      bus.on('battle:start', () => { last = { n: 0, ids: [], t: 0 }; });
+      bus.on('battle:start', () => { last = { ids: [], prof: {}, t: 0 }; });
       setInterval(() => { if (cfg.enabled && game.ready() && E().battle && (game.inBattle() || (typeof E().battle.isBattleShow === 'function' && E().battle.isBattleShow()))) snapshot(); }, 500);
       bus.on('battle:end', () => { if (cfg.enabled) snapshot(); });
-      MP.ktozlapie = { fighters, last: () => last };
+      MP.ktozlapie = { fighters, participants };
     },
   });
 })();
@@ -212,6 +246,22 @@
 (() => {
   let cfg, invited = {};
 
+  /** Nicki znajomych z listy znajomych gry (Engine.society) — dodatkowe źródło obok relacji gracza. */
+  let frCache = { t: 0, set: new Set() };
+  function friendNicks() {
+    if (now() - frCache.t < 5000) return frCache.set;
+    const out = new Set();
+    const walk = (o, d, inFr) => {
+      if (!o || typeof o !== 'object' || d > 4 || o instanceof Node) return;
+      if (inFr && typeof (o.nick || o.name) === 'string' && (o.id || o.id === 0 || o.nick)) out.add(String(o.nick || o.name).toLowerCase());
+      for (const [k, v] of Object.entries(o)) if (v && typeof v === 'object') walk(v, d + 1, inFr || /friend|przyjac|znajom|^fr$/i.test(k));
+    };
+    try { walk(E().society, 0, false); } catch {}
+    frCache = { t: now(), set: out };
+    return out;
+  }
+  const isFriendP = (p) => p.isFriend || friendNicks().has(String(p.nick).toLowerCase());
+
   function eligible() {
     const h = game.hero(); if (!h) return [];
     const inParty = new Set(game.partyMembers());
@@ -220,7 +270,7 @@
       if (nickIn(cfg.never, p.nick)) return false;
       if (cfg.range > 0 && game.dist(h, p) > cfg.range) return false;
       if (cfg.everyone) return true;
-      return (cfg.friends && p.isFriend) || (cfg.clan && p.isClan) || (cfg.allies && p.isAlly) || nickIn(cfg.always, p.nick);
+      return (cfg.friends && isFriendP(p)) || (cfg.clan && p.isClan) || (cfg.allies && p.isAlly) || nickIn(cfg.always, p.nick);
     });
   }
 
@@ -228,8 +278,20 @@
     const l = eligible().filter((p) => !(invited[p.id] > now() - 30000));   // tej samej osoby nie częściej niż co 30 s
     const room = Math.max(0, cfg.maxParty - Math.max(1, game.partyMembers().length));
     const pick = l.slice(0, room || l.length);
-    if (!pick.length) { toast('Let\'s Cook: nikogo do zaproszenia', 'warn', 1600); return; }
-    pick.forEach((p) => { invited[p.id] = now(); net.send('partyInvite', { id: p.id }, { src: 'Let\'s Cook' }); });
+    if (!pick.length) {
+      const total = game.others().length;
+      toast(total ? `Let's Cook: nikt z ${total} graczy na mapie nie pasuje do ustawień` : 'Let\'s Cook: brak graczy na mapie', 'warn', 1600);
+      return;
+    }
+    // jak gracz: menu gracza → „Zaproś do grupy"; zapas: komenda zaproszenia
+    (async () => {
+      for (const p of pick) {
+        invited[p.id] = now();
+        const ok = await menus.choosePlayerOption(p.id, /^zapro[śs] do grupy/i);
+        if (!ok) await net.send('partyInvite', { id: p.id }, { src: 'Let\'s Cook' });
+        await sleep(250);
+      }
+    })();
     toast(`Let's Cook: zapraszam ${pick.length} os.`, 'ok', 1800);
   }
 
@@ -265,6 +327,13 @@
       box.appendChild(el('div', { class: 'mp-btns' },
         el('button', { class: 'mp-btn pri', onclick: () => inviteAll() }, 'Zaproś teraz'),
         el('button', { class: 'mp-btn', onclick: () => disband() }, 'Rozwiąż grupę')));
+      // podgląd: kogo by zaprosił i dlaczego — pomaga sprawdzić ustawienia
+      const ok = new Set(eligible().map((p) => p.id));
+      const party = new Set(game.partyMembers());
+      const rows = game.others().map((p) => el('tr', null, el('td', null, p.nick, el('span', { class: 'mp-dim' }, ` (${p.lvl}${p.prof})`)),
+        el('td', { class: 'mp-dim' }, [isFriendP(p) && 'znajomy', p.isClan && 'klan', p.isAlly && 'sojusz'].filter(Boolean).join(', ') || '—', el('span', { class: 'mp-mono' }, ` [rel ${p.relation || '?'}]`)),
+        el('td', null, party.has(p.id) ? el('span', { class: 'mp-dim' }, 'w grupie') : ok.has(p.id) ? el('span', { class: 'mp-okc' }, 'zaprosi') : el('span', { class: 'mp-dim' }, 'pominie'))));
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Gracze na mapie'), rows.length ? el('table', { class: 'mp-table' }, el('tbody', null, rows)) : el('div', { class: 'mp-dim' }, 'Brak graczy.')));
     },
     init(c) {
       cfg = c;

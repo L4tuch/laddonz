@@ -182,9 +182,12 @@ const game = {
     try {
       const p = E().party;
       if (p) {
+        // brak grupy według gry → pusto (nie ufamy zapamiętanym członkom po rozwiązaniu grupy)
+        if (typeof p.isParty === 'function' && !p.isParty()) { game._partyCache = []; return []; }
         if (typeof p.getMembers === 'function') {
           const m = p.getMembers();
-          const ids = (Array.isArray(m) ? m : Object.keys(m || {})).map((x) => Number(x && x.id ? x.id : x));
+          const list = m instanceof Map ? [...m.keys()] : Array.isArray(m) ? m : Object.keys(m || {});
+          const ids = list.map((x) => Number(x && typeof x === 'object' ? (x.id || (x.d && x.d.id)) : x));
           if (ids.length) return ids.filter(Boolean);
         }
         const m = p.members || (p.d && p.d.members);

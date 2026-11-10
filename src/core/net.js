@@ -245,6 +245,7 @@ const net = {
     this._lastData = data;
     try {
       if (data.party && data.party.members) game._partyCache = Object.keys(data.party.members).map(Number);
+      else if (data.party === null || (data.party && data.party.disband)) game._partyCache = [];
       if (data.f) {
         if (data.f.init || data.f.init === 0) battleWatch.set(true);
         if (data.f.endBattle || data.f.close || data.f.battleEnd) battleWatch.set(false);

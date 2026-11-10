@@ -128,6 +128,24 @@ const menus = {
     return { label: '', fn: null };
   },
 
+  /** To samo dla gracza na mapie: menu gracza (jak prawy klik na nim) → opcja, bez pokazywania menu. */
+  async choosePlayerOption(id, re) {
+    const raw = game.otherRaw(id);
+    if (!raw || !this.hooked) return false;
+    const fn = ['oncontextmenu', 'createMenu'].map((n) => raw[n]).find((f) => typeof f === 'function');
+    if (!fn) return false;
+    const got = new Promise((res) => { this.capturing = res; setTimeout(() => { if (this.capturing === res) { this.capturing = null; res(null); } }, 400); });
+    const ev = { clientX: 0, clientY: 0, pageX: 0, pageY: 0, button: 2, preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {}, target: document.body };
+    try { fn.call(raw, ev); } catch { this.capturing = null; return false; }
+    const menu = await got;
+    if (!menu) return false;
+    for (const m of menu) {
+      const { label, fn: f } = this.entryParts(m);
+      if (f && re.test(label.trim())) { f(); return true; }
+    }
+    return false;
+  },
+
   /**
    * Wybiera opcję z menu przedmiotu tak, jak zrobiłby to gracz (prawy klik → opcja), bez pokazywania menu.
    * Zwraca true, jeśli opcja została wywołana.
@@ -292,10 +310,15 @@ const menus = {
   /** Własne, szklane menu panelu. */
   showOwn(x, y, entries, title) {
     $('#mp-ctx')?.remove();
-    const m = el('div', { id: 'mp-ctx', class: 'mp-glass', style: { left: x + 'px', top: y + 'px' } },
+    const m = el('div', { id: 'mp-ctx' },
       title ? el('div', { class: 'mp-ctx-title' }, title) : null,
       entries.map((e) => el('button', { class: 'mp-ctx-item', onclick: () => { m.remove(); e.fn(); } }, e.label)));
+    m.style.left = '-9999px'; m.style.top = '0px';
     document.body.appendChild(m);
+    // zawsze w całości na ekranie (np. ikona grupy w prawym górnym rogu)
+    const w = m.offsetWidth, h = m.offsetHeight;
+    m.style.left = clamp(x + w > innerWidth - 6 ? x - w : x, 6, innerWidth - w - 6) + 'px';
+    m.style.top = clamp(y + h > innerHeight - 6 ? y - h : y, 6, innerHeight - h - 6) + 'px';
     const close = (ev) => { if (!m.contains(ev.target)) { m.remove(); document.removeEventListener('mousedown', close, true); } };
     setTimeout(() => document.addEventListener('mousedown', close, true), 0);
   },
