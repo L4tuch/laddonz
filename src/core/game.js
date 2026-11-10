@@ -184,12 +184,17 @@ const game = {
       if (p) {
         // brak grupy według gry → pusto (nie ufamy zapamiętanym członkom po rozwiązaniu grupy)
         if (typeof p.isParty === 'function' && !p.isParty()) { game._partyCache = []; return []; }
+        // okno grupy w grze: elementy członków mają klasę other-party-id-<id> (sprawdzone diagnostyką)
+        const domIds = $$('[class*="other-party-id-"]').map((n) => Number((String(n.className).match(/other-party-id-(\d+)/) || [])[1])).filter(Boolean);
         if (typeof p.getMembers === 'function') {
           const m = p.getMembers();
           const list = m instanceof Map ? [...m.keys()] : Array.isArray(m) ? m : Object.keys(m || {});
           const ids = list.map((x) => Number(x && typeof x === 'object' ? (x.id || (x.d && x.d.id)) : x));
+          // gdy gra trzyma jeszcze nieaktualnych członków, a okno grupy ich nie pokazuje — ufamy oknu
+          if (ids.length && domIds.length && !ids.every((id) => domIds.includes(id))) return [...new Set(domIds)];
           if (ids.length) return ids.filter(Boolean);
         }
+        if (domIds.length) return [...new Set(domIds)];
         const m = p.members || (p.d && p.d.members);
         if (m) return Object.keys(m).map(Number).filter(Boolean);
       }

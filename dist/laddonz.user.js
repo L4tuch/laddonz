@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.7.3
+// @version      1.7.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -370,12 +370,17 @@ const game = {
       if (p) {
         // brak grupy według gry → pusto (nie ufamy zapamiętanym członkom po rozwiązaniu grupy)
         if (typeof p.isParty === 'function' && !p.isParty()) { game._partyCache = []; return []; }
+        // okno grupy w grze: elementy członków mają klasę other-party-id-<id> (sprawdzone diagnostyką)
+        const domIds = $$('[class*="other-party-id-"]').map((n) => Number((String(n.className).match(/other-party-id-(\d+)/) || [])[1])).filter(Boolean);
         if (typeof p.getMembers === 'function') {
           const m = p.getMembers();
           const list = m instanceof Map ? [...m.keys()] : Array.isArray(m) ? m : Object.keys(m || {});
           const ids = list.map((x) => Number(x && typeof x === 'object' ? (x.id || (x.d && x.d.id)) : x));
+          // gdy gra trzyma jeszcze nieaktualnych członków, a okno grupy ich nie pokazuje — ufamy oknu
+          if (ids.length && domIds.length && !ids.every((id) => domIds.includes(id))) return [...new Set(domIds)];
           if (ids.length) return ids.filter(Boolean);
         }
+        if (domIds.length) return [...new Set(domIds)];
         const m = p.members || (p.d && p.d.members);
         if (m) return Object.keys(m).map(Number).filter(Boolean);
       }
@@ -2739,9 +2744,9 @@ function parseProtection(data) {
 
 /* ───────── Kto złapie ─────────
  * Pod każdym przedmiotem w oknie łupu: Twoja szansa na złapanie.
- * Liczeni są tylko gracze z Twojej drużyny, którzy brali udział w walce — i tylko ci, którzy MOGĄ ten przedmiot
- * dostać: przedmiot z wymaganiem profesji (np. tylko wojownik) dzielą między siebie tylko wojownicy,
- * przedmiot bez wymagań (np. neutralny) — wszyscy. Gdy Twoja profesja nie pasuje: 0%. Bez ustawień.
+ * Liczeni są gracze z Twojej drużyny, którzy brali udział w walce (polegli też).
+ * Zasady łupu Margonem: przy przedmiocie z wymaganiem profesji pierwszeństwo mają gracze tej profesji —
+ * jeśli ktoś taki był w walce, tylko oni się liczą; jeśli nie było nikogo — losują wszyscy. Bez ustawień.
  */
 (() => {
   let cfg, last = { ids: [], prof: {}, t: 0 };
@@ -2819,8 +2824,12 @@ function parseProtection(data) {
     for (const w of wins) {
       for (const it of $$('.item', w)) {
         const req = reqProfs(it);
-        const eligible = req ? P.ids.filter((id) => req.includes(String(P.prof[id] || '').toLowerCase())) : P.ids;
-        const meOk = !req || req.includes(String(h && h.prof || '').toLowerCase());
+        // Zasady łupu: gracze z profesją pasującą do przedmiotu losują PIERWSI. Gdy w walce nie ma nikogo
+        // z pasującą profesją — przedmiot losują wszyscy uczestnicy. Przedmiot bez wymagań — wszyscy.
+        const matching = req ? P.ids.filter((id) => req.includes(String(P.prof[id] || '').toLowerCase())) : [];
+        const priority = !!(req && matching.length);
+        const eligible = priority ? matching : P.ids;
+        const meOk = !priority || req.includes(String(h && h.prof || '').toLowerCase());
         const n = Math.max(1, eligible.length);
         const pct = meOk ? Math.round(1000 / n) / 10 : 0;
         if (getComputedStyle(it).position === 'static') it.style.position = 'relative';
@@ -2829,16 +2838,17 @@ function parseProtection(data) {
         b.textContent = `${pct}%`;
         b.classList.toggle('zero', !meOk);
         const profNames = req ? req.map((p) => game.PROF_NAMES[p] || p).join(', ') : '';
-        b.title = !meOk ? `Tylko dla: ${profNames} — Twoja profesja nie może dostać tego przedmiotu`
-          : n === 1 ? (req ? `Tylko dla: ${profNames} — jesteś jedyną taką osobą w walce` : 'Przedmiot jest Twój')
-          : `1 / ${n} ${req ? `(${profNames} w walce)` : 'graczy z drużyny w walce'}`;
+        b.title = !meOk ? `Pierwszeństwo mają: ${profNames} (${matching.length} w walce) — Twoja szansa praktycznie zerowa`
+          : priority ? (n === 1 ? `Przedmiot dla: ${profNames} — jesteś jedyną taką osobą w walce` : `1 / ${n} — pierwszeństwo: ${profNames}`)
+          : req ? `Nikt w walce nie ma profesji ${profNames} — losują wszyscy: 1 / ${n}`
+          : n === 1 ? 'Przedmiot jest Twój' : `1 / ${n} graczy z drużyny w walce`;
       }
     }
   }
 
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
-    desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu. Liczone są tylko osoby z Twojej drużyny, które brały udział w walce i mogą dostać dany przedmiot: przedmiot dla jednej profesji dzielą tylko gracze tej profesji (gdy Twoja nie pasuje — 0%), a przedmiot bez wymagań — wszyscy.',
+    desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu. Liczone są osoby z Twojej drużyny, które brały udział w walce. Przy przedmiocie dla konkretnej profesji pierwszeństwo mają gracze tej profesji; gdy nikogo takiego nie było w walce, losują wszyscy. Zakłada, że wszyscy klikną „Chcę".',
     defaults: { enabled: false },
     init(c) {
       cfg = c;
@@ -2889,12 +2899,27 @@ function parseProtection(data) {
   }
 
   function inviteAll() {
-    const l = eligible().filter((p) => !(invited[p.id] > now() - 30000));   // tej samej osoby nie częściej niż co 30 s
-    const room = Math.max(0, cfg.maxParty - Math.max(1, game.partyMembers().length));
+    const h = game.hero();
+    const party = new Set(game.partyMembers());
+    // ktoś, kto dołączył do grupy albo grupa została rozwiązana — zapomnij o wcześniejszym zaproszeniu
+    for (const id of Object.keys(invited)) if (party.has(Number(id))) delete invited[id];
+    const matching = game.others().filter((p) => {
+      if (nickIn(cfg.never, p.nick)) return false;
+      if (cfg.range > 0 && h && game.dist(h, p) > cfg.range) return false;
+      return cfg.everyone || (cfg.friends && isFriendP(p)) || (cfg.clan && p.isClan) || (cfg.allies && p.isAlly) || nickIn(cfg.always, p.nick);
+    });
+    const inParty = matching.filter((p) => party.has(p.id));
+    const recent = matching.filter((p) => !party.has(p.id) && invited[p.id] > now() - 10000);   // ta sama osoba nie częściej niż co 10 s
+    const l = matching.filter((p) => !party.has(p.id) && !(invited[p.id] > now() - 10000));
+    const room = Math.max(0, cfg.maxParty - Math.max(1, party.size));
     const pick = l.slice(0, room || l.length);
     if (!pick.length) {
       const total = game.others().length;
-      toast(total ? `Let's Cook: nikt z ${total} graczy na mapie nie pasuje do ustawień` : 'Let\'s Cook: brak graczy na mapie', 'warn', 1600);
+      const why = [];
+      if (inParty.length) why.push(`już w grupie: ${inParty.map((p) => p.nick).join(', ')}`);
+      if (recent.length) why.push(`zaproszeni przed chwilą: ${recent.map((p) => p.nick).join(', ')}`);
+      if (l.length && !room) why.push('grupa jest pełna');
+      toast(why.length ? `Let's Cook: ${why.join('; ')}` : total ? `Let's Cook: nikt z ${total} graczy na mapie nie pasuje do ustawień` : 'Let\'s Cook: brak graczy na mapie', 'warn', 2500);
       return;
     }
     // jak gracz: menu gracza → „Zaproś do grupy"; zapas: komenda zaproszenia
@@ -2906,13 +2931,17 @@ function parseProtection(data) {
         await sleep(250);
       }
     })();
-    toast(`Let's Cook: zapraszam ${pick.length} os.`, 'ok', 1800);
+    toast(`Let's Cook: zapraszam ${pick.map((p) => p.nick).join(', ')}`, 'ok', 1800);
   }
 
   async function disband() {
-    if (!game.partyMembers().length) { toast('Nie masz grupy', 'warn', 1500); return; }
+    invited = {};
+    game._partyCache = [];
+    // jak gracz: przycisk „Rozwiąż grupę" w oknie grupy gry; zapas: komenda
+    const btn = $$('.party__disband, [class*="party__disband"], [class*="disband"]').find(isVisible);
+    if (btn) { btn.click(); toast('Rozwiązuję grupę'); return; }
     await net.send('partyDisband', {}, { src: 'Let\'s Cook', urgent: true });
-    toast('Rozwiązuję grupę', 'ok', 1500);
+    toast('Rozwiązuję grupę');
   }
   MP.cook = { disband };
 
@@ -4052,5 +4081,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.7.3";
+MP.version = "1.7.5";
 })();
