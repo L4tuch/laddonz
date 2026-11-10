@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.4.6
+// @version      3.4.7
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1173,13 +1173,13 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-glow{--lgg:#ff4a2a;animation:mpLgGlow 1.4s ease-in-out infinite!important;border-radius:3px}
 @keyframes mpLgGlow{0%,100%{box-shadow:0 0 5px 1px color-mix(in srgb,var(--lgg) 75%,transparent),inset 0 0 8px color-mix(in srgb,var(--lgg) 55%,transparent)}50%{box-shadow:0 0 11px 3px var(--lgg),inset 0 0 14px color-mix(in srgb,var(--lgg) 85%,transparent)}}
 .mp-lg-fbolt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
-.item.mp-lg-fx-fade{animation:mpLgFade 3s ease-in-out infinite}
+.item.mp-lg-fx-fade > :is(canvas.icon,.canvas-icon,img){animation:mpLgFade 3s ease-in-out infinite}
 @keyframes mpLgFade{0%,100%{opacity:1;filter:drop-shadow(0 0 4px #ff2a1a)}45%,55%{opacity:.12;filter:blur(2px) drop-shadow(0 0 8px #000)}}
-.item.mp-lg-fx-hue{animation:mpLgHue 2.2s linear infinite}
+.item.mp-lg-fx-hue > :is(canvas.icon,.canvas-icon,img){animation:mpLgHue 2.2s linear infinite}
 @keyframes mpLgHue{0%{filter:drop-shadow(0 0 6px #ff2bd6) brightness(1.15)}25%{filter:drop-shadow(0 0 6px #00e5ff) brightness(1.15)}50%{filter:drop-shadow(0 0 6px #ffe600) brightness(1.15)}75%{filter:drop-shadow(0 0 6px #7cff4f) brightness(1.15)}100%{filter:drop-shadow(0 0 6px #ff2bd6) brightness(1.15)}}
-.item.mp-lg-fx-glow, .item.mp-lg-fx-pop{animation:mpLgItemGlow 1.6s ease-in-out infinite}
+.item.mp-lg-fx-glow > :is(canvas.icon,.canvas-icon,img), .item.mp-lg-fx-pop > :is(canvas.icon,.canvas-icon,img){animation:mpLgItemGlow 1.6s ease-in-out infinite}
 @keyframes mpLgItemGlow{0%,100%{filter:drop-shadow(0 0 3px var(--lgg))}50%{filter:drop-shadow(0 0 8px var(--lgg)) brightness(1.12)}}
-.item.mp-lg-fx-bolts{animation:mpLgItemBolt 2.1s steps(1) infinite}
+.item.mp-lg-fx-bolts > :is(canvas.icon,.canvas-icon,img){animation:mpLgItemBolt 2.1s steps(1) infinite}
 @keyframes mpLgItemBolt{0%,100%{filter:drop-shadow(0 0 3px #6fb2ff)}20%{filter:drop-shadow(0 0 9px #cfe8ff) brightness(1.4)}23%{filter:drop-shadow(0 0 3px #6fb2ff)}61%{filter:drop-shadow(0 0 8px #cfe8ff) brightness(1.3)}64%{filter:drop-shadow(0 0 3px #6fb2ff)}}
 .mp-lg-cap{position:fixed;transform:translate(-50%,8px) scale(.92);opacity:0;transition:opacity .6s,transform .7s cubic-bezier(.2,1.4,.4,1);z-index:2147483003;pointer-events:none;text-align:center;padding:7px 18px 8px;border-radius:8px;background:linear-gradient(rgba(10,10,14,.82),rgba(4,4,8,.88));box-shadow:0 0 0 1px color-mix(in srgb,var(--lgc) 60%,transparent),0 6px 22px rgba(0,0,0,.6),0 0 18px color-mix(in srgb,var(--lgc) 35%,transparent);color:#f2f2f2;font:13px Arimo,Arial,sans-serif;max-width:min(520px,90vw);white-space:normal}
 .mp-lg-cap.on{opacity:1;transform:translate(-50%,0) scale(1)}
@@ -6719,7 +6719,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     if (run.media) run.media.remove();
     if (run.cap) run.cap.remove();
     (run.pops || []).forEach((b) => b.remove());
-    $$('.item[data-mp-lg]').forEach((x) => { if (x.style.opacity === '0') x.style.opacity = ''; });
+    $$('.item[data-mp-lg] > *').forEach((x) => { if (x.style.opacity === '0') x.style.opacity = ''; });
     if (run.win) run.win.classList.remove('mp-lg-win', 'thor', 'smoke', 'kasyno', 'disco', 'wlasny');
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
     if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
@@ -6809,7 +6809,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     for (const [name, icon] of BUILTIN[r] || []) if (!list.some((y) => y.name === name)) list.push({ name, img: IMG + icon });
     if (!list.length) return null;
     const t = pickName(list, (x) => x.name);
-    const it = el('div', { class: 'item mp-lg-tpl-item', style: { width: '32px', height: '32px' } }, el('img', { src: t.img, alt: '', draggable: 'false', style: { width: '32px', height: '32px', display: 'block', pointerEvents: 'none' } }));
+    const typ = { legendary: 't-leg', heroic: 't-her', unique: 't-uniupg', common: 't-norm' }[r] || 't-norm';
+    // ramka rzadkości jak w grze (.highlight z klasą typu) + ikonka
+    const it = el('div', { class: 'item mp-lg-tpl-item', 'data-item-type': typ, style: { width: '32px', height: '32px' } },
+      el('div', { class: 'highlight ' + typ + ' h-exist' }),
+      el('img', { class: 'icon', src: t.img, alt: '', draggable: 'false', style: { width: '32px', height: '32px', display: 'block', pointerEvents: 'none' } }));
     it.dataset.mpName = t.name;
     return it;
   }
@@ -6897,18 +6901,20 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     for (const it of $$('.item', win).filter((x) => x.dataset.mpLg)) {
       let r = it.getBoundingClientRect(); if (!r.width && it.parentElement) r = it.parentElement.getBoundingClientRect(); if (!r.width) continue;
       const c = cloneItem(it);
+      c.querySelectorAll('.highlight').forEach((x) => x.remove());
       const box = el('div', { class: 'mp-lg-pop', style: { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' } }, c);
       Object.assign(c.style, { position: 'absolute', left: '0', top: '0', margin: '0' });
       document.body.appendChild(box);
       (me.pops = me.pops || []).push(box);
-      it.style.opacity = '0';   // oryginał „wyskakuje" — na czas animacji niewidoczny (ale dalej można na niego najechać)
+      const icons = $$(':scope > canvas.icon, :scope > .canvas-icon, :scope > img', it);
+      icons.forEach((x) => { x.style.opacity = '0'; });   // ikonka „wyskakuje" — ramka przedmiotu zostaje na miejscu, najechanie dalej działa
       const an = box.animate([
         { transform: 'translateY(0) scale(1) rotateY(0deg)', filter: 'drop-shadow(0 0 0 #ffd34d)' },
         { transform: 'translateY(-78px) scale(2) rotateY(540deg)', filter: 'drop-shadow(0 0 14px #ffd34d)', offset: 0.3 },
         { transform: 'translateY(-84px) scale(2) rotateY(1260deg)', filter: 'drop-shadow(0 0 20px #fff2a8)', offset: 0.72 },
         { transform: 'translateY(0) scale(1) rotateY(1800deg)', filter: 'drop-shadow(0 0 0 #ffd34d)' },
       ], { duration: 3400, easing: 'cubic-bezier(.3,.7,.4,1)' });
-      an.onfinish = () => { box.remove(); it.style.opacity = ''; };
+      an.onfinish = () => { box.remove(); icons.forEach((x) => { x.style.opacity = ''; }); };
     }
   }
 
@@ -7683,5 +7689,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.4.6";
+MP.version = "3.4.7";
 })();

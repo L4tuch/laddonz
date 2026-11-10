@@ -748,7 +748,7 @@
     if (run.media) run.media.remove();
     if (run.cap) run.cap.remove();
     (run.pops || []).forEach((b) => b.remove());
-    $$('.item[data-mp-lg]').forEach((x) => { if (x.style.opacity === '0') x.style.opacity = ''; });
+    $$('.item[data-mp-lg] > *').forEach((x) => { if (x.style.opacity === '0') x.style.opacity = ''; });
     if (run.win) run.win.classList.remove('mp-lg-win', 'thor', 'smoke', 'kasyno', 'disco', 'wlasny');
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
     if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
@@ -838,7 +838,11 @@
     for (const [name, icon] of BUILTIN[r] || []) if (!list.some((y) => y.name === name)) list.push({ name, img: IMG + icon });
     if (!list.length) return null;
     const t = pickName(list, (x) => x.name);
-    const it = el('div', { class: 'item mp-lg-tpl-item', style: { width: '32px', height: '32px' } }, el('img', { src: t.img, alt: '', draggable: 'false', style: { width: '32px', height: '32px', display: 'block', pointerEvents: 'none' } }));
+    const typ = { legendary: 't-leg', heroic: 't-her', unique: 't-uniupg', common: 't-norm' }[r] || 't-norm';
+    // ramka rzadkości jak w grze (.highlight z klasą typu) + ikonka
+    const it = el('div', { class: 'item mp-lg-tpl-item', 'data-item-type': typ, style: { width: '32px', height: '32px' } },
+      el('div', { class: 'highlight ' + typ + ' h-exist' }),
+      el('img', { class: 'icon', src: t.img, alt: '', draggable: 'false', style: { width: '32px', height: '32px', display: 'block', pointerEvents: 'none' } }));
     it.dataset.mpName = t.name;
     return it;
   }
@@ -926,18 +930,20 @@
     for (const it of $$('.item', win).filter((x) => x.dataset.mpLg)) {
       let r = it.getBoundingClientRect(); if (!r.width && it.parentElement) r = it.parentElement.getBoundingClientRect(); if (!r.width) continue;
       const c = cloneItem(it);
+      c.querySelectorAll('.highlight').forEach((x) => x.remove());
       const box = el('div', { class: 'mp-lg-pop', style: { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' } }, c);
       Object.assign(c.style, { position: 'absolute', left: '0', top: '0', margin: '0' });
       document.body.appendChild(box);
       (me.pops = me.pops || []).push(box);
-      it.style.opacity = '0';   // oryginał „wyskakuje" — na czas animacji niewidoczny (ale dalej można na niego najechać)
+      const icons = $$(':scope > canvas.icon, :scope > .canvas-icon, :scope > img', it);
+      icons.forEach((x) => { x.style.opacity = '0'; });   // ikonka „wyskakuje" — ramka przedmiotu zostaje na miejscu, najechanie dalej działa
       const an = box.animate([
         { transform: 'translateY(0) scale(1) rotateY(0deg)', filter: 'drop-shadow(0 0 0 #ffd34d)' },
         { transform: 'translateY(-78px) scale(2) rotateY(540deg)', filter: 'drop-shadow(0 0 14px #ffd34d)', offset: 0.3 },
         { transform: 'translateY(-84px) scale(2) rotateY(1260deg)', filter: 'drop-shadow(0 0 20px #fff2a8)', offset: 0.72 },
         { transform: 'translateY(0) scale(1) rotateY(1800deg)', filter: 'drop-shadow(0 0 0 #ffd34d)' },
       ], { duration: 3400, easing: 'cubic-bezier(.3,.7,.4,1)' });
-      an.onfinish = () => { box.remove(); it.style.opacity = ''; };
+      an.onfinish = () => { box.remove(); icons.forEach((x) => { x.style.opacity = ''; }); };
     }
   }
 
