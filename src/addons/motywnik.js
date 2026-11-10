@@ -53,11 +53,11 @@
   /* ── grafiki ramek (SVG) — wymiary cięcia jak w grze ── */
   const strip = (t) => `<linearGradient id='a' x1='0' x2='1'><stop offset='0' stop-color='${t.a1}' stop-opacity='0'/><stop offset='.2' stop-color='${t.a1}'/><stop offset='.55' stop-color='${t.a3 || t.a2}'/><stop offset='.85' stop-color='${t.a2}'/><stop offset='1' stop-color='${t.a2}' stop-opacity='0'/></linearGradient><filter id='g' x='-10%' y='-200%' width='120%' height='500%'><feGaussianBlur stdDeviation='2.2'/></filter>`;
   // okno: pas górny/dolny 32 px, boczne 20 px (gui/window-frame.png 32 20 fill)
-  const winFrame = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><defs>${strip(t)}<linearGradient id='h' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg1}'/></linearGradient></defs><rect x='0' y='0' width='200' height='200' rx='6' fill='${t.bg1}'/><rect x='0' y='0' width='200' height='32' rx='6' fill='url(#h)'/><rect x='.75' y='.75' width='198.5' height='198.5' rx='5.5' fill='none' stroke='${t.line}' stroke-width='1.5'/><line x1='8' y1='1.6' x2='192' y2='1.6' stroke='url(#a)' stroke-width='3' filter='url(#g)' opacity='.9'/><line x1='14' y1='1.2' x2='186' y2='1.2' stroke='url(#a)' stroke-width='1.2'/><line x1='40' y1='198.6' x2='160' y2='198.6' stroke='url(#a)' stroke-width='1' opacity='.45'/></svg>`);
+  const winFrame = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><defs>${strip(t)}<linearGradient id='h' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg1}'/></linearGradient></defs><rect x='0' y='0' width='200' height='200' rx='6' fill='${t.bg1}'/><rect x='.75' y='.75' width='198.5' height='198.5' rx='5.5' fill='none' stroke='${t.line}' stroke-width='1.5'/><line x1='8' y1='1.6' x2='192' y2='1.6' stroke='url(#a)' stroke-width='3' filter='url(#g)' opacity='.9'/><line x1='14' y1='1.2' x2='186' y2='1.2' stroke='url(#a)' stroke-width='1.2'/></svg>`);
   // powierzchnia panelu: boczne pasy 11 px (gui/middle_graphics.png 0 11 fill)
-  const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='60' height='60' fill='${raised ? t.bg2 : t.bg1}'/></svg>`);
+  const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='60' height='60' fill='${raised ? t.bg0 : t.bg1}'/></svg>`);
   // pasek / nagłówek tabeli: boczne pasy 20 px (quest_bar.png, table_header.png 0 20 fill)
-  const bar = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40'><defs>${strip(t)}<linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect width='80' height='40' fill='url(#b)'/></svg>`);
+  const bar = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40'><defs>${strip(t)}<linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect width='80' height='40' fill='${t.bg1}'/></svg>`);
   // karta/etykieta: pas 5 px (width-card-button.png 5 fill)
   const card = (t, active) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><defs><linearGradient id='c' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${active ? t.bg2 : t.bg1}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect x='.5' y='.5' width='39' height='39' rx='3' fill='url(#c)' stroke='${active ? t.a1 : t.line}' stroke-opacity='${active ? '.75' : '1'}'/></svg>`);
 
@@ -82,8 +82,9 @@
 
 /* — krój pisma (te same wielkości co w grze) — */
 /* tylko okna, dymki, menu, czat i prawa kolumna — pasek dolny (HP, doświadczenie, czas) zostaje z czcionką gry */
-.c-window:not(.transparent), .tip-wrapper, .popup-menu-layer, .new-chat-window, ${IL} .right-column.main-column{font-family:${body}!important}
-.c-window .header-label .text, .c-window .header-label{font-family:${t.head}!important}
+.c-window:not(.transparent), .tip-wrapper, .popup-menu-layer, .new-chat-window, ${IL} .right-column.main-column,
+.c-window:not(.transparent) :not(.item):not(.item *), .tip-wrapper *, .new-chat-window *, ${IL} .right-column.main-column :not(.item):not(.item *){font-family:${body}!important}
+.c-window .header-label .text, .c-window .header-label, .c-window .header-label *{font-family:${t.head}!important}
 
 /* — ramy ekranu: kolumny, górny i dolny pasek — */
 ${IL} .left-column.main-column, ${IL} .left-column.main-column .new-chat-window, ${IL} .left-column.main-column .chat-input-wrapper{background-color:${t.bg1}!important}
@@ -114,7 +115,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
 /* — powierzchnie interfejsu (border-image) — */
 [class*="interface-element-middle-"]{border-image-source:${surface(t, false)}!important;background-color:${t.bg1}!important}
-[class*="interface-element-middle-2"], [class*="interface-element-middle-3"]{border-image-source:${surface(t, true)}!important;background-color:${t.bg2}!important}
+[class*="interface-element-middle-2"], [class*="interface-element-middle-3"]{border-image-source:${surface(t, true)}!important;background-color:${t.bg0}!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
 .interface-element-bottom-bar-background-stretch, [class*="interface-element-header-1"]{border-image-source:${bar(t)}!important}
 [class*="interface-element-header-3"], .opt-header{background:linear-gradient(${t.bg2},${t.bg1})!important;color:${t.text}!important;box-shadow:inset 0 -1px 0 ${t.line}!important}
 .interface-element-active-card-background-stretch, .interface-element-active-card-border-image{border-image-source:${card(t, true)}!important}
@@ -130,6 +131,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .button.purple, .button.violet{${btn(t.bg2, t.bg0, t.a2, t.btnText)}}
 .button.red{${btn('#4a1717', '#200909', '#a33a3a', '#ffe9e9')}}
 .button:hover{${hover}}
+.button.disabled, .button.inactive, .button[disabled], .widget-button.disabled{filter:grayscale(1);opacity:.55}
 .widget-button.green{${btnMain}}
 .widget-button.violet, .widget-button.blink-violet{${btn(t.bg2, t.bg0, t.a2, t.btnText)}}
 .widget-button.blue{${btn(t.bg2, t.bg0, t.line, t.btnText)}}
@@ -153,8 +155,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .new-chat-window .chat-channel-card.active{background:linear-gradient(${t.bg2},${t.bg1})!important;box-shadow:inset 0 0 0 1px ${t.line},inset 0 -2px 0 ${t.a1}!important}
 
 /* — ciemny tekst na nowym, ciemnym tle — */
-.mt-lt{color:${t.text}!important}
+.mt-lt, .mt-lw{color:${t.text}!important}
 .mt-lt2{color:${t.text2}!important}
+.mt-bd{border-color:${t.line}!important}
+.mt-b0{background-color:${t.bg0}!important}
+.mt-b1{background-color:${t.bg1}!important}
+.mt-b2{background-color:${t.bg2}!important}
+.mt-bov{background-color:rgba(255,255,255,.035)!important}
 
 /* — przewijanie — */
 .game-window-positioner ::-webkit-scrollbar-thumb{background:${t.line}!important}
@@ -164,16 +171,51 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   /* ── menu prawego przycisku i ciemny tekst ── */
   const skip = (n) => n.closest('.mp-glass, #mp-qbar, #mp-qpop, .mp-modal-bg, #mp-ctx, #mp-eqtip, #mp-launcher');
   const lum = (c) => { const m = String(c).match(/(\d+)\D+(\d+)\D+(\d+)/); return m ? (0.299 * m[1] + 0.587 * m[2] + 0.114 * m[3]) / 255 : 1; };
+  /** Barwa: jasność i nasycenie (0–1) z rgb(a). */
+  function tone(c) {
+    const m = String(c).match(/([\d.]+)\D+([\d.]+)\D+([\d.]+)(?:\D+([\d.]+))?/);
+    if (!m) return null;
+    const r = m[1] / 255, g = m[2] / 255, b = m[3] / 255, a = m[4] == null ? 1 : Number(m[4]);
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    return { l: 0.299 * r + 0.587 * g + 0.114 * b, s: mx ? (mx - mn) / mx : 0, a };
+  }
+  const SCOPE = '.c-window:not(.transparent), .tip-wrapper, .new-chat-window, .right-column.main-column, .mt-menu';
+  const OWN = '.button, .card, .widget-button, .header-label, .mt-mi, input, textarea, select, [class*="interface-element-"]';
+  /**
+   * Ujednolicenie jak w projekcie graficznym: szare tła, szare ramki i szare/białe napisy gry dostają kolory stylu
+   * (te same odcienie wszędzie). Kolorowe napisy (rzadkość, wartości, ostrzeżenia) zostają bez zmian.
+   */
   function fixText(root) {
     if (!active()) return;
-    const scope = root.closest ? root.closest('.c-window, .tip-wrapper, .interface-layer') : null;
-    const list = scope || root === document.body ? [root, ...$$('*', root)] : [];
+    const list = root === document.body ? $$(SCOPE).flatMap((w) => [w, ...$$('*', w)]) : (root.closest && root.closest(SCOPE) ? [root, ...$$('*', root)] : $$(SCOPE, root).flatMap((w) => [w, ...$$('*', w)]));
     for (const n of list) {
-      if (n.nodeType !== 1 || skip(n) || n.closest('.item, .big-messages') || !n.closest('.c-window, .tip-wrapper, .interface-layer')) continue;
-      if (![...n.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) continue;
-      const l = lum(getComputedStyle(n).color);
-      if (l < 0.33) n.classList.add('mt-lt');
-      else if (l < 0.5 && !n.classList.contains('mt-lt')) n.classList.add('mt-lt2');
+      if (n.nodeType !== 1 || skip(n) || n.closest('.item, .big-messages, canvas') || /^(IMG|CANVAS|svg|path)$/i.test(n.tagName)) continue;
+      const cs = getComputedStyle(n);
+      // napis
+      if ([...n.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) {
+        const t = tone(cs.color);
+        if (t && t.s < 0.22) {
+          if (t.l < 0.33) n.classList.add('mt-lt');
+          else if (t.l < 0.66) n.classList.add('mt-lt2');
+          else n.classList.add('mt-lw');
+        }
+      }
+      if (n.matches(OWN) || n.matches(SCOPE)) continue;
+      // ramka
+      if (parseFloat(cs.borderTopWidth) + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderBottomWidth) + parseFloat(cs.borderRightWidth) > 0 && cs.borderImageSource === 'none') {
+        const t = tone(cs.borderTopColor) || tone(cs.borderLeftColor);
+        if (t && t.a > 0.05 && t.s < 0.2) n.classList.add('mt-bd');
+      }
+      // tło (tylko jednolite, bez obrazka)
+      if (cs.backgroundImage === 'none') {
+        const t = tone(cs.backgroundColor);
+        if (t && t.a > 0.02 && t.s < 0.2) {
+          if (t.a < 0.5) n.classList.add('mt-bov');
+          else if (t.l < 0.09) n.classList.add('mt-b0');
+          else if (t.l < 0.2) n.classList.add('mt-b1');
+          else n.classList.add('mt-b2');
+        }
+      }
     }
   }
   function tagMenu(labels) {
@@ -200,7 +242,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
   function stop() {
     if (mo) { mo.disconnect(); mo = null; }
-    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-btn', 'mt-skin', 'mt-frame'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
+    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
   }
   const active = () => !!(cfg && cfg.enabled && THEMES[cfg.theme] && !THEMES[cfg.theme].none);
 
