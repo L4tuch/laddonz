@@ -202,6 +202,12 @@
     if (ids.size < 2) [1, 2, 3].forEach((i) => ids.add(i));
     return [...ids].filter(Boolean).sort((x, y) => x - y).map((id) => ({ id, name: (list.find((b) => b.id === id) || {}).name || saved[id] || `Zestaw ${id}` }));
   }
+  /** Przycisk z numerem obecnego zestawu (najgłębszy element z samą cyfrą). */
+  function buildBtn() {
+    if (S.btnEl && S.btnEl.isConnected && /^\s*\d{1,2}\s*$/.test(S.btnEl.textContent || '')) return S.btnEl;
+    const c = $$(BUILD_ANC + ', ' + BUILD_ANC + ' *').filter((n) => /^\s*\d{1,2}\s*$/.test(n.textContent || '') && isVisible(n) && !n.closest('.mp-glass, #mp-ctx'));
+    return c.find((n) => ![...n.children].some((ch) => /^\s*\d{1,2}\s*$/.test(ch.textContent || ''))) || null;
+  }
   function buildButtonFrom(t) {
     if (!t || !t.closest || t.closest('.mp-glass, #mp-qbar, #mp-qpop, #mp-ctx')) return null;
     let n = t;
@@ -210,14 +216,17 @@
     return n;
   }
   function currentBuild() {
-    const b = $$(BUILD_ANC).map((n) => buildButtonFrom(n)).find(Boolean);
+    const b = buildBtn();
     return b ? Number((b.textContent || '').trim()) : 0;
   }
+  /** Zegar przy numerze zestawu — jak przy przedmiotach czekających na użycie po walce. */
   function markSet() {
-    $$('.mp-setq').forEach((n) => n.classList.remove('mp-setq'));
+    $$('.mp-setclock').forEach((n) => n.remove());
     if (!S.set) return;
-    const b = $$(BUILD_ANC).map((n) => buildButtonFrom(n)).find(Boolean);
-    if (b) { b.classList.add('mp-setq'); b.title = `Po walce: ${S.set.name}`; }
+    const btn = buildBtn();
+    if (!btn) return;
+    if (getComputedStyle(btn).position === 'static') btn.style.position = 'relative';
+    btn.appendChild(el('div', { class: 'mp-ibadge queued mp-setclock', title: `Po walce: ${S.set.id}. ${S.set.name}` }, icon('clock', 11)));
   }
   function armSet(b) {
     if (!b || (S.set && S.set.id === b.id)) { S.set = null; markSet(); toast('Szybka Rączka: zestaw nie zmieni się po walce'); return; }
@@ -229,30 +238,75 @@
     const r = await net.send('eqSet', { id: s.id }, { src: 'Szybka Rączka', urgent: true });
     if (!r.ok) toast(`Szybka Rączka: nie udało się zmienić zestawu na „${s.name}"`, 'warn');
   }
+  /** Nasze podmenu z listą zestawów do wyboru „po walce". */
+  function openSetMenu(x, y) {
+    const cur = currentBuild();
+    const list = buildList().filter((b) => b.id !== cur);
+    menus.showOwn(x, y, [
+      ...list.map((b) => ({ label: `${b.id}. ${b.name}${S.set && S.set.id === b.id ? ' (wybrany)' : ''}`, fn: () => armSet(b) })),
+      ...(S.set ? [{ label: 'Nie zmieniaj po walce', fn: () => armSet(null) }] : []),
+    ], 'Zmień po walce na…');
+  }
+  /** Pozycje listy zestawów, którą gra pokazuje po kliknięciu numeru („2. Zestaw 2"). */
+  function gameSetItems() {
+    return $$('div, li, span, a, button').filter((n) => isVisible(n) && !n.closest('.mp-glass, #mp-ctx') && /^\s*\d{1,2}\.\s*\S.{0,30}$/.test(n.textContent || '') && ![...n.children].some((c) => /^\s*\d{1,2}\./.test(c.textContent || '')));
+  }
+  /** Do listy zestawów z gry dopisujemy pozycję „Zmień po walce…" (stare opcje gry zostają). */
+  function injectIntoGameList(btnRect) {
+    const items = gameSetItems();
+    if (!items.length) return false;
+    const names = store.get('sets:names', {}) || {};
+    items.forEach((n) => { const m = (n.textContent || '').trim().match(/^(\d{1,2})\.\s*(.+)$/); if (m) names[m[1]] = m[2].trim(); });
+    store.set('sets:names', names);
+    const last = items[items.length - 1];
+    const parent = last.parentElement;
+    if (!parent || parent.querySelector(':scope > .mp-buildq')) return true;
+    const row = last.cloneNode(false);
+    row.classList.add('mp-buildq');
+    row.textContent = 'Zmień po walce…';
+    row.addEventListener('click', (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      const r = row.getBoundingClientRect();
+      openSetMenu(r.right + 4, r.top);
+    }, true);
+    parent.appendChild(row);
+    return true;
+  }
   function hookSets() {
-    // prawy klik na numerze zestawu → menu z listą zestawów
+    // prawy klik na numerze zestawu: menu gry zostaje (zmiana od razu), a my dokładamy „Zmień po walce…"
     document.addEventListener('contextmenu', (e) => {
       if (!cfg.enabled) return;
-      const btn = buildButtonFrom(e.target);
+      let btn = buildButtonFrom(e.target);
       if (!btn) return;
-      e.preventDefault(); e.stopPropagation();
-      const cur = Number((btn.textContent || '').trim());
-      const list = buildList().filter((b) => b.id !== cur);
-      menus.showOwn(e.clientX, e.clientY, [
-        ...list.map((b) => ({ label: `Po walce: ${b.id}. ${b.name}${S.set && S.set.id === b.id ? ' (wybrany)' : ''}`, fn: () => armSet(b) })),
-        ...(S.set ? [{ label: 'Nie zmieniaj po walce', fn: () => armSet(null) }] : []),
-      ], 'Zmień zestaw po walce');
+      while ([...btn.children].some((ch) => /^\s*\d{1,2}\s*$/.test(ch.textContent || ''))) btn = [...btn.children].find((ch) => /^\s*\d{1,2}\s*$/.test(ch.textContent || ''));
+      S.btnEl = btn;
+      menus.setLast('build', Number((btn.textContent || '').trim()));
+      const x = e.clientX, y = e.clientY, t0 = now();
+      const tryInject = () => {
+        if (injectIntoGameList()) return;
+        if (now() - menus.lastInject < 600) return;          // dopisane do menu gry (showPopupMenu)
+        if (now() - t0 < 350) { setTimeout(tryInject, 70); return; }
+        openSetMenu(x, y);                                    // gra nie pokazała żadnej listy — nasze menu
+      };
+      setTimeout(tryInject, 40);
+    }, true);
+    // lewy klik też otwiera listę zestawów w grze — dopisujemy tam pozycję
+    document.addEventListener('click', (e) => {
+      if (!cfg.enabled) return;
+      if (buildButtonFrom(e.target)) { S.btnEl = buildButtonFrom(e.target); setTimeout(() => injectIntoGameList(), 60); setTimeout(() => injectIntoGameList(), 200); }
     }, true);
     // w trakcie walki zwykły wybór zestawu z listy gry → zapamiętujemy i zmieniamy po walce
     document.addEventListener('click', (e) => {
       if (!cfg.enabled || !game.inBattle()) return;
-      const t = e.target && e.target.closest && e.target.closest(BUILD_ANC + ' *');
-      const m = t && (t.textContent || '').trim().match(/^(\d{1,2})\.\s*(.{1,30})$/);
-      if (!m) return;
+      const t = e.target && e.target.closest && e.target.closest('div, li, span, a, button');
+      if (!t || t.classList.contains('mp-buildq')) return;
+      const m = (t.textContent || '').trim().match(/^(\d{1,2})\.\s*(.{1,30})$/);
+      if (!m || !gameSetItems().includes(t)) return;
       e.preventDefault(); e.stopPropagation();
       armSet({ id: Number(m[1]), name: m[2].trim() });
     }, true);
-    setInterval(() => { if (S.set) markSet(); }, 2000);
+    menus.add('build', () => (cfg.enabled ? [{ label: 'Zmień po walce…', fn: () => { const b = buildBtn(); const r = b ? b.getBoundingClientRect() : { right: 200, top: 200 }; openSetMenu(r.right + 4, r.top); } }] : []));
+    setInterval(() => { if (S.set && !$('.mp-setclock')) markSet(); }, 1500);
   }
 
   function queued(id) { return cfg.queue.find((q) => q.id === Number(id)); }

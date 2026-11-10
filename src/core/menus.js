@@ -9,7 +9,7 @@
  *   Alt + prawy przycisk na przedmiocie → własne menu panelu.
  */
 const menus = {
-  providers: { player: [], item: [] },
+  providers: { player: [], item: [], build: [] },
   last: null,            // { type, id, t }
   hooked: false,
   otherHooked: false,
@@ -104,8 +104,10 @@ const menus = {
   },
 
   inject(menu, args = []) {
+    // 0) świeży prawy klik na numerze zestawu
+    let tgt = this.last && this.last.type === 'build' && now() - this.last.t < 1500 ? this.last : null;
     // 1) nick w argumentach menu (tytuł menu to nick gracza) — najpewniejsze
-    let tgt = this.playerFromArgs(args);
+    if (!tgt) tgt = this.playerFromArgs(args);
     // 2) ostatni cel kliknięcia (hak gracza / dymek pod kursorem)
     if (!tgt && this.last && now() - this.last.t < 1500) tgt = this.last;
     if (!tgt) tgt = this.guessPlayerFromMenu(menu);

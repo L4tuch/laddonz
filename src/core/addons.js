@@ -92,14 +92,14 @@ function makeDraggable(node, handle, onEnd) {
 }
 
 /* ───────── okno potwierdzenia ───────── */
-function confirmBox({ title, html, items, okText = 'Potwierdź', danger = false, countdown = 0 }) {
+function confirmBox({ title, html, items, okText = 'Potwierdź', cancelText = 'Anuluj', danger = false, countdown = 0, width = null }) {
   return new Promise((resolve) => {
     const body = el('div', { class: 'mp-wbody' });
     if (html) body.appendChild(el('div', { html }));
     if (items && items.length) body.appendChild(el('ul', { style: { margin: '8px 0 0', paddingLeft: '18px' } }, items.map((t) => el('li', null, t))));
     const ok = el('button', { class: 'mp-btn ' + (danger ? 'bad' : 'pri') }, okText);
-    const cancel = el('button', { class: 'mp-btn' }, 'Anuluj');
-    const bg = el('div', { class: 'mp-modal-bg' }, el('div', { class: 'mp-modal mp-glass' }, el('h3', null, title), body, el('div', { class: 'mp-btns', style: { justifyContent: 'flex-end' } }, cancel, ok)));
+    const cancel = el('button', { class: 'mp-btn' }, cancelText);
+    const bg = el('div', { class: 'mp-modal-bg' }, el('div', { class: 'mp-modal mp-glass', style: width ? { width } : null }, el('h3', null, title), body, el('div', { class: 'mp-btns', style: { justifyContent: 'flex-end' } }, cancel, ok)));
     const done = (v) => { bg.remove(); resolve(v); };
     cancel.onclick = () => done(false);
     bg.addEventListener('mousedown', (e) => { if (e.target === bg) done(false); });
