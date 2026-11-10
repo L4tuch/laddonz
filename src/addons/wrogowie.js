@@ -55,20 +55,29 @@
       told.set(p.id, t);
       fresh.push(p);
     }
-    fresh.slice(0, 5).forEach((p) => notify(`Wróg na mapie: ${p.nick}${cfg.showLvl ? ` (${p.lvl}${p.prof || ''})` : ''}${p.clanName ? ` [${p.clanName}]` : ''}`));
+    fresh.slice(0, 5).forEach((p) => {
+      notify(`Wróg na mapie: ${p.nick}${cfg.showLvl ? ` (${p.lvl}${p.prof || ''})` : ''}${p.clanName ? ` [${p.clanName}]` : ''}`);
+      // opcjonalnie: wiadomość na czat klanu (treść do edycji)
+      if (cfg.clanChat && MP.betaSound) MP.betaSound.chat('CLAN', MP.betaSound.fill(cfg.text, { 'Nick Gracza': p.nick, 'Nazwa Klanu': p.clanName || 'brak klanu', 'Mapa': m.name, 'Poziom': p.lvl, 'Profesja': p.prof || '' }));
+    });
+    if (fresh.length && MP.betaSound) MP.betaSound.playSound('wrog', 'alarm', cfg.volume ?? 0.7, cfg.sound || 'default');
     if (fresh.length > 5) notify(`Wrogów na mapie: jeszcze ${fresh.length - 5}`);
   }
 
   defineAddon({
     id: 'wrogowie', name: 'Wrogowie na mapie', icon: 'wrogowie', color: ['#ff6a5c', '#c0392b'],
     desc: 'Na czerwonych mapach pokazuje komunikat „Wróg na mapie: Nick [Klan]", gdy pojawi się wróg. Znajomi, klan, sojusznicy, grupa i gracze z listy Bratana nigdy nie są zgłaszani.',
-    defaults: { personal: true, enemyClans: true, neutral: false, showLvl: false, pvpCodes: [2], color: '#ff4b3e' },
+    defaults: { personal: true, enemyClans: true, neutral: false, showLvl: false, pvpCodes: [2], color: '#ff4b3e', clanChat: false, text: 'Wróg! {Nick Gracza} z klanu {Nazwa Klanu} w lokalizacji {Mapa}', sound: 'default', volume: 0.7 },
     settings: [
       { key: 'enemyClans', type: 'bool', label: 'Wrogie klany' },
       { key: 'personal', type: 'bool', label: 'Gracze oznaczeni jako wrogowie' },
       { key: 'neutral', type: 'bool', label: 'Gracze neutralni (bez relacji) też jako wrogowie' },
       { key: 'showLvl', type: 'bool', label: 'Pokazuj poziom i profesję przy nicku' },
       { key: 'color', type: 'color', label: 'Kolor czcionki powiadomienia' },
+      { key: 'clanChat', type: 'bool', label: 'Wysyłaj wiadomość na czat klanu' },
+      { key: 'text', type: 'text', label: 'Treść wiadomości na klan', hint: 'Zmienne: {Nick Gracza} {Nazwa Klanu} {Mapa} {Poziom} {Profesja}' },
+      { key: 'volume', type: 'range', label: 'Głośność dźwięku', min: 0, max: 1, step: 0.05 },
+      { key: '_snd', type: 'custom', render: (o, s) => (MP.betaSound ? MP.betaSound.soundField('wrog', 'alarm').render(o, s) : el('span')) },
     ],
     init(c) {
       cfg = c;

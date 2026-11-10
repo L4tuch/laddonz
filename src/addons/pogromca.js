@@ -279,7 +279,7 @@
   }
 
   defineAddon({
-    id: 'pogromca', name: 'Pogromca Tytanów', icon: 'pogromca', color: ['#ff6a3d', '#7a1fff'],
+    id: 'pogromca', beta: true, name: 'Pogromca Tytanów', icon: 'pogromca', color: ['#ff6a3d', '#7a1fff'],
     desc: 'W walce pokazuje okienko z efektami na Twojej drużynie (albo na Tobie solo) i na przeciwnikach: nazwa efektu i za ile tur zniknie. Przy tytanach, kolosach i mobach — kto ładuje atak i za ile uderzy. Pomaga trafić z szadzią, furią, aurą czy wyzwaniem. Pozytywne efekty mają kolor stylu, negatywne — czerwony.',
     defaults: { enabled: false, showAllies: true, showEnemies: true, warnAt: 1, scale: 100 },
     settings: [

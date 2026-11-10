@@ -278,6 +278,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window:not(.transparent){box-shadow:0 12px 30px rgba(0,0,0,.6),0 0 22px ${t.glow}!important}
 /* okna przezroczyste (mapa podręczna, przelogowanie, liczniki…) zostają przezroczyste — gra sama ustawia ich krycie */
 .c-window:not(.transparent) .header-label{background:none!important;box-shadow:none!important;border-image:${plaque(t)} 14 22 fill / 14px 22px / 3px 16px stretch!important;filter:drop-shadow(0 0 6px ${t.glow})}
+/* napis w nagłówku okna — wyraźny jak w klasycznym wyglądzie: jasny, z cieniem i poświatą stylu; plakietka zawsze na wierzchu */
+.c-window:not(.transparent) > .header-label-positioner{z-index:5}
+.c-window:not(.transparent) .header-label{filter:drop-shadow(0 2px 3px rgba(0,0,0,.85)) drop-shadow(0 0 7px ${t.glow})!important}
+.c-window:not(.transparent) .header-label .text{color:${t.text}!important;text-shadow:0 1px 1px #000, 0 0 8px ${t.glow}!important}
 .c-window .header-label .text{color:${t.text}!important;text-shadow:0 0 8px ${t.glow},0 1px 1px #000!important}
 /* ozdoby plakietki z nazwą okna — ten sam kształt, przebarwione */
 /* metalowe ozdoby klasycznego interfejsu — w nowoczesnych stylach ich nie ma */
@@ -322,7 +326,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window.mt-loot > .content{background:transparent!important;box-shadow:none!important}
 /* tło okna łupów sięga aż do metalowej ramy — jedna płaszczyzna, bez pasów między ramą a środkiem.
    Rysowane na samym oknie (pseudo-element), żeby niczego w środku nie przesuwać — pasek z „Potwierdź" zostaje na miejscu */
-.c-window.mt-loot::before{content:'';position:absolute;left:-15px;right:-15px;top:-25px;bottom:0;z-index:-1;pointer-events:none;border-radius:5px;background:radial-gradient(ellipse 80% 110px at 50% 0, ${t.glow}, transparent 75%), radial-gradient(ellipse 120% 95% at 50% 45%, transparent 55%, rgba(0,0,0,.5)), linear-gradient(${ha(t.bg2, 0.88)}, ${ha(t.bg0, 0.95)}), ${TX}}
+.c-window.mt-loot::before{content:'';position:absolute;left:-15px;right:-15px;top:-3px;bottom:0;z-index:-1;pointer-events:none;border-radius:5px;background:radial-gradient(ellipse 80% 110px at 50% 0, ${t.glow}, transparent 75%), radial-gradient(ellipse 120% 95% at 50% 45%, transparent 55%, rgba(0,0,0,.5)), linear-gradient(${ha(t.bg2, 0.88)}, ${ha(t.bg0, 0.95)}), ${TX}}
 .c-window.mt-loot .content .mt-lclear, .c-window.mt-loot .content .mt-lclear:is(.mt-b0,.mt-b1,.mt-b2,.mt-bov,.mt-bd), .c-window.mt-loot .content [class*="interface-element-middle-"]{background:transparent!important;background-image:none!important;border-color:transparent!important;border-image:none!important;box-shadow:none!important}
 .c-window.mt-loot .content .mt-lin{background:transparent!important;background-image:none!important;border-color:transparent!important;box-shadow:none!important}
 /* okienko przedmiotu: szlachetny kafel — metalowa krawędź, światło od góry, głęboki cień w środku */

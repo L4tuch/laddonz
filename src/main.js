@@ -19,9 +19,10 @@
   config.data.global.dryRun = false;   // tryb próbny usunięty z panelu
   injectCSS();
   // zastrzeżenie — przy pierwszym uruchomieniu (i po każdej zmianie jego treści), dopóki nie zostanie zaakceptowane
-  if (!store.get('disclaimer:v1', false)) {
+  // pokazywane przy pierwszym pobraniu i po KAŻDEJ aktualizacji (nowa wersja = ponowna akceptacja)
+  if (store.get('disclaimer:ver', '') !== MP.version) {
     const ok = await confirmBox({
-      title: 'L4Tools — ważne informacje przed użyciem',
+      title: `L4Tools ${MP.version} — ważne informacje przed użyciem`,
       okText: 'Akceptuję', cancelText: 'Nie akceptuję', width: '520px',
       html: [
         '<p style="margin:0 0 8px"><b>L4Tools</b> to nieoficjalny zestaw dodatków do gry Margonem. Nie jest tworzony, wspierany ani zatwierdzony przez Garmory sp. z o.o. ani przez administrację gry.</p>',
@@ -31,7 +32,7 @@
       ].join(''),
     });
     if (!ok) { toast('L4Tools nie został uruchomiony — warunki nie zostały zaakceptowane. Odśwież grę, aby zobaczyć je ponownie.', 'warn', 7000); return; }
-    store.set('disclaimer:v1', true);
+    store.set('disclaimer:v1', true); store.set('disclaimer:ver', MP.version);
   }
   net.install();
   // część obiektów gry powstaje później — ponawiamy podpięcie przez pierwsze 2 minuty

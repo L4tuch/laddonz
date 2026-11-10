@@ -125,7 +125,7 @@ const ui = {
         const sw = switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, sw), true);
         const row = el('div', { class: 'mp-row' + (this.sel === a.id ? ' sel' : '') + (cfg.enabled ? '' : ' off'), onclick: (e) => { if (e.target.closest('.mp-sw')) return; this.sel = a.id; draw(); this.renderMain(); } },
           el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 18)),
-          el('div', { class: 'nm' }, a.name),
+          el('div', { class: 'nm' }, a.name, a.beta ? el('span', { class: 'mp-beta', title: 'BETA — dodatek w fazie testów' }, 'B') : null),
           sw);
         list.appendChild(row);
       }
@@ -172,12 +172,12 @@ const ui = {
         el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 26)),
         el('div', { style: { flex: 1 } },
           el('h2', null, a.name, ' ',
-            null),
+            a.beta ? el('span', { class: 'mp-beta big', title: 'BETA — dodatek w fazie testów' }, 'BETA') : null),
           el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
         cfg.enabled ? el('button', { class: 'mp-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów po prawej', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); rerender(); } },
           icon('pin', 14), quickbar.isPinned(a.id) ? 'W skrótach' : 'Dodaj do skrótów') : null,
         switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, M.querySelector('.mp-h .mp-sw')))));
-      M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
+      M.appendChild(el('p', { class: 'mp-desc' }, a.beta ? el('b', { class: 'mp-beta-txt' }, 'BETA — dodatek w fazie testów, może jeszcze nie działać w pełni. ') : null, a.desc));
     }
     if (a.notes) a.notes(cfg).forEach((n) => n && M.appendChild(note(n.type, n.text)));
     let renderBox = null;
