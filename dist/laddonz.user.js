@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.4.12
+// @version      3.4.13
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1176,8 +1176,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-fake-f .button{padding:0 12px;height:24px;line-height:24px}
 .mp-lg-glow{--lgg:#ff4a2a;animation:mpLgGlow 1.4s ease-in-out infinite!important;border-radius:3px}
 @keyframes mpLgGlow{0%,100%{box-shadow:0 0 5px 1px color-mix(in srgb,var(--lgg) 75%,transparent),inset 0 0 8px color-mix(in srgb,var(--lgg) 55%,transparent)}50%{box-shadow:0 0 11px 3px var(--lgg),inset 0 0 14px color-mix(in srgb,var(--lgg) 85%,transparent)}}
-.mp-lg-hl.mp-lg-winring{inset:2px;border-radius:8px;z-index:60}
-.mp-lg-hl.mp-lg-winring::before{padding:3px}
+.mp-lg-hl.mp-lg-winring{inset:2px;border-radius:10px;z-index:60;filter:drop-shadow(0 0 6px var(--lgc))}
+.mp-lg-hl.mp-lg-winring::before{padding:var(--ringw,10px);display:block!important}
 .mp-lg-hl.mp-lg-winring::after{display:none}
 .mp-lg-fbolt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
 .item.mp-lg-fx-fade > :is(canvas.icon,.canvas-icon,img){animation:mpLgFade 3s ease-in-out infinite}
@@ -6672,7 +6672,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       wr.className = hlClass(spec) + ' mp-lg-winring';
       // obwódka na zewnętrznej krawędzi całego okna (razem z metalową ramą), nie na jego środku
       const cs = getComputedStyle(w), bw = (k) => parseFloat(cs[k]) || 0;
-      Object.assign(wr.style, { top: -(bw('borderTopWidth') - 3) + 'px', bottom: -(bw('borderBottomWidth') - 3) + 'px', left: -(bw('borderLeftWidth') - 3) + 'px', right: -(bw('borderRightWidth') - 3) + 'px' });
+      Object.assign(wr.style, { top: -(bw('borderTopWidth') - 1) + 'px', bottom: -(bw('borderBottomWidth') - 1) + 'px', left: -(bw('borderLeftWidth') - 1) + 'px', right: -(bw('borderRightWidth') - 1) + 'px' });
+      // gruba obwódka — przykrywa całą metalową ramę okna (ok. tyle, ile ma rama z boku)
+      wr.style.setProperty('--ringw', Math.max(8, Math.min(14, bw('borderLeftWidth') - 6)) + 'px');
       wr.style.setProperty('--lgc', spec.glow);
     }
     // efekt na samym przedmiocie
@@ -7707,5 +7709,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.4.12";
+MP.version = "3.4.13";
 })();

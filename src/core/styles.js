@@ -170,8 +170,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-fake-f .button{padding:0 12px;height:24px;line-height:24px}
 .mp-lg-glow{--lgg:#ff4a2a;animation:mpLgGlow 1.4s ease-in-out infinite!important;border-radius:3px}
 @keyframes mpLgGlow{0%,100%{box-shadow:0 0 5px 1px color-mix(in srgb,var(--lgg) 75%,transparent),inset 0 0 8px color-mix(in srgb,var(--lgg) 55%,transparent)}50%{box-shadow:0 0 11px 3px var(--lgg),inset 0 0 14px color-mix(in srgb,var(--lgg) 85%,transparent)}}
-.mp-lg-hl.mp-lg-winring{inset:2px;border-radius:8px;z-index:60}
-.mp-lg-hl.mp-lg-winring::before{padding:3px}
+.mp-lg-hl.mp-lg-winring{inset:2px;border-radius:10px;z-index:60;filter:drop-shadow(0 0 6px var(--lgc))}
+.mp-lg-hl.mp-lg-winring::before{padding:var(--ringw,10px);display:block!important}
 .mp-lg-hl.mp-lg-winring::after{display:none}
 .mp-lg-fbolt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
 .item.mp-lg-fx-fade > :is(canvas.icon,.canvas-icon,img){animation:mpLgFade 3s ease-in-out infinite}
