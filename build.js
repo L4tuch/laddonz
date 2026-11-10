@@ -34,6 +34,7 @@ const ORDER = [
   'src/addons/auto_items.js',
   'src/addons/wrogowie.js',
   'src/addons/motywnik.js',
+  'src/addons/legenda.js',
   'src/main.js',
 ];
 
