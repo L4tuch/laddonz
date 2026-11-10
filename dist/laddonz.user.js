@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.0.4
+// @version      3.0.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -5238,7 +5238,7 @@ MP.itemDeco = itemDeco;
   // pasek / nagłówek tabeli: boczne pasy 20 px (quest_bar.png, table_header.png 0 20 fill)
   const bar = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40'><defs>${strip(t)}<linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect width='80' height='40' fill='${t.bg1}'/></svg>`);
   // karta/etykieta: pas 5 px (width-card-button.png 5 fill)
-  const card = (t, active) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><defs><linearGradient id='c' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${active ? t.bg2 : t.bg1}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect x='.5' y='.5' width='39' height='39' rx='3' fill='url(#c)' stroke='${active ? t.a1 : t.line}' stroke-opacity='${active ? '.75' : '1'}'/></svg>`);
+  const card = (t, active) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><defs><linearGradient id='c' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg1}'/></linearGradient></defs><rect x='.5' y='.5' width='39' height='39' rx='3' fill='url(#c)' stroke='${t.line}'/>${active ? `<rect x='4' y='37' width='32' height='1.5' rx='.75' fill='${t.a1}' opacity='.8'/>` : ''}</svg>`);
 
   function loadFonts(t) {
     if (!t || !t.fonts) { if (fontEl) fontEl.remove(); fontEl = null; return; }
@@ -5269,8 +5269,10 @@ MP.itemDeco = itemDeco;
 ${IL} .left-column.main-column, ${IL} .left-column.main-column .new-chat-window, ${IL} .left-column.main-column .chat-input-wrapper{background-color:${t.bg1}!important}
 ${IL} .right-column.main-column{background:${grain}, radial-gradient(ellipse at 50% 0%, ${t.edge}, transparent 45%), linear-gradient(${t.bg1},${t.bg0})!important}
 ${IL} .right-column.main-column > .border{background:linear-gradient(90deg,${t.bg0},${t.bg1})!important}
-${IL} .top.positioner > .bg, ${IL} .bottom.positioner > .bg{filter:${t.tint}}
-${IL} .bottom-panel-graphic, ${IL} .hud-container, ${IL} .additional-skill-panel{background-color:${t.blend}!important;background-blend-mode:luminosity!important}
+/* górny i dolny pasek: jednolite tło stylu (bez jasnej krawędzi z grafiki gry) */
+${IL} .top.positioner > .bg{background:linear-gradient(${t.bg1},${t.bg0})!important}
+${IL} .bottom.positioner > .bg{background:linear-gradient(${t.bg0},${t.bg1})!important}
+/* ozdoby wokół HP, panel szybkich umiejętności i HUD na górze — grafiki gry bez zmian (żadnych prostokątów wokół) */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:2147480000;box-shadow:inset 0 0 38px ${t.edge}}
 
 /* — sloty przedmiotów i siatka torby: ten sam rysunek, nowa barwa — */
@@ -5307,12 +5309,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
 /* — przyciski gry (zielone / fioletowe / czerwone / niebieskie) — */
 .button.green, .button.small.green{${btnMain}}
-.button.purple, .button.violet{${btn(t.bg2, t.bg0, t.a2, t.btnText)}}
+.button.purple, .button.violet{${btn(t.btn[0], t.btn[1], t.btnLine, t.btnText)}}
 .button.red{${btn('#4a1717', '#200909', '#a33a3a', '#ffe9e9')}}
 .button:hover{${hover}}
 .button.disabled, .button.inactive, .button[disabled], .widget-button.disabled{filter:grayscale(1);opacity:.55}
 .widget-button.green{${btnMain}}
-.widget-button.violet, .widget-button.blink-violet{${btn(t.bg2, t.bg0, t.a2, t.btnText)}}
+.widget-button.violet, .widget-button.blink-violet{${btn(t.btn[0], t.btn[1], t.btnLine, t.btnText)}}
 .widget-button.blue{${btn(t.bg2, t.bg0, t.line, t.btnText)}}
 .widget-button.red{${btn('#3a1414', '#1a0808', '#8a3030', '#fff')}}
 .widget-button:hover{${hover}}
@@ -5609,5 +5611,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.0.4";
+MP.version = "3.0.5";
 })();
