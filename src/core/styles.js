@@ -164,6 +164,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-fake-f{position:absolute!important;left:-20px;right:-20px;bottom:-32px;height:32px;display:flex!important;align-items:center;justify-content:space-between;gap:10px;padding:0 26px;box-sizing:border-box;color:#e6d6bf;font-size:12.8px}
 .mp-lg-fake-f .interface-element-bottom-bar-background-stretch{position:absolute;inset:0;z-index:-1;border-style:solid;border-width:0 20px}
 .mp-lg-fake-f .button{padding:0 12px;height:24px;line-height:24px}
+.mp-lg-glow{animation:mpLgRed 1.4s ease-in-out infinite!important;border-radius:3px}
+@keyframes mpLgRed{0%,100%{box-shadow:0 0 6px 1px rgba(255,70,30,.75),inset 0 0 8px rgba(255,90,40,.55)}50%{box-shadow:0 0 12px 3px rgba(255,40,20,.95),inset 0 0 14px rgba(255,110,50,.85)}}
 .mp-lg-pop{position:fixed;z-index:2147483002;pointer-events:none;perspective:300px}
 .mp-mt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .mp-mt-card{cursor:pointer;border-radius:10px;padding:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18)}

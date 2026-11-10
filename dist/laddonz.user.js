@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.3.5
+// @version      3.3.6
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1170,6 +1170,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-fake-f{position:absolute!important;left:-20px;right:-20px;bottom:-32px;height:32px;display:flex!important;align-items:center;justify-content:space-between;gap:10px;padding:0 26px;box-sizing:border-box;color:#e6d6bf;font-size:12.8px}
 .mp-lg-fake-f .interface-element-bottom-bar-background-stretch{position:absolute;inset:0;z-index:-1;border-style:solid;border-width:0 20px}
 .mp-lg-fake-f .button{padding:0 12px;height:24px;line-height:24px}
+.mp-lg-glow{animation:mpLgRed 1.4s ease-in-out infinite!important;border-radius:3px}
+@keyframes mpLgRed{0%,100%{box-shadow:0 0 6px 1px rgba(255,70,30,.75),inset 0 0 8px rgba(255,90,40,.55)}50%{box-shadow:0 0 12px 3px rgba(255,40,20,.95),inset 0 0 14px rgba(255,110,50,.85)}}
 .mp-lg-pop{position:fixed;z-index:2147483002;pointer-events:none;perspective:300px}
 .mp-mt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .mp-mt-card{cursor:pointer;border-radius:10px;padding:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18)}
@@ -5592,7 +5594,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window.mt-loot .content .mt-lin{background:transparent!important;background-image:none!important;border-color:transparent!important;box-shadow:none!important}
 /* okienko przedmiotu: szlachetny kafel — metalowa krawędź, światło od góry, głęboki cień w środku */
 .c-window.mt-loot .content .mt-lcard{background:radial-gradient(ellipse 90% 50% at 50% 0, ${ha(t.a1, 0.10)}, transparent 70%), linear-gradient(${t.bg2}, ${t.bg0})!important;border-color:${t.m[2]}!important;border-radius:5px!important;box-shadow:inset 0 0 0 1px ${t.m[2]}, inset 0 1px 0 ${t.m[0]}2e, inset 0 -10px 18px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.45)!important}
-.c-window.mt-loot .content .mt-lslot{background:radial-gradient(circle at 50% 40%, ${t.bg1}, ${t.bg0} 75%)!important;border-radius:4px!important;box-shadow:inset 0 0 0 1px ${t.m[2]}, inset 0 2px 6px rgba(0,0,0,.7), 0 1px 0 ${t.m[0]}14!important}
+.c-window.mt-loot .content .mt-lslot:not(.mp-lg-glow){background:radial-gradient(circle at 50% 40%, ${t.bg1}, ${t.bg0} 75%)!important;border-radius:4px!important;box-shadow:inset 0 0 0 1px ${t.m[2]}, inset 0 2px 6px rgba(0,0,0,.7), 0 1px 0 ${t.m[0]}14!important}
 .c-window.mt-loot .content .mt-lcard *:not(.button):not(.button *):not(.item *){color:${t.text}}
 
 /* — zakładki — */
@@ -6583,6 +6585,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
       h = el('div'); card.appendChild(h);
     }
+    // sam przedmiot-legenda świeci jak w grze (czerwono-pomarańczowy blask), niezależnie od stylu
+    const glow = it.parentElement && it.parentElement !== card ? it.parentElement : it;
+    glow.classList.add('mp-lg-glow');
     const was = h.className;
     h.className = hlClass();
     // Smoke: wyróżnienie wyłania się powoli, jak z dymu
@@ -6647,10 +6652,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     return rars;
   }
   function testItem(r, bag) {
-    const pool = bag[r];
+    let pool = bag[r];
+    if (!pool || !pool.length) pool = [].concat(bag.legendary, bag.heroic, bag.unique, bag.common);   // brak takiej rzadkości w torbie — dowolny przedmiot
     let it;
     if (pool && pool.length) it = cloneItem(pool[Math.floor(Math.random() * pool.length)]);
-    else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1] } });
+    else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1], width: '32px', height: '32px' } });
     it.title = RAR[r][0];
     if (r === 'legendary') it.dataset.mpLg = '1'; else delete it.dataset.mpLg;
     return it;
@@ -6671,7 +6677,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       card.classList.remove('mt-lcard');
       const old = card.querySelector('.item');
       const it = testItem(r, bag);
-      if (old) { it.style.cssText = old.style.cssText; old.replaceWith(it); }
+      if (old) { const keep = it.style.cssText; it.style.cssText = old.style.cssText + ';' + keep; old.replaceWith(it); }
       holder.appendChild(card);
     }
     f.querySelectorAll('.mp-lg-hl').forEach((x) => x.remove());
@@ -6711,7 +6717,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   /* ── Kasyno: legenda wyskakuje z okienka i kręci się jak moneta ── */
   function popItems(win, me) {
     for (const it of $$('.item', win).filter((x) => x.dataset.mpLg)) {
-      const r = it.getBoundingClientRect(); if (!r.width) continue;
+      let r = it.getBoundingClientRect(); if (!r.width && it.parentElement) r = it.parentElement.getBoundingClientRect(); if (!r.width) continue;
       const c = cloneItem(it);
       const box = el('div', { class: 'mp-lg-pop', style: { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' } }, c);
       Object.assign(c.style, { position: 'absolute', left: '0', top: '0', margin: '0' });
@@ -7410,5 +7416,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.3.5";
+MP.version = "3.3.6";
 })();

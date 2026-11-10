@@ -633,6 +633,9 @@
       if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
       h = el('div'); card.appendChild(h);
     }
+    // sam przedmiot-legenda świeci jak w grze (czerwono-pomarańczowy blask), niezależnie od stylu
+    const glow = it.parentElement && it.parentElement !== card ? it.parentElement : it;
+    glow.classList.add('mp-lg-glow');
     const was = h.className;
     h.className = hlClass();
     // Smoke: wyróżnienie wyłania się powoli, jak z dymu
@@ -697,10 +700,11 @@
     return rars;
   }
   function testItem(r, bag) {
-    const pool = bag[r];
+    let pool = bag[r];
+    if (!pool || !pool.length) pool = [].concat(bag.legendary, bag.heroic, bag.unique, bag.common);   // brak takiej rzadkości w torbie — dowolny przedmiot
     let it;
     if (pool && pool.length) it = cloneItem(pool[Math.floor(Math.random() * pool.length)]);
-    else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1] } });
+    else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1], width: '32px', height: '32px' } });
     it.title = RAR[r][0];
     if (r === 'legendary') it.dataset.mpLg = '1'; else delete it.dataset.mpLg;
     return it;
@@ -721,7 +725,7 @@
       card.classList.remove('mt-lcard');
       const old = card.querySelector('.item');
       const it = testItem(r, bag);
-      if (old) { it.style.cssText = old.style.cssText; old.replaceWith(it); }
+      if (old) { const keep = it.style.cssText; it.style.cssText = old.style.cssText + ';' + keep; old.replaceWith(it); }
       holder.appendChild(card);
     }
     f.querySelectorAll('.mp-lg-hl').forEach((x) => x.remove());
@@ -761,7 +765,7 @@
   /* ── Kasyno: legenda wyskakuje z okienka i kręci się jak moneta ── */
   function popItems(win, me) {
     for (const it of $$('.item', win).filter((x) => x.dataset.mpLg)) {
-      const r = it.getBoundingClientRect(); if (!r.width) continue;
+      let r = it.getBoundingClientRect(); if (!r.width && it.parentElement) r = it.parentElement.getBoundingClientRect(); if (!r.width) continue;
       const c = cloneItem(it);
       const box = el('div', { class: 'mp-lg-pop', style: { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' } }, c);
       Object.assign(c.style, { position: 'absolute', left: '0', top: '0', margin: '0' });

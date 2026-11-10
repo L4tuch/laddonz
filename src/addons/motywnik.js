@@ -327,7 +327,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window.mt-loot .content .mt-lin{background:transparent!important;background-image:none!important;border-color:transparent!important;box-shadow:none!important}
 /* okienko przedmiotu: szlachetny kafel — metalowa krawędź, światło od góry, głęboki cień w środku */
 .c-window.mt-loot .content .mt-lcard{background:radial-gradient(ellipse 90% 50% at 50% 0, ${ha(t.a1, 0.10)}, transparent 70%), linear-gradient(${t.bg2}, ${t.bg0})!important;border-color:${t.m[2]}!important;border-radius:5px!important;box-shadow:inset 0 0 0 1px ${t.m[2]}, inset 0 1px 0 ${t.m[0]}2e, inset 0 -10px 18px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.45)!important}
-.c-window.mt-loot .content .mt-lslot{background:radial-gradient(circle at 50% 40%, ${t.bg1}, ${t.bg0} 75%)!important;border-radius:4px!important;box-shadow:inset 0 0 0 1px ${t.m[2]}, inset 0 2px 6px rgba(0,0,0,.7), 0 1px 0 ${t.m[0]}14!important}
+.c-window.mt-loot .content .mt-lslot:not(.mp-lg-glow){background:radial-gradient(circle at 50% 40%, ${t.bg1}, ${t.bg0} 75%)!important;border-radius:4px!important;box-shadow:inset 0 0 0 1px ${t.m[2]}, inset 0 2px 6px rgba(0,0,0,.7), 0 1px 0 ${t.m[0]}14!important}
 .c-window.mt-loot .content .mt-lcard *:not(.button):not(.button *):not(.item *){color:${t.text}}
 
 /* — zakładki — */
