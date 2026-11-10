@@ -53,11 +53,11 @@
   /* ── grafiki ramek (SVG) — wymiary cięcia jak w grze ── */
   const strip = (t) => `<linearGradient id='a' x1='0' x2='1'><stop offset='0' stop-color='${t.a1}' stop-opacity='0'/><stop offset='.2' stop-color='${t.a1}'/><stop offset='.55' stop-color='${t.a3 || t.a2}'/><stop offset='.85' stop-color='${t.a2}'/><stop offset='1' stop-color='${t.a2}' stop-opacity='0'/></linearGradient><filter id='g' x='-10%' y='-200%' width='120%' height='500%'><feGaussianBlur stdDeviation='2.2'/></filter>`;
   // okno: pas górny/dolny 32 px, boczne 20 px (gui/window-frame.png 32 20 fill)
-  const winFrame = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><defs>${strip(t)}<linearGradient id='h' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg1}'/></linearGradient></defs><rect x='0' y='0' width='200' height='200' rx='6' fill='${t.bg1}'/><rect x='0' y='0' width='200' height='32' rx='6' fill='url(#h)'/><rect x='.75' y='.75' width='198.5' height='198.5' rx='5.5' fill='none' stroke='${t.line}' stroke-width='1.5'/><rect x='19.5' y='31.5' width='161' height='137' fill='none' stroke='${t.line2}'/><line x1='8' y1='1.6' x2='192' y2='1.6' stroke='url(#a)' stroke-width='3' filter='url(#g)' opacity='.9'/><line x1='14' y1='1.2' x2='186' y2='1.2' stroke='url(#a)' stroke-width='1.2'/><line x1='40' y1='198.6' x2='160' y2='198.6' stroke='url(#a)' stroke-width='1' opacity='.45'/></svg>`);
+  const winFrame = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><defs>${strip(t)}<linearGradient id='h' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg1}'/></linearGradient></defs><rect x='0' y='0' width='200' height='200' rx='6' fill='${t.bg1}'/><rect x='0' y='0' width='200' height='32' rx='6' fill='url(#h)'/><rect x='.75' y='.75' width='198.5' height='198.5' rx='5.5' fill='none' stroke='${t.line}' stroke-width='1.5'/><line x1='8' y1='1.6' x2='192' y2='1.6' stroke='url(#a)' stroke-width='3' filter='url(#g)' opacity='.9'/><line x1='14' y1='1.2' x2='186' y2='1.2' stroke='url(#a)' stroke-width='1.2'/><line x1='40' y1='198.6' x2='160' y2='198.6' stroke='url(#a)' stroke-width='1' opacity='.45'/></svg>`);
   // powierzchnia panelu: boczne pasy 11 px (gui/middle_graphics.png 0 11 fill)
-  const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='60' height='60' fill='${raised ? t.bg2 : t.bg1}'/><rect x='0' y='0' width='11' height='60' fill='${t.bg0}' opacity='.55'/><rect x='49' y='0' width='11' height='60' fill='${t.bg0}' opacity='.55'/><line x1='10.5' y1='0' x2='10.5' y2='60' stroke='${t.line2}'/><line x1='49.5' y1='0' x2='49.5' y2='60' stroke='${t.line2}'/></svg>`);
+  const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='60' height='60' fill='${raised ? t.bg2 : t.bg1}'/></svg>`);
   // pasek / nagłówek tabeli: boczne pasy 20 px (quest_bar.png, table_header.png 0 20 fill)
-  const bar = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40'><defs>${strip(t)}<linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect width='80' height='40' fill='url(#b)'/><line x1='0' y1='.5' x2='80' y2='.5' stroke='${t.line}'/><line x1='0' y1='.9' x2='80' y2='.9' stroke='url(#a)' opacity='.55'/><line x1='0' y1='39.5' x2='80' y2='39.5' stroke='${t.bg0}'/></svg>`);
+  const bar = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40'><defs>${strip(t)}<linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect width='80' height='40' fill='url(#b)'/></svg>`);
   // karta/etykieta: pas 5 px (width-card-button.png 5 fill)
   const card = (t, active) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><defs><linearGradient id='c' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${active ? t.bg2 : t.bg1}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs><rect x='.5' y='.5' width='39' height='39' rx='3' fill='url(#c)' stroke='${active ? t.a1 : t.line}' stroke-opacity='${active ? '.75' : '1'}'/></svg>`);
 
@@ -81,25 +81,22 @@
 :root{--mt-bg0:${t.bg0};--mt-bg1:${t.bg1};--mt-bg2:${t.bg2};--mt-line:${t.line};--mt-a1:${t.a1};--mt-a2:${t.a2};--mt-text:${t.text};--mt-text2:${t.text2}}
 
 /* — krój pisma (te same wielkości co w grze) — */
-.game-window-positioner, .game-window-positioner .c-window, .tip-wrapper, .popup-menu-layer{font-family:${body}!important}
+/* tylko okna, dymki, menu, czat i prawa kolumna — pasek dolny (HP, doświadczenie, czas) zostaje z czcionką gry */
+.c-window:not(.transparent), .tip-wrapper, .popup-menu-layer, .new-chat-window, ${IL} .right-column.main-column{font-family:${body}!important}
 .c-window .header-label .text, .c-window .header-label{font-family:${t.head}!important}
 
 /* — ramy ekranu: kolumny, górny i dolny pasek — */
 ${IL} .left-column.main-column, ${IL} .left-column.main-column .new-chat-window, ${IL} .left-column.main-column .chat-input-wrapper{background-color:${t.bg1}!important}
 ${IL} .right-column.main-column{background:${grain}, radial-gradient(ellipse at 50% 0%, ${t.edge}, transparent 45%), linear-gradient(${t.bg1},${t.bg0})!important}
-${IL} .right-column.main-column > .border{background:linear-gradient(90deg,${t.bg0},${t.bg2})!important;box-shadow:inset -1px 0 0 ${t.line}!important}
+${IL} .right-column.main-column > .border{background:linear-gradient(90deg,${t.bg0},${t.bg1})!important}
 ${IL} .top.positioner > .bg, ${IL} .bottom.positioner > .bg{filter:${t.tint}}
-${IL} .top.positioner > .bg{box-shadow:0 1px 0 ${t.line},0 4px 14px ${t.edge}}
-${IL} .bottom.positioner > .bg{box-shadow:0 -1px 0 ${t.line},0 -4px 14px ${t.edge}}
 ${IL} .bottom-panel-graphic, ${IL} .hud-container, ${IL} .additional-skill-panel{background-color:${t.blend}!important;background-blend-mode:luminosity!important}
-${IL} .right-column.main-column{box-shadow:inset 1px 0 0 ${t.line},-6px 0 18px ${t.edge}!important}
-${IL} .left-column.main-column{box-shadow:inset -1px 0 0 ${t.line},6px 0 18px ${t.edge}!important}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:2147480000;box-shadow:inset 0 0 0 1px ${t.line},inset 0 0 38px ${t.edge}}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:2147480000;box-shadow:inset 0 0 38px ${t.edge}}
 
 /* — sloty przedmiotów i siatka torby: ten sam rysunek, nowa barwa — */
 .interface-element-item-slot-grid-stretch, .interface-element-one-item-slot-background-to-repeat{background-color:${t.blend}!important;background-blend-mode:luminosity!important}
 .interface-element-one-black-tile{background:linear-gradient(${t.bg2},${t.bg0})!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
-.interface-element-grid-border, .interface-element-background-color-3{background-color:${t.bg1}!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
+.interface-element-grid-border, .interface-element-background-color-3{background-color:${t.bg1}!important}
 
 /* — okna — */
 .c-window:not(.transparent).border-window{border-image-source:${winFrame(t)}!important}
