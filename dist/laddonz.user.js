@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.1.6
+// @version      3.1.7
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -5198,7 +5198,7 @@ MP.itemDeco = itemDeco;
   const THEMES = {
     domyslny: { name: 'Domyślny', desc: 'Klasyczny interfejs gry, bez zmian.', none: true },
     dark: {
-      m: ['#eef1f5', '#9aa3b0', '#3b414b'], orn: 'rivet', name: 'Dark Theme', desc: 'Grafit i czerń, chłodna stal, spokojne światło.',
+      m: ['#eef1f5', '#9aa3b0', '#3b414b'], orn: 'rivet', xp: ['#c97a22', '#f0a648'], name: 'Dark Theme', desc: 'Grafit i czerń, chłodna stal, spokojne światło.',
       bg0: '#0a0b0d', bg1: '#121317', bg2: '#1a1c21', line: '#30343c', line2: '#21242a', a1: '#cfd5df', a2: '#7f8897', text: '#e6e8ec', text2: '#9ba1ab',
       glow: 'rgba(200,212,232,.10)', edge: 'rgba(160,175,200,.10)', tint: 'grayscale(1) brightness(.55) contrast(1.1)', blend: '#1b1c1f',
       btn: ['#2b2e35', '#1b1d22'], btnLine: '#3d424c', btnText: '#f1f3f6', head: '"Roboto", Arial, sans-serif', fonts: ['Roboto:wght@400;500;700'],
@@ -5305,7 +5305,7 @@ ${emblem(t, 20, 49, 3.2)}${emblem(t, 322, 49, 3.2)}
   /*
    * Faktury tła — odpowiednik drewna z klasycznego interfejsu, inna dla każdego stylu:
    *   Dark Theme — szczotkowana stal, Zorza — nocne niebo z pasmami zorzy i gwiazdami,
-   *   Neon — siatka z neonową poświatą, Obsydian — łupane szkło wulkaniczne z żyłkami żaru,
+   *   Neon — siatka z neonową poświatą, Obsydian — łupane szkło wulkaniczne,
    *   Głębia — refleksy światła pod wodą (kaustyka) i pęcherzyki.
    * Kafelki SVG bez szwów (stitchTiles / wzór okresowy), pamiętane per styl.
    */
@@ -5337,7 +5337,7 @@ ${emblem(t, 20, 49, 3.2)}${emblem(t, 322, 49, 3.2)}
 ${[[32, 64], [128, 160], [160, 32], [64, 128]].map(([x, y]) => `<circle cx='${x}' cy='${y}' r='1.3' fill='${t.a2}' opacity='.35'/><circle cx='${x}' cy='${y}' r='4' fill='${t.a2}' opacity='.08'/>`).join('')}
 <path d='M0 192 L192 0' stroke='${t.a1}' stroke-width='14' opacity='.025' filter='url(#gl)'/>`;
     } else if (t.orn === 'ember') {
-      // łupane szkło: trójkątne ścianki z delikatnym połyskiem + cienkie żyłki żaru
+      // łupane szkło: trójkątne ścianki z delikatnym połyskiem
       w = 384; h = 384;
       const pts = [];
       const n = 6;
@@ -5357,13 +5357,7 @@ ${[[32, 64], [128, 160], [160, 32], [64, 128]].map(([x, y]) => `<circle cx='${x}
           facets += `<path d='M${tri.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L')}Z' fill='${l > 0.5 ? '#fff' : '#000'}' fill-opacity='${(l > 0.5 ? (l - 0.5) * 0.05 : (0.5 - l) * 0.26).toFixed(3)}' stroke='#fff' stroke-opacity='.045' stroke-width='.6'/>`;
         }
       }
-      let cracks = '';
-      for (let k = 0; k < 2; k++) {
-        let x = 40 + r() * (w - 200), y = 40 + r() * (h - 80), d = `M${x.toFixed(1)} ${y.toFixed(1)}`, ang = (r() - 0.5) * 0.8;
-        for (let s = 0; s < 9; s++) { ang += (r() - 0.5) * 1.1; x += Math.cos(ang) * 16; y += Math.sin(ang) * 16; d += ` L${x.toFixed(1)} ${y.toFixed(1)}`; }
-        cracks += `<path d='${d}' fill='none' stroke='${t.a1}' stroke-width='.7' stroke-linecap='round' opacity='.35'/>`;
-      }
-      body = `<filter id='e' x='-20%' y='-20%' width='140%' height='140%'><feGaussianBlur stdDeviation='2.2'/></filter>${facets}<g filter='url(#e)'>${cracks}</g>${cracks.replace(/opacity='\.35'/g, "opacity='.22'")}`;
+      body = facets;
     } else if (t.orn === 'drop') {
       let bub = '';
       for (let i = 0; i < 9; i++) { const x = (r() * w).toFixed(1), y = (r() * h).toFixed(1), s = (r() * 2 + 0.8).toFixed(2); bub += `<circle cx='${x}' cy='${y}' r='${s}' fill='none' stroke='${t.m[0]}' stroke-width='.5' opacity='.22'/>`; }
@@ -5385,7 +5379,8 @@ ${[[32, 64], [128, 160], [160, 32], [64, 128]].map(([x, y]) => `<circle cx='${x}
     return `grayscale(1) sepia(1) hue-rotate(${Math.round(hue - 38)}deg) saturate(${(1 + s * 1.6).toFixed(2)}) brightness(${((hud ? 0.68 : 0.85) + l * (hud ? 0.3 : 0.45)).toFixed(2)})`;
   };
   // powierzchnia panelu: boczne pasy 11 px (gui/middle_graphics.png 0 11 fill)
-  const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' preserveAspectRatio='none'><defs><linearGradient id='s' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.m[0]}' stop-opacity='${raised ? '.015' : '.04'}'/><stop offset='.4' stop-color='${t.bg0}' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.35'/></linearGradient></defs><rect width='60' height='60' fill='url(#s)'/></svg>`);
+  // panel w oknie: jednolite tło (kolor elementu) + krawędzie po bokach w miejscu ramek z drewna (cięcie 0 11)
+  const surface = (t, raised) => { const side = (x, dir) => `<rect x='${x}' width='11' height='60' fill='${raised ? t.bg1 : t.bg0}'/><rect x='${dir > 0 ? x + 9 : x + 1}' width='1' height='60' fill='${t.m[1]}' opacity='.35'/><rect x='${dir > 0 ? x + 10 : x}' width='1' height='60' fill='${t.m[2]}'/>`; return svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' preserveAspectRatio='none'>${side(0, 1)}${side(49, -1)}</svg>`); };
   // pasek / nagłówek tabeli: boczne pasy 20 px (quest_bar.png, table_header.png 0 20 fill)
   // metalowa płyta (nagłówki tabel, paski na dole okien — zamiast drewna): jednolita w poziomie, więc pasuje do każdego cięcia
   const plate = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='40' preserveAspectRatio='none'><defs><linearGradient id='p' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='.5' stop-color='${t.bg1}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient><linearGradient id='h' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.m[0]}' stop-opacity='.26'/><stop offset='.5' stop-color='${t.m[1]}' stop-opacity='.1'/><stop offset='1' stop-color='${t.m[2]}' stop-opacity='.2'/></linearGradient></defs><rect width='80' height='40' fill='url(#p)'/><rect width='80' height='40' fill='url(#h)'/><rect width='80' height='1' fill='${t.m[1]}' opacity='.55'/><rect y='39' width='80' height='1' fill='${t.m[2]}'/></svg>`);
@@ -5432,7 +5427,7 @@ ${IL} .bottom.positioner > .bg{background:${railH(t, false)} 0 0 / 96px 5px repe
 /* metal wokół kuli HP, ramki pasków doświadczenia i wskaźników — ten sam rysunek, barwa metalu stylu */
 .bottom-panel .bottom-panel-graphic, .bottom-panel .hp-indicator-wrapper > .glass, .bottom-panel .exp-progress > .overlay, .bottom-panel .pointer-exp-graphic, .bottom-panel .pointer-ttl-graphic{filter:${metalFilter(t)}!important}
 .mt-hud-bg{filter:${metalFilter(t, true)}!important}
-.bottom-panel .exp-progress .progress > .inner{background:linear-gradient(#0b0b0d 0%, ${t.a2} 22%, ${t.a1} 50%, ${t.a2} 70%, #0b0b0d 100%)!important}
+.bottom-panel .exp-progress .progress > .inner{background:linear-gradient(#0b0b0d 0%, ${(t.xp || [t.a2, t.a1])[0]} 22%, ${(t.xp || [t.a2, t.a1])[1]} 50%, ${(t.xp || [t.a2, t.a1])[0]} 70%, #0b0b0d 100%)!important}
 .skill-usable-slot[class*="interface-element-one-item-slot"]{background-color:${t.bg0}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 0 6px rgba(0,0,0,.6)!important}
 /* ozdoby wokół HP, panel szybkich umiejętności i HUD na górze — grafiki gry bez zmian (żadnych prostokątów wokół) */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:2147480000;box-shadow:inset 0 0 38px ${t.edge}}
@@ -5462,13 +5457,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window[class*="loot"], .c-window.window-on-peak{box-shadow:0 12px 30px rgba(0,0,0,.6),0 0 0 1px ${t.a1}55,0 0 34px ${t.glow}!important}
 
 /* — powierzchnie interfejsu (border-image) — */
-[class*="interface-element-middle-"]{border-image-source:${surface(t, false)}!important;background:${TX}, ${t.bg1}!important}
-[class*="interface-element-middle-2"], [class*="interface-element-middle-3"]{border-image-source:${surface(t, true)}!important;background:${TX}, ${t.bg0}!important;box-shadow:inset 0 0 0 1px ${t.line2}!important}
+[class*="interface-element-middle-"]{border-image-source:${surface(t, false)}!important;background:${t.bg1}!important}
+[class*="interface-element-middle-2"], [class*="interface-element-middle-3"]{border-image-source:${surface(t, true)}!important;background:${t.bg0}!important;box-shadow:none!important}
 .interface-element-bottom-bar-background-stretch, [class*="interface-element-header-1"]{border-image-source:${bar(t)}!important}
 [class*="interface-element-header-3"], .opt-header{background:linear-gradient(${t.bg2},${t.bg1})!important;color:${t.text}!important;box-shadow:inset 0 -1px 0 ${t.line}!important}
 .interface-element-active-card-background-stretch, .interface-element-active-card-border-image{border-image-source:${card(t, true)}!important}
 .interface-element-green-box-background{background:radial-gradient(ellipse 80% 70% at 50% 0, ${t.glow}, transparent 75%), linear-gradient(${t.bg2},${t.bg0})!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 1px 0 ${t.m[0]}26!important}
-.c-window:not(.transparent) > .content{background:radial-gradient(ellipse 70% 140px at 50% 0, ${t.glow}, transparent 70%), ${TX}, linear-gradient(${t.bg2}, ${t.bg1} 140px)!important;background-color:${t.bg1}!important}
+.c-window:not(.transparent) > .content{background:radial-gradient(ellipse 70% 140px at 50% 0, ${t.glow}, transparent 70%), linear-gradient(${t.bg2}, ${t.bg1} 140px)!important;background-color:${t.bg1}!important}
 
 /* — drewniane nagłówki tabel i belki gry → metalowa płyta w kolorach stylu — */
 .mt-plate{background-image:${plate(t)}!important;background-size:100% 100%!important;background-position:0 0!important;background-repeat:no-repeat!important;background-color:${t.bg1}!important;color:${t.text}!important;text-shadow:0 1px 1px #000!important}
@@ -5485,8 +5480,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window .hover-header:hover{filter:brightness(1.2)}
 /* wiersze tabel: delikatne pasy na zmianę i cienkie linie zamiast jednolitej szarości */
 .c-window table.table-content tr, .c-window table.table-content tr.mt-bov{background-color:transparent!important}
-.c-window table.table-content tr:nth-child(even){background-color:${t.m[0]}08!important}
-.c-window table.table-content tr:hover{background-color:${t.a1}12!important}
+.c-window table.table-content tr:nth-child(even):has(> td:not(:empty)){background-color:${t.m[0]}08!important}
+.c-window table.table-content tr:hover:has(> td:not(:empty)){background-color:${t.a1}12!important}
 .c-window table.table-content td, .c-window table.table-content td.mt-bd{border-color:${t.line2}!important}
 
 /* — zakładki — */
@@ -5835,5 +5830,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.1.6";
+MP.version = "3.1.7";
 })();
