@@ -361,15 +361,16 @@
       if (i >= 0) { slots().splice(i, 1); config.save(); toast(`Ulepszarka: „${o.target.name}" jest już maksymalnie ulepszony — usunięto z listy`, 'ok'); rr(); }
     }
   };
-  async function run(src) {
+  async function run(src, limit = 0) {
     if (running) return;
     if (game.inBattle()) { toast('Ulepszarka: najpierw skończ walkę', 'warn'); return; }
     dropMaxed();
     if (!slots().length) { toast('Ulepszarka: najpierw wskaż przedmiot do ulepszania', 'warn'); return; }
     const c = net.cmd('enhance');
     if (!c.t || !c.verified) { toast('Ulepszarka: ulepsz raz ręcznie w oknie rzemiosła — wtedy się nauczy', 'warn'); return; }
-    const p = plan();
+    let p = plan();
     if (!p.length) { toast('Ulepszarka: brak pasujących przedmiotów', 'info'); return; }
+    if (limit) { p = p.slice(0, 1); p[0].list = p[0].list.slice(0, limit); }   // próba: tylko jeden składnik
     const cs = craftState();
     if (!cs) { toast('Ulepszarka: otwórz okno Rzemiosło → zakładka Ulepszanie (bez tego gra wyrzuca)', 'warn'); return; }
     if (cs === 'other') { toast('Ulepszarka: przełącz okno Rzemiosło na zakładkę Ulepszanie', 'warn'); return; }
@@ -657,6 +658,7 @@
       }
       box.appendChild(el('div', { class: 'mp-btns' },
         slots().length ? el('button', { class: 'mp-btn pri', onclick: () => run() }, cfg.key ? `Ulepsz teraz (${cfg.key})` : 'Ulepsz teraz') : null,
+        slots().length ? el('button', { class: 'mp-btn', title: 'Ulepsza tylko jednym składnikiem — do bezpiecznego sprawdzenia, czy działa', onclick: () => run('test', 1) }, 'Próba: 1 składnik') : null,
         el('button', { class: 'mp-btn', title: 'Gdy ulepszanie nie działa — skopiuj i wklej w rozmowie', onclick: report }, 'Kopiuj raport'),
         (config.data.commands || {}).enhance ? el('button', { class: 'mp-btn', title: 'Wróć do wbudowanej komendy ulepszania', onclick: () => { net.resetCmd('enhance'); rr(); } }, 'Przywróć domyślne') : null));
     },
@@ -678,7 +680,7 @@
       try { const own = (config.data.commands || {}).enhance; if (own && /answer\d+=/.test(own.t || '')) net.resetCmd('enhance'); } catch {}
       setInterval(() => { if (cfg.enabled && !running) dropMaxed(); }, 5000);
       setInterval(freeWatch, 1500);
-      MP.ulepszarka = { addTarget, plan, run, typeOf, closeCraft, report, dropMaxed, enhLevel };
+      MP.ulepszarka = { addTarget, plan, run, craftState, typeOf, closeCraft, report, dropMaxed, enhLevel };
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
         const it = game.itemById(id);
