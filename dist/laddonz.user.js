@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.4.10
+// @version      3.4.11
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1176,6 +1176,9 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-fake-f .button{padding:0 12px;height:24px;line-height:24px}
 .mp-lg-glow{--lgg:#ff4a2a;animation:mpLgGlow 1.4s ease-in-out infinite!important;border-radius:3px}
 @keyframes mpLgGlow{0%,100%{box-shadow:0 0 5px 1px color-mix(in srgb,var(--lgg) 75%,transparent),inset 0 0 8px color-mix(in srgb,var(--lgg) 55%,transparent)}50%{box-shadow:0 0 11px 3px var(--lgg),inset 0 0 14px color-mix(in srgb,var(--lgg) 85%,transparent)}}
+.mp-lg-hl.mp-lg-winring{inset:2px;border-radius:8px;z-index:60}
+.mp-lg-hl.mp-lg-winring::before{padding:3px}
+.mp-lg-hl.mp-lg-winring::after{display:none}
 .mp-lg-fbolt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
 .item.mp-lg-fx-fade > :is(canvas.icon,.canvas-icon,img){animation:mpLgFade 3s ease-in-out infinite}
 @keyframes mpLgFade{0%,100%{opacity:1;filter:drop-shadow(0 0 4px #ff2a1a)}45%,55%{opacity:.12;filter:blur(2px) drop-shadow(0 0 8px #000)}}
@@ -6662,9 +6665,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     slot.classList.add('mp-lg-glow'); slot.style.setProperty('--lgg', spec.glow);
     // całe okno łupów świeci kolorem pola z legendą (dopóki okno jest otwarte)
     const w = it.closest('.c-window');
-    if (w) {
-      w.classList.remove('mp-lg-win', 'r-thor', 'r-smoke', 'r-kasyno', 'r-disco', 'r-wlasny');
-      w.classList.add('mp-lg-win', 'r-' + spec.ring); w.style.setProperty('--lgc', spec.glow);
+    if (w && !w.closest('.mp-glass')) {
+      // ta sama obwódka co na polu z legendą, tylko na całym oknie
+      let wr = w.querySelector(':scope > .mp-lg-winring');
+      if (!wr) { if (getComputedStyle(w).position === 'static') w.style.position = 'relative'; wr = el('div'); w.appendChild(wr); }
+      wr.className = hlClass(spec) + ' mp-lg-winring';
+      wr.style.setProperty('--lgc', spec.glow);
     }
     // efekt na samym przedmiocie
     FX_CLASSES.forEach((c) => it.classList.remove(c));
@@ -7698,5 +7704,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.4.10";
+MP.version = "3.4.11";
 })();

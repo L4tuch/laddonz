@@ -687,9 +687,12 @@
     slot.classList.add('mp-lg-glow'); slot.style.setProperty('--lgg', spec.glow);
     // całe okno łupów świeci kolorem pola z legendą (dopóki okno jest otwarte)
     const w = it.closest('.c-window');
-    if (w) {
-      w.classList.remove('mp-lg-win', 'r-thor', 'r-smoke', 'r-kasyno', 'r-disco', 'r-wlasny');
-      w.classList.add('mp-lg-win', 'r-' + spec.ring); w.style.setProperty('--lgc', spec.glow);
+    if (w && !w.closest('.mp-glass')) {
+      // ta sama obwódka co na polu z legendą, tylko na całym oknie
+      let wr = w.querySelector(':scope > .mp-lg-winring');
+      if (!wr) { if (getComputedStyle(w).position === 'static') w.style.position = 'relative'; wr = el('div'); w.appendChild(wr); }
+      wr.className = hlClass(spec) + ' mp-lg-winring';
+      wr.style.setProperty('--lgc', spec.glow);
     }
     // efekt na samym przedmiocie
     FX_CLASSES.forEach((c) => it.classList.remove(c));
