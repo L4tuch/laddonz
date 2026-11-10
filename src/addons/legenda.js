@@ -322,7 +322,7 @@
       } };
     },
     shade(E) {
-      return { back(x, t) { x.fillStyle = `rgba(0,0,0,${0.35 * E.fade(t)})`; x.fillRect(0, 0, E.W, E.H); } };
+      return { back(x, t) { x.fillStyle = `rgba(0,0,0,${(E.dim ?? 0.35) * E.fade(t)})`; x.fillRect(0, 0, E.W, E.H); } };
     },
     bolts(E) {
       const { r } = E;
@@ -373,7 +373,7 @@
       } };
       return { back(x, t, dt) {
         if (t < 0.05 && !P.length) spawn(70, true);
-        if (t < E.dur - 3) { acc += dt * 38; const n = Math.floor(acc); acc -= n; spawn(n, false); }
+        if (t < E.dur - 3) { acc += dt * 38 * E.k; const n = Math.floor(acc); acc -= n; spawn(n, false); }
         for (let i = P.length - 1; i >= 0; i--) {
           const p = P[i]; p.age += dt; if (p.age > p.life) { P.splice(i, 1); continue; }
           const k = p.age / p.life;
@@ -412,7 +412,7 @@
       const add = (o) => C.push(Object.assign({ ph: R(0, 6.3), vph: R(7, 15), tilt: R(-0.5, 0.5), sz: R(11, 18), b: 0, dead: 0 }, o));
       return { front(x, t, dt) {
         while (fi < fq.length && t >= fq[fi]) { fi++; const cx = r.left + r.width / 2; for (let i = 0; i < 70; i++) add({ x: cx + R(-20, 20), y: r.top + 8, vx: R(-420, 420), vy: R(-1050, -520), g: 1500 }); }
-        if (t < E.dur - 3) { acc += dt * (t < 3.2 ? 64 : 26); const n = Math.floor(acc); acc -= n; for (let i = 0; i < n; i++) add({ x: R(0, E.W), y: R(-60, -20), vx: R(-40, 40), vy: R(180, 380), g: 700 }); }
+        if (t < E.dur - 3) { acc += dt * (t < 3.2 ? 64 : 26) * E.k; const n = Math.floor(acc); acc -= n; for (let i = 0; i < n; i++) add({ x: R(0, E.W), y: R(-60, -20), vx: R(-40, 40), vy: R(180, 380), g: 700 }); }
         for (let i = C.length - 1; i >= 0; i--) {
           const c = C[i];
           c.vy += c.g * dt; c.x += c.vx * dt; c.y += c.vy * dt; c.ph += c.vph * dt;
@@ -500,7 +500,7 @@
       const N = []; let acc = 0;
       const hues = E.custom ? [null] : [320, 190, 55, 280, 140];
       return { front(x, t, dt) {
-        if (t < E.dur - 1.2) { acc += dt * 4.2; while (acc >= 1) { acc--; const fromLeft = Math.random() < 0.5; N.push({ x: fromLeft ? -40 : E.W + 40, y: R(E.H * 0.08, E.H * 0.92), vx: (fromLeft ? 1 : -1) * R(520, 900), vy: R(-120, 120), w: R(0, 6), f: R(2, 5), h: hues[Math.floor(Math.random() * hues.length)], tr: [] }); } }
+        if (t < E.dur - 1.2) { acc += dt * 4.2 * E.k; while (acc >= 1) { acc--; const fromLeft = Math.random() < 0.5; N.push({ x: fromLeft ? -40 : E.W + 40, y: R(E.H * 0.08, E.H * 0.92), vx: (fromLeft ? 1 : -1) * R(520, 900), vy: R(-120, 120), w: R(0, 6), f: R(2, 5), h: hues[Math.floor(Math.random() * hues.length)], tr: [] }); } }
         x.save(); x.globalCompositeOperation = 'lighter'; x.lineCap = 'round'; x.lineJoin = 'round';
         for (let i = N.length - 1; i >= 0; i--) {
           const n = N[i]; n.w += dt * n.f; n.x += n.vx * dt; n.y += (n.vy + Math.sin(n.w * 3) * 160) * dt;
@@ -532,7 +532,7 @@
       return { front(x, t) {
         const p = Math.min(1, Math.max(0, (t - 0.25) / 0.55)); if (p <= 0) return;
         const a = E.fade(t) * Math.min(1, p * 1.6), sc = 0.6 + 0.4 * ease.back(p);
-        const big = st === 'kasyno' ? 'JACKPOT!' : 'LEGENDA!';
+        const big = st === 'kasyno' ? 'JACKPOT!' : st === 'wlasny' ? (String((cfg.custom && cfg.custom.text) || 'LEGENDA!').slice(0, 24)) : 'LEGENDA!';
         x.save(); x.translate(cx, top); x.scale(sc, sc); x.globalAlpha = a; x.textAlign = 'center'; x.textBaseline = 'middle';
         if (st === 'thor') {
           x.font = '900 46px Cinzel, Georgia, serif';
@@ -558,7 +558,8 @@
           x.shadowColor = `hsl(${hue},100%,60%)`; x.shadowBlur = on ? 28 : 4; x.fillStyle = on ? `hsl(${hue},100%,78%)` : `hsl(${hue},40%,30%)`; x.fillText(big, 0, 0);
           x.shadowBlur = 0; x.lineWidth = 1; x.strokeStyle = 'rgba(0,229,255,.8)'; x.strokeText(big, 0, 0);
         } else {
-          x.font = '900 44px Cinzel, Georgia, serif';
+          const fnt = (cfg.custom && cfg.custom.font) || 'Cinzel';
+          x.font = fnt === 'Bungee' ? '44px Bungee, Impact, sans-serif' : fnt === 'Monoton' ? '42px Monoton, Impact, sans-serif' : '900 44px Cinzel, Georgia, serif';
           x.shadowColor = E.col; x.shadowBlur = 24; x.fillStyle = '#fff'; x.fillText(big, 0, 0); x.shadowBlur = 0; x.lineWidth = 1.4; x.strokeStyle = E.col; x.strokeText(big, 0, 0);
         }
         if (E.name) {
@@ -611,7 +612,26 @@
   function lootWindow() { const ws = lootWindows(); return ws[ws.length - 1] || null; }
 
   /* ── podświetlenie legendarnych przedmiotów w oknie łupu (zostaje, dopóki okno jest otwarte) ── */
-  function hlClass() { return 'mp-lg-hl ' + (STYLES[cfg.style] ? cfg.style : 'thor') + ' m-' + (cfg.hlMode || 'ring'); }
+  /*
+   * Wygląd pola z legendą w oknie łupów (zostaje, dopóki okno jest otwarte; nic nie blokuje najechania na przedmiot):
+   *   Thor   — obwódka-błyskawica + pioruny uderzające w legendę
+   *   Smoke  — czarno-czerwona obwódka + legenda pojawia się i znika jak w dymie
+   *   Kasyno — złota obwódka + (w trakcie efektu) legenda wyskakuje z pola i kręci się jak moneta
+   *   Disco  — neonowa obwódka + legenda świeci zmieniającym się kolorem
+   *   Własny — obwódka i efekt przedmiotu do wyboru
+   */
+  const FIELD = {
+    thor: { ring: 'thor', item: 'bolts', glow: '#7fc0ff' },
+    smoke: { ring: 'smoke', item: 'fade', glow: '#ff2a1a' },
+    kasyno: { ring: 'kasyno', item: 'pop', glow: '#ffc83a' },
+    disco: { ring: 'disco', item: 'hue', glow: '#ff4fd8' },
+  };
+  function fieldSpec() {
+    if (cfg.style !== 'wlasny') return FIELD[cfg.style] || FIELD.thor;
+    const cc = cfg.custom || {};
+    return { ring: cc.ring || 'wlasny', item: cc.itemFx || 'glow', glow: cc.color || '#ff9a1f' };
+  }
+  function hlClass(spec) { return 'mp-lg-hl ' + spec.ring + ' m-' + (cfg.hlMode || 'ring'); }
   /** „Okienko" przedmiotu w oknie łupu: największy przodek kafelka, który zawiera tylko ten jeden przedmiot. */
   function cardOf(it) {
     let n = it;
@@ -624,30 +644,64 @@
     }
     return n;
   }
+  const FX_CLASSES = ['mp-lg-fx-fade', 'mp-lg-fx-hue', 'mp-lg-fx-glow', 'mp-lg-fx-pop', 'mp-lg-fx-bolts'];
   function markItem(it) {
     if (!it) return;
-    if ((cfg.hlMode || 'ring') === 'none') return;
+    const spec = fieldSpec();
     const card = cardOf(it);
+    const slot = it.parentElement && it.parentElement !== card ? it.parentElement : it;
+    // blask pola w kolorze stylu
+    slot.classList.add('mp-lg-glow'); slot.style.setProperty('--lgg', spec.glow);
+    // efekt na samym przedmiocie
+    FX_CLASSES.forEach((c) => it.classList.remove(c));
+    it.classList.add('mp-lg-fx-' + spec.item); it.style.setProperty('--lgg', spec.glow);
+    if ((cfg.hlMode || 'ring') === 'none') return;
     let h = card.querySelector(':scope > .mp-lg-hl');
     if (!h) {
       if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
       h = el('div'); card.appendChild(h);
     }
-    // sam przedmiot-legenda świeci jak w grze (czerwono-pomarańczowy blask), niezależnie od stylu
-    const glow = it.parentElement && it.parentElement !== card ? it.parentElement : it;
-    glow.classList.add('mp-lg-glow');
     const was = h.className;
-    h.className = hlClass();
-    // Smoke: wyróżnienie wyłania się powoli, jak z dymu
-    if (cfg.style === 'smoke' && !/\bsmoke\b/.test(was)) try { h.animate([{ opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)' }], { duration: 3500, easing: 'ease-out' }); } catch {}
-    h.style.setProperty('--lgc', cfg.style === 'wlasny' ? ((cfg.custom && cfg.custom.color) || '#ff9a1f') : STYLES[cfg.style] ? STYLES[cfg.style].col : '#8fc4ff');
+    h.className = hlClass(spec);
+    h.style.setProperty('--lgc', spec.glow);
+    if (spec.ring === 'smoke' && !/\bsmoke\b/.test(was)) try { h.animate([{ opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)' }], { duration: 3500, easing: 'ease-out' }); } catch {}
+    if (spec.item === 'bolts') fieldBolts(h, slot); else { const c = h.querySelector('canvas'); if (c) c.remove(); }
   }
-  function markWindow(win, test) {
+  /** Małe pioruny bijące w legendę — płótno wewnątrz pola, działa, dopóki pole istnieje. */
+  function fieldBolts(h, slot) {
+    if (h.querySelector('canvas')) return;
+    const cv = el('canvas', { class: 'mp-lg-fbolt' }); h.appendChild(cv);
+    const x = cv.getContext('2d');
+    let next = 0, cur = null, t0 = performance.now();
+    const loop = (n) => {
+      if (!cv.isConnected) return;
+      const W = (cv.width = h.clientWidth || 60), H = (cv.height = h.clientHeight || 100);
+      const hr = h.getBoundingClientRect(), sr = slot.getBoundingClientRect();
+      const tx = sr.left - hr.left + sr.width / 2, ty = sr.top - hr.top + sr.height / 2;
+      const t = (n - t0) / 1000;
+      if (t > next) { cur = { at: t, b: bolt(R(0, W), -4, tx + R(-6, 6), ty + R(-6, 6), Math.max(10, H * 0.12), false), b2: Math.random() < 0.5 ? bolt(R(0, W), -4, tx, ty, H * 0.1, false) : null }; next = t + R(0.45, 1.3); }
+      x.clearRect(0, 0, W, H);
+      if (cur) {
+        const p = (t - cur.at) / 0.32;
+        if (p <= 1) {
+          const a = Math.pow(1 - p, 1.2) * (0.6 + 0.4 * Math.abs(Math.sin(p * 30)));
+          x.save(); x.globalCompositeOperation = 'lighter';
+          for (const b of [cur.b, cur.b2].filter(Boolean)) for (const { pts } of b) {
+            x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) x.lineTo(pts[i][0], pts[i][1]);
+            x.shadowColor = '#6fb2ff'; x.shadowBlur = 10; x.strokeStyle = `rgba(150,200,255,${0.8 * a})`; x.lineWidth = 2.4; x.stroke();
+            x.shadowBlur = 0; x.strokeStyle = `rgba(255,255,255,${a})`; x.lineWidth = 0.9; x.stroke();
+          }
+          const g = x.createRadialGradient(tx, ty, 0, tx, ty, 26); g.addColorStop(0, `rgba(200,230,255,${0.7 * a})`); g.addColorStop(1, 'rgba(200,230,255,0)');
+          x.fillStyle = g; x.fillRect(0, 0, W, H); x.restore();
+        }
+      }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+  function markWindow(win) {
     if (!win) return;
-    const items = $$('.item', win);
-    let any = false;
-    for (const it of items) if (it.dataset.mpLg) { markItem(it); any = true; }
-    if (!any && test && items[0]) markItem(items[0]);
+    for (const it of $$('.item', win)) if (it.dataset.mpLg) markItem(it);
   }
   function canvas(z, before) {
     const c = el('canvas', { class: 'mp-lg-cv', style: { position: 'fixed', left: '0', top: '0', width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: String(z) } });
@@ -660,6 +714,7 @@
     cancelAnimationFrame(run.raf); run.cvs.forEach((c) => c.remove()); if (run.fake) run.fake.remove();
     if (run.media) run.media.remove();
     (run.pops || []).forEach((b) => b.remove());
+    $$('.item[data-mp-lg]').forEach((x) => { if (x.style.opacity === '0') x.style.opacity = ''; });
     if (run.win) run.win.classList.remove('mp-lg-win', 'thor', 'smoke', 'kasyno', 'disco', 'wlasny');
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
     if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
@@ -703,7 +758,7 @@
     let pool = bag[r];
     if (!pool || !pool.length) pool = [].concat(bag.legendary, bag.heroic, bag.unique, bag.common);   // brak takiej rzadkości w torbie — dowolny przedmiot
     let it;
-    if (pool && pool.length) it = cloneItem(pool[Math.floor(Math.random() * pool.length)]);
+    if (pool && pool.length) { it = cloneItem(pool[Math.floor(Math.random() * pool.length)]); it.style.position = it.style.left = it.style.top = it.style.transform = ''; it.querySelectorAll('.amount, small, .cl-icon').forEach((n) => n.remove()); }
     else it = el('div', { class: 'item mp-lg-fake-item', style: { '--rc': RAR[r][1], width: '32px', height: '32px' } });
     it.title = RAR[r][0];
     if (r === 'legendary') it.dataset.mpLg = '1'; else delete it.dataset.mpLg;
@@ -725,7 +780,7 @@
       card.classList.remove('mt-lcard');
       const old = card.querySelector('.item');
       const it = testItem(r, bag);
-      if (old) { const keep = it.style.cssText; it.style.cssText = old.style.cssText + ';' + keep; old.replaceWith(it); }
+      if (old) { const sz = it.classList.contains('mp-lg-fake-item') ? ';width:32px;height:32px' : ''; it.style.cssText = old.style.cssText + sz; old.replaceWith(it); }
       holder.appendChild(card);
     }
     f.querySelectorAll('.mp-lg-hl').forEach((x) => x.remove());
@@ -771,13 +826,14 @@
       Object.assign(c.style, { position: 'absolute', left: '0', top: '0', margin: '0' });
       document.body.appendChild(box);
       (me.pops = me.pops || []).push(box);
+      it.style.opacity = '0';   // oryginał „wyskakuje" — na czas animacji niewidoczny (ale dalej można na niego najechać)
       const an = box.animate([
         { transform: 'translateY(0) scale(1) rotateY(0deg)', filter: 'drop-shadow(0 0 0 #ffd34d)' },
         { transform: 'translateY(-78px) scale(2) rotateY(540deg)', filter: 'drop-shadow(0 0 14px #ffd34d)', offset: 0.3 },
         { transform: 'translateY(-84px) scale(2) rotateY(1260deg)', filter: 'drop-shadow(0 0 20px #fff2a8)', offset: 0.72 },
         { transform: 'translateY(0) scale(1) rotateY(1800deg)', filter: 'drop-shadow(0 0 0 #ffd34d)' },
       ], { duration: 3400, easing: 'cubic-bezier(.3,.7,.4,1)' });
-      an.onfinish = () => box.remove();
+      an.onfinish = () => { box.remove(); it.style.opacity = ''; };
     }
   }
 
@@ -802,6 +858,8 @@
       W: innerWidth, H: innerHeight, r: { left: rect.left, top: rect.top, width: rect.width, height: rect.height, right: rect.left + rect.width, bottom: rect.top + rect.height },
       dur, col: custom ? (cc.color || '#7c5cff') : STYLES[st].col, name: '', layers, style: custom ? 'wlasny' : st, custom,
       fade: (t) => Math.min(1, t / 0.3) * Math.min(1, Math.max(0, (dur - t) / 0.9)),
+      k: custom ? Math.max(0.3, Math.min(2.5, (Number(cc.intensity) || 100) / 100)) : 1,
+      dim: custom ? Math.max(0, Math.min(0.85, (cc.dim ?? 35) / 100)) : 0.35,
     };
     const parts = layers.map((k) => L[k] && L[k](E)).filter(Boolean);   // „media" to element strony, nie warstwa płótna
     const bx = back.getContext('2d'), fx = front.getContext('2d');
@@ -810,11 +868,11 @@
     if (win) {
       win.style.setProperty('--lgc', E.col);
       const before = new Set($$('.mp-lg-hl', win));
-      markWindow(win, !!opts.test);
+      markWindow(win);
       if (opts.test && !fake) $$('.mp-lg-hl', win).forEach((h) => { if (!before.has(h)) h.classList.add('test'); });
     }
     showMedia(E);
-    if (st === 'kasyno' && win) FOUNTAINS(dur).forEach((ft) => setTimeout(() => { if (run === me) popItems(win, me); }, ft * 1000 + 250));
+    if (win && fieldSpec().item === 'pop') FOUNTAINS(dur).forEach((ft) => setTimeout(() => { if (run === me) popItems(win, me); }, ft * 1000 + 250));
     // przy teście panel przygasa, żeby było widać cały efekt
     if (me.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .3s'; g.style.opacity = '0.12'; });
     run = me;
@@ -1071,6 +1129,28 @@
           el('div', { class: 'mp-btns' },
             el('button', { class: 'mp-btn', onclick: () => importOwn(rerender) }, 'Importuj efekt (.json)'),
             el('button', { class: 'mp-btn', onclick: exportOwn }, 'Eksportuj efekt (.json)'))));
+        const selRow = (label, key, opts, def) => {
+          const sel = el('select', { class: 'mp-in' }, opts.map(([v, l]) => { const o = el('option', { value: v }, l); if ((cc[key] || def) === v) o.selected = true; return o; }));
+          sel.addEventListener('change', () => { cc[key] = sel.value; config.save(); });
+          return el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '120px' } }, label), sel);
+        };
+        const rangeRow = (label, key, min, max, step, def, unit) => {
+          const r = el('input', { class: 'mp-range', type: 'range', min, max, step, value: cc[key] ?? def });
+          const o = el('span', { class: 'mp-dim', style: { width: '46px', textAlign: 'right' } }, `${cc[key] ?? def}${unit}`);
+          const pp = () => r.style.setProperty('--p', ((r.value - min) / (max - min)) * 100 + '%'); pp();
+          r.addEventListener('input', () => { pp(); o.textContent = r.value + unit; cc[key] = Number(r.value); });
+          r.addEventListener('change', () => config.save());
+          return el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '120px' } }, label), r, o);
+        };
+        const txt = el('input', { class: 'mp-in', type: 'text', maxlength: 24, value: cc.text || 'LEGENDA!', placeholder: 'LEGENDA!' });
+        txt.addEventListener('change', () => { cc.text = txt.value.trim() || 'LEGENDA!'; config.save(); });
+        box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Pole z legendą i napis'),
+          selRow('Obwódka pola', 'ring', [['thor', 'Błyskawica (niebieska)'], ['smoke', 'Czarno-czerwona'], ['kasyno', 'Złota'], ['disco', 'Neonowa (tęcza)'], ['wlasny', 'W moim kolorze']], 'wlasny'),
+          selRow('Efekt legendy', 'itemFx', [['glow', 'Świeci moim kolorem'], ['bolts', 'Pioruny w legendę'], ['fade', 'Pojawia się i znika'], ['pop', 'Wyskakuje i kręci się'], ['hue', 'Świeci zmieniając kolory']], 'glow'),
+          el('div', { class: 'mp-lg-row' }, el('span', { class: 'mp-dim', style: { width: '120px' } }, 'Tekst napisu'), txt),
+          selRow('Czcionka napisu', 'font', [['Cinzel', 'Klasyczna (Cinzel)'], ['Bungee', 'Kasynowa (Bungee)'], ['Monoton', 'Neonowa (Monoton)']], 'Cinzel'),
+          rangeRow('Intensywność', 'intensity', 30, 250, 10, 100, '%'),
+          rangeRow('Przyciemnienie', 'dim', 0, 85, 5, 35, '%')));
         box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Twój efekt'),
           el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Warstwy efektu — włącz dowolne:'), chips,
           el('div', { class: 'mp-lg-row', style: { marginTop: '10px' } }, el('span', { class: 'mp-dim', style: { width: '90px' } }, 'Kolor'), col)));

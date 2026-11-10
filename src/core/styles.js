@@ -139,7 +139,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-hl.thor{--lgc:#6fb2ff}.mp-lg-hl.thor::before{background:conic-gradient(from var(--mpa),transparent 0 18%,#4f9dff 26%,#fff 30%,#4f9dff 34%,transparent 42% 68%,#4f9dff 76%,#fff 80%,#4f9dff 84%,transparent 92%);animation-duration:.9s}
 .mp-lg-hl.thor::after{background:radial-gradient(circle,rgba(200,230,255,.55),transparent 70%);opacity:0;animation:mpLgThorFl 2.3s steps(1) infinite}
 @keyframes mpLgThorFl{0%,100%{opacity:0}31%{opacity:1}33%{opacity:0}35%{opacity:.7}37%{opacity:0}78%{opacity:.9}80%{opacity:0}}
-.mp-lg-hl.smoke{--lgc:#b9bec6}.mp-lg-hl.smoke::before{background:conic-gradient(from var(--mpa),#0b0b0d,#8a8f98,#0b0b0d 35%,#d9dde3 50%,#0b0b0d 65%,#6b7078,#0b0b0d);animation-duration:4s}
+.mp-lg-hl.smoke{--lgc:#ff2a1a}.mp-lg-hl.smoke::before{background:conic-gradient(from var(--mpa),#050505,#ff2a1a 12%,#050505 25%,#2a0505 38%,#ff4a2a 50%,#050505 62%,#8a1208 75%,#050505 88%);animation-duration:3.4s}
 .mp-lg-hl.kasyno{--lgc:#ffc83a}.mp-lg-hl.kasyno::before{background:conic-gradient(from var(--mpa),#8a5a05,#ffd34d,#fff6c4 12%,#ffd34d 20%,#b8860b 35%,#ffd34d 55%,#fff6c4 62%,#ffd34d 70%,#8a5a05);animation-duration:1.8s}
 .mp-lg-hl.kasyno::after{background:linear-gradient(115deg,transparent 35%,rgba(255,250,220,.6) 50%,transparent 65%) -150% 0/250% 100% no-repeat;animation:mpLgSweep 1.6s ease-in-out infinite}
 @keyframes mpLgSweep{0%{background-position:-150% 0}60%,100%{background-position:250% 0}}
@@ -164,8 +164,17 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-lg-fake-f{position:absolute!important;left:-20px;right:-20px;bottom:-32px;height:32px;display:flex!important;align-items:center;justify-content:space-between;gap:10px;padding:0 26px;box-sizing:border-box;color:#e6d6bf;font-size:12.8px}
 .mp-lg-fake-f .interface-element-bottom-bar-background-stretch{position:absolute;inset:0;z-index:-1;border-style:solid;border-width:0 20px}
 .mp-lg-fake-f .button{padding:0 12px;height:24px;line-height:24px}
-.mp-lg-glow{animation:mpLgRed 1.4s ease-in-out infinite!important;border-radius:3px}
-@keyframes mpLgRed{0%,100%{box-shadow:0 0 6px 1px rgba(255,70,30,.75),inset 0 0 8px rgba(255,90,40,.55)}50%{box-shadow:0 0 12px 3px rgba(255,40,20,.95),inset 0 0 14px rgba(255,110,50,.85)}}
+.mp-lg-glow{--lgg:#ff4a2a;animation:mpLgGlow 1.4s ease-in-out infinite!important;border-radius:3px}
+@keyframes mpLgGlow{0%,100%{box-shadow:0 0 5px 1px color-mix(in srgb,var(--lgg) 75%,transparent),inset 0 0 8px color-mix(in srgb,var(--lgg) 55%,transparent)}50%{box-shadow:0 0 11px 3px var(--lgg),inset 0 0 14px color-mix(in srgb,var(--lgg) 85%,transparent)}}
+.mp-lg-fbolt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.item.mp-lg-fx-fade{animation:mpLgFade 3s ease-in-out infinite}
+@keyframes mpLgFade{0%,100%{opacity:1;filter:drop-shadow(0 0 4px #ff2a1a)}45%,55%{opacity:.12;filter:blur(2px) drop-shadow(0 0 8px #000)}}
+.item.mp-lg-fx-hue{animation:mpLgHue 2.2s linear infinite}
+@keyframes mpLgHue{0%{filter:drop-shadow(0 0 6px #ff2bd6) brightness(1.15)}25%{filter:drop-shadow(0 0 6px #00e5ff) brightness(1.15)}50%{filter:drop-shadow(0 0 6px #ffe600) brightness(1.15)}75%{filter:drop-shadow(0 0 6px #7cff4f) brightness(1.15)}100%{filter:drop-shadow(0 0 6px #ff2bd6) brightness(1.15)}}
+.item.mp-lg-fx-glow, .item.mp-lg-fx-pop{animation:mpLgItemGlow 1.6s ease-in-out infinite}
+@keyframes mpLgItemGlow{0%,100%{filter:drop-shadow(0 0 3px var(--lgg))}50%{filter:drop-shadow(0 0 8px var(--lgg)) brightness(1.12)}}
+.item.mp-lg-fx-bolts{animation:mpLgItemBolt 2.1s steps(1) infinite}
+@keyframes mpLgItemBolt{0%,100%{filter:drop-shadow(0 0 3px #6fb2ff)}20%{filter:drop-shadow(0 0 9px #cfe8ff) brightness(1.4)}23%{filter:drop-shadow(0 0 3px #6fb2ff)}61%{filter:drop-shadow(0 0 8px #cfe8ff) brightness(1.3)}64%{filter:drop-shadow(0 0 3px #6fb2ff)}}
 .mp-lg-pop{position:fixed;z-index:2147483002;pointer-events:none;perspective:300px}
 .mp-mt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .mp-mt-card{cursor:pointer;border-radius:10px;padding:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.18)}
