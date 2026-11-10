@@ -4,6 +4,10 @@
 (async function boot() {
   if (W.__MargoPanelStarted) return;
   W.__MargoPanelStarted = true;
+  // dziennik błędów strony (przetrwa odświeżenie / wyrzucenie z gry) — trafia do raportu Ulepszarki
+  const logErr = (msg) => { try { const l = store.get('errlog', []); l.unshift({ t: new Date().toISOString(), msg: String(msg).slice(0, 300) }); store.set('errlog', l.slice(0, 15)); } catch {} };
+  W.addEventListener('error', (e) => logErr((e.message || '') + ' @ ' + (e.filename || '').split('/').pop() + ':' + (e.lineno || '')));
+  W.addEventListener('unhandledrejection', (e) => logErr('promise: ' + (e.reason && (e.reason.message || e.reason))));
   const t0 = now();
   while (!game.ready()) {
     if (now() - t0 > 120000) { console.warn('[laddonz] Nie wykryto gry (nowy interfejs) — panel nie startuje.'); return; }

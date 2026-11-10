@@ -19,8 +19,10 @@ const DEFAULT_COMMANDS = {
   eqSet:        { t: '', destructive: false, label: 'Zmiana zestawu', how: 'Przełącz ręcznie zestaw ekwipunku.' },
   otherEq:      { t: '', destructive: false, label: 'Podgląd EQ gracza', how: 'Kliknij u gracza „Pokaż ekwipunek".' },
   friendAdd:    { t: '', destructive: false, label: 'Dodanie do znajomych', how: 'Dodaj ręcznie kogoś do znajomych.' },
-  // potwierdzone w grze (raport z okna rzemiosła): gra najpierw pyta (pytanie 1001012), potem wysyła to samo z answer1001012=1
-  enhance:      { t: 'enhancement&action=progress&item={item}&ingredients={ingredients}&answer1001012=1', verified: true, destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
+  // potwierdzone w grze (raport z okna rzemiosła): podgląd → ulepszenie → gra zadaje pytanie → odpowiedź „Tak" wysyła sama gra.
+  // NIE dopisujemy odpowiedzi z góry (answer…=1) — serwer traktuje to jako błąd i wyrzuca z gry.
+  enhancePreview: { t: 'enhancement&action=progress_preview&item={item}&ingredients={ingredients}', verified: true, destructive: false, label: 'Podgląd ulepszenia', how: 'Włóż przedmiot i składnik w oknie ulepszania.' },
+  enhance:      { t: 'enhancement&action=progress&item={item}&ingredients={ingredients}', verified: true, destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
 };
 
 const net = {
@@ -136,6 +138,7 @@ const net = {
           return m;
         });
         rec.tpl = tpl;
+        if (/answer\d+=/.test(tpl)) return;   // to odpowiedź na pytanie gry — nie zapamiętujemy (komenda bez odpowiedzi jest wbudowana)
         if (item !== 1 || ing !== 1 || tpl === this.cmd('enhance').t) return;   // ta sama co wbudowana → nic do zmiany
         this.setCmd('enhance', tpl, true);
         this.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Nauczono komendy ulepszania: ' + tpl });

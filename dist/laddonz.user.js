@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.8.7
+// @version      1.8.8
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -573,8 +573,10 @@ const DEFAULT_COMMANDS = {
   eqSet:        { t: '', destructive: false, label: 'Zmiana zestawu', how: 'Przełącz ręcznie zestaw ekwipunku.' },
   otherEq:      { t: '', destructive: false, label: 'Podgląd EQ gracza', how: 'Kliknij u gracza „Pokaż ekwipunek".' },
   friendAdd:    { t: '', destructive: false, label: 'Dodanie do znajomych', how: 'Dodaj ręcznie kogoś do znajomych.' },
-  // potwierdzone w grze (raport z okna rzemiosła): gra najpierw pyta (pytanie 1001012), potem wysyła to samo z answer1001012=1
-  enhance:      { t: 'enhancement&action=progress&item={item}&ingredients={ingredients}&answer1001012=1', verified: true, destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
+  // potwierdzone w grze (raport z okna rzemiosła): podgląd → ulepszenie → gra zadaje pytanie → odpowiedź „Tak" wysyła sama gra.
+  // NIE dopisujemy odpowiedzi z góry (answer…=1) — serwer traktuje to jako błąd i wyrzuca z gry.
+  enhancePreview: { t: 'enhancement&action=progress_preview&item={item}&ingredients={ingredients}', verified: true, destructive: false, label: 'Podgląd ulepszenia', how: 'Włóż przedmiot i składnik w oknie ulepszania.' },
+  enhance:      { t: 'enhancement&action=progress&item={item}&ingredients={ingredients}', verified: true, destructive: true, label: 'Ulepszenie przedmiotu', how: 'Ulepsz ręcznie przedmiot jednym składnikiem.' },
 };
 
 const net = {
@@ -690,6 +692,7 @@ const net = {
           return m;
         });
         rec.tpl = tpl;
+        if (/answer\d+=/.test(tpl)) return;   // to odpowiedź na pytanie gry — nie zapamiętujemy (komenda bez odpowiedzi jest wbudowana)
         if (item !== 1 || ing !== 1 || tpl === this.cmd('enhance').t) return;   // ta sama co wbudowana → nic do zmiany
         this.setCmd('enhance', tpl, true);
         this.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Nauczono komendy ulepszania: ' + tpl });
@@ -4198,36 +4201,84 @@ MP.itemDeco = itemDeco;
       if (!ok) return;
     }
     running = true;
-    let n = 0;
-    const used = [];
+    let n = 0, failed = false;
+    const steps = [];
+    const saveSteps = () => store.set('up:last', { t: new Date().toISOString(), steps: steps.slice(-20) });
+    store.set('up:inflight', now());         // gdyby gra wyrzuciła w trakcie — po powrocie wiemy o tym
     try {
-      for (const o of p) {
+      outer: for (const o of p) {
         // każdy składnik sprawdzony jeszcze raz tuż przed wysłaniem
         const fresh = o.list.filter((i) => { const f = game.itemById(i.id); return f && f.st === 0 && !NEVER.includes(f.rarity) && !targetIds().has(f.id); });
-        for (let k = 0; k < fresh.length; k += 20) {
-          const part = fresh.slice(k, k + 20);
-          if (c.t.includes('{ingredients}')) await net.send('enhance', { item: o.target.id, ingredients: part.map((i) => i.id).join(',') }, { src: 'Ulepszarka', onResponse: maxResp(o) });
-          else for (const i of part) { await net.send('enhance', { item: o.target.id, id: i.id, ingredients: i.id }, { src: 'Ulepszarka', onResponse: maxResp(o) }); await sleep(250); }
-          n += part.length; used.push(...part.map((i) => i.id));
+        for (let k = 0; k < fresh.length; k += 16) {
+          const part = fresh.slice(k, k + 16);
+          const ids = part.map((i) => i.id).join(',');
+          // dokładnie tak jak gra: najpierw podgląd, potem ulepszenie; na pytanie gry „Tak" klika Ulepszarka
+          const rp = await net.send('enhancePreview', { item: o.target.id, ingredients: ids }, { src: 'Ulepszarka' });
+          steps.push({ a: 'preview', item: o.target.id, n: part.length, ok: rp.ok, err: rp.error, resp: short(rp.data) }); saveSteps();
+          if (!rp.ok) { failed = true; break outer; }
+          await sleep(350);
+          ask.arm();
+          const r = await net.send('enhance', { item: o.target.id, ingredients: ids }, { src: 'Ulepszarka', onResponse: maxResp(o) });
+          steps.push({ a: 'progress', item: o.target.id, n: part.length, ok: r.ok, err: r.error, resp: short(r.data) }); saveSteps();
+          if (!r.ok) { failed = true; break outer; }
+          const gone = await waitGone(part.map((i) => i.id), 6000);
+          steps.push({ a: 'gone', n: gone }); saveSteps();
+          if (!gone) { failed = true; break outer; }
+          n += gone;
+          await sleep(600);
         }
       }
-      net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Wysłano ${n} przedmiotów do ulepszenia` });
-      // sprawdzenie: czy przedmioty naprawdę zniknęły? Jeśli nie — zapamiętana komenda jest zła, uczymy się od nowa
-      setTimeout(() => {
-        const bag = new Set(game.heroItems().map((i) => i.id));
-        const gone = used.filter((id) => !bag.has(id)).length;
-        if (cfg.closeCraft) closeCraft();
-        dropMaxed();
-        if (!gone && used.length) {
-          // zapamiętana (nauczona) komenda nie zadziałała → wracamy do wbudowanej
-          const own = (config.data.commands || {}).enhance;
-          if (own) { net.resetCmd('enhance'); toast('Ulepszarka: gra nie przyjęła ulepszenia — przywróciłam domyślną komendę, spróbuj jeszcze raz', 'bad'); }
-          else toast('Ulepszarka: gra nie przyjęła ulepszenia (żaden przedmiot nie zniknął)', 'bad');
-        } else toast(`Ulepszarka: ulepszono — zużyto ${gone} przedmiotów`, 'ok');
-        rr();
-      }, 1500);
-    } finally { running = false; rr(); }
+    } finally {
+      ask.disarm();
+      store.del('up:inflight');
+      running = false;
+      if (cfg.closeCraft) closeCraft();
+      dropMaxed();
+      net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Zużyto ${n} przedmiotów na ulepszanie${failed ? ' (przerwano)' : ''}` });
+      if (failed) toast(n ? `Ulepszarka: zużyto ${n}, potem gra przestała przyjmować ulepszenie — przerwałam` : 'Ulepszarka: gra nie przyjęła ulepszenia — przerwałam', 'bad');
+      else toast(`Ulepszarka: ulepszono — zużyto ${n} przedmiotów`, 'ok');
+      rr();
+    }
   }
+  const short = (d) => { try { const s = JSON.stringify(d); return s && s.length > 300 ? s.slice(0, 300) + '…' : s; } catch { return '?'; } };
+  async function waitGone(ids, ms) {
+    const t0 = now();
+    while (now() - t0 < ms) {
+      const bag = new Set(game.heroItems().map((i) => i.id));
+      const g = ids.filter((id) => !bag.has(id)).length;
+      if (g) { await sleep(200); const bag2 = new Set(game.heroItems().map((i) => i.id)); return ids.filter((id) => !bag2.has(id)).length; }
+      await sleep(150);
+    }
+    return 0;
+  }
+
+  /*
+   * Pytanie gry przy ulepszaniu („Czy na pewno…?") — przez kilka sekund po naszym ulepszeniu klikamy „Tak"
+   * (ukryte, więc nic nie mignie). Odpowiedź wysyła sama gra, dokładnie jak przy ręcznym kliknięciu.
+   */
+  const ask = {
+    until: 0, mo: null,
+    arm() { this.until = now() + 6000; if (!this.mo) { this.mo = new MutationObserver(() => this.scan()); this.mo.observe(document.body, { childList: true, subtree: true }); } this.scan(); },
+    disarm() { this.until = 0; },
+    scan() {
+      if (now() > this.until) return;
+      const yesRe = /^\s*(tak|ok|akceptuj|potwierd[źz])\b/i;
+      let btns = $$('button, .button, .btn, [class*="button"]').filter((b) => yesRe.test(b.textContent || '') && (b.textContent || '').trim().length < 20 && !b.closest('.mp-glass, .mp-modal-bg'));
+      btns = btns.filter((b) => !btns.some((o) => o !== b && b.contains(o)));
+      for (const btn of btns) {
+        let box = btn.parentElement;
+        for (let i = 0; i < 8 && box && !/(ulepsz|sk[łl]adnik|zu[żz]y|zniszcz|na pewno|czy chcesz)/i.test(box.textContent || ''); i++) box = box.parentElement;
+        if (!box || box.__mpUp) continue;
+        const win = btn.closest('[class*="window"]');
+        if (win && /rzemios/i.test(((win.querySelector('[class*="header"], [class*="title"]') || {}).textContent || ''))) continue;   // nigdy przyciski w samym oknie rzemiosła
+        if ((box.textContent || '').length > 600) continue;
+        box.__mpUp = true;
+        box.style.setProperty('visibility', 'hidden', 'important');
+        btn.click();
+        net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Potwierdzono pytanie gry: ' + (box.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120) });
+      }
+    },
+  };
 
   /*
    * Maksymalnie ulepszony przedmiot → sam znika z listy. Poziom ulepszenia czytamy ze statystyk przedmiotu
@@ -4277,7 +4328,7 @@ MP.itemDeco = itemDeco;
   let freeBlockSig = '';
   const bagSig = () => game.bag().map((i) => i.id).join(',');
   async function freeWatch() {
-    if (!cfg || !cfg.enabled || running || !(Number(cfg.freeAt) > 0) || !slots().length) return;
+    if (!cfg || !cfg.enabled || running || cfg.autoPaused || !(Number(cfg.freeAt) > 0) || !slots().length) return;
     if (game.inBattle() || document.querySelector('.mp-modal-bg')) return;
     const free = game.freeBagSlots();
     if (free == null || free > Number(cfg.freeAt)) { freeBlockSig = ''; return; }
@@ -4295,6 +4346,9 @@ MP.itemDeco = itemDeco;
     const E0 = W.Engine || {};
     const r = {
       wersja: MP.version, komenda: net.cmd('enhance'),
+      ostatnieUlepszanie: store.get('up:last', null),
+      bledyStrony: store.get('errlog', []),
+      craftingFns: (() => { try { const c = W.Engine && W.Engine.crafting; const o = new Set(); for (let q = c; q && q !== Object.prototype; q = Object.getPrototypeOf(q)) Object.getOwnPropertyNames(q).forEach((k) => { try { if (typeof c[k] === 'function') o.add(k); } catch {} }); return [...o].slice(0, 60); } catch { return null; } })(),
       wolneMiejsca: game.freeBagSlots(),
       torby: game.heroItems().filter((i) => i.stats.bag != null).map((i) => ({ nazwa: i.name, st: i.st, bag: i.stats.bag, cl: i.cl })),
       wTorbie: game.bag().length,
@@ -4411,6 +4465,8 @@ MP.itemDeco = itemDeco;
       } else {
         box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));
       }
+      if (cfg.autoPaused) box.appendChild(el('div', { class: 'mp-card' }, el('div', { class: 'mp-warnc' }, 'Poprzednie ulepszanie zostało przerwane (np. gra wyrzuciła). Ulepszanie przy pełnej torbie jest wstrzymane.'),
+        el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { cfg.autoPaused = false; config.save(); rr(); } }, 'Wznów'), el('button', { class: 'mp-btn', onclick: report }, 'Kopiuj raport'))));
       if (Number(cfg.freeAt) > 0) {
         const f = game.freeBagSlots();
         box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, f == null ? 'Nie udało się odczytać wolnych miejsc w torbie — kliknij „Kopiuj raport" i wklej w rozmowie.' : `Wolne miejsca w torbie teraz: ${f} · ulepszę przy ${cfg.freeAt} lub mniej`));
@@ -4432,6 +4488,10 @@ MP.itemDeco = itemDeco;
       if (!Array.isArray(c.protect)) c.protect = [];
       { const u = new Set(); slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => !u.has(t)); sl.types.forEach((t) => u.add(t)); }); }   // typ składników tylko u jednego przedmiotu
       watchPointer();
+      // wyrzuciło z gry w trakcie ulepszania? — automatyczne ulepszanie wstrzymane, dopóki go nie wznowisz
+      { const inf = store.get('up:inflight', 0); if (inf && now() - inf < 15 * 60000) { cfg.autoPaused = true; config.save(); } store.del('up:inflight'); }
+      // stara komenda z dopisaną odpowiedzią (powodowała wyrzucenie) — usuwamy
+      try { const own = (config.data.commands || {}).enhance; if (own && /answer\d+=/.test(own.t || '')) net.resetCmd('enhance'); } catch {}
       setInterval(() => { if (cfg.enabled && !running) dropMaxed(); }, 5000);
       setInterval(freeWatch, 1500);
       MP.ulepszarka = { addTarget, plan, run, typeOf, closeCraft, report, dropMaxed, enhLevel };
@@ -4455,6 +4515,10 @@ MP.itemDeco = itemDeco;
 (async function boot() {
   if (W.__MargoPanelStarted) return;
   W.__MargoPanelStarted = true;
+  // dziennik błędów strony (przetrwa odświeżenie / wyrzucenie z gry) — trafia do raportu Ulepszarki
+  const logErr = (msg) => { try { const l = store.get('errlog', []); l.unshift({ t: new Date().toISOString(), msg: String(msg).slice(0, 300) }); store.set('errlog', l.slice(0, 15)); } catch {} };
+  W.addEventListener('error', (e) => logErr((e.message || '') + ' @ ' + (e.filename || '').split('/').pop() + ':' + (e.lineno || '')));
+  W.addEventListener('unhandledrejection', (e) => logErr('promise: ' + (e.reason && (e.reason.message || e.reason))));
   const t0 = now();
   while (!game.ready()) {
     if (now() - t0 > 120000) { console.warn('[laddonz] Nie wykryto gry (nowy interfejs) — panel nie startuje.'); return; }
@@ -4482,5 +4546,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.8.7";
+MP.version = "1.8.8";
 })();
