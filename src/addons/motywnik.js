@@ -97,6 +97,31 @@ ${stars}
 ${emblem(t, 11, 14, 4)}${emblem(t, 109, 14, 4)}
 </svg>`);
   };
+  /** Pionowa metalowa listwa (kolumna czatu / ekwipunku): kafelek 10×96 powtarzany w pionie, emblemat co 96 px. */
+  const railV = (t) => {
+    const [m1, m2, m3] = t.m;
+    return svg(`<svg xmlns='http://www.w3.org/2000/svg' width='10' height='96'><defs>${metalDefs(t)}<linearGradient id='rv' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='${m3}'/><stop offset='.3' stop-color='${m2}'/><stop offset='.5' stop-color='${m1}'/><stop offset='.7' stop-color='${m2}'/><stop offset='1' stop-color='${m3}'/></linearGradient></defs>
+<rect width='10' height='96' fill='${t.bg0}'/><rect x='2' width='6' height='96' fill='url(#rv)'/><rect x='2' width='.6' height='96' fill='#000' opacity='.45'/><rect x='7.4' width='.6' height='96' fill='#000' opacity='.45'/>
+<rect x='1' y='40' width='8' height='16' rx='2' fill='url(#mp)' stroke='${m3}' stroke-width='.6'/>${emblem(t, 5, 48, 3)}</svg>`);
+  };
+  /** Pozioma metalowa listwa (krawędź górnego i dolnego paska): kafelek 96×5. */
+  const railH = (t, flip) => {
+    const [m1, m2, m3] = t.m;
+    const g = flip ? [m3, m2, m1, m2, m3].reverse() : [m3, m2, m1, m2, m3];
+    return svg(`<svg xmlns='http://www.w3.org/2000/svg' width='96' height='5'><defs>${metalDefs(t)}<linearGradient id='rh' x1='0' y1='0' x2='0' y2='1'>${g.map((c, i) => `<stop offset='${i / 4}' stop-color='${c}'/>`).join('')}</linearGradient></defs>
+<rect width='96' height='5' fill='url(#rh)'/><rect y='${flip ? 0 : 4.4}' width='96' height='.6' fill='#000' opacity='.6'/>${t.orn === 'star' ? `<circle cx='48' cy='2.5' r='1.1' fill='${t.star}'/>` : `<circle cx='48' cy='2.5' r='1.2' fill='url(#mr)' stroke='${m3}' stroke-width='.4'/>`}</svg>`);
+  };
+  /** Filtr przebarwiający szare, metalowe grafiki gry (kula HP, obramowania pasków doświadczenia) na metal stylu. */
+  const metalFilter = (t) => {
+    const h = t.m[1].replace('#', ''); const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255);
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    let hue = 0;
+    if (d) hue = mx === r ? 60 * (((g - b) / d) % 6) : mx === g ? 60 * ((b - r) / d + 2) : 60 * ((r - g) / d + 4);
+    if (hue < 0) hue += 360;
+    if (s < 0.12) return 'grayscale(1) brightness(1.08) contrast(1.05)';
+    return `grayscale(1) sepia(1) hue-rotate(${Math.round(hue - 38)}deg) saturate(${(1 + s * 1.6).toFixed(2)}) brightness(${(0.85 + l * 0.45).toFixed(2)})`;
+  };
   // powierzchnia panelu: boczne pasy 11 px (gui/middle_graphics.png 0 11 fill)
   const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='60' height='60' fill='${raised ? t.bg0 : t.bg1}'/></svg>`);
   // pasek / nagłówek tabeli: boczne pasy 20 px (quest_bar.png, table_header.png 0 20 fill)
@@ -132,10 +157,15 @@ ${emblem(t, 11, 14, 4)}${emblem(t, 109, 14, 4)}
 /* — ramy ekranu: kolumny, górny i dolny pasek — */
 ${IL} .left-column.main-column, ${IL} .left-column.main-column .new-chat-window, ${IL} .left-column.main-column .chat-input-wrapper{background-color:${t.bg1}!important}
 ${IL} .right-column.main-column{background:${grain}, radial-gradient(ellipse at 50% 0%, ${t.edge}, transparent 45%), linear-gradient(${t.bg1},${t.bg0})!important}
-${IL} .right-column.main-column > .border{background:linear-gradient(90deg,${t.bg0} 0,${t.m[2]} 30%,${t.m[1]} 50%,${t.m[2]} 70%,${t.bg0} 100%)!important;opacity:.55}
-/* górny i dolny pasek: jednolite tło stylu (bez jasnej krawędzi z grafiki gry) */
-${IL} .top.positioner > .bg{background:linear-gradient(${t.bg1},${t.bg0})!important}
-${IL} .bottom.positioner > .bg{background:linear-gradient(${t.bg0},${t.bg1})!important}
+/* metalowe listwy przy kolumnie czatu i ekwipunku (w miejscu krawędzi gry, ta sama szerokość) */
+${IL} .left-column.main-column > .border, ${IL} .right-column.main-column > .border{background:${railV(t)} 0 0 / 10px 96px repeat-y!important;opacity:1!important}
+/* górny i dolny pasek: tło stylu + metalowa krawędź od strony mapy (rysowana wewnątrz paska — nic nie wystaje) */
+${IL} .top.positioner > .bg{background:${railH(t, true)} 0 100% / 96px 5px repeat-x, linear-gradient(${t.bg1},${t.bg0})!important}
+${IL} .bottom.positioner > .bg{background:${railH(t, false)} 0 0 / 96px 5px repeat-x, linear-gradient(${t.bg0},${t.bg1})!important}
+/* metal wokół kuli HP, ramki pasków doświadczenia i wskaźników — ten sam rysunek, barwa metalu stylu */
+.bottom-panel .bottom-panel-graphic, .bottom-panel .hp-indicator-wrapper > .glass, .bottom-panel .exp-progress > .overlay, .bottom-panel .pointer-exp-graphic, .bottom-panel .pointer-ttl-graphic, .mt-hud-bg{filter:${metalFilter(t)}!important}
+.bottom-panel .exp-progress .progress > .inner{background:linear-gradient(#0b0b0d 0%, ${t.a2} 22%, ${t.a1} 50%, ${t.a2} 70%, #0b0b0d 100%)!important}
+.skill-usable-slot[class*="interface-element-one-item-slot"]{background-color:${t.bg0}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 0 6px rgba(0,0,0,.6)!important}
 /* ozdoby wokół HP, panel szybkich umiejętności i HUD na górze — grafiki gry bez zmian (żadnych prostokątów wokół) */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:2147480000;box-shadow:inset 0 0 38px ${t.edge}}
 
@@ -288,7 +318,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (queue.size && !qT) qT = setTimeout(() => { qT = null; const q = [...queue]; queue.clear(); q.forEach((n) => n.isConnected && fixText(n)); }, 150);
     });
     mo.observe(document.body, { childList: true, subtree: true });
-    [1200, 4000].forEach((ms) => setTimeout(() => fixText(document.body), ms));
+    [1200, 4000].forEach((ms) => setTimeout(() => { fixText(document.body); hudLayer(active()); }, ms));
   }
   function stop() {
     if (mo) { mo.disconnect(); mo = null; }
@@ -306,7 +336,28 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const own = (cfg.custom || []).find((x) => x.id === cfg.customOn);
     if (own) out += `\n/* Własny styl: ${own.name} */\n${own.css}`;
     styleEl.textContent = out;
+    hudLayer(active());
     if (active()) start();
+  }
+
+  /* HUD na górze (złoto, mapa) ma metalową grafikę z dziećmi w środku — filtra nie da się dać na cały element,
+     więc kopia tej samej grafiki trafia na warstwę pod treścią i tylko ona jest przebarwiana. */
+  function hudLayer(on) {
+    for (const hud of $$('.hud-container')) {
+      let lay = hud.querySelector(':scope > .mt-hud-bg');
+      if (!on) { if (lay) lay.remove(); hud.classList.remove('mt-hud'); hud.style.removeProperty('background-image'); continue; }
+      if (!lay) {
+        const cs = getComputedStyle(hud);
+        if (cs.backgroundImage === 'none') continue;
+        lay = el('div', { class: 'mt-hud-bg' });
+        Object.assign(lay.style, { position: 'absolute', inset: '0', zIndex: '-1', pointerEvents: 'none', backgroundImage: cs.backgroundImage, backgroundPosition: cs.backgroundPosition, backgroundRepeat: cs.backgroundRepeat, backgroundSize: cs.backgroundSize });
+        if (cs.position === 'static') hud.style.position = 'relative';
+        hud.style.isolation = 'isolate';
+        hud.prepend(lay);
+      }
+      hud.classList.add('mt-hud');
+      hud.style.setProperty('background-image', 'none', 'important');
+    }
   }
 
   /* ── dane wyglądu dla twórcy ── */
