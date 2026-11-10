@@ -109,12 +109,18 @@ const net = {
    * learnLog (raport „Kopiuj raport" w Ulepszarce), gdyby gra robiła to inaczej.
    */
   learnLog: [],
+  recent: [],          // ostatnie komendy gry (wszystkie) — do raportu, z informacją czy okno rzemiosła było otwarte
   craftOpen() {
+    try {
+      const c = W.Engine && W.Engine.crafting;
+      if (c && typeof c.isOpen === 'function' && c.isOpen()) return true;
+    } catch {}
     try {
       return $$('[class*="window"]').some((w) => isVisible(w) && /rzemios|ulepsza|crafting|enhanc/i.test(((w.querySelector('[class*="header"], [class*="title"]') || {}).textContent || '') + ' ' + w.className));
     } catch { return false; }
   },
   autoLearn(t, args) {
+    try { this.recent.unshift({ t: new Date().toISOString().slice(11, 23), task: t.slice(0, 160), craft: this.craftOpen() }); if (this.recent.length > 60) this.recent.length = 60; } catch {}
     try {
       const head = t.split('&')[0];
       const craft = this.craftOpen() || /enhanc|upgrad|ulepsz|craft/i.test(head);

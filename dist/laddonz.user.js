@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.8.8
+// @version      1.8.9
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -663,12 +663,18 @@ const net = {
    * learnLog (raport „Kopiuj raport" w Ulepszarce), gdyby gra robiła to inaczej.
    */
   learnLog: [],
+  recent: [],          // ostatnie komendy gry (wszystkie) — do raportu, z informacją czy okno rzemiosła było otwarte
   craftOpen() {
+    try {
+      const c = W.Engine && W.Engine.crafting;
+      if (c && typeof c.isOpen === 'function' && c.isOpen()) return true;
+    } catch {}
     try {
       return $$('[class*="window"]').some((w) => isVisible(w) && /rzemios|ulepsza|crafting|enhanc/i.test(((w.querySelector('[class*="header"], [class*="title"]') || {}).textContent || '') + ' ' + w.className));
     } catch { return false; }
   },
   autoLearn(t, args) {
+    try { this.recent.unshift({ t: new Date().toISOString().slice(11, 23), task: t.slice(0, 160), craft: this.craftOpen() }); if (this.recent.length > 60) this.recent.length = 60; } catch {}
     try {
       const head = t.split('&')[0];
       const craft = this.craftOpen() || /enhanc|upgrad|ulepsz|craft/i.test(head);
@@ -4141,6 +4147,27 @@ MP.itemDeco = itemDeco;
   const slots = () => (Array.isArray(cfg.slots) ? cfg.slots : (cfg.slots = []));
   const targetIds = () => new Set(slots().map((s) => Number(s.id)));
   const RAR_PL = { common: 'zwykły', unique: 'unikat', heroic: 'heroiczny', legendary: 'legendarny', upgraded: 'ulepszony', artefact: 'artefakt' };
+  /**
+   * Stan okna rzemiosła. Serwer przyjmuje ulepszanie TYLKO przy otwartym oknie rzemiosła na zakładce ulepszania
+   * (bez tego odpowiada „Błąd wewnętrzny" i wyrzuca z gry) — więc bez otwartego okna nic nie wysyłamy.
+   * 'enh' = otwarte na ulepszaniu, 'other' = otwarte na innej zakładce, 'unknown' = otwarte, zakładki nie rozpoznano, null = zamknięte.
+   */
+  function craftState() {
+    if (!net.craftOpen()) return null;
+    try {
+      for (const w of $$('[class*="window"]')) {
+        if (!isVisible(w) || w.closest('.mp-glass')) continue;
+        const head = ((w.querySelector('[class*="header"], [class*="title"]') || {}).textContent || '');
+        if (!/rzemios/i.test(head)) continue;
+        const act = $$('[class*="active"], [class*="selected"], [class*="--on"]', w).filter((n) => isVisible(n) && (n.textContent || '').trim().length < 30 && (n.textContent || '').trim());
+        if (act.some((n) => /ulepsz/i.test(n.textContent))) return 'enh';
+        const tabs = $$('[class*="tab"], [class*="card"]', w).filter((n) => /ulepsz/i.test(n.textContent || '') && (n.textContent || '').trim().length < 30);
+        if (act.length && tabs.length) return 'other';
+        return 'unknown';
+      }
+    } catch {}
+    return 'unknown';
+  }
   /** Okno rzemiosła z gry (ulepszanie) — zamykane po ulepszeniu. */
   function closeCraft() {
     try {
@@ -4195,6 +4222,9 @@ MP.itemDeco = itemDeco;
     if (!c.t || !c.verified) { toast('Ulepszarka: ulepsz raz ręcznie w oknie rzemiosła — wtedy się nauczy', 'warn'); return; }
     const p = plan();
     if (!p.length) { toast('Ulepszarka: brak pasujących przedmiotów', 'info'); return; }
+    const cs = craftState();
+    if (!cs) { toast('Ulepszarka: otwórz okno Rzemiosło → zakładka Ulepszanie (bez tego gra wyrzuca)', 'warn'); return; }
+    if (cs === 'other') { toast('Ulepszarka: przełącz okno Rzemiosło na zakładkę Ulepszanie', 'warn'); return; }
     if (cfg.confirm) {
       const items = []; p.forEach((o) => o.list.forEach((i) => items.push(el('span', null, i.name, ' ', el('span', { class: 'mp-rar ' + i.rarity }, RAR_PL[i.rarity] || i.rarity), el('span', { class: 'mp-dim' }, ' → ' + o.target.name)))));
       const ok = await confirmBox({ title: 'Ulepszyć teraz?', okText: 'Ulepsz', html: `Zużyję <b>${items.length}</b> przedmiotów:`, items });
@@ -4215,12 +4245,12 @@ MP.itemDeco = itemDeco;
           // dokładnie tak jak gra: najpierw podgląd, potem ulepszenie; na pytanie gry „Tak" klika Ulepszarka
           const rp = await net.send('enhancePreview', { item: o.target.id, ingredients: ids }, { src: 'Ulepszarka' });
           steps.push({ a: 'preview', item: o.target.id, n: part.length, ok: rp.ok, err: rp.error, resp: short(rp.data) }); saveSteps();
-          if (!rp.ok) { failed = true; break outer; }
+          if (!rp.ok || badResp(rp.data)) { failed = true; if (badResp(rp.data)) { cfg.autoPaused = true; config.save(); } break outer; }
           await sleep(350);
           ask.arm();
           const r = await net.send('enhance', { item: o.target.id, ingredients: ids }, { src: 'Ulepszarka', onResponse: maxResp(o) });
           steps.push({ a: 'progress', item: o.target.id, n: part.length, ok: r.ok, err: r.error, resp: short(r.data) }); saveSteps();
-          if (!r.ok) { failed = true; break outer; }
+          if (!r.ok || badResp(r.data)) { failed = true; if (badResp(r.data)) { cfg.autoPaused = true; config.save(); } break outer; }
           const gone = await waitGone(part.map((i) => i.id), 6000);
           steps.push({ a: 'gone', n: gone }); saveSteps();
           if (!gone) { failed = true; break outer; }
@@ -4240,6 +4270,8 @@ MP.itemDeco = itemDeco;
       rr();
     }
   }
+  /** Odpowiedź serwera z błędem (np. „Błąd wewnętrzny", t:stop) → przerywamy natychmiast. */
+  const badResp = (d) => !!d && (d.t === 'stop' || d.t === 'reload' || (d.e && d.e !== 'ok'));
   const short = (d) => { try { const s = JSON.stringify(d); return s && s.length > 300 ? s.slice(0, 300) + '…' : s; } catch { return '?'; } };
   async function waitGone(ids, ms) {
     const t0 = now();
@@ -4325,7 +4357,7 @@ MP.itemDeco = itemDeco;
    * Ulepszanie przy zapełnionej torbie: gdy wolnych miejsc jest tyle, ile ustawisz (lub mniej) — ulepsza wszystkie
    * wybrane przedmioty. Po próbie czeka, aż w torbie coś się zmieni (żeby nie powtarzać w kółko, gdy nie ma czego użyć).
    */
-  let freeBlockSig = '';
+  let freeBlockSig = '', freeNag = 0;
   const bagSig = () => game.bag().map((i) => i.id).join(',');
   async function freeWatch() {
     if (!cfg || !cfg.enabled || running || cfg.autoPaused || !(Number(cfg.freeAt) > 0) || !slots().length) return;
@@ -4334,8 +4366,10 @@ MP.itemDeco = itemDeco;
     if (free == null || free > Number(cfg.freeAt)) { freeBlockSig = ''; return; }
     const sig = bagSig();
     if (sig === freeBlockSig) return;          // już próbowaliśmy przy tej zawartości torby
+    if (now() - freeNag < 30000 && !net.craftOpen()) return;   // przypomnienie o oknie rzemiosła co 30 s
     freeBlockSig = sig;
     if (!plan().length) return;
+    if (craftState() !== 'enh' && craftState() !== 'unknown') { toast(`Ulepszarka: zostało ${free} wolnych miejsc — otwórz Rzemiosło → Ulepszanie, a ulepszę`, 'warn'); freeBlockSig = ''; freeNag = now(); return; }
     net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Wolne miejsca w torbie: ${free} — ulepszam` });
     await run('free');
     freeBlockSig = bagSig();
@@ -4347,6 +4381,8 @@ MP.itemDeco = itemDeco;
     const r = {
       wersja: MP.version, komenda: net.cmd('enhance'),
       ostatnieUlepszanie: store.get('up:last', null),
+      rzemiosloOtwarte: craftState(),
+      ostatnieKomendyGry: net.recent.slice(0, 40),
       bledyStrony: store.get('errlog', []),
       craftingFns: (() => { try { const c = W.Engine && W.Engine.crafting; const o = new Set(); for (let q = c; q && q !== Object.prototype; q = Object.getPrototypeOf(q)) Object.getOwnPropertyNames(q).forEach((k) => { try { if (typeof c[k] === 'function') o.add(k); } catch {} }); return [...o].slice(0, 60); } catch { return null; } })(),
       wolneMiejsca: game.freeBagSlots(),
@@ -4436,7 +4472,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
-    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Ulepszasz przyciskiem albo klawiszem — to zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Każdy typ składników może być przypisany tylko do jednego ulepszanego przedmiotu.',
+    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Ulepszasz przyciskiem albo klawiszem przy otwartym oknie Rzemiosło → Ulepszanie — to zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Każdy typ składników może być przypisany tylko do jednego ulepszanego przedmiotu.',
     defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, closeCraft: true, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
@@ -4546,5 +4582,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.8.8";
+MP.version = "1.8.9";
 })();
