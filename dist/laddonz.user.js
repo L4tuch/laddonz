@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.3.1
+// @version      3.3.2
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -5485,6 +5485,7 @@ ${[[32, 64], [128, 160], [160, 32], [64, 128]].map(([x, y]) => `<circle cx='${x}
     const IL = '.interface-layer';
     const body = '"Roboto", Arimo, Arial, sans-serif';
     const btn = (from, to, line, txt) => `background:linear-gradient(${from},${to})!important;color:${txt}!important;border-radius:3px!important;box-shadow:inset 0 0 0 1px ${line},inset 0 1px 0 ${t.m[0]}2e,0 1px 2px rgba(0,0,0,.55)!important;text-shadow:0 1px 1px rgba(0,0,0,.8)!important`;
+    const ha = (h, a) => { const x = String(h).replace('#', ''); const n = parseInt(x.length === 3 ? x.split('').map((ch) => ch + ch).join('') : x, 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
     const tx = texture(t), TX = `${tx.url} 0 0 / ${tx.w}px ${tx.h}px repeat`;
     const btnMain = btn(t.btn[0], t.btn[1], t.btnLine, t.btnText);
     const hover = `filter:brightness(1.18);box-shadow:inset 0 0 0 1px ${t.a1},0 0 10px ${t.glow}!important`;
@@ -5569,11 +5570,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .c-window table.table-content td, .c-window table.table-content td.mt-bd{border-color:${t.line2}!important}
 
 /* — okno łupu: gładkie tło bez pionowych krawędzi paneli, okienka przedmiotów jako spokojne kafle — */
-.c-window.mt-loot > .content{background:linear-gradient(${t.bg2}, ${t.bg1} 90px)!important}
-.c-window.mt-loot [class*="interface-element-middle-"]{border-image-source:none!important;border-image:none!important;background:transparent!important;box-shadow:none!important}
-.c-window.mt-loot .mt-lc{background-image:linear-gradient(${t.bg2},${t.bg0})!important;background-color:${t.bg1}!important}
-.c-window.mt-loot .mt-lcb{border-color:${t.m[2]}!important}
-.c-window.mt-loot .mt-lc.mt-lcb{box-shadow:inset 0 1px 0 ${t.m[0]}1a!important}
+.c-window.mt-loot > .content{background:transparent!important;box-shadow:none!important}
+/* tło okna łupów sięga aż do metalowej ramy — jedna płaszczyzna, bez pasów między ramą a środkiem */
+.c-window.mt-loot > .content::before{content:'';position:absolute;left:-15px;right:-15px;top:-25px;bottom:0;z-index:-1;pointer-events:none;border-radius:5px;background:radial-gradient(ellipse 80% 110px at 50% 0, ${t.glow}, transparent 75%), radial-gradient(ellipse 120% 95% at 50% 45%, transparent 55%, rgba(0,0,0,.5)), linear-gradient(${ha(t.bg2, 0.88)}, ${ha(t.bg0, 0.95)}), ${TX}}
+.c-window.mt-loot .content .mt-lclear, .c-window.mt-loot .content .mt-lclear:is(.mt-b0,.mt-b1,.mt-b2,.mt-bov,.mt-bd), .c-window.mt-loot .content [class*="interface-element-middle-"]{background:transparent!important;background-image:none!important;border-color:transparent!important;border-image:none!important;box-shadow:none!important}
+.c-window.mt-loot .content .mt-lin{background:transparent!important;background-image:none!important;border-color:transparent!important;box-shadow:none!important}
+/* okienko przedmiotu: szlachetny kafel — metalowa krawędź, światło od góry, głęboki cień w środku */
+.c-window.mt-loot .content .mt-lcard{background:radial-gradient(ellipse 90% 50% at 50% 0, ${ha(t.a1, 0.10)}, transparent 70%), linear-gradient(${t.bg2}, ${t.bg0})!important;border-color:${t.m[2]}!important;border-radius:5px!important;box-shadow:inset 0 0 0 1px ${t.m[2]}, inset 0 1px 0 ${t.m[0]}2e, inset 0 -10px 18px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.45)!important}
+.c-window.mt-loot .content .mt-lslot{background:radial-gradient(circle at 50% 40%, ${t.bg1}, ${t.bg0} 75%)!important;border-radius:4px!important;box-shadow:inset 0 0 0 1px ${t.m[2]}, inset 0 2px 6px rgba(0,0,0,.7), 0 1px 0 ${t.m[0]}14!important}
+.c-window.mt-loot .content .mt-lcard *:not(.button):not(.button *):not(.item *){color:${t.text}}
 
 /* — zakładki — */
 .tabs-nav .card{background:linear-gradient(${t.bg2},${t.bg0})!important;color:${t.text2}!important;box-shadow:inset 0 0 0 1px ${t.m[2]},inset 0 1px 0 ${t.m[0]}1f!important;text-shadow:0 1px 1px #000!important}
@@ -5690,13 +5695,23 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       w.classList.add('mt-loot');
       // wszystkie tła w środku okna (także kolorowe, np. brązowo-czerwone okienka przedmiotów) → kolory stylu
       const c = w.querySelector(':scope > .content'); if (!c) continue;
+      if (getComputedStyle(c).position === 'static') c.style.position = 'relative';
+      // okienko przedmiotu = największy przodek kafelka, w którym jest tylko ten jeden przedmiot
+      const cards = new Set();
+      for (const it of $$('.item', c)) {
+        let n = it; const iw = it.getBoundingClientRect().width || 32;
+        while (n.parentElement && n.parentElement !== c) {
+          const p = n.parentElement;
+          if (p.matches('.inner-content, [class*="scroll"]') || $$('.item', p).length > 1 || p.getBoundingClientRect().width > iw * 4.5) break;
+          n = p;
+        }
+        if (n !== it) { n.classList.add('mt-lcard'); cards.add(n); if (it.parentElement !== n) it.parentElement.classList.add('mt-lslot'); }
+      }
+      // reszta teł w środku okna znika — zostaje jedno, spójne tło okna (żadnych pasów po bokach)
       for (const n of $$('*', c)) {
-        if (n.closest('.item, .button, .mp-lg-hl, .mp-ibadge, .mp-lg-pop') || /interface-element-one-item-slot|item-slot/.test(String(n.className))) continue;
-        const cs = getComputedStyle(n), r = n.getBoundingClientRect();
-        const col = tone(cs.backgroundColor);
-        const bigImg = cs.backgroundImage !== 'none' && /url\(/.test(cs.backgroundImage) && r.width > 44 && r.height > 44;
-        if ((col && col.a > 0.05) || bigImg) n.classList.add('mt-lc');
-        if (parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0) n.classList.add('mt-lcb');
+        if (cards.has(n) || n.closest('.item, .button, .mp-lg-hl, .mp-ibadge, .mp-lg-pop, .mt-lslot') || n.classList.contains('mt-lslot')) continue;
+        const cs = getComputedStyle(n);
+        if (cs.backgroundImage !== 'none' || (tone(cs.backgroundColor) || { a: 0 }).a > 0.02 || parseFloat(cs.borderLeftWidth) > 0 || parseFloat(cs.borderTopWidth) > 0 || cs.borderImageSource !== 'none') n.classList.add(n.closest('.mt-lcard') ? 'mt-lin' : 'mt-lclear');
       }
     }
   }
@@ -5740,7 +5755,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function stop() {
     if (mo) { mo.disconnect(); mo = null; }
     document.removeEventListener('contextmenu', onCtx, true);
-    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi', 'mt-loot', 'mt-lc', 'mt-lcb'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
+    ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi', 'mt-loot', 'mt-lc', 'mt-lcb', 'mt-lcard', 'mt-lslot', 'mt-lclear', 'mt-lin'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
   }
   const active = () => !!(cfg && cfg.enabled && THEMES[cfg.theme] && !THEMES[cfg.theme].none);
 
@@ -7297,5 +7312,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.3.1";
+MP.version = "3.3.2";
 })();
