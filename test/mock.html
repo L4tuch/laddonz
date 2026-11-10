@@ -40,12 +40,12 @@
     this.onhover = () => {};
     this.showEq = () => {
       const w = document.createElement('div'); w.className = 'c-window border-window showeq-window';
-      w.style.cssText='position:fixed;left:50px;top:50px;width:200px;height:200px;background:#222'; const pos={1:[1,0],2:[0,1],15:[2,1],777:[1,2]}; w.innerHTML = '<div class="close-button"></div>' + [1,2,15,777].map(i => '<div class="item item-id-'+i+'-showeq" '+(i===777?'data-item-type="t-leg"':'')+' style="position:absolute;width:32px;height:32px;left:'+(10+pos[i][0]*40)+'px;top:'+(30+pos[i][1]*40)+'px"><canvas class="icon" width="32" height="32"></canvas></div>').join(''); w.querySelector('.close-button').onclick = () => { w.style.display='none'; }; if (this._w) { this._w.remove(); }
+      w.style.cssText='position:fixed;left:50px;top:50px;width:200px;height:200px;background:#222'; const pos={1:[1,0],2:[0,1],15:[2,1],777:[1,2],888:[2,2]}; w.innerHTML = '<div class="close-button"></div>' + [1,2,15,777,888].map(i => '<div class="item item-id-'+i+'-showeq'+(i===888?' item-tpl-555':'')+'" '+(i===777?'data-item-type="t-leg"':'')+' style="position:absolute;width:32px;height:32px;left:'+(10+pos[i][0]*40)+'px;top:'+(30+pos[i][1]*40)+'px"><canvas class="icon" width="32" height="32"></canvas></div>').join(''); w.querySelector('.close-button').onclick = () => { w.style.display='none'; }; if (this._w) { this._w.remove(); }
       setTimeout(() => document.body.appendChild(w), 200);
     };
   }
   const OTH = {
-    101: new Other({id:101,nick:'Wrogus',lvl:82,prof:'w',x:11,y:10,relation:1,clan:{id:7,name:'Złe Chłopaki'}}),
+    101: new Other({id:101,icon:'/x/wrogus.gif',nick:'Wrogus',lvl:82,prof:'w',x:11,y:10,relation:1,clan:{id:7,name:'Złe Chłopaki'}}),
     102: new Other({id:102,nick:'Bratanek',lvl:80,prof:'m',x:10,y:11,relation:4,clan:{id:5,name:'Moi'}}),
     103: new Other({id:103,nick:'Kumpel',lvl:79,prof:'t',x:12,y:10,relation:2}),
     104: new Other({id:104,nick:'Obcy',lvl:85,prof:'h',x:20,y:20,relation:1}),
@@ -60,6 +60,7 @@
     battle: { _s: false, _end: false, isBattleShow(){ return this._s; }, getEndBattle(){ return this._end; }, show(){} },
     interface: { showPopupMenu(menu){ window.LAST_MENU = menu; } },
     communication: { parseJSON(d){ return d; } },
+    tpls: { store: new Map([[555, { name: 'Tarcza Smoka', stat: 'rarity=legendary;legbon=dmgred', icon: 'tarcza.gif', cl: 14 }]]) },
   };
   window.message = function(t){ const m = document.createElement('div'); m.className = 'message'; m.textContent = t; document.querySelector('.big-messages').appendChild(m); setTimeout(()=>m.remove(), 3000); };
   window._g = function(task, cb){

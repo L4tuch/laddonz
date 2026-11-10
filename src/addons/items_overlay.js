@@ -141,21 +141,109 @@ MP.itemDeco = itemDeco;
 })();
 
 /* ───────── Pokaż EQ ─────────
- * Najechanie na gracza (na mapie albo w „Kto tu jest?") → jego ekwipunek + podsumowanie bonusów legendarnych.
+ * Najechanie na gracza (na mapie albo na liście graczy) → okno w stylu dymka gry, które ZASTĘPUJE dymek gry:
+ * informacje z dymka + postać z outfitem + ekwipunek ułożony jak w grze + podsumowanie bonusów.
  * Dane pobieramy tą samą funkcją co „Pokaż ekwipunek" w grze (okno gry jest na ten czas niewidoczne).
+ * Gra opisuje przedmioty innych graczy szablonami (item-tpl-<nr>) — szukamy ich w danych gry na kilka sposobów.
  */
 (() => {
   let cfg, cache = {}, tip = null, hoverId = null, lastReq = 0;
-  let busy = false, wanted = null;       // jeśli w trakcie pobierania najedziesz na innego gracza — pobierzemy jego zaraz potem
+  let busy = false, wanted = null, anchor = null, userEqClick = 0, activeHide = null;
+  const seenItems = new Map();      // dane przedmiotów/szablonów, które przeszły przez grę (id → obiekt, 'tpl:<nr>' → obiekt)
 
-  function hide() { hoverId = null; wanted = null; if (tip) tip.style.display = 'none'; }
-
-  /** Szuka w danych gry obiektów przedmiotów (mają id + name + stat/icon), do 3 poziomów w głąb. */
-  function collectItems(obj, out, depth = 0) {
-    if (!obj || typeof obj !== 'object' || depth > 3) return;
-    if ((obj.id || obj.id === 0) && obj.name && (obj.stat !== undefined || obj.icon)) { out[String(obj.id)] = obj; return; }
-    for (const v of Object.values(obj)) if (v && typeof v === 'object') collectItems(v, out, depth + 1);
+  function hide() {
+    hoverId = null; wanted = null; anchor = null;
+    document.body.classList.remove('mp-eq-on');
+    if (tip) tip.style.display = 'none';
   }
+
+  /** Zbiera obiekty wyglądające na przedmiot/szablon (mają name + stat lub icon). */
+  function collectItems(obj, out, depth = 0) {
+    if (!obj || typeof obj !== 'object' || depth > 3 || obj instanceof Node) return;
+    if (obj.name && (obj.stat !== undefined || obj.icon)) {
+      if (obj.id || obj.id === 0) out[String(obj.id)] = obj;
+      if (obj.tpl) out['tpl:' + obj.tpl] = obj;
+      return;
+    }
+    for (const [k, v] of Object.entries(obj)) {
+      if (v && typeof v === 'object' && !(v instanceof Node)) {
+        // słownik { idPrzedmiotu: {...} } — klucz to id
+        if (v.name && (v.stat !== undefined || v.icon) && /^\d+$/.test(k) && !(v.id || v.id === 0)) out[k] = v;
+        collectItems(v, out, depth + 1);
+      }
+    }
+  }
+  /** Podpinamy się pod funkcje gry, przez które przechodzą przedmioty i szablony. */
+  function hookItemFlow() {
+    const wrap = (obj, name) => {
+      if (!obj || typeof obj[name] !== 'function' || obj[name].__mpEq) return;
+      const f = obj[name];
+      obj[name] = function (...a) {
+        try { const o = {}; for (const x of a) if (x && typeof x === 'object') collectItems(x, o); for (const [k, v] of Object.entries(o)) seenItems.set(k, v); } catch {}
+        return f.apply(this, a);
+      };
+      obj[name].__mpEq = true;
+    };
+    try { const I = E().items; ['newItem', 'newItemInLocation', 'updateItem', 'updateDATA'].forEach((n) => wrap(I, n)); } catch {}
+    try {
+      const T = E().tpls;
+      if (T) {
+        const names = new Set(Object.keys(T));
+        for (let o = Object.getPrototypeOf(T); o && o !== Object.prototype; o = Object.getPrototypeOf(o)) Object.getOwnPropertyNames(o).forEach((n) => names.add(n));
+        [...names].filter((n) => /update|add|set|new|parse/i.test(n) && n !== 'constructor').forEach((n) => wrap(T, n));
+      }
+    } catch {}
+  }
+
+  /** Kontenery w Engine.items / Engine.tpls, w których gra trzyma przedmioty i szablony (Map albo słownik id → obiekt). */
+  let contCache = { t: 0, list: [] };
+  function containers() {
+    if (now() - contCache.t < 5000) return contCache.list;
+    const list = [];
+    const looks = (v) => v && typeof v === 'object' && (v.name || v.stat !== undefined);
+    const consider = (c) => {
+      if (!c || typeof c !== 'object' || c instanceof Node) return;
+      if (c instanceof Map) { for (const v of c.values()) { if (looks(v)) list.push(c); break; } return; }
+      if (Array.isArray(c)) return;
+      const ks = Object.keys(c);
+      for (let i = 0; i < Math.min(ks.length, 5); i++) if (/^\d+$/.test(ks[i]) && looks(c[ks[i]])) { list.push(c); return; }
+    };
+    for (const root of [E() && E().items, E() && E().tpls]) {
+      if (!root) continue;
+      consider(root);
+      for (const v of Object.values(root)) { consider(v); if (v && typeof v === 'object' && !(v instanceof Map) && !Array.isArray(v) && !(v instanceof Node)) for (const w of Object.values(v)) consider(w); }
+    }
+    contCache = { t: now(), list };
+    return list;
+  }
+  const fromContainers = (key) => {
+    for (const c of containers()) {
+      const v = c instanceof Map ? (c.get(key) || c.get(String(key)) || c.get(Number(key))) : (c[key] || c[String(key)]);
+      if (v && (v.name || v.stat !== undefined)) return v;
+    }
+    return null;
+  };
+  /** Funkcje gry typu get…(nrSzablonu) w Engine.tpls. */
+  const fromTplApi = (tpl) => {
+    const T = E() && E().tpls;
+    if (!T || !tpl) return null;
+    const names = new Set();
+    for (let o = T; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) Object.getOwnPropertyNames(o).forEach((n) => names.add(n));
+    for (const n of names) {
+      if (!/^get/i.test(n) || /fetch|load|request|send/i.test(n)) continue;
+      try { const f = T[n]; if (typeof f !== 'function') continue; const r = f.call(T, tpl) || f.call(T, String(tpl)); if (r && typeof r === 'object' && (r.name || r.stat !== undefined)) return r; } catch {}
+    }
+    return null;
+  };
+  /** Dane przypięte przez jQuery do elementu przedmiotu. */
+  const fromJq = (n) => {
+    try {
+      const $ = W.$ || W.jQuery; if (!$ || !$(n).data) return null;
+      const d = $(n).data(); for (const v of Object.values(d || {})) if (v && typeof v === 'object' && (v.name || v.stat !== undefined)) return v;
+    } catch {}
+    return null;
+  };
+
   /** Rzadkość z elementu DOM (data-item-type np. „t-uniupg") — zapas, gdy brak danych przedmiotu. */
   function rarityFromEl(n) {
     const t = (n.getAttribute('data-item-type') || '') + ' ' + (n.querySelector('.highlight') ? n.querySelector('.highlight').className : '');
@@ -173,44 +261,50 @@ MP.itemDeco = itemDeco;
   async function fetchRaw(id) {
     const raw = game.otherRaw(id);
     if (!raw || typeof raw.showEq !== 'function') return null;
-    // jeśli sam masz otwarte okno „Ekwipunek Postaci" — nie ruszamy go
-    if ($$('.showeq-window').some((n) => shown(n) && getComputedStyle(n).visibility !== 'hidden')) return null;
+    // sam masz otwarte okno „Ekwipunek Postaci" — nie ruszamy go
+    if ($$('.showeq-window').some((n) => shown(n) && getComputedStyle(n).visibility !== 'hidden')) return 'own-window';
+    hookItemFlow();
     const before = new Map($$('.showeq-window').map((n) => [n, shown(n) + '#' + sigOf(n)]));
     const hideCss = el('style', null, '.showeq-window{visibility:hidden!important;pointer-events:none!important}');
     document.head.appendChild(hideCss);
+    activeHide = hideCss;
     const seen = {};
-    const off = bus.on('data', (d) => collectItems(d, seen));      // odpowiedź serwera z przedmiotami gracza
-    let items = null;
-    const dbg = { id, ids: [], fromStore: 0, fromData: 0, fromDom: 0 };
+    const off = bus.on('data', (d) => collectItems(d, seen));
+    const t0 = now();
+    let items = null, w = null;
+    const dbg = { id, ids: [], tpls: [], src: {}, fromDom: 0 };
     try {
       raw.showEq();
-      const t0 = now();
-      let w = null;
-      // okno nowe ALBO to samo okno gry, które się pokazało / zmieniło zawartość (gra używa go ponownie)
       while (now() - t0 < 3000) {
-        await sleep(40);
+        await sleep(25);
         w = $$('.showeq-window').find((n) => shown(n) && n.querySelector('[class*="-showeq"]') && before.get(n) !== true + '#' + sigOf(n));
         if (w) break;
       }
       if (w) {
-        await sleep(30);
         const els = $$('[class*="item-id-"]', w).filter((n) => /item-id-\d+-showeq/.test(String(n.className)));
         const ids = els.map((n) => Number(String(n.className).match(/item-id-(\d+)-showeq/)[1]));
-        dbg.ids = ids;
-        // rozmieszczenie jak w oknie gry (hełm, błogosławieństwo, pierścienie…) — okno jest niewidoczne, ale ma układ
+        const tpls = els.map((n) => Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0);
+        dbg.ids = ids; dbg.tpls = tpls;
         const rects = els.map((n) => n.getBoundingClientRect());
-        const lookup = (iid) => {
-          let it = null;
-          try { const I = E().items; it = I.getItemById(iid) || I.getItemById(String(iid)); } catch {}
-          if (it) { dbg.fromStore++; return it; }
-          if (seen[String(iid)]) { dbg.fromData++; return seen[String(iid)]; }
+        const ways = [
+          ['store', (iid) => { const I = E().items; return I.getItemById(iid) || I.getItemById(String(iid)) || I.getItemById(iid + '-showeq'); }],
+          ['hook', (iid) => seenItems.get(String(iid))],
+          ['data', (iid) => seen[String(iid)]],
+          ['jq', (iid, tpl, n) => fromJq(n)],
+          ['cont', (iid) => fromContainers(iid)],
+          ['tplHook', (iid, tpl) => tpl && (seenItems.get('tpl:' + tpl) || seen['tpl:' + tpl])],
+          ['tplApi', (iid, tpl) => fromTplApi(tpl)],
+          ['tplCont', (iid, tpl) => tpl && fromContainers(tpl)],
+        ];
+        const lookup = (i) => {
+          for (const [name, f] of ways) { try { const r = f(ids[i], tpls[i], els[i]); if (r && (r.name || r.stat !== undefined)) { dbg.src[name] = (dbg.src[name] || 0) + 1; return r; } } catch {} }
           return null;
         };
-        let found = ids.map(lookup);
-        for (let i = 0; i < 4 && !found.every(Boolean); i++) { await sleep(80); dbg.fromStore = dbg.fromData = 0; found = ids.map(lookup); }
+        let found = els.map((n, i) => lookup(i));
+        if (!found.every(Boolean)) { await sleep(120); dbg.src = {}; found = els.map((n, i) => lookup(i)); }
         items = ids.map((iid, i) => {
           let it;
-          if (found[i]) it = game.normItem(found[i]);
+          if (found[i]) { it = game.normItem(found[i]); it.id = iid; }
           else {
             dbg.fromDom++;
             const n = els[i];
@@ -221,20 +315,22 @@ MP.itemDeco = itemDeco;
           it.pos = { x: rects[i].left, y: rects[i].top, w: rects[i].width || 32 };
           return it;
         });
-        await closeGameWindow(w);
       } else dbg.noWindow = true;
     } catch (e) { console.warn('[laddonz] showEq', e); dbg.error = String(e); }
-    finally { off(); hideCss.remove(); }
+    finally { off(); }
+    // zamykanie okna gry w tle — nie każemy czekać na podgląd
+    const userOpened = userEqClick >= t0 - 150;
+    if (w && !userOpened) closeGameWindow(w).finally(() => { hideCss.remove(); if (activeHide === hideCss) activeHide = null; });
+    else { hideCss.remove(); if (activeHide === hideCss) activeHide = null; }
     MP.pokazEq.lastDebug = dbg;
     return items;
   }
 
   /** Zamyka okno gry tak, jak zrobiłby to gracz. NIGDY go nie usuwa — gra używa tego okna ponownie. */
   async function closeGameWindow(w) {
-    const cands = $$('.close-button, [class*="close-button"], .close, [class*="close"]', w);
-    for (const c of cands) {
+    for (const c of $$('.close-button, [class*="close-button"], .close, [class*="close"]', w)) {
       try { c.click(); } catch {}
-      for (let i = 0; i < 6; i++) { if (!shown(w)) return; await sleep(30); }
+      for (let i = 0; i < 6; i++) { if (!shown(w)) return; await sleep(25); }
     }
   }
 
@@ -242,59 +338,68 @@ MP.itemDeco = itemDeco;
     const c = cache[id];
     if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
     if (busy) { wanted = id; return 'wait'; }
-    const gap = 400 - (now() - lastReq);            // nie częściej niż ~2,5 zapytania na sekundę
+    const gap = 350 - (now() - lastReq);
     if (gap > 0) await sleep(gap);
     if (hoverId !== id) return 'stale';
     busy = true; lastReq = now();
     let items = null;
     try { items = await fetchRaw(id); } finally { busy = false; }
-    if (items) cache[id] = { t: now(), items };
-    if (wanted && wanted !== id && hoverId === wanted) { const w = wanted; wanted = null; setTimeout(() => render(w), 0); }
+    if (Array.isArray(items) && items.length) cache[id] = { t: now(), items };
+    if (wanted && wanted !== id && hoverId === wanted) { const w = wanted; wanted = null; setTimeout(() => fill(w), 0); }
     return items;
   }
 
-  let anchor = null;   // dymek gry, pod którym przyklejamy podgląd (mapa)
+  /* ── wygląd ── */
+  function outfitEl(id) {
+    const raw = game.otherRaw(id);
+    const d = raw && raw.d;
+    if (!d || !d.icon) return null;
+    const base = (W.CFG && W.CFG.a_opath) || 'https://micc.garmory-cdn.cloud/obrazki/postacie/';
+    const url = /^https?:/.test(d.icon) ? d.icon : base.replace(/\/?$/, '/') + String(d.icon).replace(/^\//, '');
+    const box = el('div', { class: 'mp-eqoutfit' });
+    const img = new Image();
+    img.onload = () => {
+      const fw = Number(raw.fw) || img.width / 4, fh = Number(raw.fh) || img.height / 4;   // arkusz 4×4 klatek
+      const S = 1.5;
+      Object.assign(box.style, { width: fw * S + 'px', height: fh * S + 'px', backgroundImage: `url("${url}")`, backgroundSize: `${img.width * S}px ${img.height * S}px`, backgroundPosition: '0 0' });
+    };
+    img.src = url;
+    return box;
+  }
+
+  function headerEl(id) {
+    if (anchor && anchor.isConnected) {
+      const c = el('div', { class: anchor.className + ' mp-clone' });
+      c.innerHTML = anchor.innerHTML;
+      return c;
+    }
+    const p = game.otherById(id);
+    return el('div', { class: 'mp-eqhead2' }, el('div', { class: 'nick' }, p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id), p && p.clanName ? el('div', { class: 'clan' }, p.clanName) : null);
+  }
+
   function place(x, y) {
+    if (!tip) return;
     if (anchor && anchor.isConnected) {
       const r = anchor.getBoundingClientRect();
-      tip.style.left = clamp(r.left, 4, innerWidth - (tip.offsetWidth || 260) - 4) + 'px';
-      const below = r.bottom + 3;
-      tip.style.top = (below + (tip.offsetHeight || 120) < innerHeight ? below : Math.max(4, r.top - (tip.offsetHeight || 120) - 3)) + 'px';
+      tip.style.minWidth = Math.round(r.width) + 'px';
+      const h = tip.offsetHeight || 200, wd = tip.offsetWidth || r.width;
+      tip.style.left = clamp(r.left, 4, innerWidth - wd - 4) + 'px';
+      tip.style.top = clamp(r.top, 4, Math.max(4, innerHeight - h - 4)) + 'px';
       return;
     }
-    tip.style.left = clamp(x, 4, innerWidth - 300) + 'px';
-    tip.style.top = clamp(y, 4, innerHeight - 280) + 'px';
+    tip.style.minWidth = '';
+    tip.style.left = clamp(x, 4, innerWidth - (tip.offsetWidth || 260) - 4) + 'px';
+    tip.style.top = clamp(y, 4, innerHeight - (tip.offsetHeight || 200) - 4) + 'px';
   }
 
-  async function render(id) {
-    const p = game.otherById(id);
-    tip.innerHTML = '';
-    tip.appendChild(el('div', { class: 'mp-eqhead', style: { fontWeight: 700 } }, p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id, p && p.clanName ? el('span', { class: 'mp-dim', style: { fontWeight: 400 } }, ` [${p.clanName}]`) : null));
-    const loading = el('div', { class: 'mp-dim' }, 'Wczytuję ekwipunek…');
-    tip.appendChild(loading);
-    const items = await fetchEq(id);
-    if (hoverId !== id || items === 'wait' || items === 'stale') return;
-    loading.remove();
-    if (!items) { tip.appendChild(el('div', { class: 'mp-warnc' }, 'Nie udało się pobrać — spróbuj za chwilę.')); return; }
-    if (!items.length) { tip.appendChild(el('div', { class: 'mp-dim' }, 'Brak przedmiotów.')); return; }
-    const grid = layoutGrid(items);
-    const sum = {};
-    items.forEach((i) => { if (i.legbon) sum[i.legbon] = (sum[i.legbon] || 0) + 1; });
-    tip.append(grid, el('div', { class: 'mp-eqsum', style: { fontSize: '12px' } },
-      el('div', null, 'Legendy: ', el('b', null, String(items.filter((i) => i.rarity === 'legendary').length)), ' · Heroiki: ', el('b', null, String(items.filter((i) => i.rarity === 'heroic').length))),
-      Object.keys(sum).length ? el('div', { style: { marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px' } }, Object.entries(sum).map(([k, n]) => el('span', { class: 'mp-chip', style: { padding: '2px 8px' }, title: MP.legName(k) }, `${MP.legAbbr(k)} ×${n}`))) : el('div', { class: 'mp-dim' }, 'Brak bonusów legendarnych')));
-    if (anchor) place();
-  }
-
-  /** Siatka w układzie okna gry: pozycje przedmiotów przeliczone na komórki 34 px. */
+  /** Siatka w układzie okna gry: pozycje przedmiotów przeliczone na komórki. */
   function layoutGrid(items) {
-    const cell = (it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: it.name ? `${it.name} (${it.rarity})` : it.rarity },
+    const cell = (it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
       it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
       it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon)) : null);
     const withPos = items.filter((i) => i.pos && i.pos.w);
     if (withPos.length !== items.length || !items.length) return el('div', { class: 'mp-eqgrid' }, items.map(cell));
     const minX = Math.min(...withPos.map((i) => i.pos.x)), minY = Math.min(...withPos.map((i) => i.pos.y));
-    // rozstaw slotów w oknie gry = najmniejsza różnica między kolumnami/wierszami
     const step = (vals) => {
       const u = [...new Set(vals.map((v) => Math.round(v)))].sort((a, b) => a - b);
       let m = Infinity;
@@ -302,7 +407,7 @@ MP.itemDeco = itemDeco;
       return isFinite(m) ? m : withPos[0].pos.w + 2;
     };
     const ux = step(withPos.map((i) => i.pos.x)), uy = step(withPos.map((i) => i.pos.y));
-    const S = 36;                                          // nasz rozstaw
+    const S = 36;
     let maxC = 0, maxR = 0;
     const box = el('div', { class: 'mp-eqlayout' });
     for (const it of withPos) {
@@ -317,61 +422,82 @@ MP.itemDeco = itemDeco;
     return box;
   }
 
-  function show(id, x, y, force, anc) {
-    if (!cfg.enabled && !force) return;
-    if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass' }); document.body.appendChild(tip); }
-    anchor = anc || null;
-    tip.classList.toggle('gamey', !!anchor);
-    place(x, y);
-    tip.style.display = 'block';
-    if (hoverId === id) return;          // ten sam gracz — tylko przesuwamy
-    hoverId = id;
-    render(id);
+  function summaryEl(items) {
+    const sum = {};
+    items.forEach((i) => { if (i.legbon) sum[i.legbon] = (sum[i.legbon] || 0) + 1; });
+    const leg = items.filter((i) => i.rarity === 'legendary').length, her = items.filter((i) => i.rarity === 'heroic').length;
+    const known = items.every((i) => i.name);
+    return el('div', { class: 'mp-eqsum' },
+      el('div', null, 'Legendy: ', el('b', null, String(leg)), ' · Heroiki: ', el('b', null, String(her))),
+      Object.keys(sum).length
+        ? el('div', { class: 'mp-eqbons' }, Object.entries(sum).map(([k, n]) => el('span', { class: 'mp-chip', title: MP.legName(k) }, `${MP.legAbbr(k)} ×${n}`)))
+        : el('div', { class: 'mp-dim' }, known ? 'Brak bonusów legendarnych' : 'Bonusy: brak danych z gry'));
   }
 
-  /*
-   * Mapa: gra pokazuje własny dymek z nickiem gracza (.tip-wrapper.normal-tip — sprawdzone diagnostyką).
-   * Gdy dymek z nickiem się pojawi → pokazujemy EQ; gdy zniknie albo zmieni się gracz → chowamy/podmieniamy.
-   * Dodatkowo hak na onhover gracza, jeśli gra go wywołuje.
-   */
+  let eqBox = null, sumBox = null;
+  function build(id) {
+    tip.innerHTML = '';
+    eqBox = el('div', { class: 'mp-eqmain' }, el('div', { class: 'mp-dim mp-eqload' }, 'Wczytuję ekwipunek…'));
+    sumBox = el('div');
+    tip.append(headerEl(id), el('div', { class: 'mp-eqbody' }, outfitEl(id), eqBox), sumBox);
+  }
+  async function fill(id) {
+    const items = await fetchEq(id);
+    if (hoverId !== id || items === 'wait' || items === 'stale') return;
+    eqBox.innerHTML = '';
+    if (items === 'own-window') eqBox.appendChild(el('div', { class: 'mp-dim mp-eqload' }, 'Masz otwarte okno ekwipunku z gry.'));
+    else if (!items) eqBox.appendChild(el('div', { class: 'mp-warnc mp-eqload' }, 'Nie udało się pobrać.'));
+    else if (!items.length) eqBox.appendChild(el('div', { class: 'mp-dim mp-eqload' }, 'Brak założonych przedmiotów.'));
+    else { eqBox.appendChild(layoutGrid(items)); sumBox.innerHTML = ''; sumBox.appendChild(summaryEl(items)); }
+    place();
+  }
+
+  function show(id, x, y, force, anc) {
+    if (!cfg.enabled && !force) return;
+    if (!tip) { tip = el('div', { id: 'mp-eqtip', class: 'mp-glass gamey' }); document.body.appendChild(tip); }
+    const same = hoverId === id && anchor === (anc || null);
+    anchor = anc || null;
+    document.body.classList.toggle('mp-eq-on', !!anchor);      // chowa dymek gry — nasze okno go zastępuje
+    tip.style.display = 'block';
+    if (!same) { hoverId = id; build(id); fill(id); }
+    place(x, y);
+  }
+
   function watchHover() {
-    let mx = 0, my = 0, shift = false, src = null;   // src: 'map' | 'list' | null — skąd pokazany podgląd
-    const follow = () => { if (tip && tip.style.display === 'block' && src) place(mx + 18, my + 14); };
-    let tipNode = null;
+    let mx = 0, my = 0, shift = false, src = null, tipNode = null;
     const want = (id, from, anc) => {
       if (!cfg.enabled) return;
       if (from === 'map' && (!cfg.mapHover || (cfg.needShift && !shift))) return;
       if (from === 'list' && !cfg.listHover) return;
       src = from;
       show(id, mx + 18, my + 14, false, anc);
-      if (anc) place();
     };
     const stop = (from) => { if (src === from) { src = null; hide(); } };
 
-    /* MAPA: gra pokazuje przy kursorze dymek z nickiem (.tip-wrapper.normal-tip).
-       Liczy się tylko dymek widoczny TUŻ PRZY kursorze — gdy zjedziesz z gracza, dymek znika
-       albo zostaje w starym miejscu, więc podgląd chowamy. */
+    /* MAPA: dymek gry z nickiem przy kursorze (.tip-wrapper.normal-tip). Dymek jest tylko „wycięty" (clip-path),
+       więc nadal wiemy, gdzie jest i czy gra go pokazuje. */
     const mapCheck = () => {
       if (!cfg.enabled || !cfg.mapHover || src === 'list') return;
       const tipSel = (cfg.tipSelector || '').split('\n').map((x) => x.trim()).filter(Boolean).join(',');
       let p = null;
+      tipNode = null;
       if (tipSel) {
         for (const n of $$(tipSel)) {
-          if (n.closest('.mp-glass') || !isVisible(n)) continue;
+          if (n.closest('#mp-eqtip, .mp-glass') || !isVisible(n)) continue;
           const r = n.getBoundingClientRect();
           const dx = Math.max(r.left - mx, 0, mx - r.right), dy = Math.max(r.top - my, 0, my - r.bottom);
-          if (Math.hypot(dx, dy) > 90) continue;                       // dymek nie przy kursorze
+          if (Math.hypot(dx, dy) > 90) continue;
           const txt = (n.textContent || '').toLowerCase();
-          p = game.others().find((o) => o.nick && txt.includes(o.nick.toLowerCase()));
+          p = game.others().filter((o) => o.nick && txt.includes(o.nick.toLowerCase())).sort((a, b) => b.nick.length - a.nick.length)[0] || null;
           if (p) { tipNode = n; break; }
         }
       }
       if (p) want(p.id, 'map', tipNode); else stop('map');
     };
 
-    /* LISTA GRACZY W GRZE („Kto tu jest" gry) i lista laddonz: najechanie na wiersz → podgląd, zjechanie → koniec */
+    /* LISTA GRACZY (w grze i w laddonz) */
     const listRow = (t) => t && t.closest && t.closest('.one-other, .tw-list-item, .mp-prow');
-    const nickFromRow = (row) => {
+    const playerFromRow = (row) => {
       if (row.dataset && row.dataset.pid) return game.otherById(row.dataset.pid);
       const txt = (row.textContent || '').toLowerCase();
       return game.others().filter((o) => o.nick && txt.includes(o.nick.toLowerCase())).sort((a, b) => b.nick.length - a.nick.length)[0] || null;
@@ -379,37 +505,44 @@ MP.itemDeco = itemDeco;
     document.addEventListener('mouseover', (e) => {
       const row = listRow(e.target);
       if (!row) return;
-      const p = nickFromRow(row);
-      if (p) want(p.id, 'list');
+      const p = playerFromRow(row);
+      if (p) { const r = row.getBoundingClientRect(); mx = r.right; my = r.top; want(p.id, 'list'); }
     }, true);
     document.addEventListener('mouseout', (e) => {
       const row = listRow(e.target);
-      if (!row) return;
-      if (e.relatedTarget && row.contains(e.relatedTarget)) return;      // nadal w tym samym wierszu
+      if (!row || (e.relatedTarget && row.contains(e.relatedTarget))) return;
       stop('list');
     }, true);
 
     let raf = 0;
     document.addEventListener('mousemove', (e) => {
       mx = e.clientX; my = e.clientY; shift = e.shiftKey;
-      follow();
       if (!raf) raf = requestAnimationFrame(() => { raf = 0; mapCheck(); });
     }, true);
     document.addEventListener('mouseleave', () => { stop('map'); stop('list'); });
-    new MutationObserver(debounce(mapCheck, 40)).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+    new MutationObserver(debounce(mapCheck, 30)).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+
+    /* zwykłe „Pokaż ekwipunek" z menu gry działa niezależnie: gdy go klikniesz, nie chowamy ani nie zamykamy okna gry */
+    document.addEventListener('click', (e) => {
+      const t = e.target && e.target.closest && e.target.closest('div, span, button, li');
+      if (t && /^poka[żz] ekwipunek$/i.test((t.textContent || '').trim())) {
+        userEqClick = now();
+        if (activeHide) { activeHide.remove(); activeHide = null; }
+        hide();
+      }
+    }, true);
   }
 
   MP.pokazEq = {
-    show: () => {},   // lista laddonz obsługiwana przez watchHover (mouseover/mouseout)
     showForce: (id, x, y) => { show(id, x, y, true); setTimeout(() => document.addEventListener('mousedown', hide, { once: true, capture: true }), 50); },
     hide,
   };
 
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
-    desc: 'Po najechaniu na gracza — na mapie albo na liście graczy (w grze i w laddonz) — pokazuje jego ekwipunek i podsumowanie bonusów legendarnych. Gdy zjedziesz kursorem z gracza, podgląd znika.',
-    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, cacheSec: 120, tipSelector: '.tip-wrapper.normal-tip' },
-    notes: () => [{ type: 'info', text: 'Podgląd korzysta z tej samej funkcji co „Pokaż ekwipunek" w grze, więc pierwszy podgląd danego gracza trwa tyle, ile odpowiedź serwera. Kolejne przez 2 minuty są natychmiastowe.' }],
+    desc: 'Po najechaniu na gracza — na mapie albo na liście graczy — zamiast zwykłego dymka gry pokazuje rozszerzony: informacje o graczu, jego postać z outfitem, ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych. Zwykłe „Pokaż ekwipunek" z menu gry działa dalej normalnie.',
+    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, cacheSec: 300, tipSelector: '.tip-wrapper.normal-tip' },
+    notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
       { key: 'listHover', type: 'bool', label: 'Najechanie na gracza na liście graczy (w grze i w laddonz)' },
@@ -419,8 +552,10 @@ MP.itemDeco = itemDeco;
     ],
     init(c) {
       cfg = c;
-      // migracja ustawień z wcześniejszych wersji
-      if (!c._v12) { c._v12 = true; c.needShift = false; c.tipSelector = '.tip-wrapper.normal-tip'; config.save(); }
+      if (!c._v12) { c._v12 = true; c.needShift = false; c.tipSelector = '.tip-wrapper.normal-tip'; }
+      if (!c._v16) { c._v16 = true; c.cacheSec = 300; }
+      config.save();
+      hookItemFlow();
       watchHover();
     },
     onToggle(on) { if (!on) hide(); },
