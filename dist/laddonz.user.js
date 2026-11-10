@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      2.0.1
+// @version      2.0.2
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -570,7 +570,8 @@ const DEFAULT_COMMANDS = {
   partyInvite:  { t: 'party&a=inv&id={id}', destructive: false, label: 'Zaproszenie do grupy', how: 'Zaproś ręcznie kogoś do grupy.' },
   partyDisband: { t: 'party&a=disband', destructive: false, label: 'Rozwiązanie grupy', how: 'Rozwiąż grupę przyciskiem w oknie grupy.' },
   useItem:      { t: 'moveitem&st=1&id={id}', destructive: false, label: 'Użycie przedmiotu', how: 'Użyj (2× klik) dowolnej mikstury.' },
-  eqSet:        { t: '', destructive: false, label: 'Zmiana zestawu', how: 'Przełącz ręcznie zestaw ekwipunku.' },
+  // potwierdzone w grze (raport): zmiana zestawu = builds&action=updateCurrent&id=<nr>
+  eqSet:        { t: 'builds&action=updateCurrent&id={id}', verified: true, destructive: false, label: 'Zmiana zestawu', how: 'Przełącz ręcznie zestaw ekwipunku.' },
   otherEq:      { t: '', destructive: false, label: 'Podgląd EQ gracza', how: 'Kliknij u gracza „Pokaż ekwipunek".' },
   friendAdd:    { t: '', destructive: false, label: 'Dodanie do znajomych', how: 'Dodaj ręcznie kogoś do znajomych.' },
   // potwierdzone w grze (raport z okna rzemiosła): podgląd → ulepszenie → gra zadaje pytanie → odpowiedź „Tak" wysyła sama gra.
@@ -4063,39 +4064,92 @@ MP.itemDeco = itemDeco;
   const S = { disbandArmed: false, set: null };
 
   /*
-   * Zmiana zestawu po walce: w trakcie walki kliknięcie numeru zestawu przy ekwipunku nie zmienia go od razu
-   * (gra i tak nie pozwala) — zapamiętujemy wybór i zaraz po walce klikamy ten numer za Ciebie.
+   * Zmiana zestawu po walce. Prawy klik na numerze zestawu przy ekwipunku (także przed walką) → „Zmień po walce"
+   * → lista Twoich zestawów z nazwami. Zaraz po zakończeniu walki zestaw przełącza się tą samą komendą co w grze
+   * (builds&action=updateCurrent). Ponowny wybór tego samego albo „Nie zmieniaj" anuluje.
    */
-  const SET_ANC = '[class*="set"], [class*="zestaw"], [class*="Set"]';
-  function setButtonFrom(t) {
-    if (!t || !t.closest || t.closest('.mp-glass, #mp-qbar, #mp-qpop')) return null;
-    let btn = t;
-    for (let i = 0; i < 3 && btn && !/^\s*\d\s*$/.test(btn.textContent || ''); i++) btn = btn.parentElement;
-    if (!btn || !/^\s*\d\s*$/.test(btn.textContent || '')) return null;
-    if (!btn.closest(SET_ANC)) return null;
-    return { el: btn, num: (btn.textContent || '').trim(), cls: String(btn.className || '') };
+  const BUILD_ANC = '[class*="build"], [class*="Build"], [class*="zestaw"], [class*="eq-set"], [class*="eqset"]';
+  /** Lista zestawów: z danych gry (moduł zestawów), z listy rozwijanej w grze albo zapamiętana. */
+  function buildList() {
+    let list = [];
+    try {
+      const E0 = W.Engine || {};
+      for (const k of Object.keys(E0).filter((x) => /build/i.test(x))) {
+        const o = E0[k]; if (!o || typeof o !== 'object') continue;
+        const cands = [o.builds, o.list, o.data, o.d, typeof o.getBuilds === 'function' ? o.getBuilds() : null, typeof o.getList === 'function' ? o.getList() : null];
+        for (const c of cands) {
+          const arr = c instanceof Map ? [...c.values()] : Array.isArray(c) ? c : c && typeof c === 'object' ? Object.values(c) : [];
+          const got = arr.map((b) => b && typeof b === 'object' ? { id: Number(b.id ?? b.nr ?? b.number), name: String(b.name ?? b.title ?? '') } : null).filter((b) => b && b.id > 0);
+          if (got.length) { list = got; break; }
+        }
+        if (list.length) break;
+      }
+    } catch {}
+    if (!list.length) {
+      // pozycje listy rozwijanej gry: „2. Zestaw 2"
+      const seen = new Map();
+      $$(BUILD_ANC + ' *, ' + BUILD_ANC).forEach((n) => { const m = (n.textContent || '').trim().match(/^(\d{1,2})\.\s*(.{1,30})$/); if (m && !n.children.length) seen.set(Number(m[1]), m[2].trim()); });
+      list = [...seen].map(([id, name]) => ({ id, name }));
+    }
+    const saved = store.get('sets:names', {}) || {};
+    if (list.length) { list.forEach((b) => { if (b.name) saved[b.id] = b.name; }); store.set('sets:names', saved); }
+    const ids = new Set([...list.map((b) => b.id), ...Object.keys(saved).map(Number)]);
+    const cur = currentBuild();
+    if (cur) ids.add(cur);
+    if (ids.size < 2) [1, 2, 3].forEach((i) => ids.add(i));
+    return [...ids].filter(Boolean).sort((x, y) => x - y).map((id) => ({ id, name: (list.find((b) => b.id === id) || {}).name || saved[id] || `Zestaw ${id}` }));
   }
-  function findSetEl(s) {
-    if (s.el && s.el.isConnected) return s.el;
-    const sel = s.cls ? '.' + s.cls.trim().split(/\s+/).filter((c) => !/^mp-/.test(c)).join('.') : null;
-    const cands = sel ? $$(sel) : $$(SET_ANC + ' *');
-    return cands.find((n) => (n.textContent || '').trim() === s.num) || null;
+  function buildButtonFrom(t) {
+    if (!t || !t.closest || t.closest('.mp-glass, #mp-qbar, #mp-qpop, #mp-ctx')) return null;
+    let n = t;
+    for (let i = 0; i < 4 && n && !/^\s*\d{1,2}\s*$/.test(n.textContent || ''); i++) n = n.parentElement;
+    if (!n || !/^\s*\d{1,2}\s*$/.test(n.textContent || '') || !n.closest(BUILD_ANC)) return null;
+    return n;
   }
-  function markSet(on) {
+  function currentBuild() {
+    const b = $$(BUILD_ANC).map((n) => buildButtonFrom(n)).find(Boolean);
+    return b ? Number((b.textContent || '').trim()) : 0;
+  }
+  function markSet() {
     $$('.mp-setq').forEach((n) => n.classList.remove('mp-setq'));
-    if (on && S.set) { const e = findSetEl(S.set); if (e) e.classList.add('mp-setq'); }
+    if (!S.set) return;
+    const b = $$(BUILD_ANC).map((n) => buildButtonFrom(n)).find(Boolean);
+    if (b) { b.classList.add('mp-setq'); b.title = `Po walce: ${S.set.name}`; }
+  }
+  function armSet(b) {
+    if (!b || (S.set && S.set.id === b.id)) { S.set = null; markSet(); toast('Szybka Rączka: zestaw nie zmieni się po walce'); return; }
+    S.set = b; markSet();
+    toast(`Szybka Rączka: po walce zmienię zestaw na „${b.name}"`);
+  }
+  async function switchSet(s) {
+    if (currentBuild() === s.id) return;
+    const r = await net.send('eqSet', { id: s.id }, { src: 'Szybka Rączka', urgent: true });
+    if (!r.ok) toast(`Szybka Rączka: nie udało się zmienić zestawu na „${s.name}"`, 'warn');
   }
   function hookSets() {
-    document.addEventListener('click', (e) => {
+    // prawy klik na numerze zestawu → menu z listą zestawów
+    document.addEventListener('contextmenu', (e) => {
       if (!cfg.enabled) return;
-      const b = setButtonFrom(e.target);
-      S.lastClick = b ? b.cls : (e.target && String(e.target.className || '')).slice(0, 80);
-      if (!b || !game.inBattle()) return;
+      const btn = buildButtonFrom(e.target);
+      if (!btn) return;
       e.preventDefault(); e.stopPropagation();
-      if (S.set && S.set.num === b.num) { S.set = null; markSet(false); toast('Szybka Rączka: anulowano zmianę zestawu po walce'); return; }
-      S.set = b; markSet(true);
-      toast(`Szybka Rączka: po walce zmienię zestaw na ${b.num}`);
+      const cur = Number((btn.textContent || '').trim());
+      const list = buildList().filter((b) => b.id !== cur);
+      menus.showOwn(e.clientX, e.clientY, [
+        ...list.map((b) => ({ label: `Po walce: ${b.id}. ${b.name}${S.set && S.set.id === b.id ? ' (wybrany)' : ''}`, fn: () => armSet(b) })),
+        ...(S.set ? [{ label: 'Nie zmieniaj po walce', fn: () => armSet(null) }] : []),
+      ], 'Zmień zestaw po walce');
     }, true);
+    // w trakcie walki zwykły wybór zestawu z listy gry → zapamiętujemy i zmieniamy po walce
+    document.addEventListener('click', (e) => {
+      if (!cfg.enabled || !game.inBattle()) return;
+      const t = e.target && e.target.closest && e.target.closest(BUILD_ANC + ' *');
+      const m = t && (t.textContent || '').trim().match(/^(\d{1,2})\.\s*(.{1,30})$/);
+      if (!m) return;
+      e.preventDefault(); e.stopPropagation();
+      armSet({ id: Number(m[1]), name: m[2].trim() });
+    }, true);
+    setInterval(() => { if (S.set) markSet(); }, 2000);
   }
 
   function queued(id) { return cfg.queue.find((q) => q.id === Number(id)); }
@@ -4122,13 +4176,8 @@ MP.itemDeco = itemDeco;
     try {
       // najpierw rozwiązanie grupy (nie zmienia mapy), potem przedmioty — teleporty na końcu
       if (S.disbandArmed) { S.disbandArmed = false; MP.cook ? MP.cook.disband() : net.send('partyDisband', {}, { src: 'Szybka Rączka', urgent: true }); }
-      // zmiana zestawu — kliknięcie numeru zestawu tak jak gracz (przed użyciem przedmiotów)
-      if (S.set) {
-        const s = S.set; S.set = null; markSet(false);
-        let el2 = null;
-        for (let t = 0; t < 10 && !(el2 = findSetEl(s)); t++) await sleep(100);
-        if (el2) { el2.click(); await sleep(250); } else toast('Szybka Rączka: nie znalazłam przycisku zestawu ' + s.num, 'warn');
-      }
+      // zmiana zestawu (przed użyciem przedmiotów) — ta sama komenda, którą wysyła gra
+      if (S.set) { const st = S.set; S.set = null; markSet(); await switchSet(st); await sleep(250); }
       const items = cfg.queue.slice().sort((a, b) => a.tp - b.tp);
       for (const q of items) {
         cfg.queue = cfg.queue.filter((x) => x.id !== q.id);
@@ -4168,7 +4217,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
-    desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". W trakcie walki kliknij numer zestawu przy ekwipunku — zestaw zmieni się zaraz po walce (ponowne kliknięcie anuluje).',
+    desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". Prawy klik na numerze zestawu przy ekwipunku → wybierz zestaw, który ma się założyć zaraz po walce.',
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
       { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
@@ -4192,7 +4241,7 @@ MP.itemDeco = itemDeco;
       itemDeco.add((node, it, id) => (cfg.enabled && queued(id) ? { cls: 'queued', icon: 'clock', title: 'Szybka Rączka: zostanie użyty po walce' } : null));
       // od razu po zakończeniu walki
       hookSets();
-      MP.szybka = { debug: () => ({ zestawWKolejce: S.set && { num: S.set.num, cls: S.set.cls }, ostatniKlik: S.lastClick }) };
+      MP.szybka = { debug: () => ({ zestawWKolejce: S.set, zestawy: buildList(), obecny: currentBuild(), engineBuild: Object.keys(W.Engine || {}).filter((k) => /build/i.test(k)) }), buildList, armSet };
       bus.on('battle:end', () => { if (cfg.enabled && cfg.queue.length + (S.disbandArmed ? 1 : 0) + (S.set ? 1 : 0)) runQueue(); });
       if (!/widget-party/.test(cfg.partySelector || '')) { cfg.partySelector = '.widget-party\n[class*="widget-party"]\n' + (cfg.partySelector || ''); config.save(); }
       hookPartyIcon();
@@ -4893,5 +4942,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "2.0.1";
+MP.version = "2.0.2";
 })();
