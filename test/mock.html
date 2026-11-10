@@ -16,7 +16,7 @@
 <div class="big-messages" style="position:absolute;top:40%;left:0;right:0;text-align:center;pointer-events:none"></div>
 <div class="new-chat-window chat-tpl">[Czat] Ktoś: siema<br>[Klan] Bratanek: lecimy na e2</div>
 <div class="eq" id="eq"></div>
-<div class="loot-wnd" id="loot"><div class="item item-id-900">łup</div><div class="item item-id-901">łup</div><div class="item item-id-902">łup</div></div>
+<div class="loot-wnd" id="loot"><div class="item item-id-900">łup</div><div class="item item-id-901">łup</div><div class="item item-id-902">łup</div><div class="item item-id-903" id="it903">łup</div></div>
 <script>
   window.SENT = [];
   const now = Math.floor(Date.now()/1000);
@@ -80,5 +80,8 @@
   };
   const eq = document.getElementById('eq');
   Object.values(ITEMS).forEach(i => { const d = document.createElement('div'); d.className = 'item item-id-' + i.id; d.textContent = i.name.split(' ')[0]; d.addEventListener('contextmenu', (e) => { e.preventDefault(); /*USE_MENU*/ Engine.interface.showPopupMenu([['Użyj', () => _g('use-real&id=' + i.id)], ['Wyrzuć', () => {}], ['Zniszcz', () => {}]], e); }); eq.appendChild(d); });
+  const i903=document.getElementById('it903');
+  i903.addEventListener('mouseenter',()=>{const t=document.createElement('div'); t.className='tip-wrapper'; t.id='tip903'; t.style.cssText='position:fixed;left:10px;top:10px'; t.innerHTML='<div>Tarcza obita skałą</div><div>Wymagana profesja: Wojownik, Paladyn</div><div>Wymagany poziom: 34</div>'; document.body.appendChild(t);});
+  i903.addEventListener('mouseleave',()=>document.getElementById('tip903')?.remove());
 </script>
 </body></html>

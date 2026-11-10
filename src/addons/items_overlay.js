@@ -335,7 +335,9 @@ MP.itemDeco = itemDeco;
     try {
       hookItemFlow();
       const tpl = Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0;
-      const r = lookupRaw(Number(id), tpl, n);
+      let r = lookupRaw(Number(id), tpl, n);
+      // łup: dane przedmiotów w podglądzie łupu gry
+      if (!r) { const o = {}; collectItems(E() && E().lootPreview, o); r = o[String(id)] || (tpl && o['tpl:' + tpl]) || null; }
       return r ? game.normItem(r) : null;
     } catch { return null; }
   };

@@ -133,6 +133,13 @@
   let cfg, last = { ids: [], prof: {}, t: 0 };
   const LOOT_SEL = '.loot-wnd, .loots-window, .loot-window, [class*="loot-window"], [class*="loots-window"]';
 
+  const PROF_BY_NAME = { wojownik: 'w', paladyn: 'p', 'tancerz ostrzy': 'b', 'tancerka ostrzy': 'b', mag: 'm', tropiciel: 't', tropicielka: 't', 'łowca': 'h', 'łowczyni': 'h', lowca: 'h' };
+  /** Profesja członka grupy z okna grupy gry: wiersz „Nick (41p)". */
+  function profFromParty(id) {
+    const row = document.querySelector(`[class*="other-party-id-${id}"]`);
+    const m = row && (row.textContent || '').match(/\(\s*\d+\s*([wpbmth])\s*\)/i);
+    return m ? m[1].toLowerCase() : '';
+  }
   /** Gracze (bez NPC i towarzyszy) z drużyny bohatera w bieżącej walce: [{ id, prof }]. */
   function fighters() {
     const b = E() && E().battle;
@@ -162,7 +169,7 @@
       const id = idOf(w);
       if (!((sameTeam(w) && isPlayer(w)) || party.has(id))) continue;
       const o = game.otherById(id);
-      out[id] = String(f(w, 'prof') || (o && o.prof) || (id === h.id ? h.prof : '') || '');
+      out[id] = String(f(w, 'prof') || (o && o.prof) || (id === h.id ? h.prof : '') || profFromParty(id) || '');
     }
     out[h.id] = h.prof || out[h.id] || '';
     return out;
@@ -178,22 +185,52 @@
   }
   function participants() {
     snapshot();
+    for (const id of last.ids) if (!last.prof[id]) { const o = game.otherById(id); last.prof[id] = (o && o.prof) || profFromParty(id) || ''; }
     if (last.ids.length && now() - last.t < 5 * 60000) return last;
     // nie udało się odczytać walki — członkowie grupy
     const h = game.hero();
     const ids = game.partyMembers().length ? game.partyMembers() : [h && h.id].filter(Boolean);
     const prof = {};
-    ids.forEach((id) => { const o = game.otherById(id); prof[id] = id === (h && h.id) ? h.prof : (o ? o.prof : ''); });
+    ids.forEach((id) => { const o = game.otherById(id); prof[id] = id === (h && h.id) ? h.prof : ((o && o.prof) || profFromParty(id)); });
     return { ids, prof };
   }
 
-  /** Profesje, które mogą dostać przedmiot (statystyka „reqp", np. „wb"); null = bez wymagań. */
+  /** Profesje przedmiotu (statystyka „reqp", np. „wp"); null = bez wymagań; undefined = jeszcze nie wiadomo. */
+  const reqCache = new Map();
   function reqProfs(node) {
     const id = game.itemIdFromEl(node);
+    if (id && reqCache.has(id)) return reqCache.get(id);
     let it = id ? game.itemById(id) : null;
     if (!it && MP.anyLookup) it = MP.anyLookup(node, id);
-    const r = it && it.stats ? (it.stats.reqp || it.stats.reqprof || '') : '';
-    return r ? String(r).toLowerCase().replace(/[^a-z]/g, '').split('') : null;
+    if (it && it.stats) {
+      const r = it.stats.reqp || it.stats.reqprof || '';
+      const v = r ? String(r).toLowerCase().replace(/[^a-z]/g, '').split('') : null;
+      if (id) reqCache.set(id, v);
+      return v;
+    }
+    readFromTip(node, id);       // brak danych przedmiotu — odczyt z opisu przedmiotu (dymka gry)
+    return undefined;
+  }
+  /** „Wymagana profesja: Wojownik, Paladyn" z dymka gry nad przedmiotem. */
+  const tipBusy = new Set();
+  function readFromTip(node, id) {
+    if (!id || tipBusy.has(id)) return;
+    tipBusy.add(id);
+    const r = node.getBoundingClientRect();
+    const opt = { bubbles: true, cancelable: true, view: W, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
+    ['mouseover', 'mouseenter', 'mousemove'].forEach((t) => node.dispatchEvent(new MouseEvent(t, opt)));
+    setTimeout(() => {
+      let v = null;
+      const tip = $$('.tip-wrapper').find((n) => isVisible(n) && !n.closest('#mp-eqtip'));
+      const txt = tip ? (tip.textContent || '') : '';
+      const m = txt.match(/Wymagana profesja:\s*([^\n]+?)(?:Wymagany|Warto|$)/i);
+      if (m) v = Object.entries(PROF_BY_NAME).filter(([name]) => new RegExp(name, 'i').test(m[1])).map(([, l]) => l);
+      if (m && !v.length) v = null;
+      if (tip) reqCache.set(id, v && v.length ? [...new Set(v)] : null);
+      ['mouseout', 'mouseleave'].forEach((t) => node.dispatchEvent(new MouseEvent(t, opt)));
+      tipBusy.delete(id);
+      if (tip) decorate();
+    }, 120);
   }
 
   function decorate() {
@@ -205,6 +242,13 @@
     for (const w of wins) {
       for (const it of $$('.item', w)) {
         const req = reqProfs(it);
+        if (req === undefined) {           // czekamy na odczyt wymagań — nie pokazujemy błędnego wyniku
+          if (getComputedStyle(it).position === 'static') it.style.position = 'relative';
+          let b0 = it.querySelector(':scope > .mp-ibadge.chance');
+          if (!b0) { b0 = el('div', { class: 'mp-ibadge chance' }); it.appendChild(b0); }
+          b0.textContent = '…'; b0.title = 'Sprawdzam wymagania przedmiotu';
+          continue;
+        }
         // Zasady łupu: gracze z profesją pasującą do przedmiotu losują PIERWSI. Gdy w walce nie ma nikogo
         // z pasującą profesją — przedmiot losują wszyscy uczestnicy. Przedmiot bez wymagań — wszyscy.
         const matching = req ? P.ids.filter((id) => req.includes(String(P.prof[id] || '').toLowerCase())) : [];
@@ -239,7 +283,7 @@
       bus.on('battle:start', () => { last = { ids: [], prof: {}, t: 0 }; });
       setInterval(() => { if (cfg.enabled && game.ready() && E().battle && (game.inBattle() || (typeof E().battle.isBattleShow === 'function' && E().battle.isBattleShow()))) snapshot(); }, 500);
       bus.on('battle:end', () => { if (cfg.enabled) snapshot(); });
-      MP.ktozlapie = { fighters, participants };
+      MP.ktozlapie = { fighters, participants, debug: () => ({ uczestnicy: participants(), wymagania: Object.fromEntries(reqCache) }) };
     },
   });
 })();
@@ -318,9 +362,7 @@
   async function disband() {
     invited = {};
     game._partyCache = [];
-    // jak gracz: przycisk „Rozwiąż grupę" w oknie grupy gry; zapas: komenda
-    const btn = $$('.party__disband, [class*="party__disband"], [class*="disband"]').find(isVisible);
-    if (btn) { btn.click(); toast('Rozwiązuję grupę'); return; }
+    // bez okienka „Czy na pewno chcesz rozwiązać grupę?" — od razu komenda rozwiązania (działała od początku)
     await net.send('partyDisband', {}, { src: 'Let\'s Cook', urgent: true });
     toast('Rozwiązuję grupę');
   }
