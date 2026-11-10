@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      3.4.5
+// @version      3.4.6
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -6628,8 +6628,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     kasyno: { ring: 'kasyno', item: 'pop', glow: '#ffc83a' },
     disco: { ring: 'disco', item: 'hue', glow: '#ff4fd8' },
   };
+  let curStyle = null;   // styl aktualnie odtwarzanego efektu (Test przy innym stylu niż wybrany)
   function fieldSpec() {
-    if (cfg.style !== 'wlasny') return FIELD[cfg.style] || FIELD.thor;
+    const st = curStyle || cfg.style;
+    if (st !== 'wlasny') return FIELD[st] || FIELD.thor;
     const cc = cfg.custom || {};
     return { ring: cc.ring || 'wlasny', item: cc.itemFx || 'glow', glow: cc.color || '#ff9a1f' };
   }
@@ -6913,6 +6915,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   async function play(styleKey, opts = {}) {
     stopFx();
     const st = STYLES[styleKey] ? styleKey : 'thor';
+    curStyle = st;
     const custom = st === 'wlasny';
     const cc = cfg.custom || {};
     const layers = custom ? ['shade'].concat((cc.layers || []).filter((l) => l !== 'flash' && l !== 'banner'), (cc.layers || []).includes('flash') ? ['flash'] : [], (cc.layers || []).includes('banner') ? ['banner'] : []) : PRESET_LAYERS[st];
@@ -6991,14 +6994,25 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     };
     setTimeout(go, 60);
   }
-  function isLegendNode(n) {
-    const c = String(n.className || '');
-    if (/\bt-leg\b|legendary|\blegend\b/i.test(c)) return true;
+  /*
+   * Czy przedmiot w oknie łupów jest legendą. Gra opisuje rzadkość kafelka atrybutem data-item-type
+   * (t-norm zwykły, t-uniupg unikat/ulepszony, t-her heroik, t-leg legenda) i klasą ramki .highlight — oraz w danych przedmiotu.
+   * Tryb sprawdzania (opcja) traktuje też heroiki jak legendy, żeby sprawdzić działanie na prawdziwym łupie.
+   */
+  const LEG_TYPE = /^t-leg/i, HER_TYPE = /^t-her/i;
+  function rarityOf(n) {
+    const t = n.getAttribute('data-item-type') || ((n.querySelector('.highlight') || {}).className || '').split(/\s+/).find((c) => /^t-/.test(c)) || '';
+    if (LEG_TYPE.test(t)) return 'legendary';
+    if (HER_TYPE.test(t)) return 'heroic';
     const id = game.itemIdFromEl(n);
     const it = id ? game.itemById(id) : null;
-    if (it && it.rarity === 'legendary') return true;
-    try { const raw = id && E() && E().items && E().items.getItemById && E().items.getItemById(id); if (raw && /rarity=legendary/.test(String(raw.stat || ''))) return true; } catch {}
-    return false;
+    if (it && it.rarity) return it.rarity;
+    try { const raw = id && E().items.getItemById(id); const m = raw && String(raw.stat || '').match(/rarity=(\w+)/); if (m) return m[1]; } catch {}
+    return t ? 'other' : '';
+  }
+  function isLegendNode(n) {
+    const r = rarityOf(n);
+    return r === 'legendary' || (cfg.checkHeroic && r === 'heroic');
   }
   /*
    * Wzór okna łupów: gdy w grze pojawi się prawdziwe okno łupów, zapamiętujemy jego budowę (bez przedmiotów).
@@ -7022,6 +7036,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (html.length < 120000) store.set('legenda:lootTpl', { html, parent: String((w.parentElement && w.parentElement.className) || ''), t: now() });
     } catch {}
   }
+  const lastScan = [];
   function scanDom() {
     for (const w of lootWindows()) captureTpl(w);
     if (!cfg.enabled) return;
@@ -7029,7 +7044,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (it.dataset.mpLg) { if (!it.querySelector(':scope > .mp-lg-hl')) markItem(it); continue; }
       const id = game.itemIdFromEl(it);
       if (!id) continue;
-      if (isLegendNode(it) || legendIds.has(String(id))) { it.dataset.mpLg = '1'; markItem(it); trigger(id, '', w); }
+      const rr = rarityOf(it);
+      const leg = isLegendNode(it) || (legendIds.has(String(id)) && (rr === '' || rr === 'legendary'));
+      if (!it.dataset.mpSeen) {
+        it.dataset.mpSeen = '1';
+        lastScan.unshift({ t: new Date().toISOString().slice(11, 19), id, nazwa: (game.itemById(id) || {}).name || '', typ: it.getAttribute('data-item-type') || '', rzadkosc: rr, legenda: leg });
+        if (lastScan.length > 20) lastScan.length = 20;
+      }
+      if (leg) { it.dataset.mpLg = '1'; markItem(it); trigger(id, '', w); }
     }
   }
   /*
@@ -7170,6 +7192,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Okno łupu zostaje takie jak w grze — wyróżnione jest tylko okienko z legendą, w kolorach wybranego stylu. Wyróżnienie mieści się w okienku, więc kilka legend obok siebie nie nachodzi na siebie.'),
         el('div', { class: 'mp-btns' }, HL.map(([v, l]) => el('button', { class: 'mp-upchip' + ((c.hlMode || 'ring') === v ? ' on' : ''), onclick: () => { c.hlMode = v; config.save(); rerender(); } }, l))),
         el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
+          el('button', { class: 'mp-upchip' + (c.checkHeroic ? ' on' : ''), title: 'Na czas sprawdzania: efekt odpala się też na heroikach z prawdziwego łupu. Potem wyłącz.', onclick: () => { c.checkHeroic = !c.checkHeroic; config.save(); rerender(); } }, c.checkHeroic ? 'Tryb sprawdzania: heroiki jak legendy — WŁĄCZONY' : 'Tryb sprawdzania (heroiki jak legendy)'),
           el('button', { class: 'mp-upchip' + (c.names !== false ? ' on' : ''), onclick: () => { c.names = c.names === false; config.save(); rerender(); } }, c.names !== false ? 'Napis pod oknem: „Zdobyłeś: …" — włączony' : 'Napis pod oknem: wyłączony')),
         el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, `Test pokazuje 1–3 legendy. Szablony przedmiotów z gry do testu: legendy ${((store.get('legenda:itemTpl', {}).legendary) || []).length + store.get('legenda:legTpl', []).length}, pozostałe ${['heroic', 'unique', 'common'].reduce((a, k) => a + (((store.get('legenda:itemTpl', {})[k]) || []).length), 0)}. Zbierają się same z gry (przedmioty z czatu, podgląd EQ innych graczy, łupy drużyny) — bez Twojego ekwipunku.`)));
 
@@ -7279,7 +7302,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       setInterval(() => { try { collectLegends(); } catch {} }, 5000);
       const scan = debounce(scanDom, 80);
       new MutationObserver(() => { if (cfg.enabled) scan(); }).observe(document.body, { childList: true, subtree: true });
-      MP.legenda = { play, stop: stopFx, STYLES, SOUND, learn: learnItems, debug: () => { const t = store.get('legenda:lootTpl', null); return { rozmiary: store.get('legenda:lootSizes', {}), wzor: t ? t.html.slice(0, 9000) : null, rodzic: t && t.parent }; } };
+      MP.legenda = { play, stop: stopFx, STYLES, SOUND, learn: learnItems, debug: () => { const t = store.get('legenda:lootTpl', null); return { ostatnieLupy: lastScan.slice(), trybHeroikow: !!cfg.checkHeroic, rozmiary: store.get('legenda:lootSizes', {}), wzor: t ? t.html.slice(0, 9000) : null, rodzic: t && t.parent }; } };
     },
     onToggle(on) { if (!on) stopFx(); },
   });
@@ -7660,5 +7683,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "3.4.5";
+MP.version = "3.4.6";
 })();
