@@ -65,7 +65,7 @@ const quickbar = {
       const t = el('div', { class: 'mp-qtile' + (on ? '' : ' off') + (this.popId === a.id ? ' sel' : ''), 'data-name': `${a.name} — ${on ? 'włączony' : 'wyłączony'}` },
         icon(a.icon, 15),
         on ? el('span', { class: 'mp-qdot' }) : null);
-      t.addEventListener('click', (e) => { e.stopPropagation(); this.openPop(a.id, t); });
+      t.addEventListener('click', (e) => { e.stopPropagation(); if (on && typeof a.quick === 'function') { try { a.quick(); } catch (err) { console.warn('[L4Tools]', err); } return; } this.openPop(a.id, t); });
       t.addEventListener('contextmenu', async (e) => {
         e.preventDefault(); e.stopPropagation();
         const v = !addons.on(a.id);

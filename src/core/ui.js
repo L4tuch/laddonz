@@ -341,6 +341,10 @@ function copyReport() {
       pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
       szybka: MP.szybka ? MP.szybka.debug() : null,
       wrogowie: MP.wrogowie ? MP.wrogowie.debug() : null,
+      medyk: MP.medyk && MP.medyk.debug ? MP.medyk.debug() : null,
+      berserk: MP.berserk && MP.berserk.debug ? MP.berserk.debug() : null,
+      zestawUM: MP.zestawum && MP.zestawum.debug ? MP.zestawum.debug() : null,
+      quickChange: MP.quickchange && MP.quickchange.debug ? MP.quickchange.debug() : null,
       oknoLupow: MP.legenda && MP.legenda.debug ? MP.legenda.debug() : null,
       klasyUI: (() => { const c = new Map(); document.querySelectorAll('body *').forEach((n) => { if (typeof n.className !== 'string' || n.closest('.mp-glass')) return; n.className.split(/\s+/).forEach((k) => k && !/^mp-|^mt-/.test(k) && c.set(k, (c.get(k) || 0) + 1)); }); return [...c].sort((a, b) => b[1] - a[1]).slice(0, 300).map(([k]) => k); })(),
     };

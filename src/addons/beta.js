@@ -8,7 +8,16 @@
 (() => {
   /* ═════════ wspólne ═════════ */
   const hero = () => { try { return E().hero.d; } catch { return null; } };
-  const hpNow = () => { const d = hero(); const s = d && d.warrior_stats; return s ? { hp: Number(s.hp) || 0, max: Number(s.maxhp) || 1 } : null; };
+  /** Życie bohatera: najpierw statystyki walki z gry, potem zwykłe pola, na końcu procent. */
+  const hpNow = () => {
+    const d = hero(); if (!d) return null;
+    const ws = d.warrior_stats || {};
+    const hp = Number(ws.hp ?? d.hp), max = Number(ws.maxhp ?? d.maxhp);
+    if (max > 0 && !isNaN(hp)) return { hp, max };
+    const pct = Number(ws.hpp ?? d.hpp);
+    if (pct >= 0) return { hp: pct, max: 100 };
+    return null;
+  };
   const isDead = () => { try { return !!E().dead; } catch { return false; } };
   const worldName = () => String(location.hostname || '').split('.')[0];
 
@@ -112,6 +121,7 @@
     let cfg, busy = false;
     const healOf = (st, max) => (st.leczy != null ? parseInt(st.leczy, 10) : st.perheal != null ? Math.round((parseInt(st.perheal, 10) / 100) * max) : st.fullheal != null ? parseInt(st.fullheal, 10) : 0);
     const kindOf = (st) => (st.fullheal != null ? 'full' : st.perheal != null ? 'perc' : st.leczy != null ? 'normal' : null);
+    const statusText = () => { const s = hpNow(); return `Życie teraz: ${s ? `${s.hp}/${s.max} (${Math.round((s.hp / s.max) * 100)}%)` : 'nie odczytano'} · ostatnio: ${last.why}`; };
     function potions() {
       return game.heroItems().filter((it) => kindOf(it.stats || {}) && !(it.stats.timelimit && false));
     }
@@ -130,27 +140,50 @@
         return h2 - h1;
       })[0];
     }
-    async function heal(reason) {
-      if (!cfg.enabled || busy || game.inBattle() || isDead()) return;
-      const s = hpNow(); if (!s) return;
-      if ((s.hp / s.max) * 100 >= cfg.minHp) return;
+    let fighting = false, last = { t: 0, why: 'jeszcze nie leczył' };
+    const note = (why) => { last = { t: now(), why }; return why; };
+    /** Leczenie. Zwraca powód, gdy nic nie zrobił (widać w panelu i w raporcie). */
+    async function heal(reason, manual) {
+      if (!cfg.enabled && !manual) return note('dodatek wyłączony');
+      if (busy) return note('już leczy');
+      if (fighting) return note('trwa walka');
+      if (isDead()) return note('postać nie żyje');
+      let s = hpNow();
+      if (!s) return note('nie mogę odczytać życia postaci');
+      if ((s.hp / s.max) * 100 >= cfg.minHp) return note(`życie ${Math.round((s.hp / s.max) * 100)}% — powyżej progu ${cfg.minHp}%`);
       busy = true;
+      let used = 0;
       try {
-        let toMin = Math.max((cfg.minHp / 100) * s.max - s.hp, 0), toFull = Math.max(s.max - s.hp, 0), n = 0;
-        while (toMin > 0 && n++ < 12 && !game.inBattle()) {
+        for (let n = 0; n < 15 && !fighting; n++) {
+          s = hpNow() || s;
+          if ((s.hp / s.max) * 100 >= cfg.minHp) break;
+          const toFull = Math.max(s.max - s.hp, 0);
           const list = potions().filter((it) => {
             const k = kindOf(it.stats);
             if ((cfg.priority || []).length) return true;
             return (k === 'normal' && cfg.useNormal) || (k === 'perc' && cfg.usePerc) || (k === 'full' && cfg.useFull);
           });
           const it = pick(list, toFull, s.max);
-          if (!it) { if (n === 1 && cfg.warnEmpty) toast('Medyk: brak mikstur do leczenia', 'warn'); break; }
+          if (!it) { if (!used && (cfg.warnEmpty || manual)) toast('Medyk: brak mikstur do leczenia', 'warn'); note(used ? `użył ${used} mikstur, skończyły się` : 'brak pasujących mikstur'); break; }
+          const before = s.hp;
           send(`moveitem&st=1&id=${it.id}`);
-          const h = healOf(it.stats, s.max);
-          toMin = Math.max(toMin - h, 0); toFull = Math.max(toFull - h, 0);
-          await sleep(cfg.delay || 350);
+          used++;
+          // czekamy, aż gra zaktualizuje życie (maks. ~1,5 s), zamiast zgadywać ile wyleczyło
+          for (let w = 0; w < 10; w++) { await sleep(150); const x = hpNow(); if (x && x.hp !== before) break; }
+          await sleep(Math.max(0, (cfg.delay || 350) - 150));
         }
+        if (used) note(`${reason}: użył ${used} ${used === 1 ? 'mikstury' : 'mikstur'}`);
       } finally { busy = false; }
+      return last.why;
+    }
+    /** Po walce próbujemy kilka razy — gra przysyła nowe życie z opóźnieniem, a okno walki bywa jeszcze otwarte. */
+    async function afterBattle() {
+      for (let i = 0; i < 8 && !fighting; i++) {
+        await sleep(i ? 900 : 500);
+        const s = hpNow();
+        if (s && (s.hp / s.max) * 100 >= cfg.minHp) return;
+        if (!busy) await heal('po walce');
+      }
     }
     defineAddon({
       id: 'medyk', beta: true, name: 'Medyk', icon: 'medyk', color: ['#2ecc71', '#16a085'],
@@ -177,14 +210,19 @@
         const rest = names.filter((n) => !pr.includes(n));
         if (rest.length) card.appendChild(el('div', { class: 'mp-btns', style: { marginTop: '6px' } }, rest.map((n) => el('button', { class: 'mp-upchip', onclick: () => { pr.push(n); config.save(); rerender(); } }, '+ ' + n))));
         else if (!names.length) card.appendChild(el('div', { class: 'mp-dim' }, 'Nie widzę mikstur leczących w torbach.'));
-        card.appendChild(el('div', { class: 'mp-btns', style: { marginTop: '8px' } }, el('button', { class: 'mp-btn pri', onclick: () => heal('ręcznie') }, 'Ulecz teraz')));
+        const st = el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, statusText());
+        card.appendChild(el('div', { class: 'mp-btns', style: { marginTop: '8px' } }, el('button', { class: 'mp-btn pri', onclick: async () => { const why = await heal('ręcznie', true); st.textContent = statusText(); if (why && !/użył/.test(why)) toast('Medyk: ' + why, 'info', 4000); } }, 'Ulecz teraz')));
+        card.appendChild(st);
         box.appendChild(card);
       },
       init(c) {
         cfg = c;
-        bus.on('battle:end', () => setTimeout(() => heal('po walce'), 700));
-        setInterval(() => { if (cfg.enabled && cfg.idle) heal('poza walką'); }, 4000);
-        MP.medyk = { heal, potions: () => potions().map((p) => ({ id: p.id, name: p.name, heal: healOf(p.stats, (hpNow() || {}).max || 1) })) };
+        bus.on('battle:start', () => { fighting = true; });
+        bus.on('battle:end', () => { fighting = false; if (cfg.enabled) afterBattle(); });
+        // zapas: koniec walki z danych serwera (gdyby gra nie zamknęła okna walki)
+        bus.on('data', (d) => { const f = d && d.f; if (!f) return; if (f.init == 1) fighting = true; if (f.endBattle == 1 && fighting) { fighting = false; if (cfg.enabled) afterBattle(); } });
+        setInterval(() => { if (cfg.enabled && cfg.idle && !fighting && !busy) heal('poza walką'); }, 4000);
+        MP.medyk = { heal, debug: () => ({ zycie: hpNow(), prog: cfg.minHp, walka: fighting, ostatnio: last.why, kiedy: last.t ? new Date(last.t).toISOString().slice(11, 19) : null, mikstury: potions().map((p) => ({ id: p.id, nazwa: p.name, leczy: healOf(p.stats, (hpNow() || {}).max || 1), rodzaj: kindOf(p.stats) })) }) };
       },
     });
   })();
@@ -237,22 +275,32 @@
       document.body.appendChild(pop);
       setTimeout(() => document.addEventListener('mousedown', function off(e) { if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener('mousedown', off); } }), 0);
     }
+    /** Stałe miejsce: tuż po prawej od tarczy HUD-a na górze (jak w grze), bez przesuwania. */
+    function place() {
+      if (!bar) return;
+      const hud = $$('.hud-container').find(isVisible);
+      if (hud) {
+        const r = hud.getBoundingClientRect();
+        bar.style.left = Math.round(r.right + 10) + 'px';
+        bar.style.top = Math.round(r.top + (r.height - bar.offsetHeight) / 2) + 'px';
+      } else { bar.style.left = Math.round(innerWidth / 2 + 190) + 'px'; bar.style.top = '8px'; }
+    }
     async function draw() {
       if (!cfg.enabled) { if (bar) bar.remove(); bar = null; return; }
       await loadChars();
       const me = hero(), w = worldName();
       const here = chars.filter((c) => c.world === w && (!me || c.id !== Number(me.id)));
-      const pos = store.get('pos:qc', { x: 280, y: 6 });
-      if (!bar) { bar = el('div', { id: 'mp-qc', style: { left: pos.x + 'px', top: pos.y + 'px' } }); document.body.appendChild(bar); makeDraggable(bar, bar, (p) => store.set('pos:qc', p)); }
+      if (!bar) { bar = el('div', { id: 'mp-qc' }); document.body.appendChild(bar); }
       bar.textContent = '';
       here.slice(0, cfg.max || 8).forEach((c) => bar.appendChild(avatar(c)));
-      const dots = el('div', { class: 'mp-qc-dots', title: 'Zmień świat', onclick: () => worldsMenu(dots) }, '⋯');
+      const dots = el('div', { class: 'mp-qc-dots', title: 'Postacie na innych światach' }, '---');
+      dots.onclick = () => worldsMenu(dots);
       bar.appendChild(dots);
-      if (!here.length) bar.insertBefore(el('span', { class: 'mp-dim', style: { padding: '0 6px', fontSize: '11px' } }, chars.length ? 'brak innych postaci na tym świecie' : 'nie mam listy postaci'), dots);
+      place();
     }
     defineAddon({
       id: 'quickchange', beta: true, name: 'Quick Change', icon: 'quickchange', color: ['#5b8cff', '#8e5bff'],
-      desc: 'Miniaturki Twoich postaci z tego świata — najedź, żeby zobaczyć nick, poziom i świat; kliknij, żeby się przelogować. Trzy kropki pokazują postacie z innych światów (szybka zmiana świata). Pasek można przesuwać.',
+      desc: 'Miniaturki Twoich postaci z tego świata obok tarczy na górze ekranu — najedź, żeby zobaczyć nick, poziom i świat; kliknij, żeby się przelogować. „---” pokazuje postacie z innych światów (szybka zmiana świata). Gdy nie masz innych postaci, ramka zostaje pusta.',
       defaults: { max: 8 },
       settings: [{ key: 'max', type: 'number', label: 'Ile miniaturek pokazywać', min: 1, max: 15 }],
       render(box) {
@@ -260,7 +308,7 @@
           el('div', { class: 'mp-dim' }, chars.length ? chars.map((c) => `${c.nick} (${c.lvl ?? '?'}${c.prof || ''}, ${c.world})`).join(' · ') : 'Lista wczyta się po włączeniu dodatku.'),
           el('div', { class: 'mp-btns', style: { marginTop: '8px' } }, el('button', { class: 'mp-btn', onclick: () => draw() }, 'Odśwież listę'))));
       },
-      init(c) { cfg = c; MP.quickchange = { chars: () => chars, draw }; },
+      init(c) { cfg = c; setInterval(place, 1000); addEventListener('resize', () => setTimeout(place, 50)); MP.quickchange = { chars: () => chars, draw, debug: () => ({ postacie: chars.map((x) => `${x.nick} ${x.lvl ?? '?'}${x.prof || ''} ${x.world} ikona:${x.icon || '-'}`), hud: !!$$('.hud-container').find(isVisible) }) }; },
       onToggle(on) { if (on) setTimeout(draw, 1500); else if (bar) { bar.remove(); bar = null; } },
     });
   })();
@@ -268,68 +316,89 @@
   /* ═════════ PODRĘCZNY BERSERK ═════════ */
   (() => {
     let cfg, btn = null;
-    const isBers = (t) => /bers/i.test(t);
-    function state() {
-      // stan z gry, jeśli gdzieś go widać; inaczej ostatni znany
-      try {
-        for (const o of [E().hero && E().hero.d, E().settings, E().interface && E().interface.settings]) {
-          if (!o || typeof o !== 'object') continue;
-          for (const k of Object.keys(o)) if (/bers/i.test(k) && (typeof o[k] === 'number' || typeof o[k] === 'boolean' || /^[01]$/.test(String(o[k])))) return !!Number(o[k]);
-        }
-      } catch {}
-      return !!cfg.on;
+    // z Twojego raportu: przełączenie berserka w ustawieniach gry wysyła settings&action=update&id=34&v=1 / v=0
+    const DEF_ID = 34;
+    const SET_RE = /^settings&action=update&id=(\d+)&v=(\d+)/;
+    const setId = () => Number(cfg.setId) || DEF_ID;
+    const isBers = (t) => { const m = String(t).match(SET_RE); return !!m && Number(m[1]) === setId(); };
+    /** Klasy przedmiotów, które leżą w miejscu tarczy: tarcze, pomocnicze (orby/księgi), strzały. */
+    const SHIELD_CL = [14, 5, 21];
+    function shieldNode() {
+      const eq = game.equipped();
+      const it = eq.find((i) => SHIELD_CL.includes(i.cl));
+      const pick = (id) => $$(`.item-id-${id}`).find((n) => isVisible(n) && !n.closest('.loot-wnd, .bag, [class*="bag-"], .tip-wrapper'));
+      if (it) { const n = pick(it.id); if (n) return n.closest('.eq-slot, [class*="slot"]') || n; }
+      // brak tarczy: puste miejsce na tarczę w ekwipunku
+      return $$('.eq-slot, [class*="eq-item-slot"], [class*="equipment"] [class*="slot"]').find((n) => isVisible(n) && /shield|tarcz|st-?4\b|slot-?4\b/i.test(n.className + ' ' + (n.getAttribute('data-st') || '') + ' ' + (n.getAttribute('tip') || ''))) || null;
+    }
+    function place() {
+      if (!btn) return;
+      const n = shieldNode();
+      if (n) {
+        const r = n.getBoundingClientRect(), sz = btn.offsetWidth || 24;
+        let x = r.right + 3; if (x + sz > innerWidth - 2) x = r.left - sz - 3;
+        btn.style.left = Math.round(x) + 'px'; btn.style.top = Math.round(r.top + (r.height - sz) / 2) + 'px';
+        btn.classList.remove('mp-bers-free');
+      } else {
+        const hud = $$('.hud-container').find(isVisible);
+        if (hud) { const r = hud.getBoundingClientRect(); btn.style.left = Math.round(r.left - 34) + 'px'; btn.style.top = Math.round(r.top + r.height / 2 - 12) + 'px'; }
+        btn.classList.add('mp-bers-free');
+      }
     }
     function paint() {
       if (!btn) return;
-      const on = state();
+      const on = !!cfg.on;
       btn.classList.toggle('on', on);
-      btn.title = `Berserk: ${on ? 'WŁĄCZONY' : 'wyłączony'} — kliknij, żeby ${on ? 'wyłączyć' : 'włączyć'}${cfg.cmd ? '' : '\n(najpierw przełącz raz berserk w ustawieniach gry — dodatek nauczy się komendy)'}`;
+      btn.title = `Berserk: ${on ? 'WŁĄCZONY' : 'wyłączony'} — kliknij, żeby ${on ? 'wyłączyć' : 'włączyć'}`;
     }
-    async function toggle() {
-      const on = !state();
-      if (!cfg.cmd) {
-        toast('Podręczny Berserk: przełącz raz berserk w ustawieniach gry (Konfiguracja) — zapamiętam, jak to robi gra', 'info', 7000);
-        const t = await learn(isBers);
-        if (t) { cfg.cmd = t; config.save(); toast('Podręczny Berserk: gotowe — przycisk działa'); }
-        return;
-      }
-      // ta sama komenda co w grze, z wartością 1/0 zamiast zapamiętanej
-      const t = /=(?:0|1|true|false)(?=&|$)/i.test(cfg.cmd) ? cfg.cmd.replace(/(bers[a-z_]*=)(?:0|1|true|false)/i, `$1${on ? 1 : 0}`).replace(/(&(?:value|v|state|s|on)=)(?:0|1|true|false)/i, `$1${on ? 1 : 0}`) : cfg.cmd;
-      send(t);
+    function toggle() {
+      if (game.inBattle()) return toast('Berserk: poczekaj do końca walki', 'warn');
+      const on = !cfg.on;
+      send(`settings&action=update&id=${setId()}&v=${on ? 1 : 0}`);
       cfg.on = on; config.save(); paint();
       toast(`Berserk ${on ? 'włączony' : 'wyłączony'}`);
     }
     function ensure() {
       if (!cfg.enabled) { if (btn) btn.remove(); btn = null; return; }
-      btn = floatBtn('mp-bers', { x: innerWidth - 300, y: 70 }, '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5 14 2h3v3l-4.5 4.5"/></svg>', 'Berserk', toggle);
-      btn.classList.add('mp-bers');
-      paint();
+      if (!btn) {
+        btn = el('div', { id: 'mp-bers', class: 'mp-fbtn mp-bers', html: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5 14 2h3v3l-4.5 4.5"/></svg>' });
+        btn.addEventListener('click', toggle);
+        document.body.appendChild(btn);
+      }
+      paint(); place();
     }
     defineAddon({
       id: 'berserk', beta: true, name: 'Podręczny Berserk', icon: 'berserk', color: ['#ff4b2b', '#ff9f1a'],
-      desc: 'Przycisk na ekranie do włączania i wyłączania berserka (automatycznej agresji wobec potworów) zgodnie z ustawieniami gry. Świeci = włączony, szary = wyłączony. Przycisk można przesuwać.',
-      defaults: { cmd: '', on: false },
+      desc: 'Mała ikonka obok tarczy w Twoim ekwipunku — kliknięcie włącza albo wyłącza berserka (automatyczną agresję wobec potworów) tą samą komendą co ustawienia gry. Świeci na pomarańczowo = włączony, szara = wyłączony.',
+      defaults: { on: false, setId: DEF_ID },
       settings: [],
       render(box, c, rerender) {
-        box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Komenda berserka'),
-          el('div', { class: 'mp-dim' }, c.cmd ? `Zapamiętana: ${c.cmd}` : 'Jeszcze nie zapamiętana — kliknij przycisk na ekranie albo „Naucz”, a potem przełącz berserk w ustawieniach gry.'),
+        box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Stan'),
+          el('div', { class: 'mp-dim' }, `Berserk: ${c.on ? 'włączony' : 'wyłączony'} · ustawienie gry nr ${setId()}. Gdy przełączysz berserka w ustawieniach gry, ikonka sama się zaktualizuje.`),
           el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
-            el('button', { class: 'mp-btn', onclick: async () => { toast('Przełącz teraz berserk w ustawieniach gry…', 'info', 6000); const t = await learn(isBers); if (t) { c.cmd = t; config.save(); toast('Zapamiętano'); rerender(); } else toast('Nie wychwyciłem komendy — spróbuj jeszcze raz', 'warn'); } }, 'Naucz'),
-            c.cmd ? el('button', { class: 'mp-btn bad', onclick: () => { c.cmd = ''; config.save(); rerender(); } }, 'Zapomnij') : null)));
+            el('button', { class: 'mp-btn pri', onclick: () => { toggle(); rerender(); } }, c.on ? 'Wyłącz berserka' : 'Włącz berserka'),
+            el('button', { class: 'mp-btn', onclick: async () => { toast('Przełącz teraz berserka w ustawieniach gry…', 'info', 6000); const t = await learn((x) => SET_RE.test(x)); if (t) { const m = t.match(SET_RE); c.setId = Number(m[1]); c.on = m[2] === '1'; config.save(); toast(`Zapamiętano (ustawienie nr ${c.setId})`); paint(); rerender(); } else toast('Nie wychwyciłem przełączenia', 'warn'); } }, 'Naucz od nowa'))));
       },
       init(c) {
         cfg = c;
-        bus.on('cmd', (t) => { if (isBers(t)) { const m = t.match(/=(0|1|true|false)(?=&|$)/i); if (m) { cfg.on = /^(1|true)$/i.test(m[1]); config.save(); paint(); } if (!cfg.cmd) { cfg.cmd = t; config.save(); } } });
-        setInterval(paint, 3000);
+        bus.on('cmd', (t) => { const m = String(t).match(SET_RE); if (m && Number(m[1]) === setId()) { cfg.on = m[2] === '1'; config.save(); paint(); } });
+        setInterval(() => { if (cfg.enabled) { if (!btn) ensure(); place(); } }, 1000);
+        addEventListener('resize', () => setTimeout(place, 50));
+        MP.berserk = { debug: () => ({ wlaczony: !!cfg.on, ustawienie: setId(), tarcza: (() => { const n = shieldNode(); return n ? String(n.className).slice(0, 80) : null; })(), zalozone: game.equipped().map((i) => `${i.name} cl${i.cl} st${i.st}`) }) };
       },
       onToggle(on) { if (on) ensure(); else if (btn) { btn.remove(); btn = null; } },
     });
   })();
 
-  /* ═════════ LICZNIK UBIĆ ═════════ */
+  /* ═════════ LICZNIK UBIĆ ═════════
+   * Lista potworów (elity II wpisane z góry z margohelp.pl, inne dopisują się same po ubiciu) z liczbą ubić
+   * i łupami: żółte = unikaty, niebieskie = heroiki, pomarańczowe = legendy; w nawiasie — ile z nich złapałeś Ty.
+   */
   (() => {
-    let cfg, warriors = {}, inFight = false, lootIds = new Map(), win = null;
-    // typ potwora wg wagi (wt) — tak jak rozpoznaje go gra / lootlog
+    let cfg, warriors = {}, inFight = false, win = null, lastFight = null;
+    const lootIds = new Map();          // id przedmiotu z okna łupów → { r, key }
+    const DB = { e2: "Mushita|23|p;Kotołak Tropiciel|27|;Shae Phu|30|m;Zorg Jednooki Baron|33|h;Władca Rzek|37|m;Gobbos|40|b;Tyrtajos|42|w;Szczęt alias Gładki|47|w;Tollok Shimger|47|w;Razuglag Oklash|51|m;Agar|51|w;Foverk Turrim|57|b;Owadzia Matka|58|t;Vari Kruger|66|m;Furruk Kozug|66|m;Jotun|70|w;Tollok Atamatu|73|h;Tollok Utumutu|73|h;Lisz|75|m;Grabarz świątynny|80|w;Podły zbrojmistrz|82|w;Wielka Stopa|82|m;Choukker|84|w;Nadzorczyni krasnoludów|88|w;Morthen|89|w;Żelazoręki Ohydziarz|92|p;Leśne Widmo|92|t;Goplana|93|p;Gnom Figlid|96|m;Centaur Zyfryd|99|h;Kambion|101|b;Jertek Moxos|105|w;Miłośnik łowców|108|w;Miłośnik rycerzy|108|w;Miłośnik magii|108|w;Łowca Czaszek|112|m;Ozirus Władca Hieroglifów|115|m;Morski Potwór|118|t;Krab pustelnik|124|b;Borgoros Garamir III|124|w;Stworzyciel|125|b;Poskramiacz hydr|128|m;Pogromczyni Mantikor|128|h;Pogromca gryfów|128|w;Ifryt|128|m;Młody Jack Truciciel|131|w;Henry Kaprawe Oko|131|w;Helga Opiekunka Rumu|131|t;Eol|135|h;Grubber Ochlaj|136|w;Mistrz Worundriel|139|w;Wójt Fistuła|144|b;Teściowa Rumcajsa|145|m;Berserker Amuno|148|w;Fodug Zolash|150|m;Goons Asterus|154|h;Adariel|155|m;Burkog Lorulk|160|w;Sheba Orcza Szamanka|160|m;Duch władcy klanów|165|p;Bragarth myśliwy dusz|170|h;Fursharag pożeracz umysłów|170|m;Ziuggrael strażnik królowej|170|w;Królowa Śniegu|175|m;Lusgrathera królowa pramatka|175|m;Chryzoprenia|177|p;Wrzosera|177|w;Cantedewia|177|t;Ogr Stalowy Pazur|183|w;Torunia Ankelwald|186|p;Pięknotka Mięsożerna|189|h;Breheret żelazny łeb|192|w;Cerasus|193|h;Mysiur myświórowy król|197|m;Sadolia Nadzorczyni Hurys|200|b;Bergermona Krwawa Hrabina|204|h;Sataniel skrytobójca|204|h;Annaniel Wysysacz Marzeń|204|m;Gothardus kolekcjoner głów|204|w;Zufulus smakosz serc|205|m;Czempion Furboli|210|w;Arachniregina Colosseus|214|b;Rycerz z za małym mieczem|214|w;Aldiphrin Ilythirahel|218|m;Marlloth Malignitas|220|b;Arytodam olbrzymi|226|w;Mocny Maddoks|231|m;Fangaj|235|h;Luna|237|p;Noumenia|237|b;Dendroculus|240|w;Silvanasus|241|m;Tolypeutes|245|w;Cuaitl Citlalin|250|w;Yaotl|258|h;Quetzalcoatl|260|m;Wabicielka|260|b;Pogardliwa Sybilla|263|m;Chopesz|267|b;Fovos|270|m;Neferkar Set|274|w;Chaegd Agnrakh|280|w;Vaenra Charkhaam|280|m;Terrozaur|280|b;Mazurnik Przybrzeżny|284|w;Nymphemonia|287|h;Zorin|300|b;Furion|300|h;Artenius|300|m", e3: "Tarmus Wuden|43|p;Vonaros|64|m;Wyznawca Ciemnych Mocy|83|b;Szkielet Władcy Żywiołów|114|m;Erktos|300|w", heros: "Domina Ecclesiae|21|b;Mietek Żul|25|w;Mroczny Patryk|35|w;Karmazynowy Mściciel|45|m;Złodziej|51|h;Zły Przewodnik|63|w;Opętany Paladyn|74|p;Piekielny Kościej|85|w;Koziec Mąciciel Ścieżek|94|m;Kochanka Nocy|102|m;Książę Kasim|116|b;Święty Braciszek|123|b;Złoty Roger|135|t;Baca bez Łowiec|144|h;Czarująca Atalia|157|m;Obłąkany Łowca Orków|165|w;Lichwiarz Grauhaz|177|w;Viviana Nandin|184|h;Przeraza|194|m;Demonis Pan Nicości|205|m;Mulher Ma|214|b;Vapor Veneno|231|w;Dęborożec|244|w;Tepeyollotl|258|b;Widmo Triady|265|m;Negthotep Czarny Kapłan|271|h;Młody Smok|282|m", kolos: "Mamlambo|36|b;Regulus Mętnooki|63|w;Amaimon Soploręki|83|b;Umibozu|114|b;Vashkar|144|h;Hydrokora Chimeryczna|167|w;Lulukav|190|m;Arachin Podstępny|213|b;Reuzen|244|w;Wernoradzki Drakolisz|279|m", tytan: "Dziewicza Orlica|51|;Zabójczy Królik|70|;Renegat Baulus|101|;Piekielny Arcymag|131|;Versus Zoons|154|;Łowczyni Wspomnień|177|;Przyzywacz Demonów|204|;Maddok Magua|231|;Tezcatlipoca|258|;Barbatos Smoczy Strażnik|285|;Tanroth|300|" };
+    const NPC_IMG = 'https://micc.garmory-cdn.cloud/obrazki/npc/';
     const typeOf = (w) => {
       const wt = Number(w.wt) || 0, ty = Number(w.type);
       if (ty === 0 && wt > 29 && wt < 80) return 'e3';
@@ -341,85 +410,171 @@
       if (wt > 9) return 'elita';
       return 'zwykly';
     };
-    const KILL = [['zwykly', 'Zwykłe'], ['elita', 'Elity'], ['e2', 'Elity II'], ['e3', 'Elity III'], ['heros', 'Herosi'], ['kolos', 'Kolosy'], ['tytan', 'Tytani']];
-    const LOOT = [['common', 'Zwykłe'], ['unique', 'Unikaty'], ['upgraded', 'Ulepszone'], ['heroic', 'Heroiczne'], ['legendary', 'Legendarne']];
-    const blank = () => ({ kills: {}, names: {}, loot: {}, caught: {}, since: now() });
-    const stat = () => (cfg.stats = cfg.stats || blank());
-    const sess = { kills: {}, names: {}, loot: {}, caught: {}, since: now() };
+    const TYPES = [['all', 'Wszystkie'], ['elita', 'Elity'], ['e2', 'Elity II'], ['e3', 'Elity III'], ['heros', 'Herosi'], ['kolos', 'Kolosy'], ['tytan', 'Tytani']];
+    const TAG = { elita: 'E1', e2: 'E2', e3: 'E3', heros: 'HER', kolos: 'KOL', tytan: 'TYT' };
+    const RANK = { zwykly: 0, elita: 1, e2: 2, e3: 3, heros: 4, kolos: 5, tytan: 6 };
+    const PROF = { wojownik: 'w', paladyn: 'p', mag: 'm', 'łowca': 'h', tropiciel: 't', 'tancerz ostrzy': 'b' };
+    const R3 = { unique: 'u', upgraded: 'u', heroic: 'h', legendary: 'l' };
+    const mobs = () => (cfg.mobs = cfg.mobs || {});
+    const keyOf = (n) => String(n || '').trim().toLowerCase();
+    function seed() {
+      const m = mobs();
+      for (const [t, list] of Object.entries(DB)) for (const row of list.split(';')) {
+        const [n, lvl, prof] = row.split('|'); const k = keyOf(n);
+        if (!m[k]) m[k] = { n, lvl: Number(lvl) || 0, prof: prof || '', t, k: 0, d: {}, m: {} };
+      }
+    }
+    const iconUrl = (ic) => { ic = String(ic || ''); if (!ic) return ''; if (/^https?:/.test(ic)) return ic; ic = ic.replace(/^\/+/, '').replace(/^obrazki\//, ''); return (/^npc\//.test(ic) ? 'https://micc.garmory-cdn.cloud/obrazki/' : NPC_IMG) + ic; };
+    const icons = new Map();            // nazwa → ikona (z danych mapy, gdy potwór stoi na mapie)
+    function mobFor(w) {
+      const k = keyOf(w.name || w.nick); if (!k) return null;
+      const m = mobs(); const t = typeOf(w);
+      const o = m[k] = m[k] || { n: w.name || w.nick, t, k: 0, d: {}, m: {} };
+      if (w.lvl) o.lvl = Number(w.lvl);
+      if (w.prof) o.prof = String(w.prof).length === 1 ? w.prof : (PROF[String(w.prof).toLowerCase()] || '');
+      if (RANK[t] > (RANK[o.t] || 0)) o.t = t;
+      const ic = w.icon || icons.get(k); if (ic) o.icon = iconUrl(ic);
+      return o;
+    }
+    const totals = () => (cfg.totals = cfg.totals || { kills: {}, loot: {}, caught: {}, since: now() });
     const inc = (o, k, n = 1) => { o[k] = (o[k] || 0) + n; };
-    const rarityOf = (it) => { const m = String(it.stat || '').match(/rarity=(\w+)/); return m ? m[1] : 'common'; };
+    const rarityOf = (it) => { const m = String(it.stat || '').match(/rarity=(\w+)/); return m ? m[1] : (it.stats && it.stats.rarity) || 'common'; };
     function onData(d) {
-      if (!cfg.enabled || !d) return;
+      if (!d) return;
+      const T = d.npc_tpls; if (T) (Array.isArray(T) ? T : Object.values(T)).forEach((t) => { if (t && t.icon && (t.nick || t.name)) icons.set(keyOf(t.nick || t.name), t.icon); });
+      if (!cfg.enabled) return;
+      let dirty = false;
       const f = d.f;
       if (f) {
         if (f.init == 1) { warriors = {}; inFight = true; }
         if (f.w) for (const [id, w] of Object.entries(f.w)) warriors[id] = Object.assign(warriors[id] || {}, w);
         if (f.endBattle == 1 && inFight) {
-          inFight = false;
+          inFight = false; lastFight = null;
           for (const [id, w] of Object.entries(warriors)) {
             if (!String(id).startsWith('-')) continue;
             const hp = w.hpp != null ? Number(w.hpp) : w.hp && w.hp.hpp != null ? Number(w.hp.hpp) : null;
             if (hp === null || hp > 0) continue;
             const t = typeOf(w);
-            for (const s of [stat(), sess]) { inc(s.kills, t); if (t !== 'zwykly') inc(s.names, `${w.name} (${w.lvl})`); }
+            inc(totals().kills, t); dirty = true;
+            if (t === 'zwykly') continue;
+            const o = mobFor(w); if (!o) continue;
+            o.k++; o.last = now();
+            if (!lastFight || RANK[t] > RANK[lastFight.t]) lastFight = { key: keyOf(o.n), t, at: now() };
           }
-          config.save(); render();
         }
       }
-      // łup z walki: przedmioty z loc „l" (okno łupów); złapany = później trafia do Twojej torby (loc „g")
+      // łupy z walki (okno łupów, loc „l") przypisujemy najsilniejszemu ubitemu potworowi z tej walki
       if (d.item && typeof d.item === 'object') {
         const me = hero(); const meId = me && String(me.id);
         for (const [key, it] of Object.entries(d.item)) {
           if (!it || typeof it !== 'object') continue;
           const id = String(it.hid || it.id || key);
           if (it.loc === 'l' && d.loot && !lootIds.has(id)) {
-            const r = rarityOf(it); lootIds.set(id, r);
-            for (const s of [stat(), sess]) inc(s.loot, r);
+            const r = rarityOf(it); const fk = lastFight && now() - lastFight.at < 30000 ? lastFight.key : null;
+            lootIds.set(id, { r, key: fk }); inc(totals().loot, r); dirty = true;
+            const o = fk && mobs()[fk]; if (o && R3[r]) inc(o.d, R3[r]);
           } else if (lootIds.has(id) && it.loc === 'g' && (!meId || String(it.own) === meId)) {
-            const r = lootIds.get(id); lootIds.delete(id);
-            for (const s of [stat(), sess]) inc(s.caught, r);
+            const { r, key: fk } = lootIds.get(id); lootIds.delete(id); inc(totals().caught, r); dirty = true;
+            const o = fk && mobs()[fk]; if (o && R3[r]) inc(o.m, R3[r]);
           }
         }
-        if (lootIds.size > 300) lootIds = new Map([...lootIds].slice(-150));
-        config.save(); render();
+        if (lootIds.size > 300) [...lootIds.keys()].slice(0, 150).forEach((k) => lootIds.delete(k));
       }
+      if (dirty) { config.save(); if (win && win.style.display !== 'none') drawList(); }
     }
-    function table(s) {
-      const k = el('div', { class: 'mp-lu-t' }, KILL.filter(([key]) => s.kills[key] || key !== 'zwykly' || true).map(([key, lb]) => el('div', null, el('span', null, lb), el('b', null, String(s.kills[key] || 0)))));
-      const l = el('div', { class: 'mp-lu-t' }, LOOT.map(([key, lb]) => el('div', null, el('span', null, lb), el('b', null, `${s.loot[key] || 0}`, el('small', null, ` (złapane ${s.caught[key] || 0})`)))));
-      return [el('div', { class: 'mp-lu-s' }, 'Ubite potwory'), k, el('div', { class: 'mp-lu-s' }, 'Łupy'), l];
+
+    /* ── okno ── */
+    const F = () => (cfg.f = Object.assign({ q: '', min: 1, max: 300, type: 'e2', show: 'all', sort: 'kills', dir: 'desc' }, cfg.f || {}));
+    function rows() {
+      const f = F(), q = f.q.trim().toLowerCase();
+      let list = Object.values(mobs()).filter((o) => (f.type === 'all' || o.t === f.type)
+        && (!q || o.n.toLowerCase().includes(q))
+        && (!o.lvl || (o.lvl >= (Number(f.min) || 1) && o.lvl <= (Number(f.max) || 1e4)))
+        && (f.show === 'all' || (f.show === 'killed' ? o.k > 0 : !o.k)));
+      const by = { kills: (o) => o.k, lvl: (o) => o.lvl || 0, name: (o) => o.n.toLowerCase(), loot: (o) => (o.d.u || 0) + (o.d.h || 0) * 10 + (o.d.l || 0) * 100 }[f.sort] || ((o) => o.k);
+      list.sort((a, b) => { const x = by(a), y = by(b); const c = x < y ? -1 : x > y ? 1 : 0; return c ? (f.dir === 'asc' ? c : -c) : (a.lvl || 0) - (b.lvl || 0) || a.n.localeCompare(b.n); });
+      return list;
     }
-    function render() {
-      if (!cfg.enabled || !cfg.window) { if (win) win.style.display = 'none'; return; }
+    const cnt = (o, r, cls) => el('span', { class: 'mp-lu-c ' + cls }, `${o.d[r] || 0} (${o.m[r] || 0})`);
+    function drawList() {
+      if (!win) return;
+      const box = win.querySelector('.mp-lu-list'); const st = box.scrollTop; box.textContent = '';
+      const list = rows();
+      if (!list.length) box.appendChild(el('div', { class: 'mp-lu-empty' }, 'Brak potworów dla tych filtrów.'));
+      for (const o of list) {
+        const ic = o.icon ? el('div', { class: 'mp-lu-ic', style: { backgroundImage: `url("${o.icon}")` } }) : el('div', { class: 'mp-lu-ic none' }, (o.n[0] || '?').toUpperCase());
+        box.appendChild(el('div', { class: 'mp-lu-row' + (o.k ? '' : ' zero') }, ic,
+          el('div', { class: 'mp-lu-mid' },
+            el('div', { class: 'mp-lu-nm' }, `[${TAG[o.t] || '?'}] ${o.n}${o.lvl ? ` (${o.lvl}${o.prof || ''})` : ''}`),
+            el('div', { class: 'mp-lu-dr' }, el('span', { class: 'mp-lu-lb' }, 'Zdobycze:'), cnt(o, 'u', 'u'), cnt(o, 'h', 'h'), cnt(o, 'l', 'l'))),
+          el('div', { class: 'mp-lu-k', title: 'Ubitych' }, `[${o.k}]`)));
+      }
+      box.scrollTop = st;
+    }
+    function sel(key, opts) {
+      const f = F();
+      const s = el('select', { class: 'mp-lu-in' }, opts.map(([v, t]) => el('option', { value: v }, t)));
+      s.value = f[key]; s.onchange = () => { f[key] = s.value; config.save(); drawList(); };
+      return s;
+    }
+    function inp(key, ph, w, num) {
+      const f = F();
+      const i = el('input', { class: 'mp-lu-in', placeholder: ph, type: num ? 'number' : 'text', style: { width: w } });
+      i.value = f[key]; i.oninput = () => { f[key] = num ? Number(i.value) || '' : i.value; config.save(); drawList(); };
+      i.addEventListener('keydown', (e) => e.stopPropagation());
+      return i;
+    }
+    function open(show = true) {
+      if (!cfg.enabled) return;
       if (!win) {
-        const p = store.get('pos:lu', { x: 20, y: 160 });
-        win = el('div', { id: 'mp-lu', style: { left: p.x + 'px', top: p.y + 'px' } }, el('div', { class: 'mp-lu-h' }, 'Licznik Ubić', el('span', { class: 'mp-lu-m' })), el('div', { class: 'mp-lu-b' }));
-        document.body.appendChild(win); makeDraggable(win, win.querySelector('.mp-lu-h'), (q) => store.set('pos:lu', q));
-        win.querySelector('.mp-lu-m').onclick = () => { cfg.showTotal = !cfg.showTotal; config.save(); render(); };
+        const p = store.get('pos:lu2', { x: Math.round(innerWidth / 2 - 200), y: 120 });
+        const head = el('div', { class: 'mp-lu-h' },
+          el('div', { class: 'mp-lu-hb' },
+            el('span', { class: 'mp-lu-hi', title: 'Ustawienia', onclick: () => ui.open('licznik') }, '⚙'),
+            el('span', { class: 'mp-lu-hi', title: 'Wyczyść filtry', onclick: () => { cfg.f = null; config.save(); win.remove(); win = null; open(); } }, '↻')),
+          el('div', { class: 'mp-lu-tt' }, 'Licznik ubić'),
+          el('span', { class: 'mp-lu-x', title: 'Zamknij', onclick: () => open(false) }, '×'));
+        win = el('div', { id: 'mp-lu', style: { left: p.x + 'px', top: p.y + 'px' } }, head,
+          el('div', { class: 'mp-lu-fl' }, inp('q', 'Nazwa potworka', 'auto'), inp('min', '1', '46px', true), inp('max', '300', '52px', true)),
+          el('div', { class: 'mp-lu-fl' }, sel('type', TYPES), sel('show', [['all', 'Wszystkie'], ['killed', 'Ubite'], ['notkilled', 'Nieubite']]),
+            sel('sort', [['kills', 'Sortuj wg zabić'], ['lvl', 'Sortuj wg poziomu'], ['name', 'Sortuj wg nazwy'], ['loot', 'Sortuj wg łupów']]), sel('dir', [['desc', 'Malejąco'], ['asc', 'Rosnąco']])),
+          el('div', { class: 'mp-lu-list' }));
+        document.body.appendChild(win);
+        makeDraggable(win, win.querySelector('.mp-lu-tt'), (q) => store.set('pos:lu2', q));
       }
-      win.style.display = '';
-      const s = cfg.showTotal ? stat() : sess;
-      win.querySelector('.mp-lu-m').textContent = cfg.showTotal ? 'ogółem ⇄' : 'ta sesja ⇄';
-      const b = win.querySelector('.mp-lu-b'); b.textContent = ''; table(s).forEach((n) => b.appendChild(n));
+      win.style.display = show ? '' : 'none';
+      cfg.open = !!show; config.save();
+      if (show) drawList();
     }
+    const toggleWin = () => open(!(win && win.style.display !== 'none'));
     defineAddon({
       id: 'licznik', beta: true, name: 'Licznik Ubić', icon: 'licznik', color: ['#e74c3c', '#8e44ad'],
-      desc: 'Liczy ubite potwory: zwykłe, elity, elity II i III, herosów, kolosy i tytanów. Liczy też łupy — ile wypadło unikatów, heroików i legend, a w nawiasie ile z nich złapałeś. Statystyki tej sesji i ogółem.',
-      defaults: { window: true, showTotal: false, stats: null },
-      settings: [{ key: 'window', type: 'bool', label: 'Pokazuj okienko licznika na ekranie' }],
+      desc: 'Okno z listą potworów (wszystkie elity II są wpisane od razu, reszta dopisuje się po ubiciu): nazwa, rodzaj, poziom, ile razy ubity i co z niego wypadło — żółte unikaty, niebieskie heroiki, pomarańczowe legendy, a w nawiasie ile z nich złapałeś Ty. Szukanie po nazwie, zakres poziomów, filtr rodzaju i sortowanie. Okno otwierasz klawiszem, przyciskiem poniżej albo ikonką na pasku skrótów.',
+      defaults: { key: '', open: false, mobs: null, totals: null, f: null },
+      settings: [{ key: 'key', type: 'key', label: 'Klawisz: otwórz/zamknij okno licznika' }],
+      quick: () => toggleWin(),
       render(box, c, rerender) {
-        const s = stat();
-        const card = el('div', { class: 'mp-card' }, el('h3', null, `Ogółem (od ${new Date(s.since).toLocaleDateString()})`), ...table(s));
-        const top = Object.entries(s.names).sort((a, b) => b[1] - a[1]).slice(0, 15);
-        if (top.length) card.appendChild(el('div', { class: 'mp-dim', style: { marginTop: '8px' } }, 'Najczęściej ubijane (bez zwykłych): ' + top.map(([n, v]) => `${n} ×${v}`).join(', ')));
-        card.appendChild(el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
-          el('button', { class: 'mp-btn bad', onclick: () => { cfg.stats = blank(); config.save(); render(); rerender(); } }, 'Wyzeruj ogółem'),
-          el('button', { class: 'mp-btn', onclick: () => { Object.assign(sess, blank()); render(); rerender(); } }, 'Wyzeruj sesję')));
-        box.appendChild(card);
+        const t = totals();
+        const killed = Object.values(mobs()).filter((o) => o.k);
+        box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, `Ogółem (od ${new Date(t.since).toLocaleDateString()})`),
+          el('div', { class: 'mp-dim' }, TYPES.slice(1).map(([k, lb]) => `${lb}: ${t.kills[k] || 0}`).join(' · ') + ` · Zwykłe: ${t.kills.zwykly || 0}`),
+          el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, `Łupy — unikaty: ${(t.loot.unique || 0) + (t.loot.upgraded || 0)} (${(t.caught.unique || 0) + (t.caught.upgraded || 0)}), heroiki: ${t.loot.heroic || 0} (${t.caught.heroic || 0}), legendy: ${t.loot.legendary || 0} (${t.caught.legendary || 0})`),
+          el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, `Na liście: ${Object.keys(mobs()).length} potworów, ubitych przynajmniej raz: ${killed.length}`),
+          el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
+            el('button', { class: 'mp-btn pri', onclick: () => toggleWin() }, 'Otwórz / zamknij okno'),
+            el('button', { class: 'mp-btn bad', onclick: async () => { if (!(await confirmBox({ title: 'Wyzerować licznik?', items: ['Ubicia i łupy wszystkich potworów'], okText: 'Wyzeruj', danger: true }))) return; cfg.mobs = null; cfg.totals = null; seed(); config.save(); drawList(); rerender(); } }, 'Wyzeruj wszystko'))));
       },
-      init(c) { cfg = c; bus.on('data', onData); MP.licznik = { stats: () => ({ ogolem: stat(), sesja: sess }) }; },
-      onChange() { render(); },
-      onToggle(on) { render(); if (!on && win) win.style.display = 'none'; },
+      init(c) {
+        cfg = c;
+        // przeniesienie starych liczników (wersja 1.0.0)
+        if (cfg.stats && !cfg.totals) { cfg.totals = { kills: cfg.stats.kills || {}, loot: cfg.stats.loot || {}, caught: cfg.stats.caught || {}, since: cfg.stats.since || now() }; delete cfg.stats; }
+        seed();
+        bus.on('data', onData);
+        keys.bind({ label: 'Licznik Ubić: okno', get: () => cfg.key || '', fn: toggleWin, when: () => cfg.enabled });
+        if (cfg.enabled && cfg.open) setTimeout(() => open(true), 1500);
+        MP.licznik = { open: toggleWin, mobs: () => mobs() };
+      },
+      onToggle(on) { if (!on && win) { win.remove(); win = null; } },
     });
   })();
 
@@ -542,37 +697,114 @@
     });
   })();
 
-  /* ═════════ ZAPISZ ZESTAW UM — zestawy umiejętności z MargoWorld ═════════ */
+  /* ═════════ ZAPISZ ZESTAW UM — rozdanie umiejętności z kodu kalkulatora ═════════
+   * Wklejasz kod z kalkulatora, np. {"level":50,"prof":"w","skills":[{"234":10,"263":10,"271":6},{},…],"mastery":{…}}
+   * i dodatek uczy postać tych umiejętności (id umiejętności → poziom).
+   */
   (() => {
     let cfg;
-    function parseLink(url) {
-      try {
-        const u = new URL(url.trim());
-        const params = {}; u.searchParams.forEach((v, k) => (params[k] = v));
-        const hash = u.hash.replace(/^#/, '');
-        return { url: u.href, host: u.hostname, path: u.pathname, params, hash };
-      } catch { return null; }
+    const SKILL_RE = /skill/i;
+    const log = [];                     // ostatnie komendy gry dotyczące umiejętności (do raportu)
+    function parse(txt) {
+      let j; try { j = JSON.parse(String(txt || '').trim()); } catch { return { err: 'To nie jest poprawny kod zestawu (JSON).' }; }
+      if (!j || !Array.isArray(j.skills)) return { err: 'W kodzie brakuje listy „skills".' };
+      const sets = j.skills.map((o) => Object.entries(o || {}).map(([id, lv]) => ({ id: Number(id), lvl: Number(lv) || 0 })).filter((x) => x.id > 0 && x.lvl > 0));
+      if (!sets.some((x) => x.length)) return { err: 'Kod nie zawiera żadnych umiejętności.' };
+      return { level: Number(j.level) || 0, prof: String(j.prof || ''), sets, raw: j };
+    }
+    /** Nazwy i obecne poziomy umiejętności z gry (jeśli gra je trzyma w pamięci). */
+    function gameSkills() {
+      const out = {};
+      const visit = (o, depth) => {
+        if (!o || typeof o !== 'object' || depth > 3) return;
+        for (const [k, v] of Object.entries(o)) {
+          if (v && typeof v === 'object' && /^\d+$/.test(k) && (v.name || v.lvl != null || v.level != null || v.curLvl != null)) {
+            out[k] = { name: v.name || out[k] && out[k].name, lvl: Number(v.lvl ?? v.level ?? v.curLvl ?? v.currentLvl) || 0 };
+          } else if (v && typeof v === 'object' && !(v instanceof Node) && depth < 3 && /skill|list|data|d$/i.test(k)) visit(v, depth + 1);
+        }
+      };
+      try { visit(E().skills, 0); } catch {}
+      return out;
+    }
+    const nameOf = (id, gs) => (gs[id] && gs[id].name) || `Umiejętność #${id}`;
+    /** Z nauczonej komendy robimy wzór: {id} = umiejętność, {lvl} = poziom docelowy (jeśli gra go podaje). */
+    function makeTpl(t) {
+      let tpl = t, hasId = false, hasLvl = false;
+      tpl = tpl.replace(/([&?](?:id|skill|skill_?id|sid|skillid)=)(\d+)/i, (m, a) => { hasId = true; return a + '{id}'; });
+      tpl = tpl.replace(/([&?](?:lvl|level|lv|points|pts|v|val|value)=)(\d+)/i, (m, a) => { hasLvl = true; return a + '{lvl}'; });
+      return hasId ? { tpl, perPoint: !hasLvl } : null;
+    }
+    async function apply(set, label) {
+      if (game.inBattle()) return toast('Poczekaj do końca walki', 'warn');
+      const h = game.hero() || {};
+      if (set.prof && h.prof && set.prof !== h.prof) return toast(`Ten zestaw jest dla innej profesji (${set.prof}), a Twoja postać to ${h.prof}`, 'warn', 6000);
+      if (set.level && h.lvl && h.lvl < set.level) { if (!(await confirmBox({ title: `Zestaw jest na poziom ${set.level}, a masz ${h.lvl}`, items: ['Może zabraknąć punktów umiejętności — gra przyjmie tyle, ile się da.'], okText: 'Ucz mimo to' }))) return; }
+      if (!cfg.tpl) { toast('Najpierw naucz mnie komendy — przycisk „Naucz komendy” w panelu Zapisz zestaw UM', 'warn', 7000); return; }
+      const gs = gameSkills();
+      const plan = set.list.map((x) => ({ ...x, cur: gs[x.id] ? gs[x.id].lvl : 0 })).filter((x) => x.lvl > x.cur);
+      if (!plan.length) return toast('Postać ma już wszystkie te umiejętności');
+      const ok = await confirmBox({ title: `Nauczyć postać: ${label}?`, items: plan.map((x) => `${nameOf(x.id, gs)}: ${x.cur} → ${x.lvl}`).concat(cfg.perPoint && !Object.keys(gs).length ? ['Uwaga: nie widzę obecnych poziomów — jeśli masz już rozdane punkty, najpierw zresetuj umiejętności.'] : []), okText: 'Naucz' });
+      if (!ok) return;
+      let n = 0;
+      for (const x of plan) {
+        if (game.inBattle()) break;
+        if (cfg.perPoint) for (let k = x.cur; k < x.lvl; k++) { send(cfg.tpl.replace(/\{id\}/g, x.id).replace(/\{lvl\}/g, k + 1)); n++; await sleep(260); }
+        else { send(cfg.tpl.replace(/\{id\}/g, x.id).replace(/\{lvl\}/g, x.lvl)); n++; await sleep(350); }
+      }
+      toast(`Zapisz zestaw UM: wysłano ${n} ${cfg.perPoint ? 'punktów' : 'umiejętności'} — sprawdź okno umiejętności`, 'info', 6000);
     }
     defineAddon({
       id: 'zestawum', beta: true, name: 'Zapisz zestaw UM', icon: 'zestawum', color: ['#9b59b6', '#3498db'],
-      desc: 'Zapisuje zestawy umiejętności z kalkulatora MargoWorld (link) i pozwala je wczytać w grze. Wersja BETA: na razie zapisuje i porządkuje zestawy, a rozdawanie punktów w grze uczy się z Twojego ręcznego rozdania.',
-      defaults: { sets: [], cmd: '' },
+      desc: 'Wklejasz kod zestawu umiejętności z kalkulatora (np. {"level":50,"prof":"w","skills":[{"234":10,"263":10,"271":6},…]}) i jednym kliknięciem uczysz postać tych umiejętności na podanych poziomach. Zestawy możesz zapisać pod nazwą i wczytywać później.',
+      defaults: { sets: [], tpl: '', perPoint: true, raw: '' },
       settings: [],
       render(box, c, rerender) {
-        const inp = el('input', { class: 'mp-in', placeholder: 'Wklej link do zestawu z margoworld.pl', style: { flex: 1 } });
-        const nm = el('input', { class: 'mp-in', placeholder: 'Nazwa zestawu', style: { width: '160px' } });
-        box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Dodaj zestaw'),
-          el('div', { class: 'mp-lg-row' }, inp), el('div', { class: 'mp-lg-row' }, nm,
-            el('button', { class: 'mp-btn pri', onclick: () => { const p = parseLink(inp.value); if (!p || !/margoworld/i.test(p.host)) return toast('To nie jest link z margoworld.pl', 'warn'); c.sets.push({ name: nm.value.trim() || `Zestaw ${c.sets.length + 1}`, link: p, t: now() }); config.save(); rerender(); } }, 'Zapisz'))));
+        c.sets = (c.sets || []).filter((x) => Array.isArray(x.list));   // stare zapisy z linkami (1.0.0) są bezużyteczne
+        const gs = gameSkills();
+        const ta = el('textarea', { class: 'mp-in', rows: 3, placeholder: 'Wklej kod zestawu, np. {"level":50,"prof":"w","skills":[{"234":10,"263":10,"271":6},{},{},{},{},{},{}]}', style: { width: '100%', boxSizing: 'border-box', fontFamily: 'monospace', fontSize: '11px', resize: 'vertical', wordBreak: 'break-all', whiteSpace: 'pre-wrap' } });
+        ta.addEventListener('keydown', (e) => e.stopPropagation());
+        const nm = el('input', { class: 'mp-in', placeholder: 'Nazwa (opcjonalnie)', style: { flex: 1 } });
+        nm.addEventListener('keydown', (e) => e.stopPropagation());
+        const prev = el('div', { class: 'mp-dim', style: { marginTop: '6px' } });
+        const read = () => {
+          const p = parse(ta.value);
+          if (p.err) { prev.textContent = ta.value.trim() ? p.err : ''; return null; }
+          const idx = p.sets.findIndex((x) => x.length);
+          const list = p.sets[idx];
+          prev.textContent = `Profesja: ${p.prof || '?'} · poziom: ${p.level || '?'} · ${list.map((x) => `${nameOf(x.id, gs)} ${x.lvl}`).join(', ')}`;
+          return { prof: p.prof, level: p.level, list, raw: ta.value.trim() };
+        };
+        ta.oninput = read;
+        box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Kod zestawu'), ta, prev,
+          el('div', { class: 'mp-lg-row', style: { marginTop: '6px' } }, nm,
+            el('button', { class: 'mp-btn pri', onclick: () => { const s = read(); if (!s) return toast('Wklej poprawny kod zestawu', 'warn'); apply(s, nm.value.trim() || 'wklejony zestaw'); } }, 'Naucz postać'),
+            el('button', { class: 'mp-btn', onclick: () => { const s = read(); if (!s) return toast('Wklej poprawny kod zestawu', 'warn'); c.sets.push({ ...s, name: nm.value.trim() || `Zestaw ${c.sets.length + 1} (${s.prof}${s.level})` }); config.save(); rerender(); } }, 'Zapisz'))));
         const list = el('div', { class: 'mp-card' }, el('h3', null, 'Zapisane zestawy'));
         if (!c.sets.length) list.appendChild(el('div', { class: 'mp-dim' }, 'Brak zapisanych zestawów.'));
-        c.sets.forEach((s, i) => list.appendChild(el('div', { class: 'mp-lg-row' }, el('b', { style: { flex: 1 } }, s.name),
-          el('button', { class: 'mp-btn', onclick: () => window.open(s.link.url, '_blank') }, 'Otwórz'),
-          el('button', { class: 'mp-btn', onclick: () => { const t = JSON.stringify(s.link, null, 1); navigator.clipboard && navigator.clipboard.writeText(t); toast('Skopiowano dane zestawu'); } }, 'Kopiuj dane'),
+        c.sets.forEach((s, i) => list.appendChild(el('div', { class: 'mp-lg-row' },
+          el('div', { style: { flex: 1, minWidth: 0 } }, el('b', null, s.name), el('div', { class: 'mp-dim', style: { fontSize: '11px' } }, s.list.map((x) => `${nameOf(x.id, gs)} ${x.lvl}`).join(', '))),
+          el('button', { class: 'mp-btn pri', onclick: () => apply(s, s.name) }, 'Naucz'),
+          el('button', { class: 'mp-btn', title: 'Skopiuj kod zestawu', onclick: () => { navigator.clipboard && navigator.clipboard.writeText(s.raw); toast('Skopiowano kod'); } }, 'Kod'),
           el('button', { class: 'mp-btn bad', onclick: () => { c.sets.splice(i, 1); config.save(); rerender(); } }, '×'))));
         box.appendChild(list);
+        box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Komenda nauki umiejętności'),
+          el('div', { class: 'mp-dim' }, c.tpl ? `Zapamiętana: ${c.tpl} (${c.perPoint ? 'po jednym punkcie' : 'od razu na poziom'})` : 'Jeszcze nie zapamiętana. Kliknij „Naucz komendy”, otwórz w grze okno umiejętności i dodaj ręcznie JEDEN punkt dowolnej umiejętności (zatwierdź, jeśli gra pyta) — zapamiętam, jak gra to robi.'),
+          el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
+            el('button', { class: 'mp-btn', onclick: async () => {
+              toast('Dodaj teraz ręcznie jeden punkt umiejętności…', 'info', 8000);
+              const t = await learn((x) => SKILL_RE.test(x.split('&')[0]) && /\d/.test(x));
+              if (!t) return toast('Nie wychwyciłem komendy — spróbuj jeszcze raz', 'warn');
+              const m = makeTpl(t); c.raw = t;
+              if (!m) { config.save(); toast('Wychwyciłem komendę, ale nie umiem jej jeszcze użyć — wyślij mi raport', 'warn', 7000); return rerender(); }
+              c.tpl = m.tpl; c.perPoint = m.perPoint; config.save(); toast('Zapisz zestaw UM: zapamiętano'); rerender();
+            } }, 'Naucz komendy'),
+            c.tpl ? el('button', { class: 'mp-btn bad', onclick: () => { c.tpl = ''; config.save(); rerender(); } }, 'Zapomnij') : null)));
       },
-      init(c) { cfg = c; bus.on('cmd', (t) => { if (/skill/i.test(t) && /&(a|action)=/.test(t)) { cfg.lastSkillCmds = (cfg.lastSkillCmds || []).concat(t).slice(-20); config.save(); } }); MP.zestawum = { debug: () => ({ zestawy: cfg.sets, komendyUmiejetnosci: cfg.lastSkillCmds || [] }) }; },
+      init(c) {
+        cfg = c;
+        bus.on('cmd', (t) => { if (SKILL_RE.test(String(t).split('&')[0])) { log.unshift(String(t).slice(0, 200)); log.length = Math.min(log.length, 20); } });
+        MP.zestawum = { debug: () => ({ wzor: cfg.tpl, surowa: cfg.raw, komendyUmiejetnosci: log, umiejetnosciZGry: Object.keys(gameSkills()).length, engineSkills: (() => { try { return Object.keys(E().skills || {}).slice(0, 40); } catch { return null; } })() }) };
+      },
     });
   })();
 })();
