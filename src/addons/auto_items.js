@@ -60,47 +60,72 @@
 })();
 
 /* ───────── Fake Taxi ─────────
- * Automatyczna akceptacja przywołań od wybranych osób (AUTOMAT, domyślnie wyłączony).
- * Działa przez kliknięcie przycisku „Tak" w oknie przywołania gry — dokładnie to, co zrobiłbyś sam.
+ * Automatycznie przyjmuje przywołania („Gracz X przyzywa do siebie swoją drużynę! Czy chcesz się teleportować…")
+ * od wybranych osób: domyślnie od członków grupy, opcjonalnie od znajomych, klanu i z listy nicków.
+ * Działa przez kliknięcie „Tak" w oknie gry — dokładnie to, co zrobiłbyś sam.
  */
 (() => {
   let cfg;
-  function whoAllowed(text) {
-    const t = text.toLowerCase();
-    if (cfg.list.some((n) => t.includes(String(n).toLowerCase()))) return true;
-    const p = game.others().find((o) => t.includes(o.nick.toLowerCase()));
-    if (p && ((cfg.clan && p.isClan) || (cfg.friends && p.isFriend))) return true;
-    return false;
+  const SUMMON_RE = /(przyzywa|przywo[łl]uje|przywo[łl]anie|przyzwanie|teleportowa[ćc] do)/i;
+  const lc = (x) => String(x || '').toLowerCase();
+
+  /** Nicki członków grupy z okna grupy gry (wiersze „Nick (41p)") i z danych gry. */
+  function partyNicks() {
+    const out = new Set();
+    $$('[class*="other-party-id-"]').forEach((n) => { const m = (n.textContent || '').trim().match(/^\s*(.+?)\s*\(\s*\d+/); if (m) out.add(lc(m[1])); });
+    game.partyMembers().forEach((id) => { const o = game.otherById(id); if (o) out.add(lc(o.nick)); });
+    return out;
   }
+  function summoner(text) {
+    const m = text.match(/Gracz(?:ka)?\s+(.+?)\s+(przyzywa|przywo[łl]uje)/i);
+    return m ? m[1].trim() : null;
+  }
+  function allowed(text) {
+    const who = summoner(text);
+    const t = lc(text);
+    const has = (nick) => (who ? lc(who) === lc(nick) : t.includes(lc(nick)));
+    if (cfg.list.some(has)) return who || true;
+    if (cfg.party) for (const n of partyNicks()) if (has(n)) return who || n;
+    const p = who ? game.otherByNick(who) : game.others().find((o) => t.includes(lc(o.nick)));
+    if (p && ((cfg.clan && p.isClan) || (cfg.friends && p.isFriend))) return p.nick;
+    return null;
+  }
+  const done = new WeakSet();
   function scan() {
-    if (!cfg.enabled || !cfg.auto) return;
+    if (!cfg.enabled) return;
     if (cfg.notInBattle && game.inBattle()) return;
-    const sel = cfg.dialogSelector.split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-    for (const d of $$(sel).filter(isVisible)) {
-      if (d.dataset.mpTaxi) continue;
-      const text = d.textContent || '';
-      if (!/przywo[łl]/i.test(text)) continue;
-      d.dataset.mpTaxi = '1';
-      if (!whoAllowed(text)) continue;
-      const btn = $$('button, .button, .btn, [class*="accept"], [class*="yes"]', d).find((b) => /^(tak|akceptuj|przyjmij|zgoda|ok)\b/i.test((b.textContent || '').trim()));
-      if (!btn) continue;
-      setTimeout(() => { btn.click(); toast('Fake Taxi: przyjęto przywołanie', 'ok'); net.pushLog({ kind: 'info', src: 'Fake Taxi', msg: 'Kliknięto „Tak" w przywołaniu' }); }, rnd(400, 900));
+    // okno z pytaniem o przywołanie: element z tekstem o przywołaniu, który ma w sobie przycisk „Tak"
+    const yesRe = /^\s*(tak|akceptuj|przyjmij|zgoda|ok)\b/i;
+    let btns = $$('button, .button, .btn, [class*="button"], [class*="accept"], [class*="yes"]').filter((b) => isVisible(b) && yesRe.test(b.textContent || '') && (b.textContent || '').trim().length < 20);
+    btns = btns.filter((b) => !btns.some((o) => o !== b && b.contains(o)));   // sam przycisk, nie pojemnik z przyciskami
+    for (const btn of btns) {
+      let box = btn.parentElement;
+      for (let i = 0; i < 8 && box && !SUMMON_RE.test(box.textContent || ''); i++) box = box.parentElement;
+      if (!box || done.has(box) || box.closest('.mp-glass')) continue;
+      const text = (box.textContent || '').replace(/\s+/g, ' ');
+      if (!SUMMON_RE.test(text)) continue;
+      done.add(box);
+      const who = allowed(text);
+      if (!who) continue;
+      setTimeout(() => { if (btn.isConnected) { btn.click(); toast(`Fake Taxi: przyjęto przywołanie${who === true ? '' : ' od ' + who}`); net.pushLog({ kind: 'info', src: 'Fake Taxi', msg: 'Kliknięto „Tak" w przywołaniu' }); } }, rnd(250, 500));
     }
   }
   defineAddon({
     id: 'taxi', name: 'Fake Taxi', icon: 'taxi', color: ['#ffe14d', '#f0b400'], risk: 'auto',
-    desc: 'Automatycznie przyjmuje przywołania od wybranych osób (lista nicków, opcjonalnie klan i znajomi).',
-    defaults: { auto: false, list: [], clan: false, friends: false, notInBattle: true, dialogSelector: '.alert-window\n.ask-window\n.mAlert\n.dialog' },
-    notes: () => [{ type: 'info', text: 'Panel klika przycisk „Tak" w oknie przywołania. Jeśli to nie działa, wskaż klasę okna przywołania (F12) w polu „Selektor okna".' }],
+    desc: 'Automatycznie przyjmuje przywołania („…przyzywa do siebie swoją drużynę!") od wybranych osób — domyślnie od członków Twojej grupy.',
+    defaults: { party: true, list: [], clan: false, friends: false, notInBattle: true },
     settings: [
-      { key: 'auto', type: 'bool', auto: true, label: 'Przyjmuj automatycznie', confirm: 'To automatyzacja — przywołania będą przyjmowane bez Twojego kliknięcia. Na własne ryzyko.', countdown: 2 },
-      { key: 'list', type: 'list', label: 'Od kogo (nicki)', placeholder: 'nick + Enter' },
-      { key: 'clan', type: 'bool', label: 'Także od klanowiczów' },
-      { key: 'friends', type: 'bool', label: 'Także od znajomych' },
+      { key: 'party', type: 'bool', label: 'Od członków grupy' },
+      { key: 'friends', type: 'bool', label: 'Od znajomych' },
+      { key: 'clan', type: 'bool', label: 'Od klanowiczów' },
+      { key: 'list', type: 'list', label: 'Zawsze od (nicki)', placeholder: 'nick + Enter' },
       { key: 'notInBattle', type: 'bool', label: 'Nie w trakcie walki' },
-      { key: 'dialogSelector', type: 'textarea', label: 'Selektor okna przywołania' },
     ],
-    init(c) { cfg = c; new MutationObserver(debounce(scan, 200)).observe(document.body, { childList: true, subtree: true }); },
+    init(c) {
+      cfg = c;
+      if ('auto' in c || 'dialogSelector' in c) { delete c.auto; delete c.dialogSelector; config.save(); }
+      new MutationObserver(debounce(scan, 80)).observe(document.body, { childList: true, subtree: true });
+    },
   });
 })();
 
