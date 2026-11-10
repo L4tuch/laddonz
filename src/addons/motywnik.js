@@ -19,31 +19,31 @@
   const THEMES = {
     domyslny: { name: 'Domyślny', desc: 'Klasyczny interfejs gry, bez zmian.', none: true },
     dark: {
-      name: 'Dark Theme', desc: 'Grafit i czerń, chłodna stal, spokojne światło.',
+      m: ['#eef1f5', '#9aa3b0', '#3b414b'], orn: 'rivet', name: 'Dark Theme', desc: 'Grafit i czerń, chłodna stal, spokojne światło.',
       bg0: '#0a0b0d', bg1: '#121317', bg2: '#1a1c21', line: '#30343c', line2: '#21242a', a1: '#cfd5df', a2: '#7f8897', text: '#e6e8ec', text2: '#9ba1ab',
       glow: 'rgba(200,212,232,.10)', edge: 'rgba(160,175,200,.10)', tint: 'grayscale(1) brightness(.55) contrast(1.1)', blend: '#1b1c1f',
       btn: ['#2b2e35', '#1b1d22'], btnLine: '#3d424c', btnText: '#f1f3f6', head: '"Roboto", Arial, sans-serif', fonts: ['Roboto:wght@400;500;700'],
     },
     zorza: {
-      name: 'Zorza', desc: 'Nocny granat i świecące pasma zorzy: turkus, błękit, fiolet.',
+      m: ['#e3f8ff', '#86bfe6', '#27466e'], orn: 'star', star: '#f2fdff', name: 'Zorza', desc: 'Nocny granat i świecące pasma zorzy: turkus, błękit, fiolet.',
       bg0: '#050b16', bg1: '#0a1426', bg2: '#10203a', line: '#22426a', line2: '#152c4a', a1: '#2ef2c4', a2: '#8a5cff', a3: '#3fa9ff', text: '#e6f3ff', text2: '#8fb0cc',
       glow: 'rgba(46,242,196,.30)', edge: 'rgba(63,169,255,.22)', tint: 'grayscale(1) brightness(.5) sepia(1) hue-rotate(170deg) saturate(2.4)', blend: '#0e2340',
       btn: ['#13405a', '#0b2539'], btnLine: 'rgba(46,242,196,.55)', btnText: '#e2fff8', head: '"Exo 2", "Roboto", Arial, sans-serif', fonts: ['Roboto:wght@400;500;700', 'Exo+2:wght@600;700'],
     },
     neon: {
-      name: 'Neon', desc: 'Ciemny fiolet, różowy i turkusowy neon z poświatą.',
+      m: ['#ffe0f8', '#d65bdc', '#4a1660'], orn: 'diamond', name: 'Neon', desc: 'Ciemny fiolet, różowy i turkusowy neon z poświatą.',
       bg0: '#07040f', bg1: '#0e0819', bg2: '#170d29', line: '#4a2470', line2: '#25133e', a1: '#ff2bd6', a2: '#00e5ff', text: '#f5ecff', text2: '#ab9cc9',
       glow: 'rgba(255,43,214,.38)', edge: 'rgba(0,229,255,.28)', tint: 'grayscale(1) brightness(.45) sepia(1) hue-rotate(245deg) saturate(3)', blend: '#1d0f33',
       btn: ['#251238', '#140a22'], btnLine: '#ff2bd6', btnText: '#ffe8fb', head: '"Rajdhani", "Roboto", Arial, sans-serif', fonts: ['Roboto:wght@400;500;700', 'Rajdhani:wght@600;700'],
     },
     obsydian: {
-      name: 'Obsydian', desc: 'Czerń i ciemny metal, bardzo subtelny żar.',
+      m: ['#ffd2a6', '#b06a3c', '#3e2617'], orn: 'ember', name: 'Obsydian', desc: 'Czerń i ciemny metal, bardzo subtelny żar.',
       bg0: '#0a0908', bg1: '#131110', bg2: '#1b1816', line: '#3c3530', line2: '#26211e', a1: '#ff8a3d', a2: '#b9471a', text: '#eee6dc', text2: '#a69c91',
       glow: 'rgba(255,120,50,.18)', edge: 'rgba(255,110,40,.10)', tint: 'grayscale(1) brightness(.5) sepia(.55) hue-rotate(-12deg) saturate(1.3)', blend: '#1e1713',
       btn: ['#2b2623', '#1a1715'], btnLine: 'rgba(205,100,45,.6)', btnText: '#f6ece1', head: '"Marcellus SC", "Roboto", Georgia, serif', fonts: ['Roboto:wght@400;500;700', 'Marcellus+SC'],
     },
     glebia: {
-      name: 'Głębia', desc: 'Ciemny ocean i chłodne, błękitne światło.',
+      m: ['#dafcff', '#5bb9cf', '#143f50'], orn: 'drop', name: 'Głębia', desc: 'Ciemny ocean i chłodne, błękitne światło.',
       bg0: '#04101a', bg1: '#081b2a', bg2: '#0c273b', line: '#185070', line2: '#0f364c', a1: '#38bdf8', a2: '#22d3ee', text: '#e3f6ff', text2: '#8db7cc',
       glow: 'rgba(56,189,248,.28)', edge: 'rgba(34,211,238,.18)', tint: 'grayscale(1) brightness(.5) sepia(1) hue-rotate(160deg) saturate(2.2)', blend: '#0b2438',
       btn: ['#10405d', '#0a283c'], btnLine: 'rgba(56,189,248,.6)', btnText: '#e6f8ff', head: '"Exo 2", "Roboto", Arial, sans-serif', fonts: ['Roboto:wght@400;500;700', 'Exo+2:wght@600;700'],
@@ -52,8 +52,51 @@
 
   /* ── grafiki ramek (SVG) — wymiary cięcia jak w grze ── */
   const strip = (t) => `<linearGradient id='a' x1='0' x2='1'><stop offset='0' stop-color='${t.a1}' stop-opacity='0'/><stop offset='.2' stop-color='${t.a1}'/><stop offset='.55' stop-color='${t.a3 || t.a2}'/><stop offset='.85' stop-color='${t.a2}'/><stop offset='1' stop-color='${t.a2}' stop-opacity='0'/></linearGradient><filter id='g' x='-10%' y='-200%' width='120%' height='500%'><feGaussianBlur stdDeviation='2.2'/></filter>`;
-  // okno: pas górny/dolny 32 px, boczne 20 px (gui/window-frame.png 32 20 fill)
-  const winFrame = (t) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><defs>${strip(t)}<linearGradient id='h' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg1}'/></linearGradient></defs><rect x='0' y='0' width='200' height='200' rx='6' fill='${t.bg1}'/><rect x='.75' y='.75' width='198.5' height='198.5' rx='5.5' fill='none' stroke='${t.line}' stroke-width='1.5'/><line x1='8' y1='1.6' x2='192' y2='1.6' stroke='url(#a)' stroke-width='3' filter='url(#g)' opacity='.9'/><line x1='14' y1='1.2' x2='186' y2='1.2' stroke='url(#a)' stroke-width='1.2'/></svg>`);
+  /* ── grafika metalu ──
+   * Emblemat w narożnikach i na plakietkach: gwiazda (Zorza), nit (Dark), romb (Neon), żar (Obsydian), kropla (Głębia). */
+  function emblem(t, cx, cy, r) {
+    const [m1, m2, m3] = t.m;
+    if (t.orn === 'star') {
+      const k = r * 0.3;
+      return `<path d='M${cx},${cy - r} L${cx + k},${cy - k} L${cx + r},${cy} L${cx + k},${cy + k} L${cx},${cy + r} L${cx - k},${cy + k} L${cx - r},${cy} L${cx - k},${cy - k}Z' fill='${t.star}' stroke='${m2}' stroke-width='.4'/><circle cx='${cx}' cy='${cy}' r='${r * 0.9}' fill='${t.a1}' opacity='.18'/>`;
+    }
+    if (t.orn === 'diamond') return `<path d='M${cx},${cy - r} L${cx + r},${cy} L${cx},${cy + r} L${cx - r},${cy}Z' fill='${t.a1}' stroke='${m1}' stroke-width='.6'/><path d='M${cx},${cy - r * 0.5} L${cx + r * 0.5},${cy} L${cx},${cy + r * 0.5} L${cx - r * 0.5},${cy}Z' fill='${m1}' opacity='.55'/>`;
+    if (t.orn === 'ember') return `<path d='M${cx},${cy - r} L${cx + r * 0.75},${cy} L${cx},${cy + r} L${cx - r * 0.75},${cy}Z' fill='#ff7a2a' stroke='${m3}' stroke-width='.6'/><circle cx='${cx}' cy='${cy}' r='${r * 0.35}' fill='#ffd08a'/>`;
+    if (t.orn === 'drop') return `<circle cx='${cx}' cy='${cy}' r='${r * 0.8}' fill='${t.a1}' stroke='${m1}' stroke-width='.6'/><circle cx='${cx - r * 0.25}' cy='${cy - r * 0.3}' r='${r * 0.25}' fill='#fff' opacity='.7'/>`;
+    return `<circle cx='${cx}' cy='${cy}' r='${r * 0.75}' fill='url(#mr)' stroke='${m3}' stroke-width='.6'/><circle cx='${cx - r * 0.2}' cy='${cy - r * 0.25}' r='${r * 0.22}' fill='${m1}' opacity='.8'/>`;
+  }
+  const metalDefs = (t) => `<linearGradient id='mp' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${t.m[0]}'/><stop offset='.45' stop-color='${t.m[1]}'/><stop offset='1' stop-color='${t.m[2]}'/></linearGradient><radialGradient id='mr' cx='.35' cy='.3' r='.8'><stop offset='0' stop-color='${t.m[0]}'/><stop offset='.6' stop-color='${t.m[1]}'/><stop offset='1' stop-color='${t.m[2]}'/></radialGradient>`;
+  /*
+   * Ramka okna: 80×104, cięcie 32 (góra/dół) i 20 (boki), krawędzie powtarzane (round) — dzięki temu ozdoby na
+   * krawędziach (gwiazdki Zorzy) nie rozciągają się. Metalowa obwódka z cieniowaniem w poprzek (bez pasów wzdłuż),
+   * narożniki to metalowe okucia z emblematem stylu.
+   */
+  const winFrame = (t) => {
+    const [m1, m2, m3] = t.m;
+    const corner = `<path d='M1.5 21 L1.5 7.5 Q1.5 1.5 7.5 1.5 L21 1.5 L21 5.5 Q12 5.5 9.5 8.5 Q5.5 11 5.5 21 Z' fill='url(#mp)' stroke='${m3}' stroke-width='.7'/><path d='M3 19 L3 8 Q3 3 8 3 L19 3' fill='none' stroke='${m1}' stroke-width='.6' opacity='.7'/>${emblem(t, 8.2, 8.2, 4.2)}`;
+    const stars = t.orn === 'star' ? `<g fill='${t.star}'>${[[40, 3.2, 2.1], [3.2, 52, 1.7], [76.8, 52, 1.7], [40, 100.8, 2.1]].map(([x, y, r]) => { const k = r * 0.3; return `<path d='M${x},${y - r} L${x + k},${y - k} L${x + r},${y} L${x + k},${y + k} L${x},${y + r} L${x - k},${y + k} L${x - r},${y} L${x - k},${y - k}Z'/>`; }).join('')}</g>` : '';
+    return svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='104'><defs>${metalDefs(t)}<linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.a1}' stop-opacity='.13'/><stop offset='1' stop-color='${t.a1}' stop-opacity='0'/></linearGradient></defs>
+<rect width='80' height='104' rx='7' fill='${t.bg1}'/>
+<rect x='4' y='4' width='72' height='26' fill='url(#w)'/>
+<rect x='1' y='1' width='78' height='102' rx='6.5' fill='none' stroke='${m3}' stroke-width='2'/>
+<rect x='2.3' y='2.3' width='75.4' height='99.4' rx='5.5' fill='none' stroke='${m2}' stroke-width='1.2'/>
+<rect x='3.4' y='3.4' width='73.2' height='97.2' rx='4.6' fill='none' stroke='${m1}' stroke-width='.5' opacity='.55'/>
+<rect x='5' y='5' width='70' height='94' rx='3.5' fill='none' stroke='${t.a1}' stroke-width='.6' opacity='.28'/>
+${stars}
+<g>${corner}</g><g transform='translate(80 0) scale(-1 1)'>${corner}</g><g transform='translate(0 104) scale(1 -1)'>${corner}</g><g transform='translate(80 104) scale(-1 -1)'>${corner}</g>
+</svg>`);
+  };
+  /** Plakietka z nazwą okna: metalowa kapsuła ze szpicami i emblematem (120×28, cięcie 14/22). */
+  const plaque = (t) => {
+    const [m1, m2, m3] = t.m;
+    return svg(`<svg xmlns='http://www.w3.org/2000/svg' width='120' height='28'><defs>${metalDefs(t)}<linearGradient id='pf' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='${t.bg2}'/><stop offset='1' stop-color='${t.bg0}'/></linearGradient></defs>
+<path d='M22 1.5 L9 1.5 L1 14 L9 26.5 L22 26.5 L98 26.5 L111 26.5 L119 14 L111 1.5 L98 1.5 Z' fill='url(#pf)' stroke='${m3}' stroke-width='1.6'/>
+<path d='M22 3 L10 3 L3 14 L10 25 L22 25 M98 3 L110 3 L117 14 L110 25 L98 25' fill='none' stroke='${m2}' stroke-width='1.1'/>
+<line x1='10' y1='3' x2='110' y2='3' stroke='${m1}' stroke-width='.6' opacity='.6'/>
+<line x1='10' y1='25' x2='110' y2='25' stroke='${m2}' stroke-width='.9'/>
+${emblem(t, 11, 14, 4)}${emblem(t, 109, 14, 4)}
+</svg>`);
+  };
   // powierzchnia panelu: boczne pasy 11 px (gui/middle_graphics.png 0 11 fill)
   const surface = (t, raised) => svg(`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><rect width='60' height='60' fill='${raised ? t.bg0 : t.bg1}'/></svg>`);
   // pasek / nagłówek tabeli: boczne pasy 20 px (quest_bar.png, table_header.png 0 20 fill)
@@ -73,7 +116,7 @@
   function css(t) {
     const IL = '.interface-layer';
     const body = '"Roboto", Arimo, Arial, sans-serif';
-    const btn = (from, to, line, txt) => `background:linear-gradient(${from},${to})!important;color:${txt}!important;box-shadow:inset 0 0 0 1px ${line},inset 0 1px 0 rgba(255,255,255,.07)!important;text-shadow:0 1px 1px rgba(0,0,0,.8)!important`;
+    const btn = (from, to, line, txt) => `background:linear-gradient(${from},${to})!important;color:${txt}!important;border-radius:3px!important;box-shadow:inset 0 0 0 1px ${line},inset 0 1px 0 ${t.m[0]}2e,0 1px 2px rgba(0,0,0,.55)!important;text-shadow:0 1px 1px rgba(0,0,0,.8)!important`;
     const btnMain = btn(t.btn[0], t.btn[1], t.btnLine, t.btnText);
     const hover = `filter:brightness(1.18);box-shadow:inset 0 0 0 1px ${t.a1},0 0 10px ${t.glow}!important`;
     return `
@@ -89,7 +132,7 @@
 /* — ramy ekranu: kolumny, górny i dolny pasek — */
 ${IL} .left-column.main-column, ${IL} .left-column.main-column .new-chat-window, ${IL} .left-column.main-column .chat-input-wrapper{background-color:${t.bg1}!important}
 ${IL} .right-column.main-column{background:${grain}, radial-gradient(ellipse at 50% 0%, ${t.edge}, transparent 45%), linear-gradient(${t.bg1},${t.bg0})!important}
-${IL} .right-column.main-column > .border{background:linear-gradient(90deg,${t.bg0},${t.bg1})!important}
+${IL} .right-column.main-column > .border{background:linear-gradient(90deg,${t.bg0} 0,${t.m[2]} 30%,${t.m[1]} 50%,${t.m[2]} 70%,${t.bg0} 100%)!important;opacity:.55}
 /* górny i dolny pasek: jednolite tło stylu (bez jasnej krawędzi z grafiki gry) */
 ${IL} .top.positioner > .bg{background:linear-gradient(${t.bg1},${t.bg0})!important}
 ${IL} .bottom.positioner > .bg{background:linear-gradient(${t.bg0},${t.bg1})!important}
@@ -102,21 +145,21 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 .interface-element-grid-border, .interface-element-background-color-3{background-color:${t.bg1}!important}
 
 /* — okna — */
-.c-window:not(.transparent).border-window{border-image-source:${winFrame(t)}!important}
+.c-window:not(.transparent).border-window{border-image-source:${winFrame(t)}!important;border-image-slice:32 20 fill!important;border-image-repeat:round!important}
 .c-window .inner-content{background-color:transparent!important}
 .c-window:not(.transparent) > .content{color:${t.text}}
 .c-window:not(.transparent){box-shadow:0 12px 30px rgba(0,0,0,.6),0 0 22px ${t.glow}!important}
 /* okna przezroczyste (mapa podręczna, przelogowanie, liczniki…) zostają przezroczyste — gra sama ustawia ich krycie */
-.c-window:not(.transparent) .header-label{background:linear-gradient(${t.bg2},${t.bg1})!important;border-radius:999px!important;box-shadow:0 0 0 1px ${t.line},inset 0 1px 0 rgba(255,255,255,.06),0 0 14px ${t.glow}!important}
+.c-window:not(.transparent) .header-label{background:none!important;box-shadow:none!important;border-image:${plaque(t)} 14 22 fill / 14px 22px / 3px 16px stretch!important;filter:drop-shadow(0 0 6px ${t.glow})}
 .c-window .header-label .text{color:${t.text}!important;text-shadow:0 0 8px ${t.glow},0 1px 1px #000!important}
 /* ozdoby plakietki z nazwą okna — ten sam kształt, przebarwione */
 /* metalowe ozdoby klasycznego interfejsu — w nowoczesnych stylach ich nie ma */
 .c-window .header-label .left-decor, .c-window .header-label .right-decor{opacity:0!important}
 .c-window .close-button-corner-decor{background-image:none!important}
-.c-window .close-button{filter:grayscale(1) brightness(1.35);background-color:${t.bg2}!important;border-radius:4px!important;box-shadow:0 0 0 1px ${t.line}!important}
+.c-window .close-button{filter:grayscale(1) brightness(1.35);background-color:${t.bg2}!important;border-radius:4px!important;box-shadow:0 0 0 1px ${t.m[2]},inset 0 0 0 1px ${t.m[1]}66!important}
 .c-window .close-button:hover{filter:grayscale(.2) brightness(1.6);box-shadow:0 0 0 1px ${t.a1},0 0 8px ${t.glow}!important}
 /* panel szybkich umiejętności nad HP — ta sama ramka co okna */
-.additional-skill-panel-border{border-image-source:${winFrame(t)}!important}
+.additional-skill-panel-border{border-image-source:${winFrame(t)}!important;border-image-slice:32 20 fill!important;border-image-repeat:round!important}
 /* okna łupów i ważne okna — mocniejsze światło */
 .c-window[class*="loot"], .c-window.window-on-peak{box-shadow:0 12px 30px rgba(0,0,0,.6),0 0 0 1px ${t.a1}55,0 0 34px ${t.glow}!important}
 
