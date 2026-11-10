@@ -23,7 +23,7 @@ Panel dodatków w formie skryptu Tampermonkey. Nowoczesny, przezroczysty panel k
 | 🔔 | **Hey WakeUP!** | Domyślnie powiadomienia wyglądają jak w grze (żółty tekst na dole). Dodatek zmienia ich kolory, czcionkę, rozmiar, tło i położenie — także dla komunikatów gry. |
 | 🛡 | **Bratan** | Blokuje każdy atak (także ręczny) na klanowiczów, znajomych, sojuszników i osoby z listy. |
 | 👥 | **Kto tu jest?** | Okno z graczami na mapie: filtry, sortowanie, zapisywane zestawy, tryb minimalny. Klik na gracza → karta z EQ, Dobij, zaproszeniem do grupy i znajomych, Bratanem. |
-| 🏆 | **Kto złapie** | Pod kafelkami łupu: Twoja szansa (%) na złapanie przedmiotu przy biciu w grupie. |
+| 🏆 | **Kto złapie** | Pod kafelkami łupu: Twoja szansa (%) na złapanie przedmiotu — liczone tylko osoby z Twojej drużyny, które brały udział w walce. |
 | 🍲 | **Let's Cook Together** | Klawisz = zaproś znajomych/klan/sojusz/wszystkich z mapy. Klawisz = rozwiąż grupę. Bez automatów. |
 | ✎ | **Podpisownik** | Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny). |
 | 🎒 | **Pokaż EQ** | Najedź na gracza (domyślnie z Shift) → jego ekwipunek + podsumowanie bonusów legendarnych. |

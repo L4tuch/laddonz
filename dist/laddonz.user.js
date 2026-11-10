@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         laddonz — legalne dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.6.9
+// @version      1.7.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Kto tu jest?, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -2709,30 +2709,58 @@ function parseProtection(data) {
 })();
 
 /* ───────── Kto złapie ─────────
- * W oknie łupu pod każdym przedmiotem pokazuje szansę na złapanie przy biciu w grupie (≈ 1 / liczba chętnych).
+ * W oknie łupu pod każdym przedmiotem pokazuje Twoją szansę na złapanie: 1 / liczba graczy z Twojej drużyny,
+ * którzy brali udział w walce (tylko oni dostają łup). Bez ustawień.
  */
 (() => {
-  let cfg, obs = null, declined = new Set();
+  let cfg, last = { n: 0, ids: [], t: 0 };
+  const LOOT_SEL = '.loot-wnd, .loots-window, .loot-window, [class*="loot-window"], [class*="loots-window"]';
 
-  function partyCount() {
-    const ids = game.partyMembers();
-    if (!ids.length) return 1;
-    let n = ids.length;
-    if (cfg.onlyOnMap) {
-      const here = new Set(game.others().map((p) => p.id));
-      const h = game.hero();
-      n = ids.filter((id) => id === (h && h.id) || here.has(id)).length || 1;
-    }
-    return Math.max(1, n - declined.size);
+  /** Gracze (bez NPC i towarzyszy) z drużyny bohatera w bieżącej walce. */
+  function fighters() {
+    const b = E() && E().battle;
+    if (!b) return null;
+    const h = game.hero(); if (!h) return null;
+    let ws = b.warriorsList || b.warriors;
+    try { if (typeof ws === 'function') ws = ws.call(b); } catch { ws = null; }
+    const arr = Array.isArray(ws) ? ws : Object.values(ws || {});
+    if (!arr.length) return null;
+    const f = (w, k) => (w && w[k] !== undefined ? w[k] : w && w.d ? w.d[k] : undefined);
+    const idOf = (w) => Number(f(w, 'id'));
+    const me = arr.find((w) => idOf(w) === h.id || f(w, 'name') === h.nick || f(w, 'nick') === h.nick);
+    let myTeam = me ? f(me, 'team') : undefined;
+    if (myTeam === undefined) { try { myTeam = typeof b.myteam === 'function' ? b.myteam() : b.myteam; } catch {} }
+    const isPlayer = (w) => {
+      const id = idOf(w);
+      if (!(id > 0)) return false;                                   // NPC mają ujemne id
+      if (f(w, 'npc') || f(w, 'isNpc') || f(w, 'pet') || f(w, 'isPet') || f(w, 'companion')) return false;
+      const t = String(f(w, 'type') || f(w, 'kind') || '').toLowerCase();
+      if (t && /npc|pet|mob|companion|towarz/.test(t)) return false;
+      return true;
+    };
+    const ids = arr.filter((w) => (myTeam === undefined || f(w, 'team') === myTeam) && isPlayer(w)).map(idOf);
+    if (!ids.includes(h.id)) ids.push(h.id);
+    return [...new Set(ids)];
+  }
+
+  /** Zapamiętujemy uczestników przez całą walkę — okno łupu pojawia się już po niej. */
+  function snapshot() {
+    const ids = fighters();
+    if (ids && ids.length) last = { n: ids.length, ids, t: now() };
+  }
+
+  function count() {
+    const ids = fighters();
+    if (ids && ids.length) { last = { n: ids.length, ids, t: now() }; return ids.length; }
+    if (last.n && now() - last.t < 5 * 60000) return last.n;
+    return 1;
   }
 
   function decorate() {
-    const sel = cfg.lootSelector.split('\n').map((s) => s.trim()).filter(Boolean).join(',');
-    if (!sel) return;
-    const wins = $$(sel).filter(isVisible);
+    const wins = $$(LOOT_SEL).filter(isVisible);
     document.querySelectorAll('.mp-ibadge.chance').forEach((b) => { if (!wins.some((w) => w.contains(b))) b.remove(); });
     if (!wins.length) return;
-    const n = partyCount();
+    const n = count();
     const pct = Math.round(1000 / n) / 10;
     for (const w of wins) {
       for (const it of $$('.item', w)) {
@@ -2740,26 +2768,24 @@ function parseProtection(data) {
         let b = it.querySelector(':scope > .mp-ibadge.chance');
         if (!b) { b = el('div', { class: 'mp-ibadge chance' }); it.appendChild(b); }
         b.textContent = `${pct}%`;
-        b.title = n === 1 ? 'Jesteś sam — przedmiot jest Twój' : `Przybliżenie: 1 / ${n} osób w grupie`;
+        b.title = n === 1 ? 'Walczyłeś sam — przedmiot jest Twój' : `1 / ${n} graczy z Twojej drużyny w walce`;
       }
     }
   }
 
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
-    desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu przy biciu w grupie.',
-    defaults: { enabled: false, onlyOnMap: true, lootSelector: '.loot-wnd\n.loots-window\n.loot-window' },
-    notes: () => [{ type: 'info', text: 'To przybliżenie: zakłada równą szansę dla wszystkich członków grupy (opcjonalnie tylko tych na tej samej mapie). Jeśli liczby się nie pojawiają, sprawdź selektor okna łupu (F12 → wskaż okno łupu).' }],
-    settings: [
-      { key: 'onlyOnMap', type: 'bool', label: 'Licz tylko członków grupy na tej samej mapie' },
-      { key: 'lootSelector', type: 'textarea', label: 'Selektor okna łupu' },
-    ],
+    desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu: liczone są tylko osoby z Twojej drużyny, które brały udział w walce — tylko one dostają łup.',
+    defaults: { enabled: false },
     init(c) {
       cfg = c;
+      if ('onlyOnMap' in c || 'lootSelector' in c) { delete c.onlyOnMap; delete c.lootSelector; config.save(); }
       const run = debounce(() => { if (cfg.enabled) decorate(); }, 120);
-      obs = new MutationObserver(run);
-      obs.observe(document.body, { childList: true, subtree: true });
-      bus.on('battle:start', () => declined.clear());
+      new MutationObserver(run).observe(document.body, { childList: true, subtree: true });
+      bus.on('battle:start', () => { last = { n: 0, ids: [], t: 0 }; });
+      setInterval(() => { if (cfg.enabled && game.ready() && E().battle && (game.inBattle() || (typeof E().battle.isBattleShow === 'function' && E().battle.isBattleShow()))) snapshot(); }, 500);
+      bus.on('battle:end', () => { if (cfg.enabled) snapshot(); });
+      MP.ktozlapie = { fighters, last: () => last };
     },
   });
 })();
@@ -3919,5 +3945,5 @@ MP.itemDeco = itemDeco;
   }
 })();
 
-MP.version = "1.6.9";
+MP.version = "1.7.0";
 })();
