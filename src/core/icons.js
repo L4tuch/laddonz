@@ -34,6 +34,12 @@ const ICON_PATHS = {
   // interfejs
   logo: '<path d="M12 2.5l8.5 5v9L12 21.5l-8.5-5v-9z"/><path d="M10 7.8v8.4h5" stroke-width="2.3"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  puzzle: '<path d="M9 4.5a2 2 0 014 0V6h3.5a1 1 0 011 1v3.5H19a2 2 0 010 4h-1.5V18a1 1 0 01-1 1H13v-1.5a2 2 0 00-4 0V19H5.5a1 1 0 01-1-1v-3.5H6a2 2 0 000-4H4.5V7a1 1 0 011-1H9z"/>',
+  branch: '<circle cx="6.5" cy="5.5" r="2"/><circle cx="6.5" cy="18.5" r="2"/><circle cx="17.5" cy="8.5" r="2"/><path d="M6.5 7.5v9M17.5 10.5c0 4-5.5 3.5-10 6"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.3"/>',
+  sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+  back: '<path d="M14.5 5.5L8 12l6.5 6.5"/>',
+  layout: '<rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M8.5 4v16"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
   diag: '<path d="M3 12h4l2.5-6 5 12 2.5-6H21"/>',

@@ -28,7 +28,7 @@ const config = {
       launcher: { x: 16, y: 120 },
       panelPos: null,
       accent: '#7c5cff',
-      glass: 0.55,          // przezroczystość tła panelu
+      glass: 0.9,          // przezroczystość tła panelu
       menuSelector: '.popup-menu\n.menu-wrapper\n[class*="popup-menu"]\n[class*="context-menu"]', // menu prawego przycisku gry (zapas)
     },
     commands: {},           // nadpisania szablonów komend (patrz net.js)
@@ -40,7 +40,9 @@ const config = {
     return h || 'world';
   },
 
+  charName: null,
   load(charName) {
+    this.charName = charName || null;
     const g = store.get('cfg:global', null);
     const perChar = g?.global?.perCharacter !== false;
     this.key = perChar && charName ? `cfg:${this.worldName()}:${charName}` : 'cfg:global';
@@ -58,6 +60,28 @@ const config = {
       g.global = Object.assign({}, g.global, { perCharacter: this.data.global.perCharacter });
       store.set('cfg:global', g);
     }
+  },
+
+  /** Przełączenie trybu zapisu od razu (bez odświeżania): wspólne dla wszystkich postaci albo osobne dla każdej. */
+  setPerCharacter(on) {
+    if (!this.data) return;
+    this.data.global.perCharacter = !!on;
+    this.key = on && this.charName ? `cfg:${this.worldName()}:${this.charName}` : 'cfg:global';
+    this.save();
+    if (!on) store.set('cfg:global', this.data);   // wspólne: pełne ustawienia w jednym miejscu
+  },
+  /** Lista postaci, które mają zapisane własne ustawienia (świat:postać). */
+  savedCharacters() {
+    const out = [];
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); const m = k && k.match(/^mp:cfg:([^:]+):(.+)$/); if (m) out.push({ key: k.slice(store.PREFIX.length), world: m[1], name: m[2] }); } } catch {}
+    return out;
+  },
+  /** Te same ustawienia dla wszystkich postaci: kopiujemy obecne do każdej zapisanej postaci i do ustawień wspólnych. */
+  copyToAll() {
+    const list = this.savedCharacters();
+    for (const c of list) store.set(c.key, this.data);
+    const g = JSON.parse(JSON.stringify(this.data)); store.set('cfg:global', g);
+    return list.length;
   },
 
   addon(id, defaults) {

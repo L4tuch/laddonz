@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.0
+// @version      1.1.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together, Legendarny Łup, Motywnik i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
-// @icon         data:image/png;base64,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
-// @icon64       data:image/png;base64,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
+// @icon         data:image/png;base64,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
+// @icon64       data:image/png;base64,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
 // @match        https://*.margonem.pl/*
 // @match        https://*.margonem.com/*
 // @exclude      https://www.margonem.pl/*
@@ -125,7 +125,7 @@ const config = {
       launcher: { x: 16, y: 120 },
       panelPos: null,
       accent: '#7c5cff',
-      glass: 0.55,          // przezroczystość tła panelu
+      glass: 0.9,          // przezroczystość tła panelu
       menuSelector: '.popup-menu\n.menu-wrapper\n[class*="popup-menu"]\n[class*="context-menu"]', // menu prawego przycisku gry (zapas)
     },
     commands: {},           // nadpisania szablonów komend (patrz net.js)
@@ -137,7 +137,9 @@ const config = {
     return h || 'world';
   },
 
+  charName: null,
   load(charName) {
+    this.charName = charName || null;
     const g = store.get('cfg:global', null);
     const perChar = g?.global?.perCharacter !== false;
     this.key = perChar && charName ? `cfg:${this.worldName()}:${charName}` : 'cfg:global';
@@ -155,6 +157,28 @@ const config = {
       g.global = Object.assign({}, g.global, { perCharacter: this.data.global.perCharacter });
       store.set('cfg:global', g);
     }
+  },
+
+  /** Przełączenie trybu zapisu od razu (bez odświeżania): wspólne dla wszystkich postaci albo osobne dla każdej. */
+  setPerCharacter(on) {
+    if (!this.data) return;
+    this.data.global.perCharacter = !!on;
+    this.key = on && this.charName ? `cfg:${this.worldName()}:${this.charName}` : 'cfg:global';
+    this.save();
+    if (!on) store.set('cfg:global', this.data);   // wspólne: pełne ustawienia w jednym miejscu
+  },
+  /** Lista postaci, które mają zapisane własne ustawienia (świat:postać). */
+  savedCharacters() {
+    const out = [];
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); const m = k && k.match(/^mp:cfg:([^:]+):(.+)$/); if (m) out.push({ key: k.slice(store.PREFIX.length), world: m[1], name: m[2] }); } } catch {}
+    return out;
+  },
+  /** Te same ustawienia dla wszystkich postaci: kopiujemy obecne do każdej zapisanej postaci i do ustawień wspólnych. */
+  copyToAll() {
+    const list = this.savedCharacters();
+    for (const c of list) store.set(c.key, this.data);
+    const g = JSON.parse(JSON.stringify(this.data)); store.set('cfg:global', g);
+    return list.length;
   },
 
   addon(id, defaults) {
@@ -1007,6 +1031,12 @@ const ICON_PATHS = {
   // interfejs
   logo: '<path d="M12 2.5l8.5 5v9L12 21.5l-8.5-5v-9z"/><path d="M10 7.8v8.4h5" stroke-width="2.3"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  puzzle: '<path d="M9 4.5a2 2 0 014 0V6h3.5a1 1 0 011 1v3.5H19a2 2 0 010 4h-1.5V18a1 1 0 01-1 1H13v-1.5a2 2 0 00-4 0V19H5.5a1 1 0 01-1-1v-3.5H6a2 2 0 000-4H4.5V7a1 1 0 011-1H9z"/>',
+  branch: '<circle cx="6.5" cy="5.5" r="2"/><circle cx="6.5" cy="18.5" r="2"/><circle cx="17.5" cy="8.5" r="2"/><path d="M6.5 7.5v9M17.5 10.5c0 4-5.5 3.5-10 6"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.3"/>',
+  sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+  back: '<path d="M14.5 5.5L8 12l6.5 6.5"/>',
+  layout: '<rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M8.5 4v16"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
   diag: '<path d="M3 12h4l2.5-6 5 12 2.5-6H21"/>',
@@ -1483,6 +1513,100 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .mp-modal{border-radius:18px;padding:18px 20px;width:440px;max-width:94vw;max-height:84vh;display:flex;flex-direction:column}
 .mp-modal h3{margin:0 0 8px;font-size:16px}
 .mp-modal .mp-wbody{overflow:auto;margin:6px 0 12px}
+
+/* ═══════════ L4Tools 1.1 — wygląd w stylu okien gry ═══════════ */
+:root{--mp-fg:#e9e9e9;--mp-dim:#a9a9a9;--mp-line:rgba(255,255,255,.14)}
+.mp-glass{background:rgba(var(--mp-bg),var(--mp-glass))!important;-webkit-backdrop-filter:blur(3px)!important;backdrop-filter:blur(3px)!important;border:1px solid rgba(255,255,255,.32)!important;box-shadow:0 0 0 1px rgba(0,0,0,.85),inset 0 0 0 1px rgba(0,0,0,.6),0 12px 34px rgba(0,0,0,.6)!important;border-radius:8px!important;font-family:Arimo,Arial,sans-serif!important}
+/* okno panelu */
+#mp-panel.l4-win{width:720px;height:470px;max-width:96vw;max-height:90vh;border-radius:8px!important}
+.l4-head{position:relative;display:flex;align-items:center;height:28px;padding:0 6px;cursor:move;user-select:none;border-bottom:1px solid rgba(255,255,255,.12);background:linear-gradient(rgba(255,255,255,.05),rgba(0,0,0,.15))}
+.l4-head-l{display:flex;gap:4px;z-index:1}
+.l4-mini{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font:900 9px Georgia,serif;color:#f4e3a8;background:radial-gradient(circle at 35% 30%,#4f7c38,#22391a);box-shadow:0 0 0 1px #9cbc78,0 0 0 2px #0c1408;text-shadow:0 1px 0 #000}
+.l4-title{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 12.5px Arimo,Arial,sans-serif;letter-spacing:.6px;color:#eee;pointer-events:none}
+.l4-x{all:unset;margin-left:auto;z-index:1;cursor:pointer;width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:#cfcfcf;border-radius:4px}.l4-x:hover{color:#fff;background:rgba(255,80,80,.25)}
+.l4-body{flex:1;display:flex;min-height:0;gap:8px;padding:8px}
+.l4-nav{width:136px;flex:none;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.l4-gap{height:4px}
+.l4-navb{all:unset;cursor:pointer;display:flex;align-items:center;gap:9px;height:34px;padding:0 10px;border-radius:6px;font:700 12.5px Arimo,Arial,sans-serif;color:#f2f2f2;background:linear-gradient(rgba(255,255,255,.07),rgba(0,0,0,.18)),rgba(24,24,26,.92);box-shadow:inset 0 0 0 1px rgba(255,255,255,.26),0 0 0 1px rgba(0,0,0,.7)}
+.l4-navb:hover{background:linear-gradient(rgba(255,255,255,.13),rgba(0,0,0,.12)),rgba(34,34,36,.95)}
+.l4-navb.on{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mp-accent) 80%,#fff),0 0 0 1px rgba(0,0,0,.7),0 0 8px color-mix(in srgb,var(--mp-accent) 35%,transparent);background:linear-gradient(color-mix(in srgb,var(--mp-accent) 22%,transparent),rgba(0,0,0,.2)),rgba(26,26,28,.95)}
+.l4-navb .mp-ico{color:#fff}
+.l4-ver{margin-top:auto;text-align:center;font-size:10.5px;color:#8a8a8a}
+.l4-main{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;padding:0 6px 4px 0;overscroll-behavior:contain;color:var(--mp-fg);font-size:12.5px}
+/* pasek wyszukiwania */
+.l4-bar{position:sticky;top:0;z-index:2;display:flex;gap:6px;margin-bottom:6px;background:rgba(var(--mp-bg),.96);padding-bottom:2px}
+.l4-search{all:unset;flex:1;height:30px;border-radius:5px;text-align:center;color:#eee;font:13px Arimo,Arial,sans-serif;background:rgba(10,10,10,.75);box-shadow:inset 0 0 0 1px rgba(255,255,255,.24)}
+.l4-search::placeholder{color:#9a9a9a}.l4-search:focus{box-shadow:inset 0 0 0 1px var(--mp-accent)}
+.l4-sq{all:unset;cursor:pointer;flex:none;width:30px;height:30px;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#eee;font:700 13px Arimo,Arial,sans-serif;background:rgba(10,10,10,.75);box-shadow:inset 0 0 0 1px rgba(255,255,255,.24)}
+.l4-sq:hover{background:rgba(40,40,40,.85)}.l4-sq.on{box-shadow:inset 0 0 0 1px var(--mp-accent);color:var(--mp-accent)}
+.l4-count{cursor:default}
+/* karty dodatków */
+.l4-list{display:flex;flex-direction:column;gap:6px}
+.l4-card{display:flex;align-items:center;gap:10px;min-height:58px;padding:7px 8px;border-radius:5px;cursor:pointer;background:linear-gradient(rgba(255,255,255,.035),rgba(0,0,0,.1)),rgba(18,18,20,.85);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.l4-card:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+.l4-card.on{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mp-accent) 60%,rgba(255,255,255,.2)),inset 3px 0 0 var(--mp-accent)}
+.l4-ico{width:36px;height:36px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:4px;color:#fff;background:linear-gradient(#2c2c2e,#121214);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 0 0 1px #000}
+.l4-card:not(.on) .l4-ico{color:#9b9b9b}
+.l4-txt{flex:1;min-width:0}
+.l4-nm{font:700 13px Arimo,Arial,sans-serif;text-transform:uppercase;letter-spacing:.3px;color:#f3f3f3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.l4-card:not(.on) .l4-nm{color:#cfcfcf}
+.l4-ds{margin-top:3px;font-size:11.5px;color:#a8a8a8;line-height:1.3;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.l4-gearb{all:unset;cursor:pointer;flex:none;width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#bdbdbd;background:rgba(40,40,42,.9);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.l4-gearb:hover{color:#fff;background:rgba(60,60,62,.95)}
+.l4-empty{padding:20px;text-align:center;color:#999}
+/* nagłówek ustawień dodatku */
+.l4-dhead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:6px 8px;margin-bottom:8px;border-radius:5px;background:rgba(14,14,16,.97);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.l4-btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:4px;font:700 11.5px Arimo,Arial,sans-serif;color:#eee;background:rgba(40,40,42,.9);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.l4-btn.on{color:var(--mp-accent);box-shadow:inset 0 0 0 1px var(--mp-accent)}
+.l4-sec{margin:0 0 8px}.l4-sec h2{margin:0 0 2px;font:700 15px Arimo,Arial,sans-serif;color:#f2f2f2;text-transform:uppercase;letter-spacing:.5px}
+/* karty ustawień w stylu gry */
+.mp-glass .mp-card{background:linear-gradient(rgba(255,255,255,.03),rgba(0,0,0,.08)),rgba(16,16,18,.8)!important;border:0!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);border-radius:5px!important;padding:10px 12px!important;margin-bottom:8px!important}
+.mp-glass .mp-card h3{color:#dcdcdc!important;font:700 11.5px Arimo,Arial,sans-serif!important;letter-spacing:.7px!important}
+.mp-glass .mp-btn{border-radius:4px!important;background:linear-gradient(rgba(255,255,255,.08),rgba(0,0,0,.15)),rgba(36,36,38,.95)!important;border:0!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.24)!important;font-family:Arimo,Arial,sans-serif!important}
+.mp-glass .mp-btn:hover{background:linear-gradient(rgba(255,255,255,.14),rgba(0,0,0,.1)),rgba(46,46,48,.95)!important}
+.mp-glass .mp-btn.pri{background:linear-gradient(#5c8f39,#35591f)!important;box-shadow:inset 0 0 0 1px #9cc277,0 0 0 1px #000!important;color:#fff!important}
+.mp-glass .mp-in{border-radius:4px!important;background:rgba(6,6,8,.7)!important}
+.mp-desc{color:#b4b4b4!important;margin:0 0 10px!important;line-height:1.45}
+.l4-cl h3{display:flex;align-items:baseline;gap:8px}.l4-cld{font-weight:400;text-transform:none;letter-spacing:0;color:#8f8f8f;font-size:11px}
+.l4-cl.cur{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mp-accent) 70%,transparent)!important}
+.l4-cl ul{margin:0;padding-left:18px}.l4-cl li{margin:3px 0;line-height:1.4;color:#d6d6d6}
+.l4-info p{margin:0 0 9px;line-height:1.55;color:#dcdcdc}.l4-info p:last-child{margin:0}
+.l4-acc{display:flex;flex-wrap:wrap;gap:6px}
+.l4-accb{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:4px;font-size:11.5px;color:#ddd;background:rgba(30,30,32,.9);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.l4-accb i{width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 6px var(--c)}
+.l4-accb.on{box-shadow:inset 0 0 0 1px var(--c);color:#fff}
+.l4-lays{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.l4-lay{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 5px;border-radius:5px;text-align:center;background:rgba(24,24,26,.9);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+.l4-lay b{font-size:11.5px;color:#eee}.l4-lay small{font-size:10px;color:#999;line-height:1.25}
+.l4-lay.on{box-shadow:inset 0 0 0 1px var(--mp-accent),0 0 8px color-mix(in srgb,var(--mp-accent) 30%,transparent)}
+.l4-lay-pic{position:relative;width:64px;height:40px;border-radius:3px;background:#3d5a2a;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);display:flex;gap:2px;padding:4px;box-sizing:border-box}
+.l4-lay-pic::before,.l4-lay-pic::after{content:"";position:absolute;top:0;bottom:0;width:10px;background:#2a2a2c}
+.l4-lay-pic::before{left:0}.l4-lay-pic::after{right:0}
+.l4-lay-pic i{width:5px;height:5px;border-radius:1px;background:#fff;z-index:1}
+.l4-lay-pic.pgp,.l4-lay-pic.lgp{flex-direction:column}
+.l4-lay-pic.pgp{align-items:flex-end;padding-right:13px}.l4-lay-pic.lgp{align-items:flex-start;padding-left:13px}
+.l4-lay-pic.lgh{padding-left:13px}.l4-lay-pic.ldh{padding-left:13px;align-items:flex-end}
+/* kafelek L4 (jak przyciski gry) */
+#mp-launcher.l4-tile{width:34px;height:34px;border-radius:4px;transition:filter .12s;background:linear-gradient(#5b8b3d,#3a6224 48%,#2c4d1a 52%,#33572080);background-color:#2f501d;box-shadow:inset 0 0 0 1px #a3c47f,inset 0 0 0 2px #1f3512,inset 0 2px 0 2px rgba(255,255,255,.18),0 0 0 1px #0b0f07,0 2px 4px rgba(0,0,0,.6)}
+#mp-launcher.l4-tile:hover{transform:none;filter:brightness(1.15)}
+.l4-tile-t{font:900 15px/1 Georgia,"Times New Roman",serif;letter-spacing:-.5px;color:#fff3c4;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000,0 -1px 0 #000,0 0 5px rgba(255,214,110,.55);pointer-events:none}
+/* pasek skrótów — kafelki jak przyciski gry */
+#mp-qbar{position:fixed;z-index:2147482998;display:flex;flex-direction:column;gap:5px;padding:0;background:none!important;border:0!important;box-shadow:none!important;width:auto!important;opacity:1}
+#mp-qbar.hz{flex-direction:row}
+#mp-qbar .mp-qtile{width:30px;height:30px;border-radius:4px;color:#fff;background:linear-gradient(#262628,#0d0d0f);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 0 0 1px #000,0 2px 4px rgba(0,0,0,.55)}
+#mp-qbar .mp-qtile:hover{background:linear-gradient(#36363a,#151517);color:#fff}
+#mp-qbar .mp-qtile.off{color:rgba(255,255,255,.35)}
+#mp-qbar .mp-qtile.on::before{content:"";position:absolute;right:3px;top:3px;width:5px;height:5px;border-radius:50%;background:var(--mp-accent);box-shadow:0 0 4px var(--mp-accent)}
+#mp-qbar .mp-qtile.sel{box-shadow:inset 0 0 0 1px var(--mp-accent),0 0 0 1px #000,0 0 8px color-mix(in srgb,var(--mp-accent) 45%,transparent)}
+#mp-qbar .mp-qmore{background:linear-gradient(#5b8b3d,#2c4d1a);box-shadow:inset 0 0 0 1px #a3c47f,inset 0 0 0 2px #1f3512,0 0 0 1px #0b0f07}
+#mp-qbar .mp-qmore span{font:900 12px Georgia,serif;color:#fff3c4;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000,0 -1px 0 #000}
+#mp-qbar .mp-qtile:hover::after{right:auto;left:auto}
+#mp-qbar[data-lay="pgp"] .mp-qtile:hover::after{right:calc(100% + 8px);left:auto}
+#mp-qbar[data-lay="lgp"] .mp-qtile:hover::after{left:calc(100% + 8px);right:auto}
+#mp-qbar.hz .mp-qtile:hover::after{left:50%;right:auto;top:calc(100% + 6px);transform:translateX(-50%)}
+#mp-qbar[data-lay="ldh"] .mp-qtile:hover::after{top:auto;bottom:calc(100% + 6px)}
+#mp-qpop{border-radius:8px!important}
+
 `;
 
 function injectCSS() {
@@ -2011,28 +2135,59 @@ MP.menus = menus;
 
 // ═══ src/core/ui.js ═══
 /* ───────────────────────── ui.js ─────────────────────────
- * Panel konfiguracyjny: przycisk startowy + okno z zakładkami
- *   Dodatki · Ogólne
+ * Panel L4Tools w stylu okien gry:
+ *   Dodatki · Motywy · Ustawienia · Changelog · Informacje
  */
+
+/** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
+const CHANGELOG = [
+  { v: '1.1.0', d: '11.11.2026', items: [
+    'Nowy wygląd panelu w stylu okien gry: zakładki Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
+    'Lista dodatków z wyszukiwarką, filtrem (wszystkie / włączone / wyłączone) i licznikiem włączonych.',
+    'Motywnik przeniesiony do osobnej zakładki „Motywy” — wybór stylu interfejsu i import własnego CSS.',
+    'Pasek skrótów ma stałe miejsce wybierane w Ustawieniach: Prawo góra pionowo (domyślnie, przy ekwipunku), Lewo góra pionowo, Lewo góra poziomo, Lewo dół poziomo.',
+    'Nowe ikonki skrótów w stylu przycisków gry.',
+    'Nowa ikonka L4 — kafelek jak przyciski gry, także na liście Tampermonkey.',
+    'Hey WakeUP!: 10 nowych stylów komunikatów.',
+    'Informacja o zasadach korzystania pokazuje się tylko raz — przy pierwszej instalacji. Zawsze można ją przeczytać w zakładce Informacje.',
+  ] },
+  { v: '1.0.0', d: '11.11.2026', items: [
+    'Pierwsza oficjalna wersja zestawu.',
+    'Ustawienia wspólne dla wszystkich postaci albo osobne dla każdej, z kopiowaniem na wszystkie postacie.',
+    'Legendarny Łup: efekty Thor, Smoke, Kasyno, Disco i własny styl — tylko na legendach w oknie łupów, z testem na łupach Tanrotha.',
+    'Motywnik: 5 stylów interfejsu (ramy, paski, okna, przyciski, okno łupów) i własne style CSS.',
+    'Wrogowie na mapie: opcjonalna wiadomość na czat klanowy i dźwięk (wbudowany albo własny plik).',
+    'Poprawione odczytywanie danych z gry (pakiety czytane raz, także te wysyłane jako tekst).',
+  ] },
+];
+
+const INFO_HTML = [
+  '<p><b>L4Tools</b> to zestaw dodatków do Margonem tworzony hobbystycznie, po godzinach.</p>',
+  '<p>Aktualizacje, poprawki i nowe dodatki pojawiają się na bieżąco — według sugestii i potrzeb użytkowników, bez ustalonego harmonogramu. Masz pomysł albo coś nie działa? Daj znać.</p>',
+  '<p>Pamiętaj, że dodatki <b>nie są w żaden sposób autoryzowane przez Garmory</b> ani administrację gry. Korzystasz z nich <b>na własną odpowiedzialność</b> — jako twórca menedżera nie odpowiadam za ewentualne blokady konta ani inne konsekwencje.</p>',
+].join('');
+
 const ui = {
   panel: null,
   tab: 'addons',
-  sel: null,
+  sel: null,          // otwarty dodatek (ustawienia) w zakładce Dodatki
   filter: '',
+  show: 'all',        // filtr listy: all | on | off
+
+  TABS: [
+    ['addons', 'puzzle', 'Dodatki'], ['motywy', 'motywnik', 'Motywy'], null,
+    ['settings', 'gear', 'Ustawienia'], null,
+    ['changelog', 'branch', 'Changelog'], ['info', 'info', 'Informacje'],
+  ],
 
   start() {
     this.applyTheme();
     this.fixWheel();
     this.launcher();
     keys.bind({ label: 'Panel: otwórz/zamknij', get: () => config.data.global.panelKey || '', fn: () => this.toggle() });
-    bus.on('log', debounce(() => { if (this.panel && this.tab === 'log') this.renderMain(); }, 300));
-    bus.on('sniff', debounce(() => { if (this.panel && this.tab === 'diag') this.renderMain(); }, 300));
   },
 
-  /**
-   * Gra przechwytuje kółko myszy (zoom mapy), więc w naszych oknach przewijamy ręcznie
-   * i nie przepuszczamy zdarzenia do gry.
-   */
+  /** Gra przechwytuje kółko myszy (zoom mapy), więc w naszych oknach przewijamy ręcznie. */
   fixWheel() {
     window.addEventListener('wheel', (e) => {
       const root = e.target && e.target.closest && e.target.closest('.mp-glass');
@@ -2053,29 +2208,32 @@ const ui = {
     }, { capture: true, passive: false });
   },
 
+  /** Kolory akcentu panelu (przełączniki, zaznaczenia). Tło zawsze ciemne, jak okna gry. */
   THEMES: {
-    fiolet:   { name: 'Fiolet (domyślny)', accent: '#7c5cff', bg: '16,17,28' },
-    ocean:    { name: 'Ocean',             accent: '#3fa2ff', bg: '10,20,34' },
-    szmaragd: { name: 'Szmaragd',          accent: '#2ecc8f', bg: '10,26,22' },
-    rubin:    { name: 'Rubin',             accent: '#ff4d6d', bg: '30,12,18' },
-    bursztyn: { name: 'Bursztyn',          accent: '#ffb020', bg: '28,20,8' },
-    roz:      { name: 'Róż',               accent: '#ff6ec7', bg: '28,12,26' },
-    grafit:   { name: 'Grafit',            accent: '#a3adbd', bg: '18,18,20' },
-    noc:      { name: 'Północ',            accent: '#6d8bff', bg: '6,8,16' },
+    margo:    { name: 'Zieleń gry', accent: '#6fae3f' },
+    zloto:    { name: 'Złoto',      accent: '#d9a93a' },
+    fiolet:   { name: 'Fiolet',     accent: '#8b6cff' },
+    ocean:    { name: 'Ocean',      accent: '#3fa2ff' },
+    rubin:    { name: 'Rubin',      accent: '#e8495f' },
+    grafit:   { name: 'Grafit',     accent: '#b9c0cc' },
   },
 
   applyTheme() {
     const g = config.data.global;
-    const t = this.THEMES[g.theme] || this.THEMES.fiolet;
+    if (!this.THEMES[g.theme]) g.theme = 'margo';
+    if (!(g.glass >= 0.6)) g.glass = 0.9;   // nowy wygląd: prawie kryjące tło jak okna gry
+    const t = this.THEMES[g.theme];
     g.accent = t.accent;
-    document.documentElement.style.setProperty('--mp-bg', t.bg);
-    document.documentElement.style.setProperty('--mp-accent', t.accent);
-    document.documentElement.style.setProperty('--mp-glass', String(g.glass ?? 0.55));
+    const R = document.documentElement.style;
+    R.setProperty('--mp-bg', '20,20,22');
+    R.setProperty('--mp-accent', t.accent);
+    R.setProperty('--mp-glass', String(g.glass ?? 0.9));
   },
 
+  /** Kafelek L4 — w stylu przycisków gry. */
   launcher() {
     const p = config.data.global.launcher || { x: 16, y: 120 };
-    const b = el('div', { id: 'mp-launcher', class: 'mp-glass', title: `L4Tools (${config.data.global.panelKey || 'brak skrótu'})`, style: { left: p.x + 'px', top: p.y + 'px' } }, icon('logo', 24));
+    const b = el('div', { id: 'mp-launcher', class: 'l4-tile', title: `L4Tools (${config.data.global.panelKey || 'brak skrótu'})`, style: { left: p.x + 'px', top: p.y + 'px' } }, el('span', { class: 'l4-tile-t' }, 'L4'));
     document.body.appendChild(b);
     const moved = makeDraggable(b, b, (pos) => { config.data.global.launcher = pos; config.save(); });
     b.addEventListener('click', () => { if (!moved()) this.toggle(); });
@@ -2085,68 +2243,82 @@ const ui = {
   close() { this.panel?.remove(); this.panel = null; },
 
   open(addonId) {
-    if (addonId) { this.sel = addonId; this.tab = 'addons'; }
+    if (addonId) { this.sel = addonId === 'motywnik' ? null : addonId; this.tab = addonId === 'motywnik' ? 'motywy' : 'addons'; }
     if (this.panel) { this.renderAll(); return; }
     const pos = config.data.global.panelPos;
-    this.panel = el('div', { id: 'mp-panel', class: 'mp-glass', style: pos ? { left: pos.x + 'px', top: pos.y + 'px' } : { left: '50%', top: '50%', transform: 'translate(-50%,-50%)' } });
+    this.panel = el('div', { id: 'mp-panel', class: 'mp-glass l4-win', style: pos ? { left: pos.x + 'px', top: pos.y + 'px' } : { left: '50%', top: '50%', transform: 'translate(-50%,-50%)' } });
     document.body.appendChild(this.panel);
     this.renderAll();
   },
 
   renderAll() {
     const P = this.panel;
+    if (!P) return;
     P.innerHTML = '';
-    const tabs = [['addons', 'grid', 'Dodatki'], ['general', 'gear', 'Ogólne']];
-    if (!['addons', 'general'].includes(this.tab)) this.tab = 'addons';
-    const head = el('div', { class: 'mp-head' },
-      el('div', { class: 'mp-tile', style: { background: grad([config.data.global.accent, '#3fa2ff']) } }, icon('logo', 18)),
-      el('div', null, el('div', { class: 'mp-title' }, 'L4Tools'), el('div', { class: 'mp-sub' }, this.subtitle())),
-      el('div', { class: 'mp-sp' }),
-      el('div', { class: 'mp-tabs' }, tabs.map(([id, ic, lb]) => el('button', { class: 'mp-tab' + (this.tab === id ? ' on' : ''), onclick: () => { this.tab = id; this.renderAll(); } }, icon(ic, 15), lb))),
-      el('button', { class: 'mp-x', title: 'Zamknij', onclick: () => this.close() }, icon('close', 18)));
+    if (!this.TABS.some((t) => t && t[0] === this.tab)) this.tab = 'addons';
+    const head = el('div', { class: 'l4-head' },
+      el('div', { class: 'l4-head-l' }, el('span', { class: 'l4-mini' }, 'L4')),
+      el('div', { class: 'l4-title' }, 'L4TOOLS'),
+      el('button', { class: 'l4-x', title: 'Zamknij', onclick: () => this.close() }, icon('close', 15)));
     makeDraggable(P, head, (p) => { config.data.global.panelPos = p; config.save(); P.style.transform = 'none'; });
     head.addEventListener('mousedown', () => {
       if (P.style.transform && P.style.transform !== 'none') {
         const r = P.getBoundingClientRect(); P.style.transform = 'none'; P.style.left = r.left + 'px'; P.style.top = r.top + 'px';
       }
     }, true);
-    const body = el('div', { class: 'mp-body' });
-    if (this.tab === 'addons') body.appendChild(this.side());
-    this.main = el('div', { class: 'mp-main' });
-    body.appendChild(this.main);
-    P.append(head, body);
+    const nav = el('div', { class: 'l4-nav' });
+    for (const t of this.TABS) {
+      if (!t) { nav.appendChild(el('div', { class: 'l4-gap' })); continue; }
+      const [id, ic, lb] = t;
+      nav.appendChild(el('button', { class: 'l4-navb' + (this.tab === id ? ' on' : ''), onclick: () => { this.tab = id; if (id === 'addons') this.sel = null; this.renderAll(); } }, icon(ic, 16), el('span', null, lb)));
+    }
+    nav.appendChild(el('div', { class: 'l4-ver' }, `v${MP.version}`));
+    this.main = el('div', { class: 'l4-main' });
+    P.append(head, el('div', { class: 'l4-body' }, nav, this.main));
     this.renderMain();
   },
 
-  subtitle() {
-    const h = game.hero();
-    const g = config.data.global;
-    const parts = [`v${MP.version}`, h ? `${h.nick} (${h.lvl})` : 'gra nie wykryta'];
-    if (g.dryRun) parts.push('TRYB PRÓBNY');
-    return parts.join(' · ');
+  renderMain() {
+    if (!this.main) return;
+    const st = this.main.scrollTop;
+    this.main.innerHTML = '';
+    if (this.tab === 'addons') { if (this.sel && addons.byId[this.sel]) this.renderDetail(); else this.renderList(); }
+    else if (this.tab === 'motywy') this.renderMotywy();
+    else if (this.tab === 'settings') this.renderGeneral();
+    else if (this.tab === 'changelog') this.renderChangelog();
+    else if (this.tab === 'info') this.renderInfo();
+    this.main.scrollTop = st;
   },
 
-  side() {
-    const list = el('div', { class: 'mp-list' });
+  /* ───── Dodatki: lista ───── */
+  listAddons() { return addons.list.filter((a) => a.id !== 'motywnik'); },
+  renderList() {
+    const M = this.main;
+    const all = this.listAddons();
+    const onCount = all.filter((a) => addons.on(a.id)).length;
+    const list = el('div', { class: 'l4-list' });
     const draw = () => {
       list.innerHTML = '';
-      const f = this.filter.toLowerCase();
-      for (const a of addons.list) {
-        if (f && !(a.name + ' ' + a.desc).toLowerCase().includes(f)) continue;
-        const cfg = addons.cfg(a.id);
-        const sw = switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, sw), true);
-        const row = el('div', { class: 'mp-row' + (this.sel === a.id ? ' sel' : '') + (cfg.enabled ? '' : ' off'), onclick: (e) => { if (e.target.closest('.mp-sw')) return; this.sel = a.id; draw(); this.renderMain(); } },
-          el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 18)),
-          el('div', { class: 'nm mp-nmb' }, el('span', { class: 'mp-nmt' }, a.name), a.beta ? el('span', { class: 'mp-beta', title: 'BETA — dodatek w fazie testów' }, 'B') : null),
-          sw);
-        list.appendChild(row);
+      const f = this.filter.trim().toLowerCase();
+      const rows = all.filter((a) => (!f || (a.name + ' ' + a.desc).toLowerCase().includes(f)) && (this.show === 'all' || (this.show === 'on') === addons.on(a.id)));
+      if (!rows.length) list.appendChild(el('div', { class: 'l4-empty' }, 'Brak dodatków dla tego wyszukiwania.'));
+      for (const a of rows) {
+        const on = addons.on(a.id);
+        const sw = switchEl(on, (v) => this.toggleAddon(a, v, sw), true);
+        list.appendChild(el('div', { class: 'l4-card' + (on ? ' on' : ''), onclick: (e) => { if (e.target.closest('.mp-sw, .l4-gearb')) return; this.sel = a.id; this.renderMain(); } },
+          el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
+          el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, a.desc)),
+          sw,
+          el('button', { class: 'l4-gearb', title: 'Ustawienia', onclick: () => { this.sel = a.id; this.renderMain(); } }, icon('gear', 15))));
       }
     };
-    if (!this.sel) this.sel = addons.list[0]?.id;
+    const inp = el('input', { class: 'l4-search', placeholder: 'Szukaj dodatku...', value: this.filter, oninput: (e) => { this.filter = e.target.value; draw(); } });
+    inp.addEventListener('keydown', (e) => e.stopPropagation());
+    const LB = { all: 'Wszystkie', on: 'Włączone', off: 'Wyłączone' };
+    const fb = el('button', { class: 'l4-sq' + (this.show !== 'all' ? ' on' : ''), title: `Pokaż: ${LB[this.show]} (kliknij, żeby zmienić)`, onclick: () => { this.show = { all: 'on', on: 'off', off: 'all' }[this.show]; toast(`Dodatki: ${LB[this.show].toLowerCase()}`); this.renderMain(); } }, icon('sliders', 16));
+    M.appendChild(el('div', { class: 'l4-bar' }, inp, fb, el('div', { class: 'l4-sq l4-count', title: 'Włączone dodatki' }, String(onCount))));
+    M.appendChild(list);
     draw();
-    this._drawSide = draw;
-    const inp = el('input', { placeholder: 'Szukaj dodatku…', value: this.filter, oninput: (e) => { this.filter = e.target.value; draw(); } });
-    return el('div', { class: 'mp-side' }, el('label', { class: 'mp-search' }, icon('search', 15), inp), list);
   },
 
   async toggleAddon(a, v, sw) {
@@ -2160,37 +2332,33 @@ const ui = {
       addons.cfg(a.id)._ack = true;
     }
     addons.setEnabled(a.id, v);
-    if (this.panel) { this._drawSide && this._drawSide(); if (this.sel === a.id && this.tab === 'addons') this.renderMain(); }
+    if (this.panel && this.tab === 'addons') this.renderMain();
     bus.emit('quickbar');
     return true;
   },
 
-  renderMain() {
-    if (!this.main) return;
-    const st = this.main.scrollTop;
-    this.main.innerHTML = '';
-    if (this.tab === 'addons') this.renderAddon();
-    else this.renderGeneral();
-    this.main.scrollTop = st;
+  /* ───── Dodatki: ustawienia jednego dodatku ───── */
+  renderDetail() {
+    const M = this.main;
+    const a = addons.byId[this.sel];
+    const cfg = addons.cfg(a.id);
+    const sw = switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, sw));
+    M.appendChild(el('div', { class: 'l4-dhead' },
+      el('button', { class: 'l4-sq', title: 'Wróć do listy', onclick: () => { this.sel = null; this.renderMain(); } }, icon('back', 16)),
+      el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
+      el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
+      cfg.enabled ? el('button', { class: 'l4-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); this.renderMain(); } }, icon('pin', 13), quickbar.isPinned(a.id) ? 'W skrótach' : 'Do skrótów') : null,
+      sw));
+    M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
+    this.renderAddon(M, a.id, () => this.renderMain(), true);
   },
 
-  /* ───── zakładka: dodatek ───── */
+  /** Ustawienia dodatku (używane też przez okienko skrótów). */
   renderAddon(M = this.main, id = this.sel, rerender = () => this.renderMain(), compact = false) {
     const a = addons.byId[id];
     if (!a) return;
     const cfg = addons.cfg(a.id);
-    if (!compact) {
-      M.appendChild(el('div', { class: 'mp-h' },
-        el('div', { class: 'mp-tile', style: { background: grad(a.color) } }, icon(a.icon, 26)),
-        el('div', { style: { flex: 1 } },
-          el('h2', null, a.name, ' ',
-            a.beta ? el('span', { class: 'mp-beta big', title: 'BETA — dodatek w fazie testów' }, 'BETA') : null),
-          el('div', { class: 'mp-dim' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
-        cfg.enabled ? el('button', { class: 'mp-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów po prawej', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); rerender(); } },
-          icon('pin', 14), quickbar.isPinned(a.id) ? 'W skrótach' : 'Dodaj do skrótów') : null,
-        switchEl(cfg.enabled, (v) => this.toggleAddon(a, v, M.querySelector('.mp-h .mp-sw')))));
-      M.appendChild(el('p', { class: 'mp-desc' }, a.beta ? el('b', { class: 'mp-beta-txt' }, 'BETA — dodatek w fazie testów, może jeszcze nie działać w pełni. ') : null, a.desc));
-    }
+    if (!compact) M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
     if (a.notes) a.notes(cfg).forEach((n) => n && M.appendChild(note(n.type, n.text)));
     let renderBox = null;
     if (a.render && a.renderFirst) { renderBox = el('div'); M.appendChild(renderBox); }
@@ -2199,8 +2367,8 @@ const ui = {
       for (const s of a.settings.filter((x) => !x.adv && x.group !== 'Zaawansowane')) (groups[s.group || 'Ustawienia'] = groups[s.group || 'Ustawienia'] || []).push(s);
       for (const [g, arr] of Object.entries(groups)) {
         const card = el('div', { class: 'mp-card' }, el('h3', null, g));
-        arr.forEach((s) => { if (s.adv) return; if (!s.show || s.show(cfg)) card.appendChild(field(s, cfg, () => { config.save(); a.onChange && a.onChange(s.key, cfg); if (s.rerender) rerender(); })); });
-        M.appendChild(card);
+        arr.forEach((s) => { if (!s.show || s.show(cfg)) card.appendChild(field(s, cfg, () => { config.save(); a.onChange && a.onChange(s.key, cfg); if (s.rerender) rerender(); })); });
+        if (card.children.length > 1) M.appendChild(card);
       }
     }
     if (a.render) {
@@ -2210,132 +2378,102 @@ const ui = {
     }
   },
 
-  /* ───── zakładka: diagnostyka ───── */
-  renderDiag() {
+  /* ───── Motywy ───── */
+  renderMotywy() {
     const M = this.main;
-    const ok = (b) => el('span', { class: b ? 'mp-okc' : 'mp-badc' }, b ? '✔' : '✘');
-    const E0 = W.Engine;
-    const checks = [
-      ['Obiekt gry Engine', !!E0],
-      ['Funkcja wysyłania _g', typeof W._g === 'function'],
-      ['Wysyłanie komend (window._g)', !!net.origG],
-      ['Komendy gry przechwycone (naciśnij X na graczu)', net.stats.gameCalls > 0],
-      ['Bohater (Engine.hero)', !!game.hero()],
-      ['Lista graczy (Engine.others)', !!(E0 && E0.others)],
-      ['Przedmioty (Engine.items)', game.heroItems().length > 0],
-      ['Odpowiedzi serwera (hak: ' + (net.respHook || 'brak') + ')', !!net.respHook],
-      ['Menu prawego przycisku (' + (menus.hookName || 'brak funkcji') + ')', menus.hooked],
-      ['Najechanie na gracza (prototyp Other)', !!menus.hoverHooked],
-      ['Cel menu na graczu (prototyp Other)', menus.otherHooked],
-    ];
-    M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Punkty zaczepienia'),
-      el('table', { class: 'mp-table' }, el('tbody', null, checks.map(([n, b]) => el('tr', null, el('td', null, n), el('td', { style: { width: '30px' } }, ok(b))))))),
-    );
-    M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Statystyki'),
-      el('div', { class: 'mp-dim' }, `Komendy gry: ${net.stats.gameCalls} · komendy panelu: ${net.stats.ourCalls} · zablokowane: ${net.stats.blocked} · odpowiedzi: ${net.stats.responses} · graczy na mapie: ${game.others().length} · przedmiotów: ${game.heroItems().length}`)));
+    M.appendChild(el('div', { class: 'l4-sec' }, el('h2', null, 'Motywy'), el('div', { class: 'mp-dim' }, 'Wygląd całego interfejsu gry. „Domyślny” = klasyczny wygląd. Możesz też wczytać własny styl CSS.')));
+    if (addons.byId.motywnik) this.renderAddon(M, 'motywnik', () => this.renderMain(), true);
+  },
 
-    // szablony komend
-    M.appendChild(note('info', 'Komendy oznaczone „do ustawienia" panel zna dopiero, gdy podejrzy je w grze. Wykonaj daną akcję RĘCZNIE w grze, a potem w sekcji „Podsłuch" przypisz ją do właściwej komendy. Komendy usuwania i ulepszania pozostają zablokowane, dopóki tego nie zrobisz — tak żeby panel nigdy nie wysłał czegoś, czego nie widziałeś na własne oczy.'));
-    const cmdCard = el('div', { class: 'mp-card' }, el('h3', null, 'Komendy'));
-    const tb = el('tbody');
-    for (const name of Object.keys(DEFAULT_COMMANDS)) {
-      const c = net.cmd(name);
-      const status = !c.t ? el('span', { class: 'mp-badge lock' }, 'do ustawienia')
-        : c.verified ? el('span', { class: 'mp-badge ok' }, 'zweryfikowana')
-        : c.destructive ? el('span', { class: 'mp-badge destr' }, 'zablokowana') : el('span', { class: 'mp-badge auto' }, 'domyślna');
-      const inp = el('input', { class: 'mp-in mp-mono', style: { width: '100%' }, value: c.t || '', placeholder: '(pusta)' });
-      const save = el('button', { class: 'mp-mini', onclick: () => { net.setCmd(name, inp.value.trim(), !!inp.value.trim()); toast('Zapisano komendę: ' + c.label, 'ok'); this.renderMain(); } }, 'Zapisz');
-      tb.appendChild(el('tr', null,
-        el('td', { style: { width: '150px' } }, el('b', null, c.label), el('div', { class: 'mp-dim', style: { fontSize: '11px' } }, c.how)),
-        el('td', null, inp), el('td', { style: { width: '110px' } }, status), el('td', { style: { width: '60px' } }, save)));
+  /* ───── Changelog ───── */
+  renderChangelog() {
+    const M = this.main;
+    M.appendChild(el('div', { class: 'l4-sec' }, el('h2', null, 'Changelog'), el('div', { class: 'mp-dim' }, 'Lista zmian w kolejnych wersjach.')));
+    for (const c of CHANGELOG) {
+      M.appendChild(el('div', { class: 'mp-card l4-cl' + (c.v === MP.version ? ' cur' : '') },
+        el('h3', null, `Wersja ${c.v}`, el('span', { class: 'l4-cld' }, c.d + (c.v === MP.version ? ' · zainstalowana' : ''))),
+        el('ul', null, c.items.map((t) => el('li', null, t)))));
     }
-    cmdCard.appendChild(el('table', { class: 'mp-table' }, el('thead', null, el('tr', null, el('th', null, 'Akcja'), el('th', null, 'Szablon'), el('th', null, 'Status'), el('th'))), tb));
-    M.appendChild(cmdCard);
-
-    // podsłuch
-    const sn = el('div', { class: 'mp-card' }, el('h3', null, 'Podsłuch — ostatnie komendy wysłane przez grę'));
-    sn.appendChild(el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Nasłuch włączony', el('small', null, 'Zapamiętuje tylko 40 ostatnich komend, nic nigdzie nie wysyła.')),
-      switchEl(net.sniffing, (v) => { net.sniffing = v; })));
-    if (!net.sniff.length) sn.appendChild(el('div', { class: 'mp-dim', style: { padding: '8px 0' } }, 'Brak — wykonaj jakąś akcję w grze.'));
-    const sb = el('tbody');
-    net.sniff.slice(0, 25).forEach((s) => {
-      const sel = el('select', { class: 'mp-in' }, el('option', { value: '' }, 'Przypisz do…'), Object.keys(DEFAULT_COMMANDS).map((n) => el('option', { value: n }, DEFAULT_COMMANDS[n].label)));
-      sel.onchange = async () => {
-        const name = sel.value; if (!name) return;
-        const tpl = templatize(name, s.task);
-        const yes = await confirmBox({ title: 'Przypisać komendę?', okText: 'Zapisz', html: `<div>Akcja: <b>${esc(DEFAULT_COMMANDS[name].label)}</b></div><div style="margin-top:8px">Podsłuchane:</div><div class="mp-mono">${esc(s.task)}</div><div style="margin-top:8px">Szablon (zmienne w nawiasach):</div><div class="mp-mono mp-okc">${esc(tpl)}</div><div class="mp-dim" style="margin-top:8px">Jeśli szablon jest zły, popraw go ręcznie w tabeli „Komendy".</div>` });
-        if (yes) { net.setCmd(name, tpl, true); toast('Komenda zweryfikowana', 'ok'); this.renderMain(); } else sel.value = '';
-      };
-      sb.appendChild(el('tr', null, el('td', { class: 'mp-dim', style: { width: '62px' } }, new Date(s.t).toLocaleTimeString()), el('td', { class: 'mp-mono' }, s.task, el('div', { class: 'mp-dim' }, s.via || '')), el('td', { style: { width: '160px' } }, sel)));
-    });
-    sn.appendChild(el('table', { class: 'mp-table' }, sb));
-    M.appendChild(sn);
   },
 
-  /* ───── zakładka: log ───── */
-  renderLog() {
+  /* ───── Informacje ───── */
+  renderInfo() {
     const M = this.main;
-    M.appendChild(note('info', 'Wszystko, co panel wysłał albo zablokował. Jeśli coś działa nie tak, tu zobaczysz dlaczego.'));
-    const kinds = { send: ['wysłano', 'mp-okc'], dry: ['próba', 'mp-warnc'], block: ['zablokowano', 'mp-badc'], error: ['błąd', 'mp-badc'], info: ['info', 'mp-dim'] };
-    const tb = el('tbody', null, net.log.slice(0, 120).map((l) => el('tr', null,
-      el('td', { class: 'mp-dim', style: { width: '62px' } }, new Date(l.t).toLocaleTimeString()),
-      el('td', { style: { width: '90px' } }, el('span', { class: kinds[l.kind]?.[1] }, kinds[l.kind]?.[0] || l.kind)),
-      el('td', { style: { width: '110px' } }, l.src || ''),
-      el('td', { class: 'mp-mono' }, l.task || ''),
-      el('td', null, l.msg || ''))));
-    M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Ostatnie akcje'), net.log.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Pusto.')));
-    M.appendChild(el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { net.log.length = 0; this.renderMain(); } }, 'Wyczyść log')));
+    M.appendChild(el('div', { class: 'l4-sec' }, el('h2', null, 'Informacje')));
+    M.appendChild(el('div', { class: 'mp-card l4-info', html: INFO_HTML }));
+    M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Coś nie działa?'),
+      el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Skopiuj raport i wklej go w wiadomości do twórcy — są w nim ostatnie ruchy dodatków i odpowiedzi gry (bez haseł i danych konta).'),
+      el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => copyReport() }, 'Kopiuj raport'))));
+    M.appendChild(el('div', { class: 'mp-dim', style: { fontSize: '11.5px', textAlign: 'center', marginTop: '6px' } }, `L4Tools v${MP.version} · kod otwarty — możesz sprawdzić, co robi każdy dodatek.`));
   },
 
-  /* ───── zakładka: ogólne ───── */
+  /* ───── Ustawienia ───── */
+  LAYOUTS: [
+    ['pgp', 'Prawo góra pionowo', 'Przy ekwipunku, w pionie (domyślnie)'],
+    ['lgp', 'Lewo góra pionowo', 'Przy czacie, u góry, w pionie'],
+    ['lgh', 'Lewo góra poziomo', 'Przy czacie, u góry, w poziomie'],
+    ['ldh', 'Lewo dół poziomo', 'Przy czacie, na dole, w poziomie'],
+  ],
   renderGeneral() {
     const g = config.data.global;
     const M = this.main;
-    const save = () => { config.save(); this.applyTheme(); };
-    const S = [
-      { key: 'panelKey', type: 'key', label: 'Skrót otwierający panel' },
-      { key: 'perCharacter', type: 'bool', label: 'Osobne ustawienia dla każdej postaci', hint: 'Zmiana zadziała po odświeżeniu gry.' },
-      { key: 'theme', type: 'custom', render: (obj, onSave) => el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } },
-        el('div', { class: 'lb' }, 'Motyw okien'),
-        el('div', { class: 'mp-themes' }, Object.entries(this.THEMES).map(([k, t]) => el('div', {
-          class: 'mp-theme' + ((obj.theme || 'fiolet') === k ? ' on' : ''), style: { '--t-accent': t.accent, background: `rgba(${t.bg},.85)` },
-          onclick: () => { obj.theme = k; onSave(); this.renderAll(); quickbar.draw(); },
-        }, el('div', { class: 'sw', style: { background: `linear-gradient(135deg, ${t.accent}55, rgba(${t.bg},1))` } }, el('i')), el('div', { class: 'nm' }, t.name))))) },
-      { key: 'glass', type: 'range', label: 'Przezroczystość tła', min: 0.2, max: 0.95, step: 0.05 },
-    ];
-    const card = el('div', { class: 'mp-card' }, el('h3', null, 'Ogólne'));
-    S.forEach((s) => card.appendChild(field(s, g, () => { save(); if (s.key === 'dryRun') this.renderAll(); })));
-    M.appendChild(card);
+    M.appendChild(el('div', { class: 'l4-sec' }, el('h2', null, 'Ustawienia')));
+
+    // panel
+    const pc = el('div', { class: 'mp-card' }, el('h3', null, 'Panel'));
+    pc.appendChild(field({ key: 'panelKey', type: 'key', label: 'Skrót otwierający panel' }, g, () => config.save()));
+    pc.appendChild(el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } }, el('div', { class: 'lb' }, 'Kolor akcentu'),
+      el('div', { class: 'l4-acc' }, Object.entries(this.THEMES).map(([k, t]) => el('button', { class: 'l4-accb' + (g.theme === k ? ' on' : ''), title: t.name, style: { '--c': t.accent }, onclick: () => { g.theme = k; config.save(); this.applyTheme(); this.renderMain(); } }, el('i'), t.name)))));
+    pc.appendChild(field({ key: 'glass', type: 'range', label: 'Krycie tła okien', min: 0.6, max: 1, step: 0.02, live: () => this.applyTheme() }, g, () => { config.save(); this.applyTheme(); }));
+    M.appendChild(pc);
 
     // pasek skrótów
-    const q = (g.quickbar = g.quickbar || { show: true, pinned: [], pos: null });
+    const q = (g.quickbar = g.quickbar || { show: true, pinned: [] });
     if (!Array.isArray(q.pinned)) q.pinned = [];
-    const qc = el('div', { class: 'mp-card' }, el('h3', null, 'Pasek skrótów (po prawej)'),
-      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj pasek skrótów', el('small', null, 'Na pasku są dodatki dodane przyciskiem „Dodaj do skrótów". Lewy klik na ikonce = ustawienia, prawy klik = włącz/wyłącz.')), switchEl(q.show, (v) => { q.show = v; config.save(); quickbar.draw(); })),
-      el('div', { class: 'mp-dim', style: { margin: '8px 0 4px', fontSize: '11.5px' } }, 'W skrótach (kliknij, żeby dodać/usunąć):'),
-      el('div', { class: 'mp-chips' }, addons.list.map((a) => {
+    if (!q.layout) q.layout = 'pgp';
+    const qc = el('div', { class: 'mp-card' }, el('h3', null, 'Skróty dodatków'),
+      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj skróty', el('small', null, 'Lewy klik na ikonce = szybkie ustawienia, prawy klik = włącz/wyłącz.')), switchEl(q.show, (v) => { q.show = v; config.save(); quickbar.draw(); })),
+      el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } }, el('div', { class: 'lb' }, 'Ułożenie'),
+        el('div', { class: 'l4-lays' }, this.LAYOUTS.map(([k, n, d]) => el('button', { class: 'l4-lay' + (q.layout === k ? ' on' : ''), onclick: () => { q.layout = k; config.save(); quickbar.draw(); this.renderMain(); } },
+          el('div', { class: 'l4-lay-pic ' + k }, el('i'), el('i'), el('i')), el('b', null, n), el('small', null, d))))),
+      el('div', { class: 'mp-dim', style: { margin: '8px 0 4px', fontSize: '11.5px' } }, 'Dodatki w skrótach (kliknij, żeby dodać albo usunąć):'),
+      el('div', { class: 'mp-chips' }, this.listAddons().map((a) => {
         const b = el('button', { class: 'mp-pf' + (quickbar.isPinned(a.id) ? ' on' : '') }, a.name);
         b.onclick = () => { quickbar.togglePin(a.id); b.classList.toggle('on'); };
         return b;
-      })),
-      el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { q.pos = null; config.save(); quickbar.place(); } }, 'Przywróć położenie paska')));
+      })));
     M.appendChild(qc);
+
+    // zapisywanie ustawień: wspólne albo na każdą postać
+    const per = g.perCharacter !== false;
+    const who = config.charName ? `${config.charName} (${config.worldName()})` : 'tej postaci';
+    const saved = config.savedCharacters();
+    M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Zapisywanie ustawień'),
+      el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, per
+        ? `Każda postać ma własne ustawienia. Teraz edytujesz: ${who}. Nowa postać zaczyna od ustawień wspólnych.`
+        : 'Wszystkie postacie korzystają z tych samych ustawień — zmiana na jednej działa na wszystkich.'),
+      el('div', { class: 'mp-btns' },
+        el('button', { class: 'mp-upchip' + (!per ? ' on' : ''), onclick: () => { config.setPerCharacter(false); toast('Ustawienia wspólne dla wszystkich postaci', 'ok'); this.renderMain(); } }, 'Wspólne dla wszystkich postaci'),
+        el('button', { class: 'mp-upchip' + (per ? ' on' : ''), onclick: () => { config.setPerCharacter(true); toast(`Osobne ustawienia — zapisano dla: ${who}`, 'ok'); this.renderMain(); } }, 'Osobne dla każdej postaci')),
+      per ? el('div', { class: 'mp-btns', style: { marginTop: '6px' } },
+        el('button', { class: 'mp-btn', onclick: async () => {
+          if (!(await confirmBox({ title: 'Skopiować na wszystkie postacie?', html: `Ustawienia postaci ${who} zastąpią ustawienia pozostałych postaci i staną się domyślne dla nowych.`, okText: 'Skopiuj' }))) return;
+          const n = config.copyToAll(); toast(`Skopiowano na ${n} ${n === 1 ? 'postać' : 'postaci'} i jako domyślne dla nowych`, 'ok');
+        } }, 'Skopiuj te ustawienia na wszystkie postacie')) : null,
+      per && saved.length ? el('div', { class: 'mp-dim', style: { marginTop: '6px', fontSize: '11.5px' } }, 'Postacie z własnymi ustawieniami: ' + saved.map((c) => `${c.name} (${c.world})`).join(', ')) : null));
 
     const conf = keys.conflicts();
     if (conf.length) M.appendChild(note('warn', 'Konflikt skrótów: ' + conf.map(([a, b, k]) => `${k}: „${a}" i „${b}"`).join('; ')));
 
     const ta = el('textarea', { class: 'mp-in', placeholder: 'Wklej tutaj konfigurację do zaimportowania…' });
+    ta.addEventListener('keydown', (e) => e.stopPropagation());
     M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Kopia ustawień'),
       el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Zapisane w przeglądarce dla: ' + config.key),
       ta,
       el('div', { class: 'mp-btns' },
         el('button', { class: 'mp-btn', onclick: () => { ta.value = config.export(); ta.select(); try { navigator.clipboard.writeText(ta.value); toast('Skopiowano do schowka', 'ok'); } catch {} } }, 'Eksportuj'),
         el('button', { class: 'mp-btn', onclick: () => { try { config.import(ta.value); toast('Zaimportowano — odśwież grę', 'ok'); } catch (e) { toast(e.message, 'bad'); } } }, 'Importuj'),
-        el('button', { class: 'mp-btn bad', onclick: async () => { if (await confirmBox({ title: 'Przywrócić domyślne?', danger: true, html: 'Wszystkie ustawienia tej postaci zostaną skasowane.' })) { config.reset(); toast('Ustawienia skasowane — odśwież grę', 'ok'); } } }, 'Przywróć domyślne'))));
-    M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Coś nie działa?'),
-      el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Skopiuj raport i wklej go w rozmowie z twórcą — są w nim ostatnie ruchy dodatków i odpowiedzi gry (bez haseł i danych konta).'),
-      el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => copyReport() }, 'Kopiuj raport'))));
-    M.appendChild(el('div', { class: 'mp-dim', style: { fontSize: '11.5px' } }, `L4Tools v${MP.version}. Kod otwarty — sprawdź, co robi każdy dodatek, zanim go włączysz.`));
+        el('button', { class: 'mp-btn bad', onclick: async () => { if (await confirmBox({ title: 'Przywrócić domyślne?', danger: true, html: 'Wszystkie ustawienia zostaną skasowane.' })) { config.reset(); toast('Ustawienia skasowane — odśwież grę', 'ok'); } } }, 'Przywróć domyślne'))));
   },
 };
 
@@ -2471,7 +2609,7 @@ MP.note = note;
  * Pasek skrótów dodatków (domyślnie po prawej, przy ramce obok ekwipunku).
  *   • lewy klik  → szybkie okno ustawień tego dodatku
  *   • prawy klik → włącz / wyłącz dodatek
- * Pasek przeciągasz za uchwyt u góry. Które dodatki są na pasku — zakładka Ogólne.
+ * Pasek ma stałe miejsce wybierane w Ustawieniach (domyślnie po lewej od ekwipunku, w pionie) — nie da się go przeciągnąć.
  */
 const quickbar = {
   bar: null,
@@ -2504,36 +2642,40 @@ const quickbar = {
     return addons.list.filter((a) => order.includes(a.id));
   },
 
-  defaultPos() {
-    return { x: innerWidth - 40, y: Math.round(innerHeight * 0.3) };
+  layout() { const q = config.data.global.quickbar || {}; return ['pgp', 'lgp', 'lgh', 'ldh'].includes(q.layout) ? q.layout : 'pgp'; },
+  /** Obszar mapy między kolumnami interfejsu gry. */
+  area() {
+    const vis = (sel, col) => [...document.querySelectorAll(sel)].map((n) => n.getBoundingClientRect()).find((r) => (col ? r.width > 20 && r.height > 50 : r.width > 200 && r.height > 8));
+    const L = vis('.left-column.main-column', 1), R = vis('.right-column.main-column', 1);
+    const T = vis('.top.positioner'), B = vis('.bottom.positioner');
+    return { l: L ? L.right : 0, r: R ? R.left : innerWidth, t: T && T.bottom < innerHeight / 3 ? T.bottom : 0, b: B && B.top > innerHeight / 2 ? B.top : innerHeight };
   },
-
   place() {
     if (!this.bar) return;
-    const p = (config.data.global.quickbar || {}).pos || this.defaultPos();
-    const h = this.bar.offsetHeight || 200;
-    this.bar.style.left = clamp(p.x, 0, innerWidth - 34) + 'px';
-    this.bar.style.top = clamp(p.y, 0, Math.max(0, innerHeight - h - 4)) + 'px';
+    const lay = this.layout(), A = this.area(), w = this.bar.offsetWidth || 36, h = this.bar.offsetHeight || 200, m = 8;
+    this.bar.classList.toggle('hz', lay === 'lgh' || lay === 'ldh');
+    let x, y;
+    if (lay === 'pgp') { x = A.r - w - m; y = A.t + m; }
+    else if (lay === 'lgp') { x = A.l + m; y = A.t + m; }
+    else if (lay === 'lgh') { x = A.l + m; y = A.t + m; }
+    else { x = A.l + m; y = A.b - h - m; }
+    this.bar.style.left = Math.round(clamp(x, 0, innerWidth - w)) + 'px';
+    this.bar.style.top = Math.round(clamp(y, 0, Math.max(0, innerHeight - h))) + 'px';
   },
 
   draw() {
-    const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, pinned: [], pos: null });
+    const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, pinned: [] });
     if (!Array.isArray(q.pinned)) q.pinned = [];
     if (!q.show || !q.pinned.length) { this.bar && this.bar.remove(); this.bar = null; return; }
     if (!this.bar) {
-      this.bar = el('div', { id: 'mp-qbar', class: 'mp-glass' });
+      this.bar = el('div', { id: 'mp-qbar' });
       document.body.appendChild(this.bar);
-      this.place();
+      if (!this._iv) this._iv = setInterval(() => this.place(), 1500);   // gra przebudowuje interfejs — pilnujemy miejsca
     }
     this.bar.innerHTML = '';
-    const handle = el('div', { class: 'mp-qhandle', title: 'Przeciągnij, żeby przesunąć pasek' }, icon('drag', 12));
-    this.bar.appendChild(handle);
-    makeDraggable(this.bar, handle, (pos) => { q.pos = pos; config.save(); });
     for (const a of this.enabledList()) {
       const on = addons.on(a.id);
-      const t = el('div', { class: 'mp-qtile' + (on ? '' : ' off') + (this.popId === a.id ? ' sel' : ''), 'data-name': `${a.name} — ${on ? 'włączony' : 'wyłączony'}` },
-        icon(a.icon, 15),
-        on ? el('span', { class: 'mp-qdot' }) : null);
+      const t = el('div', { class: 'mp-qtile' + (on ? ' on' : ' off') + (this.popId === a.id ? ' sel' : ''), 'data-name': `${a.name} — ${on ? 'włączony' : 'wyłączony'}` }, icon(a.icon, 17));
       t.addEventListener('click', (e) => { e.stopPropagation(); if (on && typeof a.quick === 'function') { try { a.quick(); } catch (err) { console.warn('[L4Tools]', err); } return; } this.openPop(a.id, t); });
       t.addEventListener('contextmenu', async (e) => {
         e.preventDefault(); e.stopPropagation();
@@ -2544,7 +2686,8 @@ const quickbar = {
       });
       this.bar.appendChild(t);
     }
-    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Pełny panel L4Tools', onclick: () => ui.toggle() }, icon('logo', 15)));
+    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Panel L4Tools', onclick: () => ui.toggle() }, el('span', null, 'L4')));
+    this.bar.dataset.lay = this.layout();
     this.place();
   },
 
@@ -2562,7 +2705,7 @@ const quickbar = {
     P.innerHTML = '';
     const sw = switchEl(cfg.enabled, async (v) => { const ok = await ui.toggleAddon(a, v, sw); if (ok !== false) this.openPop(id, null, true); });
     const head = el('div', { class: 'mp-head' },
-      el('div', { class: 'mp-tile', style: { width: '30px', height: '30px', borderRadius: '9px', background: grad(a.color) } }, icon(a.icon, 17)),
+      el('div', { class: 'l4-ico', style: { width: '30px', height: '30px' } }, icon(a.icon, 17)),
       el('div', { style: { flex: 1, minWidth: 0 } }, el('div', { class: 'mp-title', style: { fontSize: '14px' } }, a.name), el('div', { class: 'mp-sub' }, cfg.enabled ? 'włączony' : 'wyłączony')),
       sw,
       el('button', { class: 'mp-x', title: 'Usuń ze skrótów', onclick: () => { this.togglePin(id); this.closePop(); toast(`${a.name}: usunięto ze skrótów`); } }, icon('pin', 15)),
@@ -2574,14 +2717,17 @@ const quickbar = {
     body.scrollTop = st;
     // pozycja: obok paska, po stronie, gdzie jest miejsce
     if (this.bar) {
-      const r = this.bar.getBoundingClientRect();
-      const w = 360;
-      const left = r.left > w + 20 ? r.left - w - 8 : r.right + 8;
-      P.style.left = left + 'px';
-      // okno zawsze mieści się w ekranie: przesuwamy je w górę, gdy jest wysokie
-      const want = clamp(anchor ? anchor.getBoundingClientRect().top - 20 : (parseFloat(P.style.top) || r.top), 8, innerHeight - 200);
+      const r = this.bar.getBoundingClientRect(), w = 360, lay = this.layout();
       const h = Math.min(P.scrollHeight, innerHeight * 0.78);
-      P.style.top = Math.max(8, Math.min(want, innerHeight - h - 8)) + 'px';
+      if (lay === 'lgh' || lay === 'ldh') {
+        const ar = anchor ? anchor.getBoundingClientRect() : r;
+        P.style.left = clamp(ar.left - 10, 8, innerWidth - w - 8) + 'px';
+        P.style.top = (lay === 'lgh' ? Math.min(r.bottom + 8, innerHeight - h - 8) : Math.max(8, r.top - h - 8)) + 'px';
+      } else {
+        P.style.left = (lay === 'pgp' ? Math.max(8, r.left - w - 8) : Math.min(innerWidth - w - 8, r.right + 8)) + 'px';
+        const want = clamp(anchor ? anchor.getBoundingClientRect().top - 20 : (parseFloat(P.style.top) || r.top), 8, innerHeight - 200);
+        P.style.top = Math.max(8, Math.min(want, innerHeight - h - 8)) + 'px';
+      }
     }
     this.draw();
   },
@@ -2929,6 +3075,17 @@ function parseProtection(data) {
     pasek:    { name: 'Ciemny pasek', css: 'color:#ffd84a!important;font:700 17px/1.3 Arial,sans-serif!important;text-shadow:none!important;background:rgba(0,0,0,.72)!important;padding:6px 40px!important;display:table!important;margin:4px auto!important;border-top:1px solid rgba(255,216,74,.5)!important;border-bottom:1px solid rgba(255,216,74,.5)!important' },
     pergamin: { name: 'Pergamin', css: 'color:#3b2410!important;font:700 18px/1.3 Georgia,serif!important;text-shadow:none!important;background:linear-gradient(#f3e3b8,#e2c88c)!important;border:2px solid #8a6230!important;border-radius:6px!important;padding:6px 18px!important;display:table!important;margin:4px auto!important;box-shadow:0 4px 14px rgba(0,0,0,.45)!important' },
     duzy:     { name: 'Bardzo duży', css: `color:#ffe500!important;font:900 34px/1.25 Arial,sans-serif!important;text-shadow:${OUTLINE},0 0 12px rgba(0,0,0,.6)!important` },
+    zloto:    { name: 'Złoty', css: 'font:900 24px/1.3 Georgia,serif!important;background:linear-gradient(#fff7cf,#f2c14e 50%,#a86b12)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 2px 0 #3a2200) drop-shadow(0 0 6px rgba(255,190,60,.55))!important;letter-spacing:.5px!important' },
+    ogien:    { name: 'Ogień', css: 'font:900 23px/1.3 Arial,sans-serif!important;background:linear-gradient(#fff3a0,#ffb13b 45%,#e8331b)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;text-shadow:none!important;filter:drop-shadow(0 1px 0 #3a0800) drop-shadow(0 0 8px rgba(255,90,20,.75))!important' },
+    krew:     { name: 'Krwawy', css: `color:#ff3b3b!important;font:900 22px/1.3 Georgia,serif!important;text-shadow:${OUTLINE},0 0 12px rgba(200,0,0,.8)!important;letter-spacing:.6px!important` },
+    lod:      { name: 'Lodowy', css: 'color:#e9fbff!important;font:700 20px/1.3 Georgia,serif!important;text-shadow:0 0 4px #7fdcff,0 0 12px #2aa8e0,0 2px 1px #0a3550!important;letter-spacing:1px!important' },
+    magia:    { name: 'Magiczny', css: 'color:#fff!important;font:700 17px/1.3 "Segoe UI",sans-serif!important;text-shadow:0 0 6px #d18bff!important;background:linear-gradient(90deg,rgba(90,30,150,0),rgba(90,30,150,.85) 18%,rgba(140,60,220,.85) 50%,rgba(90,30,150,.85) 82%,rgba(90,30,150,0))!important;padding:6px 50px!important;display:table!important;margin:4px auto!important' },
+    okno:     { name: 'Okno gry', css: 'color:#f6e7b8!important;font:700 16px/1.3 Arial,sans-serif!important;text-shadow:0 1px 1px #000!important;background:linear-gradient(rgba(38,30,20,.94),rgba(20,15,10,.94))!important;border:1px solid #b08b4a!important;box-shadow:inset 0 0 0 1px #3d2c15,0 4px 12px rgba(0,0,0,.6)!important;border-radius:4px!important;padding:6px 20px!important;display:table!important;margin:4px auto!important;' },
+    las:      { name: 'Leśny', css: 'color:#f1e8c6!important;font:700 17px/1.3 Georgia,serif!important;text-shadow:0 1px 1px #000!important;background:linear-gradient(#36572a,#1d3415)!important;border:2px solid #8a6a3a!important;border-radius:6px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 4px 10px rgba(0,0,0,.5)!important;padding:6px 20px!important;display:table!important;margin:4px auto!important;' },
+    kamien:   { name: 'Kamienna tablica', css: 'color:#d9d9d9!important;font:700 17px/1.3 Georgia,serif!important;text-shadow:0 -1px 0 #000,0 1px 0 rgba(255,255,255,.25)!important;background:linear-gradient(#6b6b6b,#4a4a4a)!important;border:2px solid #2c2c2c!important;border-radius:3px!important;box-shadow:inset 0 0 8px rgba(0,0,0,.6),0 3px 8px rgba(0,0,0,.5)!important;letter-spacing:.5px!important;padding:6px 20px!important;display:table!important;margin:4px auto!important;' },
+    komiks:   { name: 'Komiks', css: 'color:#111!important;font:900 18px/1.2 "Comic Sans MS","Trebuchet MS",sans-serif!important;text-shadow:none!important;background:#fff!important;border:3px solid #111!important;border-radius:18px!important;box-shadow:4px 4px 0 #111!important;padding:6px 20px!important;display:table!important;margin:4px auto!important;' },
+    terminal: { name: 'Terminal', css: 'color:#5cff7a!important;font:700 16px/1.3 Consolas,monospace!important;text-shadow:0 0 6px rgba(92,255,122,.7)!important;background:rgba(0,10,0,.85)!important;border:1px solid #1f6b2c!important;border-radius:3px!important;padding:6px 20px!important;display:table!important;margin:4px auto!important;' },
+    elegancki:{ name: 'Elegancki', css: 'color:#fff!important;font:400 20px/1.3 Georgia,serif!important;font-style:italic!important;text-shadow:0 1px 3px rgba(0,0,0,.9)!important;border-top:1px solid rgba(232,190,100,.8)!important;border-bottom:1px solid rgba(232,190,100,.8)!important;padding:4px 30px!important;display:table!important;margin:4px auto!important;letter-spacing:1px!important' },
     wlasny:   { name: 'Własny', css: null },
   };
 
@@ -6090,15 +6247,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 
   defineAddon({
-    id: 'motywnik', name: 'Motywnik', icon: 'motywnik', color: ['#2ef2c4', '#8a5cff'], renderFirst: true,
+    id: 'motywnik', name: 'Motywy', icon: 'motywnik', color: ['#2ef2c4', '#8a5cff'], renderFirst: true,
     desc: 'Style całego interfejsu: ramy ekranu, paski, okna, nagłówki, zakładki, przyciski, menu, sloty, dymki i czat. Domyślny = klasyczny wygląd gry. Rozmiary zostają jak w grze. Możesz też wgrać własne style CSS.',
     defaults: { theme: 'domyslny', custom: [], customOn: null },
     settings: [],
     render(box, c, rerender) {
       const grid = el('div', { class: 'mp-mt-grid' });
-      for (const [k, t] of Object.entries(THEMES)) grid.appendChild(el('div', { class: 'mp-mt-card' + (c.theme === k ? ' on' : ''), onclick: () => { c.theme = k; config.save(); apply(); rerender(); } }, preview(k), el('div', { class: 'mp-mt-name' }, t.name), el('div', { class: 'mp-mt-desc' }, t.desc)));
+      for (const [k, t] of Object.entries(THEMES)) grid.appendChild(el('div', { class: 'mp-mt-card' + ((c.enabled ? c.theme : 'domyslny') === k ? ' on' : ''), onclick: () => { c.theme = k; addons.setEnabled('motywnik', k !== 'domyslny'); config.save(); apply(); rerender(); } }, preview(k), el('div', { class: 'mp-mt-name' }, t.name), el('div', { class: 'mp-mt-desc' }, t.desc)));
       const tc = el('div', { class: 'mp-card' }, el('h3', null, 'Styl interfejsu'), grid);
-      if (!c.enabled) tc.prepend(MP.note('info', 'Dodatek jest wyłączony — gra ma swój wygląd.'));
       let editing = null;
       const ta = el('textarea', { class: 'mp-in', placeholder: '/* Własny CSS, np.:\n.button.green { color: #ffd27a !important; } */' });
       ta.addEventListener('keydown', (e) => e.stopPropagation());
@@ -7508,20 +7664,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   config.load(h && h.nick);
   config.data.global.dryRun = false;   // tryb próbny usunięty z panelu
   injectCSS();
-  // zastrzeżenie — przy pierwszym uruchomieniu (i po każdej zmianie jego treści), dopóki nie zostanie zaakceptowane
-  // pokazywane przy pierwszym pobraniu i po KAŻDEJ aktualizacji (nowa wersja = ponowna akceptacja)
-  if (store.get('disclaimer:ver', '') !== MP.version) {
+  // informacja o zasadach — tylko raz, przy pierwszej instalacji (później zawsze w zakładce Informacje)
+  if (!store.get('disclaimer:v1', false)) {
     const ok = await confirmBox({
-      title: `L4Tools ${MP.version} — ważne informacje przed użyciem`,
-      okText: 'Akceptuję', cancelText: 'Nie akceptuję', width: '520px',
-      html: [
-        '<p style="margin:0 0 8px"><b>L4Tools</b> to nieoficjalny zestaw dodatków do gry Margonem. Nie jest tworzony, wspierany ani zatwierdzony przez Garmory sp. z o.o. ani przez administrację gry.</p>',
-        '<p style="margin:0 0 8px">Korzystanie z dodatków, które zmieniają działanie klienta gry lub wykonują czynności bez udziału gracza, może zostać uznane za naruszenie Regulaminu gry i skutkować sankcjami — w tym czasową lub trwałą blokadą konta.</p>',
-        '<p style="margin:0 0 8px">Autor L4Tools <b>nie ponosi odpowiedzialności</b> za jakiekolwiek skutki korzystania z dodatków, w szczególności za kary nałożone przez administrację gry, utratę przedmiotów, waluty, postępów lub dostępu do konta. Dodatki udostępniane są w obecnej postaci, bez żadnych gwarancji działania.</p>',
-        '<p style="margin:0">Klikając „Akceptuję", potwierdzasz, że zapoznałeś się z powyższym i korzystasz z dodatków <b>na własne ryzyko i odpowiedzialność</b>.</p>',
-      ].join(''),
+      title: 'L4Tools — zanim zaczniesz',
+      okText: 'Rozumiem i akceptuję', cancelText: 'Nie akceptuję', width: '500px',
+      html: INFO_HTML,
     });
-    if (!ok) { toast('L4Tools nie został uruchomiony — warunki nie zostały zaakceptowane. Odśwież grę, aby zobaczyć je ponownie.', 'warn', 7000); return; }
+    if (!ok) { toast('L4Tools nie został uruchomiony. Odśwież grę, aby zobaczyć informację ponownie.', 'warn', 7000); return; }
     store.set('disclaimer:v1', true); store.set('disclaimer:ver', MP.version);
   }
   net.install();
@@ -7542,5 +7692,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.0";
+MP.version = "1.1.0";
 })();

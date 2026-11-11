@@ -638,15 +638,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 
   defineAddon({
-    id: 'motywnik', name: 'Motywnik', icon: 'motywnik', color: ['#2ef2c4', '#8a5cff'], renderFirst: true,
+    id: 'motywnik', name: 'Motywy', icon: 'motywnik', color: ['#2ef2c4', '#8a5cff'], renderFirst: true,
     desc: 'Style całego interfejsu: ramy ekranu, paski, okna, nagłówki, zakładki, przyciski, menu, sloty, dymki i czat. Domyślny = klasyczny wygląd gry. Rozmiary zostają jak w grze. Możesz też wgrać własne style CSS.',
     defaults: { theme: 'domyslny', custom: [], customOn: null },
     settings: [],
     render(box, c, rerender) {
       const grid = el('div', { class: 'mp-mt-grid' });
-      for (const [k, t] of Object.entries(THEMES)) grid.appendChild(el('div', { class: 'mp-mt-card' + (c.theme === k ? ' on' : ''), onclick: () => { c.theme = k; config.save(); apply(); rerender(); } }, preview(k), el('div', { class: 'mp-mt-name' }, t.name), el('div', { class: 'mp-mt-desc' }, t.desc)));
+      for (const [k, t] of Object.entries(THEMES)) grid.appendChild(el('div', { class: 'mp-mt-card' + ((c.enabled ? c.theme : 'domyslny') === k ? ' on' : ''), onclick: () => { c.theme = k; addons.setEnabled('motywnik', k !== 'domyslny'); config.save(); apply(); rerender(); } }, preview(k), el('div', { class: 'mp-mt-name' }, t.name), el('div', { class: 'mp-mt-desc' }, t.desc)));
       const tc = el('div', { class: 'mp-card' }, el('h3', null, 'Styl interfejsu'), grid);
-      if (!c.enabled) tc.prepend(MP.note('info', 'Dodatek jest wyłączony — gra ma swój wygląd.'));
       let editing = null;
       const ta = el('textarea', { class: 'mp-in', placeholder: '/* Własny CSS, np.:\n.button.green { color: #ffd27a !important; } */' });
       ta.addEventListener('keydown', (e) => e.stopPropagation());

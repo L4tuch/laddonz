@@ -18,20 +18,14 @@
   config.load(h && h.nick);
   config.data.global.dryRun = false;   // tryb próbny usunięty z panelu
   injectCSS();
-  // zastrzeżenie — przy pierwszym uruchomieniu (i po każdej zmianie jego treści), dopóki nie zostanie zaakceptowane
-  // pokazywane przy pierwszym pobraniu i po KAŻDEJ aktualizacji (nowa wersja = ponowna akceptacja)
-  if (store.get('disclaimer:ver', '') !== MP.version) {
+  // informacja o zasadach — tylko raz, przy pierwszej instalacji (później zawsze w zakładce Informacje)
+  if (!store.get('disclaimer:v1', false)) {
     const ok = await confirmBox({
-      title: `L4Tools ${MP.version} — ważne informacje przed użyciem`,
-      okText: 'Akceptuję', cancelText: 'Nie akceptuję', width: '520px',
-      html: [
-        '<p style="margin:0 0 8px"><b>L4Tools</b> to nieoficjalny zestaw dodatków do gry Margonem. Nie jest tworzony, wspierany ani zatwierdzony przez Garmory sp. z o.o. ani przez administrację gry.</p>',
-        '<p style="margin:0 0 8px">Korzystanie z dodatków, które zmieniają działanie klienta gry lub wykonują czynności bez udziału gracza, może zostać uznane za naruszenie Regulaminu gry i skutkować sankcjami — w tym czasową lub trwałą blokadą konta.</p>',
-        '<p style="margin:0 0 8px">Autor L4Tools <b>nie ponosi odpowiedzialności</b> za jakiekolwiek skutki korzystania z dodatków, w szczególności za kary nałożone przez administrację gry, utratę przedmiotów, waluty, postępów lub dostępu do konta. Dodatki udostępniane są w obecnej postaci, bez żadnych gwarancji działania.</p>',
-        '<p style="margin:0">Klikając „Akceptuję", potwierdzasz, że zapoznałeś się z powyższym i korzystasz z dodatków <b>na własne ryzyko i odpowiedzialność</b>.</p>',
-      ].join(''),
+      title: 'L4Tools — zanim zaczniesz',
+      okText: 'Rozumiem i akceptuję', cancelText: 'Nie akceptuję', width: '500px',
+      html: INFO_HTML,
     });
-    if (!ok) { toast('L4Tools nie został uruchomiony — warunki nie zostały zaakceptowane. Odśwież grę, aby zobaczyć je ponownie.', 'warn', 7000); return; }
+    if (!ok) { toast('L4Tools nie został uruchomiony. Odśwież grę, aby zobaczyć informację ponownie.', 'warn', 7000); return; }
     store.set('disclaimer:v1', true); store.set('disclaimer:ver', MP.version);
   }
   net.install();

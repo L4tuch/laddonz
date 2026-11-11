@@ -2,7 +2,7 @@
  * Pasek skrótów dodatków (domyślnie po prawej, przy ramce obok ekwipunku).
  *   • lewy klik  → szybkie okno ustawień tego dodatku
  *   • prawy klik → włącz / wyłącz dodatek
- * Pasek przeciągasz za uchwyt u góry. Które dodatki są na pasku — zakładka Ogólne.
+ * Pasek ma stałe miejsce wybierane w Ustawieniach (domyślnie po lewej od ekwipunku, w pionie) — nie da się go przeciągnąć.
  */
 const quickbar = {
   bar: null,
@@ -35,36 +35,40 @@ const quickbar = {
     return addons.list.filter((a) => order.includes(a.id));
   },
 
-  defaultPos() {
-    return { x: innerWidth - 40, y: Math.round(innerHeight * 0.3) };
+  layout() { const q = config.data.global.quickbar || {}; return ['pgp', 'lgp', 'lgh', 'ldh'].includes(q.layout) ? q.layout : 'pgp'; },
+  /** Obszar mapy między kolumnami interfejsu gry. */
+  area() {
+    const vis = (sel, col) => [...document.querySelectorAll(sel)].map((n) => n.getBoundingClientRect()).find((r) => (col ? r.width > 20 && r.height > 50 : r.width > 200 && r.height > 8));
+    const L = vis('.left-column.main-column', 1), R = vis('.right-column.main-column', 1);
+    const T = vis('.top.positioner'), B = vis('.bottom.positioner');
+    return { l: L ? L.right : 0, r: R ? R.left : innerWidth, t: T && T.bottom < innerHeight / 3 ? T.bottom : 0, b: B && B.top > innerHeight / 2 ? B.top : innerHeight };
   },
-
   place() {
     if (!this.bar) return;
-    const p = (config.data.global.quickbar || {}).pos || this.defaultPos();
-    const h = this.bar.offsetHeight || 200;
-    this.bar.style.left = clamp(p.x, 0, innerWidth - 34) + 'px';
-    this.bar.style.top = clamp(p.y, 0, Math.max(0, innerHeight - h - 4)) + 'px';
+    const lay = this.layout(), A = this.area(), w = this.bar.offsetWidth || 36, h = this.bar.offsetHeight || 200, m = 8;
+    this.bar.classList.toggle('hz', lay === 'lgh' || lay === 'ldh');
+    let x, y;
+    if (lay === 'pgp') { x = A.r - w - m; y = A.t + m; }
+    else if (lay === 'lgp') { x = A.l + m; y = A.t + m; }
+    else if (lay === 'lgh') { x = A.l + m; y = A.t + m; }
+    else { x = A.l + m; y = A.b - h - m; }
+    this.bar.style.left = Math.round(clamp(x, 0, innerWidth - w)) + 'px';
+    this.bar.style.top = Math.round(clamp(y, 0, Math.max(0, innerHeight - h))) + 'px';
   },
 
   draw() {
-    const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, pinned: [], pos: null });
+    const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, pinned: [] });
     if (!Array.isArray(q.pinned)) q.pinned = [];
     if (!q.show || !q.pinned.length) { this.bar && this.bar.remove(); this.bar = null; return; }
     if (!this.bar) {
-      this.bar = el('div', { id: 'mp-qbar', class: 'mp-glass' });
+      this.bar = el('div', { id: 'mp-qbar' });
       document.body.appendChild(this.bar);
-      this.place();
+      if (!this._iv) this._iv = setInterval(() => this.place(), 1500);   // gra przebudowuje interfejs — pilnujemy miejsca
     }
     this.bar.innerHTML = '';
-    const handle = el('div', { class: 'mp-qhandle', title: 'Przeciągnij, żeby przesunąć pasek' }, icon('drag', 12));
-    this.bar.appendChild(handle);
-    makeDraggable(this.bar, handle, (pos) => { q.pos = pos; config.save(); });
     for (const a of this.enabledList()) {
       const on = addons.on(a.id);
-      const t = el('div', { class: 'mp-qtile' + (on ? '' : ' off') + (this.popId === a.id ? ' sel' : ''), 'data-name': `${a.name} — ${on ? 'włączony' : 'wyłączony'}` },
-        icon(a.icon, 15),
-        on ? el('span', { class: 'mp-qdot' }) : null);
+      const t = el('div', { class: 'mp-qtile' + (on ? ' on' : ' off') + (this.popId === a.id ? ' sel' : ''), 'data-name': `${a.name} — ${on ? 'włączony' : 'wyłączony'}` }, icon(a.icon, 17));
       t.addEventListener('click', (e) => { e.stopPropagation(); if (on && typeof a.quick === 'function') { try { a.quick(); } catch (err) { console.warn('[L4Tools]', err); } return; } this.openPop(a.id, t); });
       t.addEventListener('contextmenu', async (e) => {
         e.preventDefault(); e.stopPropagation();
@@ -75,7 +79,8 @@ const quickbar = {
       });
       this.bar.appendChild(t);
     }
-    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Pełny panel L4Tools', onclick: () => ui.toggle() }, icon('logo', 15)));
+    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Panel L4Tools', onclick: () => ui.toggle() }, el('span', null, 'L4')));
+    this.bar.dataset.lay = this.layout();
     this.place();
   },
 
@@ -93,7 +98,7 @@ const quickbar = {
     P.innerHTML = '';
     const sw = switchEl(cfg.enabled, async (v) => { const ok = await ui.toggleAddon(a, v, sw); if (ok !== false) this.openPop(id, null, true); });
     const head = el('div', { class: 'mp-head' },
-      el('div', { class: 'mp-tile', style: { width: '30px', height: '30px', borderRadius: '9px', background: grad(a.color) } }, icon(a.icon, 17)),
+      el('div', { class: 'l4-ico', style: { width: '30px', height: '30px' } }, icon(a.icon, 17)),
       el('div', { style: { flex: 1, minWidth: 0 } }, el('div', { class: 'mp-title', style: { fontSize: '14px' } }, a.name), el('div', { class: 'mp-sub' }, cfg.enabled ? 'włączony' : 'wyłączony')),
       sw,
       el('button', { class: 'mp-x', title: 'Usuń ze skrótów', onclick: () => { this.togglePin(id); this.closePop(); toast(`${a.name}: usunięto ze skrótów`); } }, icon('pin', 15)),
@@ -105,14 +110,17 @@ const quickbar = {
     body.scrollTop = st;
     // pozycja: obok paska, po stronie, gdzie jest miejsce
     if (this.bar) {
-      const r = this.bar.getBoundingClientRect();
-      const w = 360;
-      const left = r.left > w + 20 ? r.left - w - 8 : r.right + 8;
-      P.style.left = left + 'px';
-      // okno zawsze mieści się w ekranie: przesuwamy je w górę, gdy jest wysokie
-      const want = clamp(anchor ? anchor.getBoundingClientRect().top - 20 : (parseFloat(P.style.top) || r.top), 8, innerHeight - 200);
+      const r = this.bar.getBoundingClientRect(), w = 360, lay = this.layout();
       const h = Math.min(P.scrollHeight, innerHeight * 0.78);
-      P.style.top = Math.max(8, Math.min(want, innerHeight - h - 8)) + 'px';
+      if (lay === 'lgh' || lay === 'ldh') {
+        const ar = anchor ? anchor.getBoundingClientRect() : r;
+        P.style.left = clamp(ar.left - 10, 8, innerWidth - w - 8) + 'px';
+        P.style.top = (lay === 'lgh' ? Math.min(r.bottom + 8, innerHeight - h - 8) : Math.max(8, r.top - h - 8)) + 'px';
+      } else {
+        P.style.left = (lay === 'pgp' ? Math.max(8, r.left - w - 8) : Math.min(innerWidth - w - 8, r.right + 8)) + 'px';
+        const want = clamp(anchor ? anchor.getBoundingClientRect().top - 20 : (parseFloat(P.style.top) || r.top), 8, innerHeight - 200);
+        P.style.top = Math.max(8, Math.min(want, innerHeight - h - 8)) + 'px';
+      }
     }
     this.draw();
   },
