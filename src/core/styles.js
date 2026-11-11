@@ -537,11 +537,11 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 /* pasek skrótów — kafelki jak przyciski gry */
 #mp-qbar{position:fixed;z-index:2147482998;display:flex;flex-direction:column;gap:5px;padding:0;background:none!important;border:0!important;box-shadow:none!important;width:auto!important;opacity:1}
 #mp-qbar.hz{flex-direction:row}
-#mp-qbar .mp-qtile{width:27px;height:27px;border-radius:4px;transition:filter .12s}
-#mp-qbar .mp-qtile.on{color:#fff;background:linear-gradient(#5b8b3d,#3a6224 48%,#2c4d1a 52%,#33571f);box-shadow:inset 0 0 0 1px #a3c47f,inset 0 0 0 2px #1f3512,0 0 0 1px #0b0f07,0 2px 4px rgba(0,0,0,.55)}
-#mp-qbar .mp-qtile.on .mp-ico{filter:drop-shadow(0 1px 0 rgba(0,0,0,.7))}
-#mp-qbar .mp-qtile.off{color:#9a9a9a;background:linear-gradient(#4a4a4c,#2a2a2c 48%,#1e1e20 52%,#262628);box-shadow:inset 0 0 0 1px #8a8a8a,inset 0 0 0 2px #151515,0 0 0 1px #050505,0 2px 4px rgba(0,0,0,.55)}
-#mp-qbar .mp-qtile:hover{filter:brightness(1.18)}
+#mp-qbar .mp-qtile{width:27px;height:27px;border-radius:4px;transition:filter .12s;background:linear-gradient(#262628,#0d0d0f);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 0 0 1px #000,0 2px 4px rgba(0,0,0,.55)}
+#mp-qbar .mp-qtile.on{color:#6dff5a}
+#mp-qbar .mp-qtile.on .mp-ico{filter:drop-shadow(0 0 2px rgba(80,255,60,.95)) drop-shadow(0 0 5px rgba(60,220,40,.6))}
+#mp-qbar .mp-qtile.off{color:#7d7d7d}
+#mp-qbar .mp-qtile:hover{filter:brightness(1.25)}
 #mp-qbar .mp-qtile.sel{outline:2px solid #ffd54a;outline-offset:1px}
 #mp-qbar .mp-qmore{background:linear-gradient(#5b8b3d,#2c4d1a);box-shadow:inset 0 0 0 1px #a3c47f,inset 0 0 0 2px #1f3512,0 0 0 1px #0b0f07}
 #mp-qbar .mp-qmore span{font:900 12px Georgia,serif;color:#fff3c4;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000,0 -1px 0 #000}
