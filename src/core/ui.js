@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.3', d: '11.11.2026', items: [
+    'Ulepszarka: dzienny licznik ulepszeń wczytuje się sam zaraz po wejściu do gry (Rzemiosło otwiera się na moment w tle, niewidocznie) — bez ręcznego otwierania okna.',
+  ] },
   { v: '1.0.2', d: '11.11.2026', items: [
     'Ulepszarka: dzienny limit odczytywany także z odpowiedzi okna Rzemiosła, gdy ulepszasz ręcznie; w raporcie widać, skąd przyszedł ostatni odczyt.',
   ] },

@@ -552,6 +552,8 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-qbar[data-lay="ldh"] .mp-qtile:hover::after{top:auto;bottom:calc(100% + 6px)}
 #mp-qpop{border-radius:8px!important}
 
+/* Ulepszarka: ciche pobranie licznika — okno Rzemiosła niewidoczne przez chwilę */
+.mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){opacity:0!important;pointer-events:none!important}
 `;
 
 function injectCSS() {

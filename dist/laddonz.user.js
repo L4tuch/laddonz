@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.2
+// @version      1.0.3
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -1628,6 +1628,8 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-qbar[data-lay="ldh"] .mp-qtile:hover::after{top:auto;bottom:calc(100% + 6px)}
 #mp-qpop{border-radius:8px!important}
 
+/* Ulepszarka: ciche pobranie licznika — okno Rzemiosła niewidoczne przez chwilę */
+.mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){opacity:0!important;pointer-events:none!important}
 `;
 
 function injectCSS() {
@@ -2162,6 +2164,9 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.3', d: '11.11.2026', items: [
+    'Ulepszarka: dzienny licznik ulepszeń wczytuje się sam zaraz po wejściu do gry (Rzemiosło otwiera się na moment w tle, niewidocznie) — bez ręcznego otwierania okna.',
+  ] },
   { v: '1.0.2', d: '11.11.2026', items: [
     'Ulepszarka: dzienny limit odczytywany także z odpowiedzi okna Rzemiosła, gdy ulepszasz ręcznie; w raporcie widać, skąd przyszedł ostatni odczyt.',
   ] },
@@ -5127,6 +5132,7 @@ MP.itemDeco = itemDeco;
       const e = d && (d.enhancement || (d.d && d.d.enhancement));
       const u = cfg && findUsages(e);
       if (!u) return;
+      try { bus.emit('enhusage', u); } catch {}
       limitSeen.unshift({ t: new Date().toISOString().slice(11, 19), src, count: u.count, limit: u.limit }); limitSeen.length = Math.min(limitSeen.length, 8);
       const nu = { count: Number(u.count) || 0, limit: Number(u.limit) || 0, day: new Date().toDateString() };
       const o = cfg.usages || {};
@@ -5137,6 +5143,32 @@ MP.itemDeco = itemDeco;
     } catch {}
   };
   bus.on('data', (d) => onUsages(d, 'pakiet'));
+  /**
+   * Licznik od razu po wejściu do gry: gra podaje go dopiero po otwarciu Rzemiosła (artisanship&action=open),
+   * więc otwieramy je na moment w ukryciu (okno niewidoczne) i zamykamy, gdy przyjdzie licznik.
+   */
+  let silentDone = false;
+  async function silentUsages() {
+    if (silentDone || !cfg || !cfg.enabled || running) return;
+    if (game.inBattle() || net.craftOpen()) return;
+    silentDone = true;
+    const before = (cfg.usages || {}).t || 0;
+    const c = W.Engine && W.Engine.crafting;
+    if (!c || typeof c.triggerOpen !== 'function') return;
+    document.documentElement.classList.add('mp-ul-silent');
+    let got = false;
+    const off = () => { got = true; };
+    bus.on('enhusage', off);
+    try {
+      c.triggerOpen();
+      for (let i = 0; i < 25 && !got; i++) await sleep(120);
+    } catch {}
+    try { if (net.craftOpen() && !openedByUs) closeCraft(); } catch {}
+    for (let i = 0; i < 10 && net.craftOpen(); i++) { await sleep(100); try { closeCraft(); } catch {} }
+    setTimeout(() => document.documentElement.classList.remove('mp-ul-silent'), 250);
+    limitSeen.unshift({ t: new Date().toISOString().slice(11, 19), src: 'start gry (w tle)', count: got ? (cfg.usages || {}).count : '—', limit: got ? (cfg.usages || {}).limit : '—' });
+    void before;
+  }
   bus.on('enhresp', (d) => onUsages(d, 'okno rzemiosła'));
   /** Odpowiedź gry „maksymalny poziom" → przedmiot znika z listy. */
   const maxResp = (o) => (data) => {
@@ -5633,6 +5665,9 @@ MP.itemDeco = itemDeco;
       try { if ((config.data.commands || {}).enhance) net.resetCmd('enhance'); } catch {}   // komenda jest wbudowana — żadnych nauczonych zamienników
       setInterval(() => { if (cfg.enabled && !running) dropMaxed(); }, 5000);
       setInterval(freeWatch, 1500);
+      // licznik dziennych ulepszeń w tle po wejściu do gry (i po północy, gdy zacznie się nowy dzień)
+      setTimeout(silentUsages, 6000);
+      setInterval(() => { if (cfg.usages && cfg.usages.day !== new Date().toDateString()) { silentDone = false; silentUsages(); } }, 60000);
       MP.ulepszarka = { addTarget, plan, run, craftState, typeOf, closeCraft, reportData: report, dropMaxed, enhLevel };
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
@@ -7913,5 +7948,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.2";
+MP.version = "1.0.3";
 })();

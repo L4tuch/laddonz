@@ -584,6 +584,7 @@
       const e = d && (d.enhancement || (d.d && d.d.enhancement));
       const u = cfg && findUsages(e);
       if (!u) return;
+      try { bus.emit('enhusage', u); } catch {}
       limitSeen.unshift({ t: new Date().toISOString().slice(11, 19), src, count: u.count, limit: u.limit }); limitSeen.length = Math.min(limitSeen.length, 8);
       const nu = { count: Number(u.count) || 0, limit: Number(u.limit) || 0, day: new Date().toDateString() };
       const o = cfg.usages || {};
@@ -594,6 +595,32 @@
     } catch {}
   };
   bus.on('data', (d) => onUsages(d, 'pakiet'));
+  /**
+   * Licznik od razu po wejściu do gry: gra podaje go dopiero po otwarciu Rzemiosła (artisanship&action=open),
+   * więc otwieramy je na moment w ukryciu (okno niewidoczne) i zamykamy, gdy przyjdzie licznik.
+   */
+  let silentDone = false;
+  async function silentUsages() {
+    if (silentDone || !cfg || !cfg.enabled || running) return;
+    if (game.inBattle() || net.craftOpen()) return;
+    silentDone = true;
+    const before = (cfg.usages || {}).t || 0;
+    const c = W.Engine && W.Engine.crafting;
+    if (!c || typeof c.triggerOpen !== 'function') return;
+    document.documentElement.classList.add('mp-ul-silent');
+    let got = false;
+    const off = () => { got = true; };
+    bus.on('enhusage', off);
+    try {
+      c.triggerOpen();
+      for (let i = 0; i < 25 && !got; i++) await sleep(120);
+    } catch {}
+    try { if (net.craftOpen() && !openedByUs) closeCraft(); } catch {}
+    for (let i = 0; i < 10 && net.craftOpen(); i++) { await sleep(100); try { closeCraft(); } catch {} }
+    setTimeout(() => document.documentElement.classList.remove('mp-ul-silent'), 250);
+    limitSeen.unshift({ t: new Date().toISOString().slice(11, 19), src: 'start gry (w tle)', count: got ? (cfg.usages || {}).count : '—', limit: got ? (cfg.usages || {}).limit : '—' });
+    void before;
+  }
   bus.on('enhresp', (d) => onUsages(d, 'okno rzemiosła'));
   /** Odpowiedź gry „maksymalny poziom" → przedmiot znika z listy. */
   const maxResp = (o) => (data) => {
@@ -1090,6 +1117,9 @@
       try { if ((config.data.commands || {}).enhance) net.resetCmd('enhance'); } catch {}   // komenda jest wbudowana — żadnych nauczonych zamienników
       setInterval(() => { if (cfg.enabled && !running) dropMaxed(); }, 5000);
       setInterval(freeWatch, 1500);
+      // licznik dziennych ulepszeń w tle po wejściu do gry (i po północy, gdy zacznie się nowy dzień)
+      setTimeout(silentUsages, 6000);
+      setInterval(() => { if (cfg.usages && cfg.usages.day !== new Date().toDateString()) { silentDone = false; silentUsages(); } }, 60000);
       MP.ulepszarka = { addTarget, plan, run, craftState, typeOf, closeCraft, reportData: report, dropMaxed, enhLevel };
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
