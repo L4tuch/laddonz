@@ -45,7 +45,9 @@ const header = fs.readFileSync(path.join(root, 'src/header.js'), 'utf8')
   .replace(/__GITHUB_REPO__/g, cfg.githubRepo)
   .replace(/__VERSION__/g, cfg.version);
 
-const body = ORDER.map((f) => `// ═══ ${f} ═══\n` + fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
+// baza potworów (aktualizowana automatycznie z margoworld.pl — patrz scripts/update-potwory.js)
+const potwory = fs.existsSync(path.join(root, 'data/potwory.json')) ? fs.readFileSync(path.join(root, 'data/potwory.json'), 'utf8') : '{"potwory":[]}';
+const body = `const POTWORY_DB = ${JSON.stringify(JSON.parse(potwory))};\n` + ORDER.map((f) => `// ═══ ${f} ═══\n` + fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
 const out = `${header}\n(function () {\n'use strict';\n${body}\nMP.version = ${JSON.stringify(cfg.version)};\n})();\n`;
 
 fs.mkdirSync(path.join(root, 'dist'), { recursive: true });

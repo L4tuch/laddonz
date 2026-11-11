@@ -284,11 +284,17 @@ const net = {
       if (!obj || typeof obj[name] !== 'function' || obj[name].__mp) return false;
       const orig = obj[name];
       obj[name] = function (...args) {
-        // gra podaje pakiet jako obiekt albo jako tekst JSON (tak samo czyta to lootlog)
-        let data = args.find((a) => a && typeof a === 'object');
-        if (!data) { const t = args.find((a) => typeof a === 'string' && a.charCodeAt(0) === 123); if (t) { try { data = JSON.parse(t); } catch {} } }
-        if (data) self.onData(data);
-        return orig.apply(this, args);
+        // inny dodatek mógł owinąć nasze owinięcie (wtedy pakiet przechodzi przez nas dwa razy) — czytamy go tylko raz
+        if (self._inHook) return orig.apply(this, args);
+        self._inHook = true;
+        try {
+          // gra podaje pakiet jako obiekt albo jako tekst JSON (tak samo czyta to lootlog)
+          let data = args.find((a) => a && typeof a === 'object');
+          const raw = data ? null : args.find((a) => typeof a === 'string' && a.charCodeAt(0) === 123);
+          if (!data && raw) { try { data = JSON.parse(raw); } catch {} }
+          if (data && !self.isDup(data, raw)) self.onData(data);
+          return orig.apply(this, args);
+        } finally { self._inHook = false; }
       };
       obj[name].__mp = true;
       self.respHook = name;
@@ -302,6 +308,16 @@ const net = {
     this.respHook = null;
   },
   respHook: null,
+  _inHook: false,
+  _last: { k: '', t: 0 },
+  /** Ten sam pakiet walki/łupów podany drugi raz w ciągu chwili — pomijamy (inaczej liczniki liczą podwójnie). */
+  isDup(data, raw) {
+    if (!data.f && !data.loot && !data.item) return false;
+    let k; try { k = raw || JSON.stringify(data); } catch { return false; }
+    const t = Date.now(), dup = k === this._last.k && t - this._last.t < 1500;
+    this._last = { k, t };
+    return dup;
+  },
 
   onData(data) {
     this.stats.responses++;

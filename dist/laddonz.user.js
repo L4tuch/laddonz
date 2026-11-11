@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.8
+// @version      1.0.10
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -20,6 +20,7 @@
 
 (function () {
 'use strict';
+const POTWORY_DB = {"zrodlo":"margoworld.pl","aktualizacja":"2026-11-11","potwory":[{"n":"Czarna Wilczyca","lvl":15,"t":"elita","i":"e1/st-wilczyca.gif"},{"n":"Astratus","lvl":20,"t":"elita","i":"e1/szkielet6.gif"},{"n":"Karhu","lvl":22,"t":"elita","i":"e1/st-niedzwiadek.gif"},{"n":"Tigrios","lvl":22,"t":"elita","i":"e1/dk-tigrios.gif"},{"n":"Mrówcza Królowa","lvl":22,"t":"elita","i":"e1/mrowka-kro01a.gif"},{"n":"Paladyński Apostata","lvl":25,"t":"elita","i":"e1/apostata.gif"},{"n":"Mula Furla","lvl":28,"t":"elita","i":"e1/dzikus10.gif"},{"n":"Zulu Furla","lvl":28,"t":"elita","i":"e1/dzikus9.gif"},{"n":"Nuna Furla","lvl":28,"t":"elita","i":"e1/dzikus8.gif"},{"n":"Cerber","lvl":30,"t":"elita","i":"e1/cerber.gif"},{"n":"Herszt rozbójników","lvl":32,"t":"elita","i":"e1/zbir-herszt.gif"},{"n":"Zakuty goblin","lvl":35,"t":"elita","i":"e1/gobbloker.gif"},{"n":"Nocny Puff","lvl":38,"t":"elita","i":"e1/puff-3b.gif"},{"n":"Dowódca Ghuli","lvl":42,"t":"elita","i":"e1/ghul-elita-a.gif"},{"n":"Wilcza Paszcza","lvl":44,"t":"elita","i":"e1/wilk_paszcza.gif"},{"n":"Wilcza Jagoda","lvl":44,"t":"elita","i":"e1/wilk_jagoda.gif"},{"n":"Thowar","lvl":50,"t":"elita","i":"e1/orkd.gif"},{"n":"Krogor","lvl":50,"t":"elita","i":"e1/orkkrogor.gif"},{"n":"Nieżłopka wątpia","lvl":60,"t":"elita","i":"e1/zadlak5a.gif"},{"n":"Bazyliszek Mroku","lvl":63,"t":"elita","i":"e1/bazyl-mroku-b.gif"},{"n":"Tarrol Agze","lvl":65,"t":"elita","i":"e1/gnoll19.gif"},{"n":"Mrówka Królowa","lvl":67,"t":"elita","i":"e1/mrowka-kro02a.gif"},{"n":"Tollok Vitez","lvl":72,"t":"elita","i":"e1/tollok_jask-4b.gif"},{"n":"Selder","lvl":76,"t":"elita","i":"e1/mnich_selder.gif"},{"n":"Zarządca magazynu","lvl":77,"t":"elita","i":"e1/magaz_zarzadca.gif"},{"n":"Łowca Skór","lvl":77,"t":"elita","i":"e1/magaz_lowca_skor.gif"},{"n":"Mnich Czarnego Uroku","lvl":80,"t":"elita","i":"e1/nieum_mnich-6a.gif"},{"n":"Duchowy Pożeracz","lvl":80,"t":"elita","i":"e1/nieum_mnich-7a.gif"},{"n":"Stalowa Twarz","lvl":86,"t":"elita","i":"e1/krasnolud-11b.gif"},{"n":"Krasnoludzki eksplorator","lvl":86,"t":"elita","i":"e1/krasnolud-10a.gif"},{"n":"Berog Astron","lvl":88,"t":"elita","i":"e1/berog.gif"},{"n":"Istota cienia","lvl":88,"t":"elita","i":"e1/darhoun-4b.gif"},{"n":"Strażnik kniei","lvl":92,"t":"elita","i":"e1/straznik_kniei-1a.gif"},{"n":"Brzeginia","lvl":93,"t":"elita","i":"e1/brzeginia.gif"},{"n":"Rdzawy wyziew","lvl":97,"t":"elita","i":"pot/ogniki05.gif"},{"n":"Strażnik świętego ognia","lvl":104,"t":"elita","i":"e1/moloch-6a.gif"},{"n":"Uriasog","lvl":107,"t":"elita","i":"e1/olbrzm_dwug-4a.gif"},{"n":"Nieumarły krzyżowiec","lvl":112,"t":"elita","i":"e1/krzyz_pust_szkiel.gif"},{"n":"Antyczny wojownik","lvl":114,"t":"elita","i":"e1/mumia-7b.gif"},{"n":"Zabalsamowany wyznawca Seta","lvl":114,"t":"elita","i":"e1/mumia-6b.gif"},{"n":"Wielka macka","lvl":118,"t":"elita","i":"e1/osmiornica-e1-a.gif"},{"n":"Demiurg lutum","lvl":125,"t":"elita","i":"e1/caneum_demiurg-3a.gif"},{"n":"Demiurg cretula","lvl":125,"t":"elita","i":"e1/caneum_demiurg-2a.gif"},{"n":"Demiurg argilla","lvl":125,"t":"elita","i":"e1/caneum_demiurg-1b.gif"},{"n":"Marid","lvl":127,"t":"elita","i":"e1/magradit_marid_1b.gif"},{"n":"Anemoi","lvl":135,"t":"elita","i":"e1/piaskowy_potwor-5b.gif"},{"n":"Golem władca lawy","lvl":139,"t":"elita","i":"hum/golem06.gif"},{"n":"Monstrualna łunka ognista","lvl":141,"t":"elita","i":"pot/wazka2b.gif"},{"n":"Monstrualna łunka piżmowa","lvl":141,"t":"elita","i":"pot/wazka1b.gif"},{"n":"Hanka patelnianka","lvl":142,"t":"elita","i":"e1/goral-9b.gif"},{"n":"Mistrz oscypków","lvl":143,"t":"elita","i":"e1/goral-11b.gif"},{"n":"Berserker Grilull","lvl":146,"t":"elita","i":"hum/grilull2.gif"},{"n":"Berserker Okel","lvl":147,"t":"elita","i":"hum/okel1.gif"},{"n":"Biała Dama","lvl":152,"t":"elita","i":"e1/duch_eterycz-7a.gif"},{"n":"Upadły Lord","lvl":152,"t":"elita","i":"e1/duch_eterycz-8a.gif"},{"n":"Pogromca Wątpliwych","lvl":158,"t":"elita","i":"hum/cz_e_ork1a.gif"},{"n":"Duch Pradawnego Egzekutora","lvl":164,"t":"elita","i":"e1/praork_duch3a.gif"},{"n":"Strażnik Przyboczny","lvl":168,"t":"elita","i":"e1/praork_woj_1a.gif"},{"n":"Profos Czarnej Gwardii","lvl":173,"t":"elita","i":"e1/czarna_gwardia_1.gif"},{"n":"Patronka szronu","lvl":175,"t":"elita","i":"e1/ice_nymph-3b.gif"},{"n":"Córa Dębu","lvl":177,"t":"elita","i":"e1/driada_e1a.gif"},{"n":"Zielone Karczycho","lvl":182,"t":"elita","i":"e1/ogr-6a.gif"},{"n":"Urwigłówka trójgłowa","lvl":188,"t":"elita","i":"pot/mucholowka4a.gif"},{"n":"Ściółkowe monstrum","lvl":192,"t":"elita","i":"e1/forest_monster-6b.gif"},{"n":"Myświór Byku","lvl":197,"t":"elita","i":"e1/myswior-9a.gif"},{"n":"Hurysa Achajeta","lvl":200,"t":"elita","i":"hum/sekta-hurysa1a.gif"},{"n":"Czarny Wdowiec","lvl":205,"t":"elita","i":"hum/sekta-wdowiec1a.gif"},{"n":"Potężny Furbol","lvl":209,"t":"elita","i":"e1/forbol15.gif"},{"n":"Phoneutria","lvl":213,"t":"elita","i":"e1/arachn_pajak-11a.gif"},{"n":"Wyznawca pajęczej bogini","lvl":217,"t":"elita","i":"hum/drow-mez08a.gif"},{"n":"Wysłanniczka matrony","lvl":220,"t":"elita","i":"e1/drider-e-3a.gif"},{"n":"Krokozaur jasnobrzuchy","lvl":225,"t":"elita","i":"e1/bagna_krokodyl-1a.gif"},{"n":"Pancerny maddok","lvl":229,"t":"elita","i":"e1/maddok-7b.gif"},{"n":"Ofiara grzybyfikacji","lvl":234,"t":"elita","i":"e1/zombie-jelen-2a.gif"},{"n":"Księżycowy strażnik","lvl":237,"t":"elita","i":"e1/lunar_deer-1a.gif"},{"n":"Bubalus","lvl":240,"t":"elita","i":"e1/e236_dendro-a.gif"},{"n":"Cuachic","lvl":250,"t":"elita","i":"e1/mahoptek9-b.gif"},{"n":"Czciciel Quetzalcoatla","lvl":255,"t":"elita","i":"e1/mahoptek8-b.gif"},{"n":"Potworzak","lvl":260,"t":"elita","i":"e1/trist2_potworzak-1b.gif"},{"n":"Prawa wiedźma","lvl":262,"t":"elita","i":"e1/trist2_prawa_wiedzma-1a.gif"},{"n":"Szalony brzdękacz","lvl":266,"t":"elita","i":"e1/pustkowie_faun-4a.gif"},{"n":"Pokutujący bębniarz","lvl":266,"t":"elita","i":"e1/pustkowie_faun-3a.gif"},{"n":"Twór chaosu","lvl":269,"t":"elita","i":"e1/przestraszony-9.gif"},{"n":"Drakosęp","lvl":277,"t":"elita","i":"e2/drakosep_pus.gif"},{"n":"Wyznawca Hebrehotha","lvl":280,"t":"elita","i":"e1/barb7.gif"},{"n":"Calathea Ornata","lvl":286,"t":"elita","i":"e1/hamadriada_e1-a.gif"},{"n":"Strelitzia Reginae","lvl":286,"t":"elita","i":"e1/hamadriada_e2-b.gif"},{"n":"Mushita","lvl":23,"t":"e2","i":"e2/st-puma.gif","p":"p"},{"n":"Kotołak Tropiciel","lvl":27,"t":"e2","i":"e1/kotolak_lowca.gif"},{"n":"Shae Phu","lvl":30,"t":"e2","i":"e2/demonszef.gif","p":"m"},{"n":"Zorg Jednooki Baron","lvl":33,"t":"e2","i":"e2/zbir-e2-zorg.gif","p":"h"},{"n":"Władca rzek","lvl":37,"t":"e2","i":"e2/gobmag2.gif","p":"m"},{"n":"Gobbos","lvl":40,"t":"e2","i":"e2/gobsamurai.gif","p":"b"},{"n":"Tyrtajos","lvl":42,"t":"e2","i":"e2/dzik.gif","p":"w"},{"n":"Tollok Shimger","lvl":47,"t":"e2","i":"e2/tollok_shimger.gif","p":"w"},{"n":"Szczęt alias Gładki","lvl":47,"t":"e2","i":"e2/zbir-szczet.gif","p":"w"},{"n":"Agar","lvl":51,"t":"e2","i":"e2/glut_agar.gif","p":"w"},{"n":"Razuglag Oklash","lvl":51,"t":"e2","i":"e2/razuglag.gif","p":"m"},{"n":"Foverk Turrim","lvl":57,"t":"e2","i":"e2/kobold07.gif","p":"b"},{"n":"Owadzia Matka","lvl":58,"t":"e2","i":"e2/zadlak-e2-owadzia-matka.gif","p":"t"},{"n":"Furruk Kozug","lvl":66,"t":"e2","i":"e2/gnoll12.gif","p":"m"},{"n":"Vari Kruger","lvl":66,"t":"e2","i":"e2/gnoll11.gif","p":"m"},{"n":"Jotun","lvl":70,"t":"e2","i":"e2/kam_olbrzym-b.gif","p":"w"},{"n":"Tollok Utumutu","lvl":73,"t":"e2","i":"e2/tollok_jask_utumatu.gif","p":"h"},{"n":"Tollok Atamatu","lvl":73,"t":"e2","i":"e2/tollok_jask_atamatu.gif","p":"h"},{"n":"Lisz","lvl":75,"t":"e2","i":"e2/lisz_demilisze.gif","p":"m"},{"n":"Grabarz świątynny","lvl":80,"t":"e2","i":"e2/nieu_mnich_grabarz.gif","p":"w"},{"n":"Wielka Stopa","lvl":82,"t":"e2","i":"e2/wlochacze_wielka_stopa.gif","p":"m"},{"n":"Podły zbrojmistrz","lvl":82,"t":"e2","i":"e2/magaz_zbrojmistrz.gif","p":"w"},{"n":"Choukker","lvl":84,"t":"e2","i":"e2/dlawiciel5.gif","p":"w"},{"n":"Nadzorczyni krasnoludów","lvl":88,"t":"e2","i":"e2/nadzorczyni_krasnoludow.gif","p":"w"},{"n":"Morthen","lvl":89,"t":"e2","i":"e2/krasnolud_boss.gif","p":"w"},{"n":"Leśne Widmo","lvl":92,"t":"e2","i":"e2/lesne_widmo.gif","p":"t"},{"n":"Żelazoręki Ohydziarz","lvl":92,"t":"e2","i":"e2/ugrape2.gif","p":"p"},{"n":"Goplana","lvl":93,"t":"e2","i":"e2/goplana.gif","p":"p"},{"n":"Gnom Figlid","lvl":96,"t":"e2","i":"e2/gnom_figlid.gif","p":"m"},{"n":"Centaur Zyfryd","lvl":99,"t":"e2","i":"e2/cent-zyfryd.gif","p":"h"},{"n":"Kambion","lvl":101,"t":"e2","i":"e2/kambion.gif","p":"b"},{"n":"Jertek Moxos","lvl":105,"t":"e2","i":"e2/moloch-jertek.gif","p":"w"},{"n":"Miłośnik rycerzy","lvl":108,"t":"e2","i":"e2/blotniaki_milosnik_rycerzy.gif","p":"w"},{"n":"Miłośnik magii","lvl":108,"t":"e2","i":"e2/blotniaki_milosnik_magii.gif","p":"w"},{"n":"Miłośnik łowców","lvl":108,"t":"e2","i":"e2/blotniaki_milosnik_lowcow.gif","p":"w"},{"n":"Łowca czaszek","lvl":112,"t":"e2","i":"e2/alghul-czaszka-1a.gif","p":"m"},{"n":"Ozirus Władca Hieroglifów","lvl":115,"t":"e2","i":"e2/mumia-ozirus.gif","p":"m"},{"n":"Morski potwór","lvl":118,"t":"e2","i":"e2/osmiornica-1b.gif","p":"t"},{"n":"Krab pustelnik","lvl":124,"t":"e2","i":"e2/krab_big3.gif","p":"b"},{"n":"Borgoros Garamir III","lvl":124,"t":"e2","i":"e2/ingotia_minotaur-7a.gif","p":"w"},{"n":"Stworzyciel","lvl":125,"t":"e2","i":"e2/stworzyciel.gif","p":"b"},{"n":"Ifryt","lvl":128,"t":"e2","i":"e2/magradit_ifryt.gif","p":"m"},{"n":"Młody Jack Truciciel","lvl":131,"t":"e2","i":"e2/pirat01.gif","p":"w"},{"n":"Helga Opiekunka Rumu","lvl":131,"t":"e2","i":"e2/pirat-2b.gif","p":"t"},{"n":"Henry Kaprawe Oko","lvl":131,"t":"e2","i":"e1/pirat5b.gif","p":"w"},{"n":"Eol","lvl":135,"t":"e2","i":"e2/piaskowy_potwor-6a.gif","p":"h"},{"n":"Grubber Ochlaj","lvl":136,"t":"e2","i":"e2/grubber-ochlaj.gif","p":"w"},{"n":"Mistrz Worundriel","lvl":139,"t":"e2","i":"e2/worundriel02.gif","p":"w"},{"n":"Wójt Fistuła","lvl":144,"t":"e2","i":"e2/goral-e2-wojt-fistula.gif","p":"b"},{"n":"Teściowa Rumcajsa","lvl":145,"t":"e2","i":"e2/goral-e2-tesciowa-rumcajsa.gif","p":"m"},{"n":"Berserker Amuno","lvl":148,"t":"e2","i":"e2/amuno.gif","p":"w"},{"n":"Fodug Zolash","lvl":150,"t":"e2","i":"e2/fodug_zolash.gif","p":"m"},{"n":"Goons Asterus","lvl":154,"t":"e2","i":"e2/goons_asterus-1a.gif","p":"h"},{"n":"Adariel","lvl":155,"t":"e2","i":"e2/tri_adariel.gif","p":"m"},{"n":"Burkog Lorulk","lvl":160,"t":"e2","i":"e2/orkczd.gif","p":"w"},{"n":"Sheba Orcza Szamanka","lvl":160,"t":"e2","i":"e2/r_orc_sheba.gif","p":"m"},{"n":"Shakkru","lvl":160,"t":"e2","i":"e2/r_orc_shakkru.gif"},{"n":"Duch Władcy Klanów","lvl":165,"t":"e2","i":"e2/duch_wladcy_kl.gif","p":"p"},{"n":"Bragarth Myśliwy Dusz","lvl":170,"t":"e2","i":"e2/praork_low_elita.gif","p":"h"},{"n":"Fursharag Pożeracz Umysłów","lvl":170,"t":"e2","i":"e2/praork_mag_elita.gif","p":"m"},{"n":"Ziuggrael Strażnik Królowej","lvl":170,"t":"e2","i":"e2/praork_woj_elita.gif","p":"w"},{"n":"Lusgrathera Królowa Pramatka","lvl":175,"t":"e2","i":"e2/prakrolowa.gif","p":"m"},{"n":"Królowa Śniegu","lvl":175,"t":"e2","i":"e2/krolowa-sniegu.gif","p":"m"},{"n":"Wrzosera","lvl":177,"t":"e2","i":"e2/wrzosera-1b.gif","p":"w"},{"n":"Chryzoprenia","lvl":177,"t":"e2","i":"e2/chryzoprenia-1a.gif","p":"p"},{"n":"Cantedewia","lvl":177,"t":"e2","i":"e2/cantedewia-1a.gif","p":"t"},{"n":"Ogr Stalowy Pazur","lvl":183,"t":"e2","i":"e2/ogr_stalowy_pazur-1a.gif","p":"w"},{"n":"Torunia Ankelwald","lvl":186,"t":"e2","i":"e2/thuz-patr1.gif","p":"p"},{"n":"Pięknotka Mięsożerna","lvl":189,"t":"e2","i":"e2/zmutowana-roslinka.gif","p":"h"},{"n":"Breheret Żelazny Łeb","lvl":192,"t":"e2","i":"e2/draki-breheret-1b.gif","p":"w"},{"n":"Cerasus","lvl":193,"t":"e2","i":"e2/cerasus-1a.gif","p":"h"},{"n":"Mysiur Myświórowy Król","lvl":197,"t":"e2","i":"e2/mysiur_myswiorowy_krol-1a.gif","p":"m"},{"n":"Sadolia Nadzorczyni Hurys","lvl":200,"t":"e2","i":"e2/sekta-sadolia.gif","p":"b"},{"n":"Sataniel Skrytobójca","lvl":204,"t":"e2","i":"e2/sekta-sataniel.gif","p":"h"},{"n":"Bergermona Krwawa Hrabina","lvl":204,"t":"e2","i":"e2/sekta-bergermona.gif","p":"h"},{"n":"Annaniel Wysysacz Marzeń","lvl":204,"t":"e2","i":"e2/sekta-annaniel.gif","p":"m"},{"n":"Gothardus Kolekcjoner Głów","lvl":204,"t":"e2","i":"e2/sekta-gothardus.gif","p":"w"},{"n":"Zufulus Smakosz Serc","lvl":205,"t":"e2","i":"e2/sekta-zufulus.gif","p":"m"},{"n":"Czempion Furboli","lvl":210,"t":"e2","i":"e2/forbol03.gif","p":"w"},{"n":"Arachniregina Colosseus","lvl":214,"t":"e2","i":"e2/regina-e2.gif","p":"b"},{"n":"Rycerz z za małym mieczem","lvl":214,"t":"e2","i":"e2/pajeczy16.gif","p":"w"},{"n":"Al'diphrin Ilythirahel","lvl":218,"t":"e2","i":"e2/drow-aldiphrin-wladca.gif"},{"n":"Marlloth Malignitas","lvl":220,"t":"e2","i":"e2/drider-marlloth.gif","p":"b"},{"n":"Arytodam olbrzymi","lvl":226,"t":"e2","i":"e2/arytodam_olbrzymi-1b.gif","p":"w"},{"n":"Mocny Maddoks","lvl":231,"t":"e2","i":"e2/mocny_maddoks-1b.gif","p":"m"},{"n":"Fangaj","lvl":235,"t":"e2","i":"e2/grzyb-humanoid-1b.gif","p":"h"},{"n":"Luna","lvl":237,"t":"e2","i":"e2/elgary_luna-1b.gif","p":"p"},{"n":"Noumenia","lvl":237,"t":"e2","i":"e2/elgary_noumenia-1a.gif","p":"b"},{"n":"Dendroculus","lvl":240,"t":"e2","i":"e2/dendroculus.gif","p":"w"},{"n":"Silvanasus","lvl":241,"t":"e2","i":"e2/silvanasus.gif","p":"m"},{"n":"Tolypeutes","lvl":245,"t":"e2","i":"e2/bolita.gif","p":"w"},{"n":"Cuaitl Citlalin","lvl":250,"t":"e2","i":"e2/maho-cuaitl.gif","p":"w"},{"n":"Yaotl","lvl":258,"t":"e2","i":"e2/mahoplowca.gif","p":"h"},{"n":"Quetzalcoatl","lvl":258,"t":"e2","i":"e2/quetzalcoatl-1a.gif","p":"m"},{"n":"Wabicielka","lvl":260,"t":"e2","i":"e2/trist2_wabicielka-1a.gif","p":"b"},{"n":"Pogardliwa Sybilla","lvl":263,"t":"e2","i":"e2/tri2_witch_e2.gif","p":"m"},{"n":"Wysłannik Tellarów","lvl":267,"t":"e2","i":"e2/wyslannik_tellarow-1a.gif"},{"n":"Fovos","lvl":270,"t":"e2","i":"e2/fovos-1.gif","p":"m"},{"n":"Chopesz","lvl":272,"t":"e2","i":"e2/chopesh2.gif","p":"b"},{"n":"Neferkar Set","lvl":274,"t":"e2","i":"e2/neferkar_set-1a.gif","p":"w"},{"n":"Chaegd Agnrakh","lvl":280,"t":"e2","i":"e2/bar_smokoszef.gif","p":"w"},{"n":"Vaenra Charkhaam","lvl":280,"t":"e2","i":"e2/bar_smoczyca.gif","p":"m"},{"n":"Terrozaur","lvl":280,"t":"e2","i":"e2/terrorzaur_pus2.gif","p":"b"},{"n":"Mazurnik Przybrzeżny","lvl":284,"t":"e2","i":"e2/mazurnik_przybrzezny-1a.gif","p":"w"},{"n":"Nymphemonia","lvl":287,"t":"e2","i":"e2/nymphemonia.gif","p":"h"},{"n":"Artenius","lvl":300,"t":"e2","i":"e2/wl-mrozu03.gif","p":"m"},{"n":"Furion","lvl":300,"t":"e2","i":"e2/wl-mrozu02.gif","p":"h"},{"n":"Zorin","lvl":300,"t":"e2","i":"e2/wl-mrozu01.gif","p":"b"},{"n":"Tarmus Wuden","lvl":43,"t":"e3","p":"p"},{"n":"Vonaros","lvl":64,"t":"e3","p":"m"},{"n":"Wyznawca Ciemnych Mocy","lvl":83,"t":"e3","p":"b"},{"n":"Szkielet Władcy Żywiołów","lvl":114,"t":"e3","p":"m"},{"n":"Erktos","lvl":300,"t":"e3","p":"w"},{"n":"Domina Ecclesiae","lvl":21,"t":"heros","i":"her/domina.gif","p":"b"},{"n":"Mietek Żul","lvl":25,"t":"heros","i":"her/zulek.gif","p":"w"},{"n":"Mroczny Patryk","lvl":35,"t":"heros","i":"her/bardzozlypatryk.gif","p":"w"},{"n":"Karmazynowy Mściciel","lvl":45,"t":"heros","i":"her/gnom_msciciel.gif","p":"m"},{"n":"Złodziej","lvl":51,"t":"heros","i":"her/zlodziej.gif","p":"h"},{"n":"Zły Przewodnik","lvl":63,"t":"heros","i":"her/mnich-zly2.gif","p":"w"},{"n":"Opętany Paladyn","lvl":74,"t":"heros","i":"her/opetanypaladyn02.gif","p":"p"},{"n":"Piekielny Kościej","lvl":85,"t":"heros","i":"her/piekielny_kosciej.gif","p":"w"},{"n":"Koziec Mąciciel Ścieżek","lvl":94,"t":"heros","i":"her/koziec_maciciel_sciezek.gif","p":"m"},{"n":"Kochanka Nocy","lvl":102,"t":"heros","i":"her/kochanka-nocy.gif","p":"m"},{"n":"Książe Kasim","lvl":116,"t":"heros","i":"her/ksiaze-kasim.gif"},{"n":"Święty Braciszek","lvl":123,"t":"heros","i":"her/sw_braciszek.gif","p":"b"},{"n":"Złoty Roger","lvl":135,"t":"heros","i":"her/szkielet_pirata.gif","p":"t"},{"n":"Baca bez Łowiec","lvl":144,"t":"heros","i":"her/baca-bez-lowiec.gif","p":"h"},{"n":"Czarująca Atalia","lvl":157,"t":"heros","i":"her/czarujaca-atalia.gif","p":"m"},{"n":"Obłąkany Łowca Orków","lvl":165,"t":"heros","i":"her/oblakany_ac1dae9d.gif","p":"w"},{"n":"Lichwiarz Grauhaz","lvl":177,"t":"heros","i":"her/lichwiarz_grauhaz.gif","p":"w"},{"n":"Viviana Nandin","lvl":185,"t":"heros","i":"her/viv_nandin_i3bd1.gif","p":"h"},{"n":"Przeraza","lvl":194,"t":"heros","i":"her/przeraza.gif","p":"m"},{"n":"Demonis Pan Nicości","lvl":205,"t":"heros","i":"her/sekta_demon_cz_s.gif","p":"m"},{"n":"Mulher Ma","lvl":214,"t":"heros","i":"her/mulher_ma.gif","p":"b"},{"n":"Vapor Veneno","lvl":231,"t":"heros","i":"her/joziniec_bagienny.gif","p":"w"},{"n":"Dęborożec","lvl":244,"t":"heros","i":"her/zwierz_kniei.gif","p":"w"},{"n":"Tepeyollotl","lvl":258,"t":"heros","i":"her/tep_35ecb966.gif","p":"b"},{"n":"Widmo Triady","lvl":265,"t":"heros","i":"her/trist2_widmo_triady.gif","p":"m"},{"n":"Negthotep Czarny Kapłan","lvl":271,"t":"heros","i":"her/negthotep.gif","p":"h"},{"n":"Młody Smok","lvl":282,"t":"heros","i":"her/smokbarb.gif","p":"m"},{"n":"Dziewicza Orlica","lvl":51,"t":"tytan","i":"tyt/dziewicza_orlica.gif"},{"n":"Zabójczy Królik","lvl":70,"t":"tytan","i":"tyt/zabojczy_krolik.gif"},{"n":"Renegat Baulus","lvl":101,"t":"tytan","i":"tyt/renegat_baulus.gif"},{"n":"Piekielny Arcymag","lvl":131,"t":"tytan","i":"tyt/archdemon.gif"},{"n":"Versus Zoons","lvl":154,"t":"tytan","i":"tyt/versus-zoons.gif"},{"n":"Łowczyni Wspomnień","lvl":177,"t":"tytan","i":"tyt/lowcz-wspo-driady.gif"},{"n":"Przyzywacz Demonów","lvl":204,"t":"tytan","i":"tyt/przyz_demon_sekta.gif"},{"n":"Maddok Magua","lvl":231,"t":"tytan","i":"tyt/maddok_magua-1b.gif"},{"n":"Tezcatlipoca","lvl":258,"t":"tytan","i":"tyt/tezcatlipoca.gif"},{"n":"Barbatos Smoczy Strażnik","lvl":285,"t":"tytan","i":"tyt/hebrehoth_smokoludzie.gif"},{"n":"Tanroth","lvl":300,"t":"tytan","i":"tyt/ice_king.gif"},{"n":"Mamlambo","lvl":36,"t":"kolos","i":"kol/mamlambo_final2.gif","p":"b"},{"n":"Regulus Mętnooki","lvl":63,"t":"kolos","i":"kol/bazyliszek.gif","p":"w"},{"n":"Amaimon Soploręki","lvl":83,"t":"kolos","i":"kol/soploreki.gif","p":"b"},{"n":"Umibozu","lvl":114,"t":"kolos","i":"kol/kolos-wodnik.gif","p":"b"},{"n":"Vashkar","lvl":144,"t":"kolos","i":"kol/kolos-wazka.gif","p":"h"},{"n":"Hydrokora Chimeryczna","lvl":167,"t":"kolos","i":"kol/hydrokora.gif","p":"w"},{"n":"Lulukav","lvl":190,"t":"kolos","i":"kol/kolkrucz.gif","p":"m"},{"n":"Arachin Podstępny","lvl":213,"t":"kolos","i":"kol/kolos-pajak.gif","p":"b"},{"n":"Reuzen","lvl":244,"t":"kolos","i":"kol/kolos-dendro.gif","p":"w"},{"n":"Wernoradzki Drakolisz","lvl":279,"t":"kolos","i":"kol/kolos-drakolisz.gif","p":"m"}]};
 // ═══ src/core/util.js ═══
 /* ───────────────────────── util.js ─────────────────────────
  * Drobne narzędzia wspólne dla całego panelu.
@@ -841,11 +842,17 @@ const net = {
       if (!obj || typeof obj[name] !== 'function' || obj[name].__mp) return false;
       const orig = obj[name];
       obj[name] = function (...args) {
-        // gra podaje pakiet jako obiekt albo jako tekst JSON (tak samo czyta to lootlog)
-        let data = args.find((a) => a && typeof a === 'object');
-        if (!data) { const t = args.find((a) => typeof a === 'string' && a.charCodeAt(0) === 123); if (t) { try { data = JSON.parse(t); } catch {} } }
-        if (data) self.onData(data);
-        return orig.apply(this, args);
+        // inny dodatek mógł owinąć nasze owinięcie (wtedy pakiet przechodzi przez nas dwa razy) — czytamy go tylko raz
+        if (self._inHook) return orig.apply(this, args);
+        self._inHook = true;
+        try {
+          // gra podaje pakiet jako obiekt albo jako tekst JSON (tak samo czyta to lootlog)
+          let data = args.find((a) => a && typeof a === 'object');
+          const raw = data ? null : args.find((a) => typeof a === 'string' && a.charCodeAt(0) === 123);
+          if (!data && raw) { try { data = JSON.parse(raw); } catch {} }
+          if (data && !self.isDup(data, raw)) self.onData(data);
+          return orig.apply(this, args);
+        } finally { self._inHook = false; }
       };
       obj[name].__mp = true;
       self.respHook = name;
@@ -859,6 +866,16 @@ const net = {
     this.respHook = null;
   },
   respHook: null,
+  _inHook: false,
+  _last: { k: '', t: 0 },
+  /** Ten sam pakiet walki/łupów podany drugi raz w ciągu chwili — pomijamy (inaczej liczniki liczą podwójnie). */
+  isDup(data, raw) {
+    if (!data.f && !data.loot && !data.item) return false;
+    let k; try { k = raw || JSON.stringify(data); } catch { return false; }
+    const t = Date.now(), dup = k === this._last.k && t - this._last.t < 1500;
+    this._last = { k, t };
+    return dup;
+  },
 
   onData(data) {
     this.stats.responses++;
@@ -1115,6 +1132,8 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-pt-dot{width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 6px var(--c)}
 .mp-pt-n{color:var(--c)}
 .mp-pt-t{opacity:.85;font-variant-numeric:tabular-nums}
+.mp-pt-by{opacity:.6;font-size:.88em}
+#mp-pt.compact{min-width:0;max-width:260px}#mp-pt.compact .mp-pt-h b{font-size:.92em}#mp-pt.compact .mp-pt-b{padding:2px 6px 5px}#mp-pt.compact .mp-pt-w{margin:2px 0 4px}#mp-pt.compact .mp-pt-wn{margin-bottom:1px;font-size:.92em}#mp-pt.compact .mp-pt-e{padding:1px 6px 1px 4px;font-size:.9em}#mp-pt.compact .mp-pt-c{padding:1px 6px;margin:1px 0 2px}
 .mp-pt-e.soon{animation:mpPtBlink 1s ease-in-out infinite}
 .mp-pt-c{margin:2px 0 4px;padding:3px 7px;border-radius:4px;background:color-mix(in srgb,var(--c) 18%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 70%,transparent);color:var(--c);font-size:.95em}
 .mp-pt-c.soon{animation:mpPtBlink .7s ease-in-out infinite;font-weight:700}
@@ -1138,14 +1157,14 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 @keyframes mpBers{0%,100%{box-shadow:0 0 0 2px #ffb070,0 0 10px 2px rgba(255,90,30,.6)}50%{box-shadow:0 0 0 2px #ffd0a0,0 0 22px 7px rgba(255,90,30,.95)}}
 .mp-fbtn.mp-free.on{color:#fff;background:radial-gradient(circle at 35% 30%,#4fe0b8,#0d6b52);box-shadow:0 0 0 2px #9fffe0,0 0 16px 4px rgba(40,220,170,.7);animation:mpFree 1.6s ease-in-out infinite}
 @keyframes mpFree{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-#mp-qc{position:fixed;z-index:2147470400;display:flex;align-items:center;gap:2px;height:36px;padding:0 2px;background:none}
-.mp-qc-av{width:22px;height:34px;flex:none;background-size:400% 400%;background-position:0 0;background-repeat:no-repeat;cursor:pointer;image-rendering:pixelated;transition:filter .12s;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+#mp-qc{position:fixed;z-index:2147470400;display:flex;align-items:center;gap:4px;height:42px;padding:0 2px;background:none}
+.mp-qc-av{width:26px;height:40px;flex:none;background-size:400% 400%;background-position:0 0;background-repeat:no-repeat;cursor:pointer;image-rendering:pixelated;transition:filter .12s;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}.mp-qc-av.me{cursor:default}
 .mp-qc-av:hover{filter:drop-shadow(0 0 3px rgba(255,211,77,.9)) brightness(1.1)}
 .mp-qc-dots i{display:block;width:3px;height:3px;border-radius:50%;background:#e8e8e8;box-shadow:0 0 2px #000,0 0 1px #000}.mp-qc-dots:hover i,.mp-qc-dots.other i{background:#ffd34d}
 .mp-qc-tip{position:fixed;z-index:2147470600;padding:4px 8px;border-radius:4px;background:rgba(12,12,14,.94);box-shadow:0 0 0 1px rgba(255,255,255,.18),0 3px 8px rgba(0,0,0,.6);color:#eee;font:12px Arimo,Arial,sans-serif;white-space:nowrap;pointer-events:none;text-align:center}.mp-qc-tip b{color:#ffd34d}.mp-qc-tip div{opacity:.75;font-size:11px}
 .mp-qc-dots{flex:none;min-width:10px;height:30px;align-self:center;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:0 2px;color:#e8e8e8;text-shadow:0 0 3px #000,0 0 2px #000;font:700 13px Arial;letter-spacing:1px;cursor:pointer;border-radius:5px}.mp-qc-dots:hover{background:rgba(255,255,255,.08);color:#ffd34d}
-.mp-qc-pop{position:fixed;z-index:2147470600;min-width:120px;padding:4px;border-radius:6px;background:rgba(14,14,18,.95);box-shadow:0 0 0 1px rgba(255,255,255,.14),0 6px 16px rgba(0,0,0,.6);color:#eee;font:12px Arimo,Arial,sans-serif}
-.mp-qc-wl{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 8px;border-radius:4px;cursor:pointer;white-space:nowrap}.mp-qc-wl:hover{background:rgba(255,255,255,.09)}.mp-qc-wl.on{color:#ffd34d}.mp-qc-wl i{font-style:normal;opacity:.55;font-size:11px}
+.mp-qc-pop{position:fixed;z-index:2147470600;width:104px;padding:5px;border-radius:6px;background:rgba(22,22,24,.96);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 0 0 1px #000,0 6px 16px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:4px}
+.mp-qc-wb{height:24px;display:flex;align-items:center;justify-content:center;border-radius:3px;cursor:pointer;color:#f2f2f2;font:700 12px Arimo,Arial,sans-serif;text-shadow:0 1px 1px #000;background:linear-gradient(180deg,#36532c,#1f3519);box-shadow:inset 0 0 0 1px #7d9a68,inset 0 1px 0 rgba(255,255,255,.12)}.mp-qc-wb:hover{filter:brightness(1.18)}.mp-qc-wb.on{box-shadow:inset 0 0 0 1px #ffd34d,inset 0 1px 0 rgba(255,255,255,.12)}.mp-qc-wb.out{color:#ff4646}
 #mp-lu{position:fixed;z-index:2147470300;width:430px;max-width:calc(100vw - 16px);border-radius:8px;background:rgba(18,18,20,.86);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 0 0 1px rgba(0,0,0,.7),0 8px 22px rgba(0,0,0,.55);color:#e8e8e8;font:12px Arimo,Arial,sans-serif;user-select:none}
 .mp-lu-h{position:relative;display:flex;align-items:center;height:24px;padding:0 6px}
 .mp-lu-hb{display:flex;gap:4px;z-index:1}.mp-lu-hi{width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:11px;color:#bbb;background:rgba(255,255,255,.08);cursor:pointer}.mp-lu-hi:hover{color:#fff;background:rgba(255,255,255,.18)}
@@ -7413,7 +7432,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   const PACKETS = [];               // ostatnie pakiety walki (do diagnozy)
   const LOGS = [];                  // ostatnie linie dziennika walki
   let state = { round: 0, w: {}, fromLog: {}, charge: {}, acts: 0, casts: [], domTurn: 0 };
-  const fresh = () => ({ round: 0, w: {}, fromLog: {}, charge: {}, acts: 0, casts: [], domTurn: 0 });
+  const fresh = () => ({ round: 0, w: {}, fromLog: {}, charge: {}, acts: 0, casts: [], domTurn: 0, cur: null, spells: [], moves: {} });
 
   /*
    * Umiejętności ostateczne tytanów i kolosów: [nazwa, pierwsza tura, co ile tur, opis].
@@ -7448,7 +7467,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     }).sort((a, b) => a.left - b.left);
   }
   /** Bieżąca tura: z danych walki, z okna walki albo z liczby Twoich ruchów — największa wiarygodna wartość. */
-  const turnNow = () => Math.max(state.round || 0, state.domTurn || 0, state.acts || 0, 1);
+  // tura = ile razy przyszła kolej bohatera (pole „move” w pakietach to czas na ruch, nie numer tury)
+  const turnNow = () => { const h = game.hero(); return ((h && state.moves[String(h.id)]) || 0) + 1; };
+  /** Ile ruchów wykonał dany wojownik (z dziennika walki) — efekty mijają z kolejnymi ruchami tego, na kim działają. */
+  const movesOf = (id) => state.moves[String(id)] || 0;
 
   /* ── klasyfikacja efektów ── */
   const NEG = /osłab|oslab|trucizn|zatru|krwaw|ogłusz|oglusz|zamroż|zamroz|szadź|szadz|spowol|oślep|oslep|podpal|płon|plon|poraż|poraz|klątw|klatw|przebic|obniż|obniz|zmniejsz|redukc|unieruch|paraliż|paraliz|strach|rozbroj|wyzwani|prowok|kruch|rozdarc|zranien|odrętw|odretw|uśpien|uspien|chorob|-\s*\d/i;
@@ -7552,17 +7574,70 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     if (m) { const who = m[1].trim(); (state.fromLog[who] = state.fromLog[who] || {})[m[2].trim()] = { left: Number(m[3]), at: turnNow() }; }
   }
 
+  /* ── umiejętności z pakietu walki: f.skills = [id, nazwa, ?, ?, ?, opis, wymagania, poziom, efekty, ?] × n ── */
+  const SKILL_DEF = {};
+  const parseEff = (str) => { const out = {}; String(str || '').split(';').forEach((p) => { const m = p.match(/^([^=]+)=([^@]*)(?:@(\d+))?$/); if (m) out[m[1]] = { v: m[2], dur: m[3] ? Number(m[3]) : null }; }); return out; };
+  function parseSkills(a) {
+    for (let i = 0; i + 9 < a.length + 1; i += 10) {
+      const id = Number(a[i]); if (!(id > 0) || !a[i + 1]) continue;
+      const eff = parseEff(a[i + 8]);
+      const dur = Math.max(0, ...Object.values(eff).map((e) => e.dur || 0)) || null;
+      SKILL_DEF[id] = { name: strip(a[i + 1]), desc: strip(a[i + 5]), eff, dur };
+      if (cfg) { cfg.known = cfg.known || {}; cfg.known[id] = Object.assign(cfg.known[id] || {}, { name: SKILL_DEF[id].name, dur, short: shortEff(eff) }); }
+    }
+  }
+  /** Krótki opis działania z kodów efektów gry. */
+  const EFF_TXT = {
+    shout: (v) => `prowokacja: ${v.split('@')[0]} przeciwników atakuje tylko rzucającego`,
+    acshield_per: (v) => `pancerz +${v}% pancerza tarczy`,
+    active_redstun: (v) => `obezwładnienie krótsze o ${v}%`,
+    adddmg2_per: (v) => `obrażenia +${v}%`,
+    stun: () => 'ogłuszenie', freeze: () => 'zamrożenie', frost: (v) => `zamrożenie ${v}`, poison: (v) => `trucizna ${v}`, bleed: (v) => `krwawienie ${v}`, fire: (v) => `podpalenie ${v}`,
+    slow: (v) => `spowolnienie ${v}`, blind: () => 'oślepienie', evade: (v) => `unik +${v}`, block: (v) => `blok +${v}`, heal: (v) => `leczenie ${v}`, absorb: (v) => `pochłanianie ${v}`,
+  };
+  function effText(k, v) {
+    const base = k.replace(/^aura-/, '').replace(/^active_/, 'active_');
+    for (const [key, fn] of Object.entries(EFF_TXT)) if (base === key || base.startsWith(key)) return (k.startsWith('aura-') ? 'drużyna: ' : '') + fn(v);
+    return null;
+  }
+  const shortEff = (eff) => Object.entries(eff || {}).map(([k, e]) => effText(k, e.v)).filter(Boolean).join(', ');
+  /** Linia dziennika z rzuconą umiejętnością: „kto=hp;cel=hp;tspell=Nazwa;skillId=25;shout=A, B;efekt=…”. */
+  function parseSpell(line) {
+    const parts = String(line).split(';');
+    const who = (parts[0] || '').split('=')[0], tgt = (parts[1] || '').split('=')[0];
+    const kv = {}; parts.slice(2).forEach((p) => { const i = p.indexOf('='); if (i > 0) kv[p.slice(0, i)] = p.slice(i + 1); else kv[p] = true; });
+    const sid = Number(kv.skillId) || null, def = sid && SKILL_DEF[sid];
+    const name = strip(kv.tspell || (def && def.name) || 'Umiejętność');
+    // cele: lista imion przy prowokacji, inaczej wskazany cel
+    let targets = [];
+    if (kv.shout) targets = String(kv.shout).split(',').map((x) => ({ name: x.trim() }));
+    else if (tgt && tgt !== '0') targets = [{ id: tgt }];
+    const lineEff = {}; for (const [k, v] of Object.entries(kv)) if (!['tspell', 'skillId', 'shout'].includes(k) && v !== true) lineEff[k] = { v: String(v).split('@')[0], dur: /@(\d+)/.test(v) ? Number(v.match(/@(\d+)/)[1]) : null };
+    const eff = def ? def.eff : lineEff;
+    const dur = (def && def.dur) || Math.max(0, ...Object.values(lineEff).map((e) => e.dur || 0)) || null;
+    if (!dur) return;   // tylko umiejętności z efektem na kilka tur (buffy, osłabienia) — zwykłe ciosy pomijamy
+    state.spells.push({ who, sid, name, targets, snap: Object.assign({}, state.moves), dur, short: shortEff(eff) || shortEff(lineEff), desc: def ? def.desc : '' });
+    if (state.spells.length > 40) state.spells.shift();
+  }
+
   function onData(d) {
     if (d) try { harvestSkills(d); } catch {}
     if (!d || !d.f) return;
     const f = d.f;
     if (f.init || f.init === 0) state = fresh();
     PACKETS.push(JSON.parse(JSON.stringify(f, (k, v) => (typeof v === 'string' && v.length > 300 ? v.slice(0, 300) + '…' : v)))); if (PACKETS.length > 40) PACKETS.shift();
-    const rnd = Number(f.round ?? f.r ?? f.turn ?? f.move);
-    if (!isNaN(rnd) && rnd > state.round) state.round = rnd;
+    if (Array.isArray(f.skills)) parseSkills(f.skills);
+    const h = game.hero();
     if (f.w && typeof f.w === 'object') for (const [id, w] of Object.entries(f.w)) state.w[id] = Object.assign(state.w[id] || {}, w);
     const logs = Array.isArray(f.m) ? f.m : f.m && typeof f.m === 'object' ? Object.values(f.m) : [];
-    logs.forEach(parseLog);
+    logs.forEach((line) => {
+      LOGS.push(strip(line)); if (LOGS.length > 80) LOGS.shift();
+      const p = String(line).split(';');
+      const actor = (p[0] || '').split('=')[0], tgt = (p[1] || '').split('=')[0];
+      // ruch wojownika = jego atak / umiejętność / krok (nie regeneracja „0;heal”, nie podsumowanie walki)
+      if (actor && actor !== '0' && (tgt !== '0' || /tspell=|;step/.test(line))) state.moves[actor] = movesOf(actor) + 1;
+      if (/tspell=/.test(line)) parseSpell(line);
+    });
     if (win && cfg.enabled && !preview && game.inBattle()) render();
   }
 
@@ -7579,21 +7654,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       const o = out[id] = out[id] || { id, name: '', team: null, hpp: null, eff: [], charge: null };
       o.name = d.name || d.nick || o.name || String(id);
       if (d.team !== undefined) o.team = d.team;
-      if (d.hpp !== undefined) o.hpp = Number(d.hpp);
-      o.eff = o.eff.concat(effectsIn(d));
-      o.charge = o.charge || chargeIn(d);
+      if (d.hpp !== undefined) o.hpp = Number(d.hpp); else if (d.hp && typeof d.hp === 'object' && d.hp.hpp !== undefined) o.hpp = Number(d.hp.hpp);
     };
     for (const w of arr) { const d = (w && (w.d || w)) || {}; add(String(d.id ?? w.id), Object.assign({}, d, w.d ? {} : w)); }
     for (const [id, d] of Object.entries(state.w)) add(String(id), d);
-    // z dziennika: dopasowanie po imieniu
-    for (const o of Object.values(out)) {
-      const L = state.fromLog[o.name];
-      if (L) for (const [nm, v] of Object.entries(L)) { const left = v.left - Math.max(0, turnNow() - v.at); if (left > 0 && !o.eff.some((e) => e.name === nm)) o.eff.push({ name: nm, left, k: kind(nm) }); }
-      const C = state.charge[o.name];
-      if (C && !o.charge) { const left = C.left - Math.max(0, turnNow() - C.at); if (left >= 0) o.charge = { name: C.name, left }; }
-      // ten sam efekt z dwóch źródeł — jeden wpis
-      const seen = new Set(); o.eff = o.eff.filter((e) => { const k = e.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
-    }
     // tytan / kolos z bazy: najbliższa umiejętność ostateczna jako „ładowany atak" + lista kolejnych
     const turn = turnNow();
     for (const o of Object.values(out)) {
@@ -7603,21 +7667,22 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (!o.charge || o.charge.left > ul[0].left) o.charge = { name: ul[0].name, left: ul[0].left, desc: ul[0].desc };
     }
     // Twoje umiejętności rzucone na wojowników (np. Wyzwanie, Szadź): ile tur temu
-    const AREA = /wszystk|każd|kazd|obszar|wrog(?:ów|ow|om)|przeciwnik(?:ów|ow|om)|drużyn|druzyn/i;
-    const castTargets = (c) => {
-      const t = c.id != null ? out[String(c.id)] : null;
-      if (!t) return [];
-      if (!AREA.test(c.desc || '')) return [t];
-      // umiejętność obszarowa: wszyscy żywi z drużyny celu
-      return Object.values(out).filter((o) => (t.team !== null && o.team !== null ? String(o.team) === String(t.team) : Math.sign(Number(o.id)) === Math.sign(Number(t.id))) && !(o.hpp === 0));
-    };
-    for (const c of state.casts) for (const o of castTargets(c)) {
-      const ago = turn - c.at;
-      if (ago > 12) continue;
-      const left = c.dur ? c.dur - ago : null;
-      if (left !== null && left <= 0) continue;
-      const nm = `${c.name} · rzucił: Ty`;
-      if (!o.eff.some((e) => e.name.toLowerCase().startsWith(c.name.toLowerCase()))) o.eff.push({ name: nm, left, ago, desc: c.desc, k: kind(c.name + ' ' + (c.desc || '')) === 'neu' ? (Number(o.id) < 0 ? 'neg' : 'pos') : kind(c.name + ' ' + (c.desc || '')) });
+    // umiejętności z dziennika walki (Twoje i przeciwników): kto rzucił, na kogo, ile tur zostało, co robi
+    const byName = (n) => Object.values(out).find((o) => o.name === n);
+    for (const sp of state.spells) {
+      const caster = out[String(sp.who)];
+      const by = caster ? (h && String(caster.id) === String(h.id) ? 'Ty' : caster.name) : '?';
+      const tg = sp.targets.map((t) => (t.id ? out[String(t.id)] : byName(t.name))).filter(Boolean);
+      const list = tg.length ? tg : caster ? [caster] : [];
+      const leftFor = (o) => sp.dur - (movesOf(o.id) - (sp.snap[String(o.id)] || 0));
+      for (const o of list) {
+        if (o.eff.some((e) => e.sp === sp)) continue;
+        const left = leftFor(o), ago = null; if (left <= 0) continue;
+        const enemyOfCaster = caster && caster.team !== null && o.team !== null && String(caster.team) !== String(o.team);
+        o.eff.push({ sp, name: sp.name, by, left, ago, desc: sp.short, long: sp.desc, k: enemyOfCaster ? 'neg' : 'pos' });
+      }
+      // efekty na sobie (np. pancerz z tarczy przy okrzyku) — również przy rzucającym
+      if (caster && tg.length && !tg.includes(caster) && sp.short && /pancerz|obezwład|drużyna/.test(sp.short) && !caster.eff.some((e) => e.sp === sp)) { const left = leftFor(caster); if (left > 0) caster.eff.push({ sp, name: sp.name, by, left, ago: null, desc: sp.short, long: sp.desc, k: 'pos' }); }
     }
     // drużyny: ta z bohaterem = „my"
     const me = h && out[String(h.id)];
@@ -7638,7 +7703,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     if (win && win.isConnected) return win;
     const pos = store.get('win:pogromca', { x: innerWidth - 330, y: 140 });
     win = el('div', { id: 'mp-pt', style: { left: pos.x + 'px', top: pos.y + 'px' } },
-      el('div', { class: 'mp-pt-h' }, el('b', null, 'Pogromca Tytanów'), el('span', { class: 'mp-pt-r' }), el('button', { class: 'mp-pt-x', title: 'Zbierz dane walki (skopiuj i wklej w rozmowie)', onclick: () => collect() }, '⧉'), el('button', { class: 'mp-pt-x', title: 'Ukryj do końca walki', onclick: () => { win.style.display = 'none'; preview = false; } }, '×')),
+      el('div', { class: 'mp-pt-h' }, el('b', null, 'Pogromca Tytanów'), el('span', { class: 'mp-pt-r' }), el('button', { class: 'mp-pt-x mp-pt-min', title: 'Zwiń / rozwiń', onclick: () => { cfg.compact = !cfg.compact; config.save(); render(preview ? sample() : undefined); } }, '–'), el('button', { class: 'mp-pt-x', title: 'Zbierz dane walki (skopiuj i wklej w rozmowie)', onclick: () => collect() }, '⧉'), el('button', { class: 'mp-pt-x', title: 'Ukryj do końca walki', onclick: () => { win.style.display = 'none'; preview = false; } }, '×')),
       el('div', { class: 'mp-pt-b' }));
     document.body.appendChild(win);
     makeDraggable(win, win.querySelector('.mp-pt-h'), (p) => store.set('win:pogromca', p));
@@ -7649,20 +7714,20 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const c = e.k === 'pos' ? P.pos : e.k === 'neg' ? P.neg : P.neu;
     const soon = e.left != null && e.left <= warnAt;
     return el('div', { class: 'mp-pt-e' + (soon ? ' soon' : ''), style: { '--c': c, background: P.chip } },
-      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), el('span', { class: 'mp-pt-t' }, e.left == null ? (e.ago === 0 ? 'teraz' : `${e.ago} t. temu`) : e.ago != null ? `jeszcze ${e.left} ${e.left === 1 ? 'tura' : e.left < 5 ? 'tury' : 'tur'}` : e.left === 1 ? '1 tura' : e.left > 1 && e.left < 5 ? `${e.left} tury` : `${e.left} tur`));
+      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), e.by && !cfg.compact ? el('span', { class: 'mp-pt-by' }, e.by === 'Ty' ? 'od Ciebie' : 'od: ' + e.by) : null, el('span', { class: 'mp-pt-t' }, e.left == null ? (e.ago === 0 ? 'teraz' : `${e.ago} t. temu`) : cfg.compact ? `${e.left} t.` : `jeszcze ${e.left} ${e.left === 1 ? 'tura' : e.left < 5 ? 'tury' : 'tur'}`));
   }
   function row(o, P) {
     const box = el('div', { class: 'mp-pt-w' },
       el('div', { class: 'mp-pt-wn' }, el('span', null, o.name), o.hpp !== null && !isNaN(o.hpp) ? el('span', { class: 'mp-pt-hp' }, el('i', { style: { width: Math.max(0, Math.min(100, o.hpp)) + '%' } })) : null));
     if (o.charge) {
       const now1 = o.charge.left <= (cfg.warnAt ?? 1);
-      box.appendChild(el('div', { class: 'mp-pt-c' + (now1 ? ' soon' : ''), style: { '--c': P.chg }, title: o.charge.desc || '' }, '⚡ ', el('b', null, o.charge.name), ' — ', o.charge.left <= 0 ? 'w TEJ turze' : `za ${o.charge.left} ${o.charge.left === 1 ? 'turę' : o.charge.left < 5 ? 'tury' : 'tur'}`, o.charge.desc ? el('div', { class: 'mp-pt-cd' }, o.charge.desc) : null));
+      box.appendChild(el('div', { class: 'mp-pt-c' + (now1 ? ' soon' : ''), style: { '--c': P.chg }, title: o.charge.desc || '' }, '⚡ ', el('b', null, o.charge.name), ' — ', o.charge.left <= 0 ? 'w TEJ turze' : `za ${o.charge.left} ${o.charge.left === 1 ? 'turę' : o.charge.left < 5 ? 'tury' : 'tur'}`, o.charge.desc && !cfg.compact ? el('div', { class: 'mp-pt-cd' }, o.charge.desc) : null));
     }
-    if (o.ults && o.ults.length > 1) box.appendChild(el('div', { class: 'mp-pt-u', style: { color: P.dim } }, 'Dalej: ', o.ults.slice(1, 3).map((u, i) => el('span', null, i ? ' · ' : '', el('b', { style: { color: P.text } }, u.name), ` za ${u.left} t.`))));
+    if (o.ults && o.ults.length > 1 && !cfg.compact) box.appendChild(el('div', { class: 'mp-pt-u', style: { color: P.dim } }, 'Dalej: ', o.ults.slice(1, 3).map((u, i) => el('span', null, i ? ' · ' : '', el('b', { style: { color: P.text } }, u.name), ` za ${u.left} t.`))));
     const eff = o.eff.slice().sort((a, b) => (a.left ?? 99) - (b.left ?? 99));
     if (eff.length) box.appendChild(el('div', { class: 'mp-pt-es' }, eff.map((e) => chip(e, P, cfg.warnAt ?? 1))));
-    else if (!o.charge) box.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'brak efektów'));
-    eff.filter((e) => e.desc).forEach((e) => box.appendChild(el('div', { class: 'mp-pt-cd', style: { color: P.dim } }, el('b', { style: { color: P.text } }, e.name.split(' · ')[0] + ': '), e.desc)));
+    else if (!o.charge && !cfg.compact) box.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'brak efektów'));
+    if (!cfg.compact) { const seen = new Set(); eff.filter((e) => e.desc && !seen.has(e.name) && seen.add(e.name)).forEach((e) => box.appendChild(el('div', { class: 'mp-pt-cd', style: { color: P.dim }, title: e.long || '' }, el('b', { style: { color: P.text } }, e.name.split(' · ')[0] + ': '), e.desc))); }
     return box;
   }
 
@@ -7673,9 +7738,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     w.querySelector('.mp-pt-h').style.borderColor = P.line;
     const { allies, enemies } = data || model();
     w.querySelector('.mp-pt-r').textContent = preview ? 'podgląd' : `tura ${turnNow()}`;
+    w.classList.toggle('compact', !!cfg.compact);
+    w.querySelector('.mp-pt-min').textContent = cfg.compact ? '+' : '–';
     const B = w.querySelector('.mp-pt-b'); B.textContent = '';
     const solo = allies.length <= 1;
-    const sec = (title, list) => { if (!list.length) return; B.appendChild(el('div', { class: 'mp-pt-s', style: { color: P.dim, borderColor: P.line } }, title)); list.forEach((o) => B.appendChild(row(o, P))); };
+    const sec = (title, list) => { if (!list.length) return; if (!cfg.compact) B.appendChild(el('div', { class: 'mp-pt-s', style: { color: P.dim, borderColor: P.line } }, title)); list.forEach((o) => B.appendChild(row(o, P))); };
     if (cfg.showAllies !== false) sec(solo ? 'Ty' : 'Twoja drużyna', allies);
     if (cfg.showEnemies !== false) sec('Przeciwnicy', enemies);
     if (!B.children.length) B.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'Brak danych o efektach w tej walce.'));
@@ -7707,7 +7774,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const shape = (o, d = 0) => { if (!o || typeof o !== 'object' || d > 2) return typeof o; const r = {}; for (const k of Object.keys(o).slice(0, 60)) { const v = o[k]; r[k] = typeof v === 'function' ? 'fn' : v && typeof v === 'object' ? shape(v, d + 1) : v; } return r; };
     let ws = b && (b.warriorsList || b.warriors); try { if (typeof ws === 'function') ws = ws.call(b); } catch {}
     const arr = Array.isArray(ws) ? ws : Object.values(ws || {});
-    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), nazwyUmiejetnosci: [...SKILL_NAMES].slice(0, 40), zapamietane: cfg.known, dymek: readTip(), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
+    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { ruchy: state.moves, umiejetnosci: state.spells.map((x) => ({ kto: x.who, nazwa: x.name, cele: x.targets, czas: x.dur, start: x.snap })) }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), nazwyUmiejetnosci: [...SKILL_NAMES].slice(0, 40), zapamietane: cfg.known, dymek: readTip(), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
     const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
     try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
     toast(`Pogromca Tytanów: skopiowano dane walki (${PACKETS.length} pakietów) — wklej je w rozmowie`, 'ok', 5000);
@@ -7716,13 +7783,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   defineAddon({
     id: 'pogromca', beta: true, name: 'Pogromca Tytanów', icon: 'pogromca', color: ['#ff6a3d', '#7a1fff'],
     desc: 'W walce pokazuje okienko z efektami na Twojej drużynie (albo na Tobie solo) i na przeciwnikach: nazwa efektu i za ile tur zniknie. Przy tytanach, kolosach i mobach — kto ładuje atak i za ile uderzy. Pomaga trafić z szadzią, furią, aurą czy wyzwaniem. Pozytywne efekty mają kolor stylu, negatywne — czerwony.',
-    defaults: { enabled: false, showAllies: true, showEnemies: true, warnAt: 1, scale: 100, known: {} },
+    defaults: { enabled: false, showAllies: true, showEnemies: true, warnAt: 1, scale: 100, known: {}, compact: false },
     settings: [
       { key: 'showAllies', type: 'bool', label: 'Pokazuj moją drużynę' },
       { key: 'showEnemies', type: 'bool', label: 'Pokazuj przeciwników' },
       { key: 'warnAt', type: 'number', label: 'Wyróżnij, gdy zostało tur', min: 0, max: 5, hint: 'Efekt lub atak, który kończy się za tyle tur (lub mniej), miga.' },
       { key: 'scale', type: 'range', label: 'Wielkość okienka (%)', min: 80, max: 140, step: 5 },
       { key: 'onlyBoss', type: 'bool', label: 'Tylko w walkach z tytanami i kolosami' },
+      { key: 'compact', type: 'bool', label: 'Zwinięte okienko (tylko efekty i tury, bez opisów)' },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Podgląd i dane'),
@@ -7756,7 +7824,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       });
       bus.on('battle:end', () => { if (win && !preview) win.style.display = 'none'; });
       timer = setInterval(tick, 500);
-      MP.pogromca = { debug: () => ({ zapamietaneUmiejetnosci: cfg.known, rzucone: state.casts.slice(-8), tura: turnNow() }), render, sample, collect, state: () => state, preview: () => { preview = true; render(sample()); } };
+      MP.pogromca = { debug: () => ({ zapamietaneUmiejetnosci: cfg.known, rzucone: state.spells.slice(-8).map((x) => ({ kto: x.who, nazwa: x.name, cele: x.targets, tura: x.at, czas: x.dur })), tura: turnNow() }), render, sample, collect, state: () => state, preview: () => { preview = true; render(sample()); } };
     },
     onToggle(on) { if (!on && win) win.style.display = 'none'; },
   });
@@ -8039,10 +8107,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       const icon = String(c.icon || '');
       const url = /^https?:/.test(icon) ? icon : ICON_BASE + (icon.startsWith('/') ? '' : '/') + icon;
       const label = `${c.nick} (${c.lvl ?? '?'}${c.prof || ''})`;
-      const av = el('div', { class: 'mp-qc-av', style: { backgroundImage: `url("${url}")` }, onclick: () => switchTo(c) });
+      const isMe = hero() && c.id === Number(hero().id);
+      const av = el('div', { class: 'mp-qc-av' + (isMe ? ' me' : ''), style: { backgroundImage: `url("${url}")` }, onclick: () => { if (!isMe) switchTo(c); } });
       // naturalny rozmiar klatki postaci (obrazek ma 4×4 klatki) — bez rozciągania
       const img = new Image();
-      img.onload = () => { const w = img.naturalWidth / 4, h = img.naturalHeight / 4; if (w > 0 && h > 0) { const k = Math.min(1, 34 / h); av.style.width = Math.round(w * k) + 'px'; av.style.height = Math.round(h * k) + 'px'; } };
+      img.onload = () => { const w = img.naturalWidth / 4, h = img.naturalHeight / 4; if (w > 0 && h > 0) { const k = Math.min(1, 40 / h); av.style.width = Math.round(w * k) + 'px'; av.style.height = Math.round(h * k) + 'px'; } };
       img.src = url;
       let tip = null;
       av.addEventListener('mouseenter', () => {
@@ -8058,21 +8127,23 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     }
     /** Trzy kropki: lista światów — wybrany świat podmienia miniaturki na postacie z tego świata. */
     let viewWorld = null;
+    function logout() {
+      try { const e = E(); for (const f of ['logOff', 'logoff', 'logout', 'logOut']) if (e && typeof e[f] === 'function') return e[f](); } catch {}
+      location.href = 'https://www.margonem.pl/';
+    }
     function worldsMenu(anchor) {
       const cur = worldName();
       const worlds = [...new Set([cur].concat(chars.map((c) => c.world)).filter(Boolean))];
-      const shown = viewWorld || cur;
+      const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
       const pop = el('div', { class: 'mp-qc-pop' },
-        worlds.map((wn) => {
-          const n = chars.filter((c) => c.world === wn && !(wn === cur && hero() && c.id === Number(hero().id))).length;
-          return el('div', { class: 'mp-qc-wl' + (wn === shown ? ' on' : ''), onclick: () => { viewWorld = wn === cur ? null : wn; pop.remove(); draw(); } },
-            el('span', null, wn.charAt(0).toUpperCase() + wn.slice(1) + (wn === cur ? ' (tu jesteś)' : '')), el('i', null, String(n)));
-        }));
+        worlds.map((wn) => el('div', { class: 'mp-qc-wb' + (wn === (viewWorld || cur) ? ' on' : ''), onclick: () => { viewWorld = wn === cur ? null : wn; pop.remove(); draw(); } }, cap(wn))),
+        el('div', { class: 'mp-qc-wb out', onclick: () => { pop.remove(); logout(); } }, 'Wyloguj'));
       const r = anchor.getBoundingClientRect();
       document.body.appendChild(pop);
-      Object.assign(pop.style, { left: Math.round(Math.min(innerWidth - pop.offsetWidth - 4, r.left - pop.offsetWidth / 2 + r.width / 2)) + 'px', top: Math.round(r.bottom + 4) + 'px' });
+      Object.assign(pop.style, { left: Math.round(Math.min(innerWidth - pop.offsetWidth - 4, r.right + 6)) + 'px', top: Math.round(r.top - 4) + 'px' });
       setTimeout(() => document.addEventListener('mousedown', function off(e) { if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener('mousedown', off); } }), 0);
     }
+
 
     /** Stałe miejsce: tuż po prawej od tarczy HUD-a na górze (jak w grze), bez przesuwania. */
     function place() {
@@ -8089,7 +8160,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       await loadChars();
       const me = hero(), w = worldName();
       const vw = viewWorld || w;
-      const here = chars.filter((c) => c.world === vw && (!me || c.id !== Number(me.id)));
+      const here = chars.filter((c) => c.world === vw).sort((a, b) => (me && a.id === Number(me.id) ? -1 : me && b.id === Number(me.id) ? 1 : 0));
       if (!bar) { bar = el('div', { id: 'mp-qc' }); document.body.appendChild(bar); }
       bar.textContent = '';
       here.slice(0, cfg.max || 8).forEach((c) => bar.appendChild(avatar(c)));
@@ -8203,16 +8274,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   })();
 
   /* ═════════ LICZNIK UBIĆ ═════════
-   * Lista potworów (elity II wpisane z góry z margohelp.pl, inne dopisują się same po ubiciu) z liczbą ubić
+   * Lista potworów (baza z margoworld.pl, odświeżana z GitHuba; nieznane — np. eventowe — dopisują się same po ubiciu) z liczbą ubić
    * i łupami: żółte = unikaty, niebieskie = heroiki, pomarańczowe = legendy; w nawiasie — ile z nich złapałeś Ty.
    */
   (() => {
     let cfg, warriors = {}, inFight = false, win = null, lastFight = null;
+    const counted = [];
     const lootIds = new Map();          // id przedmiotu z okna łupów → { r, key }
-    const DB = { e2: "Mushita|23|p;Kotołak Tropiciel|27|;Shae Phu|30|m;Zorg Jednooki Baron|33|h;Władca Rzek|37|m;Gobbos|40|b;Tyrtajos|42|w;Szczęt alias Gładki|47|w;Tollok Shimger|47|w;Razuglag Oklash|51|m;Agar|51|w;Foverk Turrim|57|b;Owadzia Matka|58|t;Vari Kruger|66|m;Furruk Kozug|66|m;Jotun|70|w;Tollok Atamatu|73|h;Tollok Utumutu|73|h;Lisz|75|m;Grabarz świątynny|80|w;Podły zbrojmistrz|82|w;Wielka Stopa|82|m;Choukker|84|w;Nadzorczyni krasnoludów|88|w;Morthen|89|w;Żelazoręki Ohydziarz|92|p;Leśne Widmo|92|t;Goplana|93|p;Gnom Figlid|96|m;Centaur Zyfryd|99|h;Kambion|101|b;Jertek Moxos|105|w;Miłośnik łowców|108|w;Miłośnik rycerzy|108|w;Miłośnik magii|108|w;Łowca Czaszek|112|m;Ozirus Władca Hieroglifów|115|m;Morski Potwór|118|t;Krab pustelnik|124|b;Borgoros Garamir III|124|w;Stworzyciel|125|b;Poskramiacz hydr|128|m;Pogromczyni Mantikor|128|h;Pogromca gryfów|128|w;Ifryt|128|m;Młody Jack Truciciel|131|w;Henry Kaprawe Oko|131|w;Helga Opiekunka Rumu|131|t;Eol|135|h;Grubber Ochlaj|136|w;Mistrz Worundriel|139|w;Wójt Fistuła|144|b;Teściowa Rumcajsa|145|m;Berserker Amuno|148|w;Fodug Zolash|150|m;Goons Asterus|154|h;Adariel|155|m;Burkog Lorulk|160|w;Sheba Orcza Szamanka|160|m;Duch władcy klanów|165|p;Bragarth myśliwy dusz|170|h;Fursharag pożeracz umysłów|170|m;Ziuggrael strażnik królowej|170|w;Królowa Śniegu|175|m;Lusgrathera królowa pramatka|175|m;Chryzoprenia|177|p;Wrzosera|177|w;Cantedewia|177|t;Ogr Stalowy Pazur|183|w;Torunia Ankelwald|186|p;Pięknotka Mięsożerna|189|h;Breheret żelazny łeb|192|w;Cerasus|193|h;Mysiur myświórowy król|197|m;Sadolia Nadzorczyni Hurys|200|b;Bergermona Krwawa Hrabina|204|h;Sataniel skrytobójca|204|h;Annaniel Wysysacz Marzeń|204|m;Gothardus kolekcjoner głów|204|w;Zufulus smakosz serc|205|m;Czempion Furboli|210|w;Arachniregina Colosseus|214|b;Rycerz z za małym mieczem|214|w;Aldiphrin Ilythirahel|218|m;Marlloth Malignitas|220|b;Arytodam olbrzymi|226|w;Mocny Maddoks|231|m;Fangaj|235|h;Luna|237|p;Noumenia|237|b;Dendroculus|240|w;Silvanasus|241|m;Tolypeutes|245|w;Cuaitl Citlalin|250|w;Yaotl|258|h;Quetzalcoatl|260|m;Wabicielka|260|b;Pogardliwa Sybilla|263|m;Chopesz|267|b;Fovos|270|m;Neferkar Set|274|w;Chaegd Agnrakh|280|w;Vaenra Charkhaam|280|m;Terrozaur|280|b;Mazurnik Przybrzeżny|284|w;Nymphemonia|287|h;Zorin|300|b;Furion|300|h;Artenius|300|m", e3: "Tarmus Wuden|43|p;Vonaros|64|m;Wyznawca Ciemnych Mocy|83|b;Szkielet Władcy Żywiołów|114|m;Erktos|300|w", heros: "Domina Ecclesiae|21|b;Mietek Żul|25|w;Mroczny Patryk|35|w;Karmazynowy Mściciel|45|m;Złodziej|51|h;Zły Przewodnik|63|w;Opętany Paladyn|74|p;Piekielny Kościej|85|w;Koziec Mąciciel Ścieżek|94|m;Kochanka Nocy|102|m;Książę Kasim|116|b;Święty Braciszek|123|b;Złoty Roger|135|t;Baca bez Łowiec|144|h;Czarująca Atalia|157|m;Obłąkany Łowca Orków|165|w;Lichwiarz Grauhaz|177|w;Viviana Nandin|184|h;Przeraza|194|m;Demonis Pan Nicości|205|m;Mulher Ma|214|b;Vapor Veneno|231|w;Dęborożec|244|w;Tepeyollotl|258|b;Widmo Triady|265|m;Negthotep Czarny Kapłan|271|h;Młody Smok|282|m", kolos: "Mamlambo|36|b;Regulus Mętnooki|63|w;Amaimon Soploręki|83|b;Umibozu|114|b;Vashkar|144|h;Hydrokora Chimeryczna|167|w;Lulukav|190|m;Arachin Podstępny|213|b;Reuzen|244|w;Wernoradzki Drakolisz|279|m", tytan: "Dziewicza Orlica|51|;Zabójczy Królik|70|;Renegat Baulus|101|;Piekielny Arcymag|131|;Versus Zoons|154|;Łowczyni Wspomnień|177|;Przyzywacz Demonów|204|;Maddok Magua|231|;Tezcatlipoca|258|;Barbatos Smoczy Strażnik|285|;Tanroth|300|" };
     const NPC_IMG = 'https://micc.garmory-cdn.cloud/obrazki/npc/';
-    // grafiki elit II z margohelp.pl (ścieżki względem obrazki/npc/e2/)
-    const ICONS = new Map("Mushita|st-puma;Kotołak Tropiciel|../e1/kotolak_lowca;Shae Phu|demonszef;Zorg Jednooki Baron|zbir-e2-zorg;Władca Rzek|gobmag2;Gobbos|gobsamurai;Tyrtajos|dzik;Szczęt alias Gładki|zbir-szczet;Tollok Shimger|tollok_shimger;Razuglag Oklash|razuglag;Agar|glut_agar;Foverk Turrim|kobold07;Owadzia Matka|zadlak-e2-owadzia-matka;Vari Kruger|gnoll11;Furruk Kozug|gnoll12;Jotun|kam_olbrzym-b;Tollok Atamatu|tollok_jask_atamatu;Tollok Utumutu|tollok_jask_utumatu;Lisz|lisz_demilisze;Grabarz świątynny|nieu_mnich_grabarz;Podły zbrojmistrz|magaz_zbrojmistrz;Wielka Stopa|wlochacze_wielka_stopa;Choukker|dlawiciel5;Nadzorczyni krasnoludów|nadzorczyni_krasnoludow;Morthen|krasnolud_boss;Żelazoręki Ohydziarz|ugrape2;Leśne Widmo|lesne_widmo;Goplana|goplana;Gnom Figlid|gnom_figlid;Centaur Zyfryd|cent-zyfryd;Kambion|kambion;Jertek Moxos|moloch-jertek;Miłośnik łowców|blotniaki_milosnik_lowcow;Miłośnik rycerzy|blotniaki_milosnik_rycerzy;Miłośnik magii|blotniaki_milosnik_magii;Łowca Czaszek|alghul-czaszka-1a;Ozirus Władca Hieroglifów|mumia-ozirus;Morski Potwór|osmiornica-1b;Krab pustelnik|krab_big3;Borgoros Garamir III|ingotia_minotaur-7a;Stworzyciel|stworzyciel;Poskramiacz hydr|zagajnik02;Pogromczyni Mantikor|zagajnik03;Pogromca gryfów|zagajnik01;Ifryt|magradit_ifryt;Młody Jack Truciciel|pirat01;Henry Kaprawe Oko|../e1/pirat5b;Helga Opiekunka Rumu|pirat-2b;Eol|piaskowy_potwor-6a;Grubber Ochlaj|grubber-ochlaj;Mistrz Worundriel|worundriel02;Wójt Fistuła|goral-e2-wojt-fistula;Teściowa Rumcajsa|goral-e2-tesciowa-rumcajsa;Berserker Amuno|amuno;Fodug Zolash|fodug_zolash;Goons Asterus|goons_asterus-1a;Adariel|tri_adariel;Burkog Lorulk|orkczd;Sheba Orcza Szamanka|r_orc_sheba;Duch władcy klanów|duch_wladcy_kl;Bragarth myśliwy dusz|praork_low_elita;Fursharag pożeracz umysłów|praork_mag_elita;Ziuggrael strażnik królowej|praork_woj_elita;Królowa Śniegu|krolowa-sniegu;Lusgrathera królowa pramatka|prakrolowa;Chryzoprenia|chryzoprenia;Wrzosera|wrzosera-1b;Cantedewia|cantedewia-1a;Ogr Stalowy Pazur|ogr_drapak;Torunia Ankelwald|thuz-patr1;Pięknotka Mięsożerna|zmutowana-roslinka;Breheret żelazny łeb|draki-breheret-1b;Cerasus|cerasus-1a;Mysiur myświórowy król|krolszczur;Sadolia Nadzorczyni Hurys|sekta-sadolia;Bergermona Krwawa Hrabina|sekta-bergermona;Sataniel skrytobójca|sekta-sataniel;Annaniel Wysysacz Marzeń|sekta-annaniel;Gothardus kolekcjoner głów|sekta-gothardus;Zufulus smakosz serc|sekta-zufulus;Czempion Furboli|forbol03;Arachniregina Colosseus|regina-e2;Rycerz z za małym mieczem|pajeczy16;Aldiphrin Ilythirahel|drow-aldiphrin;Marlloth Malignitas|drider-marlloth;Arytodam olbrzymi|arytodam_olbrzymi-1b;Mocny Maddoks|mocny_maddoks-1a;Fangaj|grzyb-humanoid-1b;Luna|elgary_luna-1b;Noumenia|elgary_noumenia-1a;Dendroculus|dendroculus;Silvanasus|silvanasus;Tolypeutes|bolita;Cuaitl Citlalin|maho-cuaitl;Yaotl|mahoplowca;Quetzalcoatl|quetzalcoatl-1a;Pogardliwa Sybilla|tri2_witch_e2;Chopesz|chopesh2;Fovos|fovos-1;Neferkar Set|neferkar_set-1a;Chaegd Agnrakh|bar_smokoszef;Vaenra Charkhaam|bar_smoczyca;Terrozaur|terrorzaur_pus;Mazurnik Przybrzeżny|mazurnik_przybrzezny-1a;Nymphemonia|nymphemonia;Zorin|wl-mrozu01;Furion|wl-mrozu02;Artenius|wl-mrozu03;Tanroth|../tyt/ice_king".split(';').map((r) => { const [n, f] = r.split('|'); return [n.toLowerCase(), NPC_IMG + ('e2/' + f).replace(/^e2\/\.\.\//, '') + '.gif']; }));
     const typeOf = (w) => {
       const wt = Number(w.wt) || 0, ty = Number(w.type);
       if (ty === 0 && wt > 29 && wt < 80) return 'e3';
@@ -8231,13 +8300,31 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const R3 = { unique: 'u', upgraded: 'u', heroic: 'h', legendary: 'l' };
     const mobs = () => (cfg.mobs = cfg.mobs || {});
     const keyOf = (n) => String(n || '').trim().toLowerCase();
+    /** Baza potworów: wbudowana (z margoworld.pl przy budowaniu) + świeża kopia z GitHuba (raz na dobę), bez aktualizacji dodatku. */
+    const DB_URL = 'https://raw.githubusercontent.com/L4tuch/laddonz/main/data/potwory.json';
+    let dbList = (POTWORY_DB && POTWORY_DB.potwory) || [];
+    const dbIcon = (i) => (i ? NPC_IMG + i : '');
+    const DBMAP = new Map();
+    const indexDb = () => { DBMAP.clear(); for (const o of dbList) DBMAP.set(keyOf(o.n), o); };
     function seed() {
+      indexDb();
       const m = mobs();
-      for (const [t, list] of Object.entries(DB)) for (const row of list.split(';')) {
-        const [n, lvl, prof] = row.split('|'); const k = keyOf(n);
-        if (!m[k]) m[k] = { n, lvl: Number(lvl) || 0, prof: prof || '', t, k: 0, d: {}, m: {} };
-        if (!m[k].icon && ICONS.has(k)) m[k].icon = ICONS.get(k);
+      for (const o of dbList) {
+        const k = keyOf(o.n);
+        if (!m[k]) m[k] = { n: o.n, lvl: o.lvl || 0, prof: o.p || '', t: o.t, k: 0, d: {}, m: {} };
+        const x = m[k]; if (o.i) x.icon = dbIcon(o.i); if (!x.prof && o.p) x.prof = o.p; if (o.t && x.t !== o.t && !x.k) x.t = o.t;
       }
+    }
+    async function refreshDb() {
+      const c = store.get('lu:db', null);
+      if (c && c.list && c.list.length >= dbList.length) dbList = c.list;
+      if (c && now() - (c.at || 0) < 864e5) return;
+      try {
+        const r = await fetch(DB_URL, { cache: 'no-store' });
+        if (!r.ok) return;
+        const j = await r.json();
+        if (j && Array.isArray(j.potwory) && j.potwory.length > 50) { dbList = j.potwory; store.set('lu:db', { at: now(), list: dbList }); seed(); config.save(); if (win && win.style.display !== 'none') drawList(); }
+      } catch {}
     }
     const iconUrl = (ic) => { ic = String(ic || ''); if (!ic) return ''; if (/^https?:/.test(ic)) return ic; ic = ic.replace(/^\/+/, '').replace(/^obrazki\//, ''); return (/^npc\//.test(ic) ? 'https://micc.garmory-cdn.cloud/obrazki/' : NPC_IMG) + ic; };
     const icons = new Map();            // nazwa → ikona (z danych mapy, gdy potwór stoi na mapie)
@@ -8248,7 +8335,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (w.lvl) o.lvl = Number(w.lvl);
       if (w.prof) o.prof = String(w.prof).length === 1 ? w.prof : (PROF[String(w.prof).toLowerCase()] || '');
       if (RANK[t] > (RANK[o.t] || 0)) o.t = t;
-      const ic = w.icon || icons.get(k); if (ICONS.has(k)) o.icon = ICONS.get(k); else if (ic) o.icon = iconUrl(ic);
+      const db = DBMAP.get(k); const ic = w.icon || icons.get(k); if (db && db.i) o.icon = dbIcon(db.i); else if (ic) o.icon = iconUrl(ic);
+      if (db && db.t) o.t = db.t;
       return o;
     }
     const totals = () => (cfg.totals = cfg.totals || { kills: {}, loot: {}, caught: {}, since: now() });
@@ -8264,17 +8352,25 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         if (f.init == 1) { warriors = {}; inFight = true; }
         if (f.w) for (const [id, w] of Object.entries(f.w)) warriors[id] = Object.assign(warriors[id] || {}, w);
         if (f.endBattle == 1 && inFight) {
-          inFight = false; lastFight = null;
+          inFight = false;
+          const dead = [];
           for (const [id, w] of Object.entries(warriors)) {
             if (!String(id).startsWith('-')) continue;
-            const hp = w.hpp != null ? Number(w.hpp) : w.hp && w.hp.hpp != null ? Number(w.hp.hpp) : null;
+            const hp = w.hpp != null ? Number(w.hpp) : w.hp && w.hp.hpp != null ? Number(w.hp.hpp) : w.hp && w.hp.cur != null ? Number(w.hp.cur) : null;
             if (hp === null || hp > 0) continue;
-            const t = typeOf(w);
-            inc(totals().kills, t); dirty = true;
-            if (t === 'zwykly') continue;
-            const o = mobFor(w); if (!o) continue;
-            o.k++; o.last = now();
-            if (!lastFight || RANK[t] > RANK[lastFight.t]) lastFight = { key: keyOf(o.n), t, at: now() };
+            dead.push(Object.assign({ id }, w));
+          }
+          // ta sama walka potrafi przyjść drugi raz (np. ponowne „init” zakończonej walki) — liczymy ją tylko raz
+          const bk = dead.map((w) => w.originalId || w.id).sort().join(',');
+          if (dead.length && !counted.includes(bk)) {
+            counted.unshift(bk); counted.length = Math.min(counted.length, 30);
+            lastFight = null;
+            dead.forEach((w) => inc(totals().kills, typeOf(w)));
+            // do listy trafia tylko główny potwór walki (najsilniejszy), nie jego obstawa
+            const top = dead.slice().sort((a, b) => (Number(b.wt) || 0) - (Number(a.wt) || 0))[0];
+            const t = typeOf(top);
+            if (t !== 'zwykly') { const o = mobFor(top); if (o) { o.k++; o.last = now(); lastFight = { key: keyOf(o.n), t, at: now() }; } }
+            dirty = true;
           }
         }
       }
@@ -8387,7 +8483,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         if (cfg.stats && cfg.stats.names) { seed(); for (const [nm, v] of Object.entries(cfg.stats.names)) { const mm = nm.match(/^(.*) \((\d+)\)$/); const n = mm ? mm[1] : nm; const k = keyOf(n); const o = mobs()[k] = mobs()[k] || { n, t: 'elita', k: 0, d: {}, m: {} }; o.k += Number(v) || 0; if (mm) o.lvl = Number(mm[2]); } }
         if (cfg.stats && !cfg.totals) { cfg.totals = { kills: cfg.stats.kills || {}, loot: cfg.stats.loot || {}, caught: cfg.stats.caught || {}, since: cfg.stats.since || now() }; delete cfg.stats; }
         if (cfg.f && !store.get('lu:filters', null)) cfg.f.type = 'all';   // wcześniej domyślnie było „Elity II”
-        seed();
+        seed(); refreshDb();
         bus.on('data', onData);
         keys.bind({ label: 'Licznik Ubić: okno', get: () => cfg.key || '', fn: toggleWin, when: () => cfg.enabled });
         if (cfg.enabled && cfg.open) setTimeout(() => open(true), 1500);
@@ -8683,5 +8779,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.8";
+MP.version = "1.0.10";
 })();

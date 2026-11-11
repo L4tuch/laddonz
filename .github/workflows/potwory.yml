@@ -1,0 +1,24 @@
+name: Aktualizacja bazy potworów
+on:
+  schedule:
+    - cron: '17 4 * * 1'   # w każdy poniedziałek rano
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  potwory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/update-potwory.js
+      - run: |
+          if ! git diff --quiet data/potwory.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data/potwory.json
+            git commit -m "Aktualizacja bazy potworów (margoworld.pl)"
+            git push
+          fi

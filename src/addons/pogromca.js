@@ -13,7 +13,7 @@
   const PACKETS = [];               // ostatnie pakiety walki (do diagnozy)
   const LOGS = [];                  // ostatnie linie dziennika walki
   let state = { round: 0, w: {}, fromLog: {}, charge: {}, acts: 0, casts: [], domTurn: 0 };
-  const fresh = () => ({ round: 0, w: {}, fromLog: {}, charge: {}, acts: 0, casts: [], domTurn: 0 });
+  const fresh = () => ({ round: 0, w: {}, fromLog: {}, charge: {}, acts: 0, casts: [], domTurn: 0, cur: null, spells: [], moves: {} });
 
   /*
    * Umiejętności ostateczne tytanów i kolosów: [nazwa, pierwsza tura, co ile tur, opis].
@@ -48,7 +48,10 @@
     }).sort((a, b) => a.left - b.left);
   }
   /** Bieżąca tura: z danych walki, z okna walki albo z liczby Twoich ruchów — największa wiarygodna wartość. */
-  const turnNow = () => Math.max(state.round || 0, state.domTurn || 0, state.acts || 0, 1);
+  // tura = ile razy przyszła kolej bohatera (pole „move” w pakietach to czas na ruch, nie numer tury)
+  const turnNow = () => { const h = game.hero(); return ((h && state.moves[String(h.id)]) || 0) + 1; };
+  /** Ile ruchów wykonał dany wojownik (z dziennika walki) — efekty mijają z kolejnymi ruchami tego, na kim działają. */
+  const movesOf = (id) => state.moves[String(id)] || 0;
 
   /* ── klasyfikacja efektów ── */
   const NEG = /osłab|oslab|trucizn|zatru|krwaw|ogłusz|oglusz|zamroż|zamroz|szadź|szadz|spowol|oślep|oslep|podpal|płon|plon|poraż|poraz|klątw|klatw|przebic|obniż|obniz|zmniejsz|redukc|unieruch|paraliż|paraliz|strach|rozbroj|wyzwani|prowok|kruch|rozdarc|zranien|odrętw|odretw|uśpien|uspien|chorob|-\s*\d/i;
@@ -152,17 +155,70 @@
     if (m) { const who = m[1].trim(); (state.fromLog[who] = state.fromLog[who] || {})[m[2].trim()] = { left: Number(m[3]), at: turnNow() }; }
   }
 
+  /* ── umiejętności z pakietu walki: f.skills = [id, nazwa, ?, ?, ?, opis, wymagania, poziom, efekty, ?] × n ── */
+  const SKILL_DEF = {};
+  const parseEff = (str) => { const out = {}; String(str || '').split(';').forEach((p) => { const m = p.match(/^([^=]+)=([^@]*)(?:@(\d+))?$/); if (m) out[m[1]] = { v: m[2], dur: m[3] ? Number(m[3]) : null }; }); return out; };
+  function parseSkills(a) {
+    for (let i = 0; i + 9 < a.length + 1; i += 10) {
+      const id = Number(a[i]); if (!(id > 0) || !a[i + 1]) continue;
+      const eff = parseEff(a[i + 8]);
+      const dur = Math.max(0, ...Object.values(eff).map((e) => e.dur || 0)) || null;
+      SKILL_DEF[id] = { name: strip(a[i + 1]), desc: strip(a[i + 5]), eff, dur };
+      if (cfg) { cfg.known = cfg.known || {}; cfg.known[id] = Object.assign(cfg.known[id] || {}, { name: SKILL_DEF[id].name, dur, short: shortEff(eff) }); }
+    }
+  }
+  /** Krótki opis działania z kodów efektów gry. */
+  const EFF_TXT = {
+    shout: (v) => `prowokacja: ${v.split('@')[0]} przeciwników atakuje tylko rzucającego`,
+    acshield_per: (v) => `pancerz +${v}% pancerza tarczy`,
+    active_redstun: (v) => `obezwładnienie krótsze o ${v}%`,
+    adddmg2_per: (v) => `obrażenia +${v}%`,
+    stun: () => 'ogłuszenie', freeze: () => 'zamrożenie', frost: (v) => `zamrożenie ${v}`, poison: (v) => `trucizna ${v}`, bleed: (v) => `krwawienie ${v}`, fire: (v) => `podpalenie ${v}`,
+    slow: (v) => `spowolnienie ${v}`, blind: () => 'oślepienie', evade: (v) => `unik +${v}`, block: (v) => `blok +${v}`, heal: (v) => `leczenie ${v}`, absorb: (v) => `pochłanianie ${v}`,
+  };
+  function effText(k, v) {
+    const base = k.replace(/^aura-/, '').replace(/^active_/, 'active_');
+    for (const [key, fn] of Object.entries(EFF_TXT)) if (base === key || base.startsWith(key)) return (k.startsWith('aura-') ? 'drużyna: ' : '') + fn(v);
+    return null;
+  }
+  const shortEff = (eff) => Object.entries(eff || {}).map(([k, e]) => effText(k, e.v)).filter(Boolean).join(', ');
+  /** Linia dziennika z rzuconą umiejętnością: „kto=hp;cel=hp;tspell=Nazwa;skillId=25;shout=A, B;efekt=…”. */
+  function parseSpell(line) {
+    const parts = String(line).split(';');
+    const who = (parts[0] || '').split('=')[0], tgt = (parts[1] || '').split('=')[0];
+    const kv = {}; parts.slice(2).forEach((p) => { const i = p.indexOf('='); if (i > 0) kv[p.slice(0, i)] = p.slice(i + 1); else kv[p] = true; });
+    const sid = Number(kv.skillId) || null, def = sid && SKILL_DEF[sid];
+    const name = strip(kv.tspell || (def && def.name) || 'Umiejętność');
+    // cele: lista imion przy prowokacji, inaczej wskazany cel
+    let targets = [];
+    if (kv.shout) targets = String(kv.shout).split(',').map((x) => ({ name: x.trim() }));
+    else if (tgt && tgt !== '0') targets = [{ id: tgt }];
+    const lineEff = {}; for (const [k, v] of Object.entries(kv)) if (!['tspell', 'skillId', 'shout'].includes(k) && v !== true) lineEff[k] = { v: String(v).split('@')[0], dur: /@(\d+)/.test(v) ? Number(v.match(/@(\d+)/)[1]) : null };
+    const eff = def ? def.eff : lineEff;
+    const dur = (def && def.dur) || Math.max(0, ...Object.values(lineEff).map((e) => e.dur || 0)) || null;
+    if (!dur) return;   // tylko umiejętności z efektem na kilka tur (buffy, osłabienia) — zwykłe ciosy pomijamy
+    state.spells.push({ who, sid, name, targets, snap: Object.assign({}, state.moves), dur, short: shortEff(eff) || shortEff(lineEff), desc: def ? def.desc : '' });
+    if (state.spells.length > 40) state.spells.shift();
+  }
+
   function onData(d) {
     if (d) try { harvestSkills(d); } catch {}
     if (!d || !d.f) return;
     const f = d.f;
     if (f.init || f.init === 0) state = fresh();
     PACKETS.push(JSON.parse(JSON.stringify(f, (k, v) => (typeof v === 'string' && v.length > 300 ? v.slice(0, 300) + '…' : v)))); if (PACKETS.length > 40) PACKETS.shift();
-    const rnd = Number(f.round ?? f.r ?? f.turn ?? f.move);
-    if (!isNaN(rnd) && rnd > state.round) state.round = rnd;
+    if (Array.isArray(f.skills)) parseSkills(f.skills);
+    const h = game.hero();
     if (f.w && typeof f.w === 'object') for (const [id, w] of Object.entries(f.w)) state.w[id] = Object.assign(state.w[id] || {}, w);
     const logs = Array.isArray(f.m) ? f.m : f.m && typeof f.m === 'object' ? Object.values(f.m) : [];
-    logs.forEach(parseLog);
+    logs.forEach((line) => {
+      LOGS.push(strip(line)); if (LOGS.length > 80) LOGS.shift();
+      const p = String(line).split(';');
+      const actor = (p[0] || '').split('=')[0], tgt = (p[1] || '').split('=')[0];
+      // ruch wojownika = jego atak / umiejętność / krok (nie regeneracja „0;heal”, nie podsumowanie walki)
+      if (actor && actor !== '0' && (tgt !== '0' || /tspell=|;step/.test(line))) state.moves[actor] = movesOf(actor) + 1;
+      if (/tspell=/.test(line)) parseSpell(line);
+    });
     if (win && cfg.enabled && !preview && game.inBattle()) render();
   }
 
@@ -179,21 +235,10 @@
       const o = out[id] = out[id] || { id, name: '', team: null, hpp: null, eff: [], charge: null };
       o.name = d.name || d.nick || o.name || String(id);
       if (d.team !== undefined) o.team = d.team;
-      if (d.hpp !== undefined) o.hpp = Number(d.hpp);
-      o.eff = o.eff.concat(effectsIn(d));
-      o.charge = o.charge || chargeIn(d);
+      if (d.hpp !== undefined) o.hpp = Number(d.hpp); else if (d.hp && typeof d.hp === 'object' && d.hp.hpp !== undefined) o.hpp = Number(d.hp.hpp);
     };
     for (const w of arr) { const d = (w && (w.d || w)) || {}; add(String(d.id ?? w.id), Object.assign({}, d, w.d ? {} : w)); }
     for (const [id, d] of Object.entries(state.w)) add(String(id), d);
-    // z dziennika: dopasowanie po imieniu
-    for (const o of Object.values(out)) {
-      const L = state.fromLog[o.name];
-      if (L) for (const [nm, v] of Object.entries(L)) { const left = v.left - Math.max(0, turnNow() - v.at); if (left > 0 && !o.eff.some((e) => e.name === nm)) o.eff.push({ name: nm, left, k: kind(nm) }); }
-      const C = state.charge[o.name];
-      if (C && !o.charge) { const left = C.left - Math.max(0, turnNow() - C.at); if (left >= 0) o.charge = { name: C.name, left }; }
-      // ten sam efekt z dwóch źródeł — jeden wpis
-      const seen = new Set(); o.eff = o.eff.filter((e) => { const k = e.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
-    }
     // tytan / kolos z bazy: najbliższa umiejętność ostateczna jako „ładowany atak" + lista kolejnych
     const turn = turnNow();
     for (const o of Object.values(out)) {
@@ -203,21 +248,22 @@
       if (!o.charge || o.charge.left > ul[0].left) o.charge = { name: ul[0].name, left: ul[0].left, desc: ul[0].desc };
     }
     // Twoje umiejętności rzucone na wojowników (np. Wyzwanie, Szadź): ile tur temu
-    const AREA = /wszystk|każd|kazd|obszar|wrog(?:ów|ow|om)|przeciwnik(?:ów|ow|om)|drużyn|druzyn/i;
-    const castTargets = (c) => {
-      const t = c.id != null ? out[String(c.id)] : null;
-      if (!t) return [];
-      if (!AREA.test(c.desc || '')) return [t];
-      // umiejętność obszarowa: wszyscy żywi z drużyny celu
-      return Object.values(out).filter((o) => (t.team !== null && o.team !== null ? String(o.team) === String(t.team) : Math.sign(Number(o.id)) === Math.sign(Number(t.id))) && !(o.hpp === 0));
-    };
-    for (const c of state.casts) for (const o of castTargets(c)) {
-      const ago = turn - c.at;
-      if (ago > 12) continue;
-      const left = c.dur ? c.dur - ago : null;
-      if (left !== null && left <= 0) continue;
-      const nm = `${c.name} · rzucił: Ty`;
-      if (!o.eff.some((e) => e.name.toLowerCase().startsWith(c.name.toLowerCase()))) o.eff.push({ name: nm, left, ago, desc: c.desc, k: kind(c.name + ' ' + (c.desc || '')) === 'neu' ? (Number(o.id) < 0 ? 'neg' : 'pos') : kind(c.name + ' ' + (c.desc || '')) });
+    // umiejętności z dziennika walki (Twoje i przeciwników): kto rzucił, na kogo, ile tur zostało, co robi
+    const byName = (n) => Object.values(out).find((o) => o.name === n);
+    for (const sp of state.spells) {
+      const caster = out[String(sp.who)];
+      const by = caster ? (h && String(caster.id) === String(h.id) ? 'Ty' : caster.name) : '?';
+      const tg = sp.targets.map((t) => (t.id ? out[String(t.id)] : byName(t.name))).filter(Boolean);
+      const list = tg.length ? tg : caster ? [caster] : [];
+      const leftFor = (o) => sp.dur - (movesOf(o.id) - (sp.snap[String(o.id)] || 0));
+      for (const o of list) {
+        if (o.eff.some((e) => e.sp === sp)) continue;
+        const left = leftFor(o), ago = null; if (left <= 0) continue;
+        const enemyOfCaster = caster && caster.team !== null && o.team !== null && String(caster.team) !== String(o.team);
+        o.eff.push({ sp, name: sp.name, by, left, ago, desc: sp.short, long: sp.desc, k: enemyOfCaster ? 'neg' : 'pos' });
+      }
+      // efekty na sobie (np. pancerz z tarczy przy okrzyku) — również przy rzucającym
+      if (caster && tg.length && !tg.includes(caster) && sp.short && /pancerz|obezwład|drużyna/.test(sp.short) && !caster.eff.some((e) => e.sp === sp)) { const left = leftFor(caster); if (left > 0) caster.eff.push({ sp, name: sp.name, by, left, ago: null, desc: sp.short, long: sp.desc, k: 'pos' }); }
     }
     // drużyny: ta z bohaterem = „my"
     const me = h && out[String(h.id)];
@@ -238,7 +284,7 @@
     if (win && win.isConnected) return win;
     const pos = store.get('win:pogromca', { x: innerWidth - 330, y: 140 });
     win = el('div', { id: 'mp-pt', style: { left: pos.x + 'px', top: pos.y + 'px' } },
-      el('div', { class: 'mp-pt-h' }, el('b', null, 'Pogromca Tytanów'), el('span', { class: 'mp-pt-r' }), el('button', { class: 'mp-pt-x', title: 'Zbierz dane walki (skopiuj i wklej w rozmowie)', onclick: () => collect() }, '⧉'), el('button', { class: 'mp-pt-x', title: 'Ukryj do końca walki', onclick: () => { win.style.display = 'none'; preview = false; } }, '×')),
+      el('div', { class: 'mp-pt-h' }, el('b', null, 'Pogromca Tytanów'), el('span', { class: 'mp-pt-r' }), el('button', { class: 'mp-pt-x mp-pt-min', title: 'Zwiń / rozwiń', onclick: () => { cfg.compact = !cfg.compact; config.save(); render(preview ? sample() : undefined); } }, '–'), el('button', { class: 'mp-pt-x', title: 'Zbierz dane walki (skopiuj i wklej w rozmowie)', onclick: () => collect() }, '⧉'), el('button', { class: 'mp-pt-x', title: 'Ukryj do końca walki', onclick: () => { win.style.display = 'none'; preview = false; } }, '×')),
       el('div', { class: 'mp-pt-b' }));
     document.body.appendChild(win);
     makeDraggable(win, win.querySelector('.mp-pt-h'), (p) => store.set('win:pogromca', p));
@@ -249,20 +295,20 @@
     const c = e.k === 'pos' ? P.pos : e.k === 'neg' ? P.neg : P.neu;
     const soon = e.left != null && e.left <= warnAt;
     return el('div', { class: 'mp-pt-e' + (soon ? ' soon' : ''), style: { '--c': c, background: P.chip } },
-      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), el('span', { class: 'mp-pt-t' }, e.left == null ? (e.ago === 0 ? 'teraz' : `${e.ago} t. temu`) : e.ago != null ? `jeszcze ${e.left} ${e.left === 1 ? 'tura' : e.left < 5 ? 'tury' : 'tur'}` : e.left === 1 ? '1 tura' : e.left > 1 && e.left < 5 ? `${e.left} tury` : `${e.left} tur`));
+      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), e.by && !cfg.compact ? el('span', { class: 'mp-pt-by' }, e.by === 'Ty' ? 'od Ciebie' : 'od: ' + e.by) : null, el('span', { class: 'mp-pt-t' }, e.left == null ? (e.ago === 0 ? 'teraz' : `${e.ago} t. temu`) : cfg.compact ? `${e.left} t.` : `jeszcze ${e.left} ${e.left === 1 ? 'tura' : e.left < 5 ? 'tury' : 'tur'}`));
   }
   function row(o, P) {
     const box = el('div', { class: 'mp-pt-w' },
       el('div', { class: 'mp-pt-wn' }, el('span', null, o.name), o.hpp !== null && !isNaN(o.hpp) ? el('span', { class: 'mp-pt-hp' }, el('i', { style: { width: Math.max(0, Math.min(100, o.hpp)) + '%' } })) : null));
     if (o.charge) {
       const now1 = o.charge.left <= (cfg.warnAt ?? 1);
-      box.appendChild(el('div', { class: 'mp-pt-c' + (now1 ? ' soon' : ''), style: { '--c': P.chg }, title: o.charge.desc || '' }, '⚡ ', el('b', null, o.charge.name), ' — ', o.charge.left <= 0 ? 'w TEJ turze' : `za ${o.charge.left} ${o.charge.left === 1 ? 'turę' : o.charge.left < 5 ? 'tury' : 'tur'}`, o.charge.desc ? el('div', { class: 'mp-pt-cd' }, o.charge.desc) : null));
+      box.appendChild(el('div', { class: 'mp-pt-c' + (now1 ? ' soon' : ''), style: { '--c': P.chg }, title: o.charge.desc || '' }, '⚡ ', el('b', null, o.charge.name), ' — ', o.charge.left <= 0 ? 'w TEJ turze' : `za ${o.charge.left} ${o.charge.left === 1 ? 'turę' : o.charge.left < 5 ? 'tury' : 'tur'}`, o.charge.desc && !cfg.compact ? el('div', { class: 'mp-pt-cd' }, o.charge.desc) : null));
     }
-    if (o.ults && o.ults.length > 1) box.appendChild(el('div', { class: 'mp-pt-u', style: { color: P.dim } }, 'Dalej: ', o.ults.slice(1, 3).map((u, i) => el('span', null, i ? ' · ' : '', el('b', { style: { color: P.text } }, u.name), ` za ${u.left} t.`))));
+    if (o.ults && o.ults.length > 1 && !cfg.compact) box.appendChild(el('div', { class: 'mp-pt-u', style: { color: P.dim } }, 'Dalej: ', o.ults.slice(1, 3).map((u, i) => el('span', null, i ? ' · ' : '', el('b', { style: { color: P.text } }, u.name), ` za ${u.left} t.`))));
     const eff = o.eff.slice().sort((a, b) => (a.left ?? 99) - (b.left ?? 99));
     if (eff.length) box.appendChild(el('div', { class: 'mp-pt-es' }, eff.map((e) => chip(e, P, cfg.warnAt ?? 1))));
-    else if (!o.charge) box.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'brak efektów'));
-    eff.filter((e) => e.desc).forEach((e) => box.appendChild(el('div', { class: 'mp-pt-cd', style: { color: P.dim } }, el('b', { style: { color: P.text } }, e.name.split(' · ')[0] + ': '), e.desc)));
+    else if (!o.charge && !cfg.compact) box.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'brak efektów'));
+    if (!cfg.compact) { const seen = new Set(); eff.filter((e) => e.desc && !seen.has(e.name) && seen.add(e.name)).forEach((e) => box.appendChild(el('div', { class: 'mp-pt-cd', style: { color: P.dim }, title: e.long || '' }, el('b', { style: { color: P.text } }, e.name.split(' · ')[0] + ': '), e.desc))); }
     return box;
   }
 
@@ -273,9 +319,11 @@
     w.querySelector('.mp-pt-h').style.borderColor = P.line;
     const { allies, enemies } = data || model();
     w.querySelector('.mp-pt-r').textContent = preview ? 'podgląd' : `tura ${turnNow()}`;
+    w.classList.toggle('compact', !!cfg.compact);
+    w.querySelector('.mp-pt-min').textContent = cfg.compact ? '+' : '–';
     const B = w.querySelector('.mp-pt-b'); B.textContent = '';
     const solo = allies.length <= 1;
-    const sec = (title, list) => { if (!list.length) return; B.appendChild(el('div', { class: 'mp-pt-s', style: { color: P.dim, borderColor: P.line } }, title)); list.forEach((o) => B.appendChild(row(o, P))); };
+    const sec = (title, list) => { if (!list.length) return; if (!cfg.compact) B.appendChild(el('div', { class: 'mp-pt-s', style: { color: P.dim, borderColor: P.line } }, title)); list.forEach((o) => B.appendChild(row(o, P))); };
     if (cfg.showAllies !== false) sec(solo ? 'Ty' : 'Twoja drużyna', allies);
     if (cfg.showEnemies !== false) sec('Przeciwnicy', enemies);
     if (!B.children.length) B.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'Brak danych o efektach w tej walce.'));
@@ -307,7 +355,7 @@
     const shape = (o, d = 0) => { if (!o || typeof o !== 'object' || d > 2) return typeof o; const r = {}; for (const k of Object.keys(o).slice(0, 60)) { const v = o[k]; r[k] = typeof v === 'function' ? 'fn' : v && typeof v === 'object' ? shape(v, d + 1) : v; } return r; };
     let ws = b && (b.warriorsList || b.warriors); try { if (typeof ws === 'function') ws = ws.call(b); } catch {}
     const arr = Array.isArray(ws) ? ws : Object.values(ws || {});
-    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), nazwyUmiejetnosci: [...SKILL_NAMES].slice(0, 40), zapamietane: cfg.known, dymek: readTip(), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
+    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { ruchy: state.moves, umiejetnosci: state.spells.map((x) => ({ kto: x.who, nazwa: x.name, cele: x.targets, czas: x.dur, start: x.snap })) }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), nazwyUmiejetnosci: [...SKILL_NAMES].slice(0, 40), zapamietane: cfg.known, dymek: readTip(), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
     const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
     try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
     toast(`Pogromca Tytanów: skopiowano dane walki (${PACKETS.length} pakietów) — wklej je w rozmowie`, 'ok', 5000);
@@ -316,13 +364,14 @@
   defineAddon({
     id: 'pogromca', beta: true, name: 'Pogromca Tytanów', icon: 'pogromca', color: ['#ff6a3d', '#7a1fff'],
     desc: 'W walce pokazuje okienko z efektami na Twojej drużynie (albo na Tobie solo) i na przeciwnikach: nazwa efektu i za ile tur zniknie. Przy tytanach, kolosach i mobach — kto ładuje atak i za ile uderzy. Pomaga trafić z szadzią, furią, aurą czy wyzwaniem. Pozytywne efekty mają kolor stylu, negatywne — czerwony.',
-    defaults: { enabled: false, showAllies: true, showEnemies: true, warnAt: 1, scale: 100, known: {} },
+    defaults: { enabled: false, showAllies: true, showEnemies: true, warnAt: 1, scale: 100, known: {}, compact: false },
     settings: [
       { key: 'showAllies', type: 'bool', label: 'Pokazuj moją drużynę' },
       { key: 'showEnemies', type: 'bool', label: 'Pokazuj przeciwników' },
       { key: 'warnAt', type: 'number', label: 'Wyróżnij, gdy zostało tur', min: 0, max: 5, hint: 'Efekt lub atak, który kończy się za tyle tur (lub mniej), miga.' },
       { key: 'scale', type: 'range', label: 'Wielkość okienka (%)', min: 80, max: 140, step: 5 },
       { key: 'onlyBoss', type: 'bool', label: 'Tylko w walkach z tytanami i kolosami' },
+      { key: 'compact', type: 'bool', label: 'Zwinięte okienko (tylko efekty i tury, bez opisów)' },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Podgląd i dane'),
@@ -356,7 +405,7 @@
       });
       bus.on('battle:end', () => { if (win && !preview) win.style.display = 'none'; });
       timer = setInterval(tick, 500);
-      MP.pogromca = { debug: () => ({ zapamietaneUmiejetnosci: cfg.known, rzucone: state.casts.slice(-8), tura: turnNow() }), render, sample, collect, state: () => state, preview: () => { preview = true; render(sample()); } };
+      MP.pogromca = { debug: () => ({ zapamietaneUmiejetnosci: cfg.known, rzucone: state.spells.slice(-8).map((x) => ({ kto: x.who, nazwa: x.name, cele: x.targets, tura: x.at, czas: x.dur })), tura: turnNow() }), render, sample, collect, state: () => state, preview: () => { preview = true; render(sample()); } };
     },
     onToggle(on) { if (!on && win) win.style.display = 'none'; },
   });
