@@ -5,36 +5,11 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
-  { v: '1.2.1', d: '11.11.2026', items: [
-    'Kafelek L4 ma 42×42 jak przyciski gry.',
-    'Skróty: włączony dodatek ma zieloną ikonkę, wyłączony — szarą.',
-    'Dodawanie i usuwanie skrótu bez włączania dodatku — przycisk pinezki na liście i w ustawieniach dodatku.',
-    'Kafelek L4 da się przesunąć tylko w trybie edycji przycisków gry (Konfiguracja → Sterowanie, gdy widać puste miejsca) — tak samo jak pozostałe przyciski.',
-  ] },
-  { v: '1.2.0', d: '11.11.2026', items: [
-    'Kafelek L4 (42×42) na czerwonym tle ze złotym napisem, w rzędzie przycisków gry — ma stałe miejsce jak inne przyciski. Przenosisz go tak jak przyciski gry: w trybie ich edycji (Konfiguracja → Sterowanie).',
-    'Mniejsze ikonki skrótów dodatków; bez kafelka panelu na pasku skrótów.',
-    'Let\'s Cook Together nazywa się teraz Lepsza Grupa (nowa ikonka).',
-    'Legendarny Łup: import dodatkowych stylów z plików .json — każdy jako osobna karta z testem i usuwaniem.',
-    'Ustawienia dodatków oznaczone zębatką.',
-  ] },
-  { v: '1.1.0', d: '11.11.2026', items: [
-    'Nowy wygląd panelu w stylu okien gry: zakładki Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
-    'Lista dodatków z wyszukiwarką, filtrem (wszystkie / włączone / wyłączone) i licznikiem włączonych.',
-    'Motywnik przeniesiony do osobnej zakładki „Motywy” — wybór stylu interfejsu i import własnego CSS.',
-    'Pasek skrótów ma stałe miejsce wybierane w Ustawieniach: Prawo góra pionowo (domyślnie, przy ekwipunku), Lewo góra pionowo, Lewo góra poziomo, Lewo dół poziomo.',
-    'Nowe ikonki skrótów w stylu przycisków gry.',
-    'Nowa ikonka L4 — kafelek jak przyciski gry, także na liście Tampermonkey.',
-    'Hey WakeUP!: 10 nowych stylów komunikatów.',
-    'Informacja o zasadach korzystania pokazuje się tylko raz — przy pierwszej instalacji. Zawsze można ją przeczytać w zakładce Informacje.',
-  ] },
   { v: '1.0.0', d: '11.11.2026', items: [
-    'Pierwsza oficjalna wersja zestawu.',
-    'Ustawienia wspólne dla wszystkich postaci albo osobne dla każdej, z kopiowaniem na wszystkie postacie.',
-    'Legendarny Łup: efekty Thor, Smoke, Kasyno, Disco i własny styl — tylko na legendach w oknie łupów, z testem na łupach Tanrotha.',
-    'Motywnik: 5 stylów interfejsu (ramy, paski, okna, przyciski, okno łupów) i własne style CSS.',
-    'Wrogowie na mapie: opcjonalna wiadomość na czat klanowy i dźwięk (wbudowany albo własny plik).',
-    'Poprawione odczytywanie danych z gry (pakiety czytane raz, także te wysyłane jako tekst).',
+    'Pierwsza wersja L4Tools.',
+    'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
+    'Kafelek L4 w rzędzie przycisków gry i pasek skrótów dodatków z wyborem ułożenia.',
+    'Dodatki: Dobijarka, Hey WakeUP!, Bratan, Wrogowie na mapie, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup oraz Motywy.',
   ] },
 ];
 
@@ -275,7 +250,7 @@ const ui = {
         list.appendChild(el('div', { class: 'l4-card' + (on ? ' on' : ''), onclick: (e) => { if (e.target.closest('.mp-sw, .l4-gearb')) return; this.sel = a.id; this.renderMain(); } },
           el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
           el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, a.desc)),
-          el('button', { class: 'l4-gearb l4-pinb' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'W skrótach — kliknij, żeby usunąć' : 'Dodaj do skrótów', onclick: () => { const p = quickbar.togglePin(a.id); toast(`${a.name}: ${p ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); draw(); } }, icon('pin', 14)),
+          el('button', { class: 'l4-gearb l4-pinb' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'W skrótach — kliknij, żeby usunąć' : 'Dodaj do skrótów', onclick: () => { quickbar.togglePin(a.id); draw(); } }, icon('pin', 14)),
           sw,
           el('button', { class: 'l4-gearb', title: 'Ustawienia', onclick: () => { this.sel = a.id; this.renderMain(); } }, icon('gear', 15))));
       }
@@ -315,7 +290,7 @@ const ui = {
       el('button', { class: 'l4-sq', title: 'Wróć do listy', onclick: () => { this.sel = null; this.renderMain(); } }, icon('back', 16)),
       el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
       el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
-      el('button', { class: 'l4-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'Usuń ikonkę z paska skrótów' : 'Dodaj ikonkę na pasek skrótów (także gdy dodatek jest wyłączony)', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); this.renderMain(); } }, icon('pin', 13), quickbar.isPinned(a.id) ? 'Usuń ze skrótów' : 'Dodaj do skrótów'),
+      el('button', { class: 'l4-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'Usuń ikonkę z paska skrótów' : 'Dodaj ikonkę na pasek skrótów (także gdy dodatek jest wyłączony)', onclick: () => { quickbar.togglePin(a.id); this.renderMain(); } }, icon('pin', 13), quickbar.isPinned(a.id) ? 'Usuń ze skrótów' : 'Dodaj do skrótów'),
       sw));
     M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
     this.renderAddon(M, a.id, () => this.renderMain(), true);

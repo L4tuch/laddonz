@@ -617,17 +617,41 @@
     }
     return out;
   }
+  /** Granice okna łupów razem z nagłówkiem „Łupy” i dolnym paskiem (przycisk „Potwierdź”). */
+  function winBox(win) {
+    win = (win.closest && win.closest('.c-window')) || win;
+    const r = win.getBoundingClientRect();
+    let t = r.top, b = r.bottom, l = r.left, rr = r.right;
+    for (const n of win.querySelectorAll('.header-label-positioner, .header-label, .bottom-wrapper, .accept-button, .c-window__bottom-bar')) {
+      const q = n.getBoundingClientRect(); if (!q.width) continue;
+      t = Math.min(t, q.top); b = Math.max(b, q.bottom); l = Math.min(l, q.left); rr = Math.max(rr, q.right);
+    }
+    return { t, b, cx: (l + rr) / 2 };
+  }
   function showCaption(win, me, st) {
     if (!win || cfg.names === false) return;
     const names = lootNames(win); if (!names.length) return;
-    const r = win.getBoundingClientRect();
     const cc = cfg.custom || {};
     const fl = st === 'wlasny' ? (cc.capText || 'Legenda!') : (FLAVOR[st] || FLAVOR.thor)[Math.floor(Math.random() * 4)];
-    const cap = el('div', { class: 'mp-lg-cap ' + st, style: { left: r.left + r.width / 2 + 'px', top: Math.min(innerHeight - 70, r.bottom + 10) + 'px', '--lgc': st === 'wlasny' ? (cc.color || '#ff9a1f') : STYLES[st].col } },
+    const cap = el('div', { class: 'mp-lg-cap ' + st, style: { '--lgc': st === 'wlasny' ? (cc.color || '#ff9a1f') : STYLES[st].col } },
       el('div', { class: 'mp-lg-cap-f' }, fl),
       el('div', { class: 'mp-lg-cap-n' }, (names.length > 1 ? 'Zdobyłeś legendy: ' : 'Zdobyłeś: '), names.map((n, i) => el('span', null, i ? ', ' : '', el('b', null, n)))));
     document.body.appendChild(cap);
     me.cap = cap;
+    // napis stoi NAD oknem łupów (nie zasłania „Potwierdź”) i jedzie razem z oknem; pod oknem tylko, gdy u góry brak miejsca
+    let last = '';
+    const place = () => {
+      if (!cap.isConnected) return;
+      if (win.isConnected) {
+        const B = winBox(win), h = cap.offsetHeight || 50;
+        const above = B.t - 8 - h >= 4;
+        const top = Math.round(above ? B.t - 8 - h : Math.min(innerHeight - h - 4, B.b + 8));
+        const key = Math.round(B.cx) + ':' + top + ':' + h;
+        if (key !== last) { last = key; cap.style.left = Math.round(B.cx) + 'px'; cap.style.top = top + 'px'; }
+      }
+      requestAnimationFrame(place);
+    };
+    place();
     requestAnimationFrame(() => cap.classList.add('on'));
     setTimeout(() => { if (cap.isConnected) cap.classList.remove('on'); }, Math.max(1500, me.dur * 1000 - 800));
   }
@@ -690,8 +714,9 @@
     // (obwódka całego okna łupów — usunięta na życzenie; zostaje tylko wyróżnienie pola z legendą)
     if (w) { const old = w.querySelector(':scope > .mp-lg-winring'); if (old) old.remove(); }
     // efekt na samym przedmiocie
-    FX_CLASSES.forEach((c) => it.classList.remove(c));
-    it.classList.add('mp-lg-fx-' + spec.item); it.style.setProperty('--lgg', spec.glow);
+    const fx = 'mp-lg-fx-' + spec.item;
+    if (!it.classList.contains(fx)) { FX_CLASSES.forEach((c) => it.classList.remove(c)); it.classList.add(fx); }
+    it.style.setProperty('--lgg', spec.glow);
     if ((cfg.hlMode || 'ring') === 'none') return;
     let h = card.querySelector(':scope > .mp-lg-hl');
     if (!h) {
@@ -699,7 +724,7 @@
       h = el('div'); card.appendChild(h);
     }
     const was = h.className;
-    h.className = hlClass(spec);
+    if (was !== hlClass(spec)) h.className = hlClass(spec);
     h.style.setProperty('--lgc', spec.glow);
     if (spec.ring === 'smoke' && !/\bsmoke\b/.test(was)) try { h.animate([{ opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)' }], { duration: 3500, easing: 'ease-out' }); } catch {}
     if (spec.item === 'bolts') fieldBolts(h, slot); else { const c = h.querySelector('canvas'); if (c) c.remove(); }
@@ -712,7 +737,8 @@
     let next = 0, cur = null, t0 = performance.now();
     const loop = (n) => {
       if (!cv.isConnected) return;
-      const W = (cv.width = h.clientWidth || 60), H = (cv.height = h.clientHeight || 100);
+      const W = h.clientWidth || 60, H = h.clientHeight || 100;
+      if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
       const hr = h.getBoundingClientRect(), sr = slot.getBoundingClientRect();
       const tx = sr.left - hr.left + sr.width / 2, ty = sr.top - hr.top + sr.height / 2;
       const t = (n - t0) / 1000;
@@ -1079,7 +1105,13 @@
     for (const w of lootWindows()) captureTpl(w);
     if (!cfg.enabled) return;
     for (const w of lootWindows()) for (const it of $$('.item', w)) {
-      if (it.dataset.mpLg) { if (!it.querySelector(':scope > .mp-lg-hl')) markItem(it); continue; }
+      if (it.dataset.mpLg) {
+        // gra mogła przebudować okienko (np. po „Chcę”) — odtwarzamy wyróżnienie tylko, gdy naprawdę zniknęło
+        const card = cardOf(it);
+        if ((cfg.hlMode || 'ring') !== 'none' && card && !card.querySelector(':scope > .mp-lg-hl')) markItem(it);
+        else if (!it.className.includes('mp-lg-fx-')) markItem(it);
+        continue;
+      }
       const id = game.itemIdFromEl(it);
       if (!id) continue;
       const rr = rarityOf(it);
@@ -1246,7 +1278,7 @@
 
   defineAddon({
     id: 'legenda', name: 'Legendarny Łup', icon: 'legenda', color: ['#ff9a1f', '#ff3d6e'], renderFirst: true,
-    desc: 'Gdy w łupie trafi się przedmiot legendarny — efekt na cały ekran z dźwiękiem: Thor, Smoke, Kasyno, Disco albo Twój własny. Każdy styl ma wbudowany dźwięk i może mieć Twój plik dźwiękowy. Przycisk „Test" pokazuje efekt od razu.',
+    desc: 'Kiedy wypadnie legenda, robi się widowisko: efekt na cały ekran z dźwiękiem — Thor, Smoke, Kasyno, Disco albo Twój własny styl. Legenda w oknie łupów dostaje wyróżnienie, a przyciskiem „Test” sprawdzisz efekt od razu.',
     defaults: { enabled: false, style: 'thor', extras: [], extraOn: null, volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
     notes: () => [{ type: 'info', text: 'Działa samodzielnie — <b>nie wymaga</b> opcji gry „Podświetlenie okna łupów”. Najlepiej ją <b>wyłączyć</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy), żeby efekty gry i dodatku nie nakładały się na siebie. Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
@@ -1388,7 +1420,12 @@
       bus.on('data', onData);
       setInterval(() => { try { collectLegends(); } catch {} }, 5000);
       const scan = debounce(scanDom, 80);
-      new MutationObserver(() => { if (cfg.enabled) scan(); }).observe(document.body, { childList: true, subtree: true });
+      // nasze własne elementy (obwódki, płótna, napis) nie wywołują ponownego skanu — inaczej efekty „skaczą”
+      const ours = (n) => n.nodeType !== 1 || /(^|\s)mp-lg|mp-lg-cv/.test(n.className && n.className.baseVal !== undefined ? n.className.baseVal : n.className || '') || (n.tagName === 'CANVAS' && n.closest && n.closest('.mp-lg-hl'));
+      new MutationObserver((recs) => {
+        if (!cfg.enabled) return;
+        for (const r of recs) { for (const n of r.addedNodes) if (!ours(n)) return scan(); for (const n of r.removedNodes) if (!ours(n)) return scan(); }
+      }).observe(document.body, { childList: true, subtree: true });
       MP.legenda = { play, stop: stopFx, STYLES, SOUND, learn: learnItems, debug: () => { const t = store.get('legenda:lootTpl', null); return { ostatnieLupy: lastScan.slice(), trybHeroikow: !!cfg.checkHeroic, rozmiary: store.get('legenda:lootSizes', {}), wzor: t ? t.html.slice(0, 9000) : null, rodzic: t && t.parent }; } };
     },
     onToggle(on) { if (!on) stopFx(); },

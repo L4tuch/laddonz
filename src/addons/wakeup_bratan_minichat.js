@@ -57,7 +57,7 @@
 
   defineAddon({
     id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'], renderFirst: true,
-    desc: 'Zmienia wygląd komunikatów gry (duży żółty napis na środku ekranu) — także tych wysyłanych przez panel. Wybierz gotowy styl albo ułóż własny.',
+    desc: 'Odświeża wygląd dużych komunikatów gry, które wyskakują na środku ekranu. Wybierz jeden z gotowych stylów albo ułóż własny — kolor, czcionkę, tło i ramkę.',
     defaults: { enabled: false, style: 'mini', fg: '#ffe500', glow: '#ffb547', bg: '#10111c', bgAlpha: 0, frame: false, radius: 10, font: 'Arial,"Segoe UI",sans-serif', size: 24, bold: true, outline: true, shadow: false, gameSelectors: '.big-messages .message' },
     settings: [
       { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
@@ -98,7 +98,7 @@
   let cfg;
   defineAddon({
     id: 'bratan', name: 'Bratan', icon: 'bratan', color: ['#3ddc97', '#1c9b6c'],
-    desc: 'Blokuje atak na klanowiczów, znajomych i sojuszników. Działa na wszystkie ataki — także kliknięte ręcznie w grze.',
+    desc: 'Chroni swoich. Nie pozwoli zaatakować klanowicza, znajomego ani sojusznika — nawet jeśli klikniesz go przez pomyłkę.',
     defaults: { enabled: false, clan: true, friends: true, allies: true, nicks: [] },
     settings: [
       { key: 'clan', type: 'bool', label: 'Chroń klanowiczów' },
@@ -148,7 +148,7 @@
   }
   defineAddon({
     id: 'minichat', name: 'MiniChat', icon: 'minichat', color: ['#5b8cff', '#3a5bd9'],
-    desc: 'Ustawia wysokość okna czatu.',
+    desc: 'Pozwala ustawić wysokość okna czatu tak, jak Ci wygodnie.',
     defaults: { height: 160, selector: '.new-chat-window' },
     settings: [
       { key: 'height', type: 'range', label: 'Wysokość czatu (px)', min: 60, max: 700, step: 10, live: () => apply() },

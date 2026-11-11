@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.2.1
+// @version      1.0.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
-// @icon         data:image/png;base64,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
-// @icon64       data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAS4UlEQVR4XtVbe5BU5ZX/fffefnczDDPDMCgvURE1RFCUBAFZTcoVom6MbiWltVtWUvvIJuu60c0/upWstanUakw0D1bX1EptxV1SrEakND5QRHkMYsDiIYWsIBJgnkw/prvvc+uc7/tu3+npbiB/7DKnaqanu+/jPH/ndUdgLBkAfCEEJk9NXzFaqi4PfEwNgiBZd9yEICFERRjoy2STm4dPlfYHQUB8s4xaABGRhL9o68jcWMiP3g8Ey7NtqaxlmhBG9LCJQ4EfwPU8FEfKRUBsyU1KPzYyWHojqgQtGQufaYvfX604j82a14MbvrTImb9wdpDLZcx4Isaqm2hkVxxRKJa8A787It7a8H7s6METiCdjD4yO2I9qJZACTABeri11X8WuPn77vcuLt929ItbWlktUKw5GR8twHW+Mq0wEIotZMRPpdIqERn6kUH3+2TedF599J5tMJP62cLr8BCmBPaC9J3v9yEBx8+p7lpb/7Nurkr4bmHt3f4Tt736Ak78fRKkwOhFkHkeZXBrTpndgybLP4soFc2HEDHftEy9VN6x9N9U2ObdsuL+wVRDgCQsb58yfdstDP/u6nUkl46+/vB0b1m9GtWwjk0uxJicikeeWCmUkU3GsvmMFbrplCXm0/f1vPhP/eP/JjYGH1daUnuy8kcHS8pvvWuJM6WiL79q6j4WPxSxcs+JyzLykB4lkDJiAQWCXHRw9dAJ7th3ES+s3o2d6FxYtmR+/+a7POf/6Ty+saG/PXmwVh8t/lMklshdddqHrVB28t30fqhUbi2+4AlctnUdAwmg64eQHEEvEsHDZZcz7u6/sxnvb9+Iziy7BnHnTBcmcL5WXWz6CaaZlIZtLi1KpguPH+tjtZ1wyDZXRKjzX5zTIaSCih4DQ4zx+T0JT3ifjzbh4Gst0/Fg/RksVZLJpYZomAjgzLABxIQBKdZ7jopAvgXK/ZVrwPRJbIOBkISnMh+qP8/09yRCLxWBZJvIjRbiOS5gQsFGDIEkKGEMEij5pLggghAHPc2tCTjASEDAtA1QAkqEMsnQdjVMAkVbCcHEQpXKBFSKEtLWsJs9f0jIGgWCBM6kcUmY2/LylArRspICR4hDKbgGCgp2vWi95o8/Ohv7Q886VBDwEOF0YgG05LFMjGu8BQsBzXYxWijDIfUjwhmbXCpE4MV5BmvR3moH/KxeSfFEYlypFeJ4Py7JCbjWNxwAFdXQCTKNBCqwTgDIBn6QVESUVNvwaPU8rhVqQMymkwfeNbiWDt87IAeOA53l8n/pviRpigIx1mUK4BtDX1p5AUcGhoe6nPiecCA8RhLJaMfo4ICAsoS9YB8RYPVt0XT+iF6ksrlj5/Nq19Puag/rqupFrGlKWZtRaASobKI1IVrTwUkva/KEY4a0JOMekzVreZIa0DiKcyeNrwsu4VZZjqwdSaLZrUFNG5E4Bn+7zEZpHAvFzVoDvBxC+zxdUd+X7GPLWKq3otCC9gRMFMa0sX6sRahmEz1VpqXalmsXkZxS7tWvrENOeX1PyWA/UfLHhlPOxqrQXN6CGHsARyyHAxUIoEF9MWU6mRS63lHsqS9WFhbRCXaRrZ+DPlT3D0BgLmrIGlQrhQyIGqaU8hTIRQwd8IE05KAaaOkCTOoB4pvjncNUxWws+ds1ANtPxpMX5lv4m74hwxff1AnZqOLYH15VMacFrUeHLIZW6hcRUqWlCcXpvqGhLpq3wHo7jw6m6fH9ZvEmFSgOqX0YAP/Cb6qCxByiZKQw0gIRMMQ4ImCbg2T6OHcrDNGXRIacLNUXRdYgx2wmQ60oi2xGH7fiSUQWY8vrKysqj2OIG/2YPMAK6n4BlGDi0sx+u7cHzAnRcmEHXzCyqVT3iqxlNyy/8AH44ARxPTUGQqz+VCRjRI64IwgfLgO96eP+VT1ActJv7GHVlKYFrb52Dyd1J2FVCfl1aaAVrBWh3p3tLhZoKztKpGD5461Ps3PgpYtyn+Ji/bBq6Z+ckPzpyIsAdhi9hQJMwaJ4FOAUSCBLaqjhXtoqnTBx49wTEUALbXn8KcSuBwb4RVKt2GB50v0wmiUwmgURbGj/80S/x4rNvY+mdl8Cl9EeWYUVI35cpVL6SNPRCVQK9ZnNxbP3N/6D8iYXdvWuRjFlIZnN4+pl1+PGj/4VVf3EFEBPwnFoGYZlVGP1BWYAE9wMJgrrOoaaQp6d+ANM0MDCUx3PrXsWF3Rfg9lXXo+fi2YDnKM5NHNi1H+9s24Oh8gj27vuYJ0s+KZVDQwqvmYymMuHLECANpTIWThw6jf3v9OHl9Y/is4sXAcXTQLYLbekcSuR9Kv1LHJVeFf4oxZ57GiR0Vh5AFqELERCRZUmjFPPDw0X88w9+xdf+9NNT+P4PvwNnOM+tp0jF8eBDP8NLL2/l780kMPOyDnZdqiWIQQ1cXHAHvsr7JLzMDDFTAA7w6n98iHvvXo2bv3wj3NOD8HwfMb8K1/ek61MIhLVATXgZxhLQz1kB8GTRI5HVhwgMWcVRr2B7mHNVB+Zc3o6Bj0bx7ktHWGjTMOCbBnuHMAzEqQ+Pm7jui7PQPjOJxOQYXFIAoZJCbZ0I2d1VGSHdP0A6HcOW/z6MrmwXHv2XbwOOA4OR1uBXnZZ1qITIp1N3aLDmEEXnNiTSnv7h6ooBUbuY1Ho6G8e8a7vgut54LZOivACe8HDlsqmY3J0K0yoBKselTl0q5YY5JADPIY8fGsGHOwbw9C8eQHvnFOzZuQ8iZo0rbWWNoIotqVsOU9Ize1mLNNBUAbVeQNUEjAkKFPlv8LisUnJaZgCKz3LB4dQlzyPGJHPMs0pRlGdYiIB6MAHhAa//50HcfecXccuX78C//9t6rHv+TYjUJFb4GNKFlUJ7VgIrVfF77h6grK0uJD1BaValxloDVN/MjCdZOMl4ChssXdWpdKutT30QpbzeV45icrwdj//4O8gPHseDD69BIkHT6QbXrxWryqskuEr+VfXYhFrUART3VGHpGp/ASyAwhCyQhPQICfnNSZfVYTixf9Lxyiwqt3KlByCZMtF3pIAPd/Tj12u/h87pF+Hvvvld9PcPY0r7JOkyjXROPMnIVKGqwpXDrTl/LesAnwaHeiROfFMmIHjigaICyBYX14VhLS2pKpCRulbfy65PsOuTIjatO4Q7b1uJr9zzp3hj40v46VPP8zGeX+f6ikIeGFNk2Rvek8v6iMLrqGkp7FQ8CINLFemeqtb3aZBuGIBhwFL9QEvywfFP01jH8eD6PmjWokt/ynSUMUi58VwCu147hqw5CU8+8QBKwwP41t8/HsZ8M2VTViJyKx5nGbqH69V6ANJbs3Mbe0AAVIoOl6J8IlWCEJx6yEqU6jjduTo+WpAP2CUXtuPAJiUwY9ItuYkx+IEEpJIWTh3O42DvIH71zMPonnkp/uG+h3Dg4FFM6UhjaHC0uQKqHlw7gG07sF0fjid/GHRVY3f2pbCKL9JmtPEmF5QMCwiTegGqUTxuUkIEqycV317V5z0ddYOUGnUBxNNnIWDFDQhXYOvGI7h91XJ89d6vYcdbb+Ana9bTvgKXzm9H79bKOCHIIIZpoFxwYSTJA3z2FvYCzwetNXQ2a8ZjcwTjVlQNOqg2V50ueb8KWfXZGbIA1y3EqIBJXSR5kTBgccEEWPQDgb3bTyITy+HnTzyIob6TuOfrj3BvYVcdbH/nOJfQrudGuk0Bx3W5sjy8fxDJjFXjR8ZrWFg1nmpLagqCWqwx4kWEPXPyqxE5CXX1HEK62qPy2KRq0cCWFz5GccjD2qcfQs9Fs3F033589/67kUjEwxKZwmfJNZcD9ijiMYtfv/TH12P6zBnofW8nNr66GZdc3SkrRXZeuiMX9PzajJoqQKozkq30e0bEyM9ZEBvEoPJVMkJ527QEynkHe98fxN/8+VfRPnkSblxxNezCMGbO7MG9fz1X5jRNdBHbAao2aK+HahULPnMxFixZiuLwaaxZswFzr+qUJtXz2tCKzc3VQgGRAasSWMsdHYG2SoMR7uXESLkmXCARt/DxkUH0H6nikX/8BnrfO4BUKo54rhtARWq+PkANlQa1YSgeYSGesHiBy7tMGhhpI0VHlE2ouQLCs+vm6VFPIDcmAGuiYZk5DCRTMZi+gOFSLpfARM8fnPykhOXXL4A5qRM7dx3Ac79+DVN7OuHZTm2qqxRHAHrzF67DkqWL4IyWEEtn8Pabvdi0bS96t+1WiE91SsTaekrS3AHOgAGc/qQawxBQbkCVLeXavuOlsOgYQwFguw5818emFw9x6ypHbDK6fBcoDji4aeXVCIIsPjl2Ck+uWd8yoKgUXrLy83BGRhCLp7Bp8y587we/5HOSaVM1WHKMysGjauQW8rf2ADV9HwOI9I6EMGMGSiNVbNtwjL+ndtihPE+dIXmNITB3znTMv3QW1Xjcw2tG6Pt0WxIrF/fgttXL4LpDGFJzhPnXTFUtsnRlSrO+Axz4XT+SyQQcx+GtFb2mknH2pEUrpyM3LQ7b9eDQDEOHgFxi1NJWA2qJAWEwhcEvp8FWzMDh3QNIOzns2Pw0Lpo9HZ0XdgNGDLEuimFJP/n5w8oW9cFMLNJnCZoX89+FQplz+NyFk7nGYAgQAvG4gXLexQe9J5DNpBCLdSHWTf1AF9KpJCu9rScJ3/ARuGoYQjc/O3BqEQIqrse6T23LR63waLGKbb178NaW91Gt0qM0kdm2AqDaoqQ+QqgllhscYRrY+f4BJLMWiiU7HMBSPFO2qJYo/wPrf/MWTgwVQgzY8mYvG6lcdmAkCF9U16quoMGyRRI4EwgqpnXcy/Elz/pNw8LxEwO474Gftozbc6Hui7LwqMskNFflN80lncBHIm3it6/v4J8oJdIW44vpG8xXmDjV2K2l9K0KIZlL9V5GN0Qy/9D0ddq8HLpmZzFyvBxubvQTGFGv0Qzp/YKa28htkdQofzblghTiGZP3Bpro7rRLETGBa/9kBgqnbJSGHb2QQqY9hmxXgosl2fzIJisEQQ5/uXtqRmdIg2Nbb8WvXGdRFZczcMGCSXKCIwwudeVCQ5KMRd2XyzdhG612OPq9SwsTP2A3lmFT257KGsJA2wVJtM9Khxem1Oi61PBQOOkHucIAUCW73lU2pualcDRwImsxrU29NSJvIMTnwaROl+NaL7VjVCrU/bpUiHZbJQDrSSE5zQxIOGrEAh+OWq2NJVXoqlH4mNZfNS368Z5G1NIDpPL02rfmsqF9w8dnqKUly4drX7UpVh7AqUg/O1Bbs9NQhEfuyjPIgfVAVypCbnzodHpaWdqBRvQ6xUtnl4AvW1/tedKJ5Dl8n3PygHHHR/fxOoo1F7Xpjrybnu9H1lH8Z91FwxW2DCyFMmO8gz9XEcFqqsWg0k+IKApj9LZaKmpMAdNEB00HItJ7FAyqOAqfFIvsceSDInofX3soQm+UNAiGDq7iWwssGRu/3o4CibKzBFu19lZtVbhYZWJPU8LzsXrNpriI9FaaxitAS6f6/1DHdclUA9xYl9M+2OBOmvR3apY/9kj1Tg8ctCy1kxsfz8dFTawUo2U4p16ggfvX+FDxF8ZaTbNnWXhFZYl4h3ouhBeCkZBSuKNjXzl+xP8izOqUqnUYBdVzaodDn5UXrz93rJ7Vu1bdxllS+ExPCHbKq5sYZGyCrr0dk7z0NVrw0HQkxhBACbjV2ec78cS56TyUqTEG1Mde9Im4Oq2ez+810IZ1QANoMkQQFKkCs6uOMC2THyvnFbYaR6k2IKSJ9p5xhPYQvo9MLslte6ViC34KLhBFGtgcc10vKOZLQTqdQOfUdn7wyC55MCwqbbkO5Vf990R5z3NIE7CLLpyKi87uKUhnUiiMlHzXdQPD8D812jpzW0r5SumDnYcDeo7+2qVX8qy90F/B6KDNbS8/u6iXjJSAz/P3mlfivTzkoNBf5ueer/38lbR2D/btPByU8tViW1dus9V3LP+xGRebN73w3qqVq66uLlw8PzHwlWFsfH4L+o6c5j09KWQiEoUy/esfjdJuveMGLFw8HwP9w86bG3bFDeCVvk/yRxjjO3vSi4YHyltv/toS7977b40HbmDt3fMRdvXux/Gjfcjni9zqnnOu//8i1Uy2tWVwwcxuXH3d5bhiwVwIS7jPPPai/dvntpvtXanPDfx+dDcpgP9xMtue+Eu74vziC3ddV7rrGzdZUzomJ1zbQbFQ5rHTRCSaF2ZzaVhxC0ODp6vrnnrdfW3djkw8Ffur4nB1DcmuszwrITM58a1yqfro7Hk98eWrFjrzr5oVtLVPMiluJqICqhVHjAzlvQN7joi3N+6OHTl4oprKJB4ona4+qQ0fLXP4wbSOaZMWjwwWHvKCYGW2LZmNWXLpMBGJGjLHdlHMV4pCiE3tHblHBk/mdzb652lN7Ak02Oie0X75yFB+hTfB/33eNNDXNmXS5lPHhvW/z7OMWuD/BWDhlJ0QZ9DqAAAAAElFTkSuQmCC
+// @icon         data:image/png;base64,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
+// @icon64       data:image/png;base64,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
 // @match        https://*.margonem.pl/*
 // @match        https://*.margonem.com/*
 // @exclude      https://www.margonem.pl/*
@@ -1041,7 +1041,7 @@ const ICON_PATHS = {
   search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
   diag: '<path d="M3 12h4l2.5-6 5 12 2.5-6H21"/>',
   log: '<path d="M5 5h14M5 10h14M5 15h9M5 20h6"/>',
-  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4L5.3 5.3"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
   warn: '<path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.2v.3"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 018 0v3"/>',
@@ -1292,7 +1292,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 @keyframes mpLgItemGlow{0%,100%{filter:drop-shadow(0 0 3px var(--lgg))}50%{filter:drop-shadow(0 0 8px var(--lgg)) brightness(1.12)}}
 .item.mp-lg-fx-bolts > :is(canvas.icon,.canvas-icon,img){animation:mpLgItemBolt 2.1s steps(1) infinite}
 @keyframes mpLgItemBolt{0%,100%{filter:drop-shadow(0 0 3px #6fb2ff)}20%{filter:drop-shadow(0 0 9px #cfe8ff) brightness(1.4)}23%{filter:drop-shadow(0 0 3px #6fb2ff)}61%{filter:drop-shadow(0 0 8px #cfe8ff) brightness(1.3)}64%{filter:drop-shadow(0 0 3px #6fb2ff)}}
-.mp-lg-cap{position:fixed;transform:translate(-50%,8px) scale(.92);opacity:0;transition:opacity .6s,transform .7s cubic-bezier(.2,1.4,.4,1);z-index:2147483003;pointer-events:none;text-align:center;padding:7px 18px 8px;border-radius:8px;background:linear-gradient(rgba(10,10,14,.82),rgba(4,4,8,.88));box-shadow:0 0 0 1px color-mix(in srgb,var(--lgc) 60%,transparent),0 6px 22px rgba(0,0,0,.6),0 0 18px color-mix(in srgb,var(--lgc) 35%,transparent);color:#f2f2f2;font:13px Arimo,Arial,sans-serif;max-width:min(520px,90vw);white-space:normal}
+.mp-lg-cap{position:fixed;transform:translate(-50%,8px) scale(.92);opacity:0;transition:opacity .6s,transform .7s cubic-bezier(.2,1.4,.4,1);max-width:min(560px,92vw);z-index:2147483003;pointer-events:none;text-align:center;padding:7px 18px 8px;border-radius:8px;background:linear-gradient(rgba(10,10,14,.82),rgba(4,4,8,.88));box-shadow:0 0 0 1px color-mix(in srgb,var(--lgc) 60%,transparent),0 6px 22px rgba(0,0,0,.6),0 0 18px color-mix(in srgb,var(--lgc) 35%,transparent);color:#f2f2f2;font:13px Arimo,Arial,sans-serif;max-width:min(520px,90vw);white-space:normal}
 .mp-lg-cap.on{opacity:1;transform:translate(-50%,0) scale(1)}
 .mp-lg-cap-f{font:900 15px Cinzel,Georgia,serif;letter-spacing:.6px;color:var(--lgc);text-shadow:0 0 10px var(--lgc);margin-bottom:2px}
 .mp-lg-cap-n b{color:#ff9a3c;text-shadow:0 0 8px rgba(255,120,30,.8)}
@@ -1597,7 +1597,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .l4-mini{background:radial-gradient(circle at 35% 30%,#b8332b,#5e110d)!important;box-shadow:0 0 0 1px #e9a07a,0 0 0 2px #140302!important;color:#ffd54a!important}
 /* zębatka przy ustawieniach dodatków */
 .l4-gears .mp-card > h3{display:flex;align-items:center;gap:6px}
-.l4-gears .mp-card > h3::before{content:"";width:12px;height:12px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4L5.3 5.3'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4L5.3 5.3'/></svg>") center/contain no-repeat}
+.l4-gears .mp-card > h3::before{content:"";width:12px;height:12px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>") center/contain no-repeat}
 /* pasek skrótów — kafelki jak przyciski gry */
 #mp-qbar{position:fixed;z-index:2147482998;display:flex;flex-direction:column;gap:5px;padding:0;background:none!important;border:0!important;box-shadow:none!important;width:auto!important;opacity:1}
 #mp-qbar.hz{flex-direction:row}
@@ -2150,36 +2150,11 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
-  { v: '1.2.1', d: '11.11.2026', items: [
-    'Kafelek L4 ma 42×42 jak przyciski gry.',
-    'Skróty: włączony dodatek ma zieloną ikonkę, wyłączony — szarą.',
-    'Dodawanie i usuwanie skrótu bez włączania dodatku — przycisk pinezki na liście i w ustawieniach dodatku.',
-    'Kafelek L4 da się przesunąć tylko w trybie edycji przycisków gry (Konfiguracja → Sterowanie, gdy widać puste miejsca) — tak samo jak pozostałe przyciski.',
-  ] },
-  { v: '1.2.0', d: '11.11.2026', items: [
-    'Kafelek L4 (42×42) na czerwonym tle ze złotym napisem, w rzędzie przycisków gry — ma stałe miejsce jak inne przyciski. Przenosisz go tak jak przyciski gry: w trybie ich edycji (Konfiguracja → Sterowanie).',
-    'Mniejsze ikonki skrótów dodatków; bez kafelka panelu na pasku skrótów.',
-    'Let\'s Cook Together nazywa się teraz Lepsza Grupa (nowa ikonka).',
-    'Legendarny Łup: import dodatkowych stylów z plików .json — każdy jako osobna karta z testem i usuwaniem.',
-    'Ustawienia dodatków oznaczone zębatką.',
-  ] },
-  { v: '1.1.0', d: '11.11.2026', items: [
-    'Nowy wygląd panelu w stylu okien gry: zakładki Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
-    'Lista dodatków z wyszukiwarką, filtrem (wszystkie / włączone / wyłączone) i licznikiem włączonych.',
-    'Motywnik przeniesiony do osobnej zakładki „Motywy” — wybór stylu interfejsu i import własnego CSS.',
-    'Pasek skrótów ma stałe miejsce wybierane w Ustawieniach: Prawo góra pionowo (domyślnie, przy ekwipunku), Lewo góra pionowo, Lewo góra poziomo, Lewo dół poziomo.',
-    'Nowe ikonki skrótów w stylu przycisków gry.',
-    'Nowa ikonka L4 — kafelek jak przyciski gry, także na liście Tampermonkey.',
-    'Hey WakeUP!: 10 nowych stylów komunikatów.',
-    'Informacja o zasadach korzystania pokazuje się tylko raz — przy pierwszej instalacji. Zawsze można ją przeczytać w zakładce Informacje.',
-  ] },
   { v: '1.0.0', d: '11.11.2026', items: [
-    'Pierwsza oficjalna wersja zestawu.',
-    'Ustawienia wspólne dla wszystkich postaci albo osobne dla każdej, z kopiowaniem na wszystkie postacie.',
-    'Legendarny Łup: efekty Thor, Smoke, Kasyno, Disco i własny styl — tylko na legendach w oknie łupów, z testem na łupach Tanrotha.',
-    'Motywnik: 5 stylów interfejsu (ramy, paski, okna, przyciski, okno łupów) i własne style CSS.',
-    'Wrogowie na mapie: opcjonalna wiadomość na czat klanowy i dźwięk (wbudowany albo własny plik).',
-    'Poprawione odczytywanie danych z gry (pakiety czytane raz, także te wysyłane jako tekst).',
+    'Pierwsza wersja L4Tools.',
+    'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
+    'Kafelek L4 w rzędzie przycisków gry i pasek skrótów dodatków z wyborem ułożenia.',
+    'Dodatki: Dobijarka, Hey WakeUP!, Bratan, Wrogowie na mapie, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup oraz Motywy.',
   ] },
 ];
 
@@ -2420,7 +2395,7 @@ const ui = {
         list.appendChild(el('div', { class: 'l4-card' + (on ? ' on' : ''), onclick: (e) => { if (e.target.closest('.mp-sw, .l4-gearb')) return; this.sel = a.id; this.renderMain(); } },
           el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
           el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, a.desc)),
-          el('button', { class: 'l4-gearb l4-pinb' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'W skrótach — kliknij, żeby usunąć' : 'Dodaj do skrótów', onclick: () => { const p = quickbar.togglePin(a.id); toast(`${a.name}: ${p ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); draw(); } }, icon('pin', 14)),
+          el('button', { class: 'l4-gearb l4-pinb' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'W skrótach — kliknij, żeby usunąć' : 'Dodaj do skrótów', onclick: () => { quickbar.togglePin(a.id); draw(); } }, icon('pin', 14)),
           sw,
           el('button', { class: 'l4-gearb', title: 'Ustawienia', onclick: () => { this.sel = a.id; this.renderMain(); } }, icon('gear', 15))));
       }
@@ -2460,7 +2435,7 @@ const ui = {
       el('button', { class: 'l4-sq', title: 'Wróć do listy', onclick: () => { this.sel = null; this.renderMain(); } }, icon('back', 16)),
       el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
       el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
-      el('button', { class: 'l4-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'Usuń ikonkę z paska skrótów' : 'Dodaj ikonkę na pasek skrótów (także gdy dodatek jest wyłączony)', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); this.renderMain(); } }, icon('pin', 13), quickbar.isPinned(a.id) ? 'Usuń ze skrótów' : 'Dodaj do skrótów'),
+      el('button', { class: 'l4-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'Usuń ikonkę z paska skrótów' : 'Dodaj ikonkę na pasek skrótów (także gdy dodatek jest wyłączony)', onclick: () => { quickbar.togglePin(a.id); this.renderMain(); } }, icon('pin', 13), quickbar.isPinned(a.id) ? 'Usuń ze skrótów' : 'Dodaj do skrótów'),
       sw));
     M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
     this.renderAddon(M, a.id, () => this.renderMain(), true);
@@ -2820,7 +2795,7 @@ const quickbar = {
       el('div', { class: 'l4-ico', style: { width: '30px', height: '30px' } }, icon(a.icon, 17)),
       el('div', { style: { flex: 1, minWidth: 0 } }, el('div', { class: 'mp-title', style: { fontSize: '14px' } }, a.name), el('div', { class: 'mp-sub' }, cfg.enabled ? 'włączony' : 'wyłączony')),
       sw,
-      el('button', { class: 'mp-x', title: 'Usuń ze skrótów', onclick: () => { this.togglePin(id); this.closePop(); toast(`${a.name}: usunięto ze skrótów`); } }, icon('pin', 15)),
+      el('button', { class: 'mp-x', title: 'Usuń ze skrótów', onclick: () => { this.togglePin(id); this.closePop(); } }, icon('pin', 15)),
       el('button', { class: 'mp-x', title: 'Otwórz w pełnym panelu', onclick: () => { this.closePop(); ui.open(id); } }, icon('grid', 15)),
       el('button', { class: 'mp-x', title: 'Zamknij', onclick: () => this.closePop() }, icon('close', 16)));
     const body = el('div', { class: 'mp-qbody' });
@@ -3127,7 +3102,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'napad', name: 'Dobijarka', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
-    desc: 'Włączona: atakuje każdego gracza, który wejdzie w zasięg (w podanym zakresie poziomów). Klawisz działa zawsze — namierza najbliższego gracza i atakuje go, gdy tylko będzie w zasięgu. Opcjonalnie zapamiętuje cel po jego zniknięciu, dopóki nie wybierzesz innego albo nie przerwiesz. To samo robi opcja „Dobij" w menu gracza; „Przerwij dobijanie" cofa polecenie. Kogo nie atakować, ustawiasz w Bratanie.',
+    desc: 'Pomaga dopaść przeciwnika. Klawiszem namierzasz najbliższego gracza, a dodatek zaatakuje go, gdy tylko znajdzie się w zasięgu. Po włączeniu atakuje też każdego, kto wejdzie w zasięg w ustawionym przedziale poziomów. To samo zrobisz z menu gracza: „Dobij” i „Przerwij dobijanie”. Kogo oszczędzić, ustawiasz w Bratanie.',
     defaults: { enabled: false, keyAttack: '', lvlMin: 0, lvlMax: 500, target: null, remember: true },
     notes: () => [{ type: 'warn', text: 'Włączona Dobijarka atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
     settings: [
@@ -3226,7 +3201,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'], renderFirst: true,
-    desc: 'Zmienia wygląd komunikatów gry (duży żółty napis na środku ekranu) — także tych wysyłanych przez panel. Wybierz gotowy styl albo ułóż własny.',
+    desc: 'Odświeża wygląd dużych komunikatów gry, które wyskakują na środku ekranu. Wybierz jeden z gotowych stylów albo ułóż własny — kolor, czcionkę, tło i ramkę.',
     defaults: { enabled: false, style: 'mini', fg: '#ffe500', glow: '#ffb547', bg: '#10111c', bgAlpha: 0, frame: false, radius: 10, font: 'Arial,"Segoe UI",sans-serif', size: 24, bold: true, outline: true, shadow: false, gameSelectors: '.big-messages .message' },
     settings: [
       { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
@@ -3267,7 +3242,7 @@ function parseProtection(data) {
   let cfg;
   defineAddon({
     id: 'bratan', name: 'Bratan', icon: 'bratan', color: ['#3ddc97', '#1c9b6c'],
-    desc: 'Blokuje atak na klanowiczów, znajomych i sojuszników. Działa na wszystkie ataki — także kliknięte ręcznie w grze.',
+    desc: 'Chroni swoich. Nie pozwoli zaatakować klanowicza, znajomego ani sojusznika — nawet jeśli klikniesz go przez pomyłkę.',
     defaults: { enabled: false, clan: true, friends: true, allies: true, nicks: [] },
     settings: [
       { key: 'clan', type: 'bool', label: 'Chroń klanowiczów' },
@@ -3317,7 +3292,7 @@ function parseProtection(data) {
   }
   defineAddon({
     id: 'minichat', name: 'MiniChat', icon: 'minichat', color: ['#5b8cff', '#3a5bd9'],
-    desc: 'Ustawia wysokość okna czatu.',
+    desc: 'Pozwala ustawić wysokość okna czatu tak, jak Ci wygodnie.',
     defaults: { height: 160, selector: '.new-chat-window' },
     settings: [
       { key: 'height', type: 'range', label: 'Wysokość czatu (px)', min: 60, max: 700, step: 10, live: () => apply() },
@@ -3456,7 +3431,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'ktotu', name: 'Gracze na mapie+', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
-    desc: 'Lista graczy na mapie z filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami. Tryb minimalny pokazuje samą listę po filtrach. Kliknij gracza, żeby zobaczyć jego kartę: EQ, Dobij, zaproszenie do grupy i znajomych, Bratan.',
+    desc: 'Wygodna lista wszystkich graczy na mapie. Filtrujesz po nicku, klanie, poziomie, profesji i relacji, a ulubione filtry zapisujesz. Kliknięcie gracza pokazuje jego kartę: EQ, dobijanie, zaproszenie do grupy i znajomych.',
     defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
     settings: [
@@ -3622,7 +3597,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
-    desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu. Liczone są osoby z Twojej drużyny, które brały udział w walce. Przy przedmiocie dla konkretnej profesji pierwszeństwo mają gracze tej profesji; gdy nikogo takiego nie było w walce, losują wszyscy. Zakłada, że wszyscy klikną „Chcę".',
+    desc: 'Przy łupie pokazuje, jaką masz szansę na zdobycie każdego przedmiotu. Bierze pod uwagę osoby z drużyny, które brały udział w walce, i pierwszeństwo profesji.',
     defaults: { enabled: false },
     init(c) {
       cfg = c;
@@ -3738,7 +3713,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'cook', name: 'Lepsza Grupa', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
-    desc: 'Zaproszenia do grupy pod klawisz dla znajomych, klanowiczów, sojuszników albo wszystkich na mapie oraz rozwiązanie grupy pod klawisz.',
+    desc: 'Szybkie zbieranie drużyny. Jednym klawiszem zapraszasz znajomych, klanowiczów, sojuszników albo wszystkich z mapy, a drugim rozwiązujesz grupę.',
     defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10 },
     keys: [
       { key: 'keyInvite', label: 'zaproś', fn: () => inviteAll() },
@@ -3858,7 +3833,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'jakibon', name: 'Jaki To Bon', icon: 'jakibon', color: ['#ff9a3c', '#d4561c'],
-    desc: 'Dodaje do przedmiotów legendarnych skrót bonusu w prawym górnym rogu (OR — Ostatni ratunek, CBK — Cios bardzo krytyczny, FO — Fasada opieki…). Działa na Twoim ekwipunku, w oknie „Ekwipunek Postaci" z gry i w podglądzie Pokaż EQ.',
+    desc: 'Na przedmiotach legendarnych wyświetla skrót bonusu (np. OR, CBK, FO), więc od razu widzisz, co to za legenda — w swoim ekwipunku i u innych graczy.',
     defaults: { enabled: false, allItems: false, abbr: {} },
     settings: [{ key: 'allItems', type: 'bool', label: 'Pokazuj też na przedmiotach w torbach', hint: 'Domyślnie tylko założone.' }],
     render(box) {
@@ -3945,7 +3920,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
-    desc: 'Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny), widoczne w ekwipunku. Prawy klik na przedmiocie → „Podpisz…" (albo Alt + prawy klik). Podpis trafia od razu na wszystkie takie same przedmioty — np. kamienie ustawione w to samo miejsce.',
+    desc: 'Własne podpisy na przedmiotach — np. dokąd prowadzi kamień teleportacyjny. Prawy klik na przedmiocie → „Podpisz…”. Podpis pojawia się od razu na wszystkich takich samych przedmiotach.',
     defaults: { enabled: false, byId: {}, byKey: {}, rules: [], autoTeleport: true },
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu (jeśli gra ją podaje)' }],
     render(box, c, rerender) {
@@ -4521,7 +4496,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
-    desc: 'Po najechaniu na gracza — na mapie albo na liście graczy — zamiast zwykłego dymka gry pokazuje rozszerzony: informacje o graczu, jego postać z outfitem, ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych. Zwykłe „Pokaż ekwipunek" z menu gry działa dalej normalnie.',
+    desc: 'Po najechaniu na gracza pokazuje jego postać, cały ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych — bez otwierania żadnych okien.',
     defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, cacheSec: 300, tipSelector: '.tip-wrapper.normal-tip' },
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [
@@ -4665,7 +4640,7 @@ MP.itemDeco = itemDeco;
   }
   defineAddon({
     id: 'taxi', name: 'Fake Taxi', icon: 'taxi', color: ['#ffe14d', '#f0b400'],
-    desc: 'Włączony: od razu przyjmuje przywołanie drużyny („…przyzywa do siebie swoją drużynę!") — okno z pytaniem w ogóle się nie pokazuje.',
+    desc: 'Gdy ktoś z drużyny przyzywa grupę do siebie, dodatek od razu przyjmuje przywołanie — bez wyskakującego okienka.',
     defaults: {},
     init(c) {
       cfg = c;
@@ -4685,7 +4660,7 @@ MP.itemDeco = itemDeco;
   let cfg, doneFor = 0;
   defineAddon({
     id: 'autof', name: 'Szybka walka', icon: 'autof', color: ['#ffd447', '#ff8a00'],
-    desc: 'Włącz/wyłącz. Gdy jest włączony, każda walka od razu przechodzi na szybką walkę — np. przy kolosie, gdy odchodzisz od komputera, a reszta nie musi czekać na Twoją turę.',
+    desc: 'Każda walka od razu przechodzi w szybką walkę. Przydatne np. przy kolosie, gdy odchodzisz od komputera, a reszta nie chce czekać na Twoją turę.',
     defaults: { enabled: false, delayMin: 250, delayMax: 600 },
     settings: [
       { adv: true, key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000 },
@@ -4938,7 +4913,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
-    desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". Prawy klik na numerze zestawu przy ekwipunku → wybierz zestaw, który ma się założyć zaraz po walce.',
+    desc: 'Zaplanuj coś na koniec walki: użycie przedmiotu (teleport, mikstura, przywołanie), rozwiązanie grupy albo zmianę zestawu. Wybierasz to prawym klikiem, a dodatek zrobi to od razu po walce.',
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
       { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
@@ -5554,7 +5529,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
-    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Ulepszasz przyciskiem albo klawiszem (okno Rzemiosło → Ulepszanie otwiera się samo) — to zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Każdy typ składników może być przypisany tylko do jednego ulepszanego przedmiotu.',
+    desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
     defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
@@ -5695,7 +5670,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'wrogowie', name: 'Wrogowie na mapie', icon: 'wrogowie', color: ['#ff6a5c', '#c0392b'],
-    desc: 'Na czerwonych mapach pokazuje komunikat „Wróg na mapie: Nick [Klan]", gdy pojawi się wróg. Znajomi, klan, sojusznicy, grupa i gracze z listy Bratana nigdy nie są zgłaszani.',
+    desc: 'Na czerwonych mapach daje znać, gdy pojawi się wróg — z nickiem i klanem. Może też od razu napisać o tym na czacie klanowym i zagrać dźwięk. Znajomi, klan, sojusznicy i Twoja grupa nigdy nie są zgłaszani.',
     defaults: { personal: true, enemyClans: true, neutral: false, showLvl: false, pvpCodes: [2], color: '#ff4b3e', clanChat: false, text: 'Wróg! {Nick Gracza} z klanu {Nazwa Klanu} w lokalizacji {Mapa}', sound: 'default', volume: 0.7 },
     settings: [
       { key: 'enemyClans', type: 'bool', label: 'Wrogie klany' },
@@ -6360,7 +6335,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
   defineAddon({
     id: 'motywnik', name: 'Motywy', icon: 'motywnik', color: ['#2ef2c4', '#8a5cff'], renderFirst: true,
-    desc: 'Style całego interfejsu: ramy ekranu, paski, okna, nagłówki, zakładki, przyciski, menu, sloty, dymki i czat. Domyślny = klasyczny wygląd gry. Rozmiary zostają jak w grze. Możesz też wgrać własne style CSS.',
+    desc: 'Nowy wygląd całego interfejsu gry — ramek, okien, pasków, przycisków i czatu. „Domyślny” przywraca klasyczny wygląd. Możesz też wczytać własny styl CSS.',
     defaults: { theme: 'domyslny', custom: [], customOn: null },
     settings: [],
     render(box, c, rerender) {
@@ -7026,17 +7001,41 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     }
     return out;
   }
+  /** Granice okna łupów razem z nagłówkiem „Łupy” i dolnym paskiem (przycisk „Potwierdź”). */
+  function winBox(win) {
+    win = (win.closest && win.closest('.c-window')) || win;
+    const r = win.getBoundingClientRect();
+    let t = r.top, b = r.bottom, l = r.left, rr = r.right;
+    for (const n of win.querySelectorAll('.header-label-positioner, .header-label, .bottom-wrapper, .accept-button, .c-window__bottom-bar')) {
+      const q = n.getBoundingClientRect(); if (!q.width) continue;
+      t = Math.min(t, q.top); b = Math.max(b, q.bottom); l = Math.min(l, q.left); rr = Math.max(rr, q.right);
+    }
+    return { t, b, cx: (l + rr) / 2 };
+  }
   function showCaption(win, me, st) {
     if (!win || cfg.names === false) return;
     const names = lootNames(win); if (!names.length) return;
-    const r = win.getBoundingClientRect();
     const cc = cfg.custom || {};
     const fl = st === 'wlasny' ? (cc.capText || 'Legenda!') : (FLAVOR[st] || FLAVOR.thor)[Math.floor(Math.random() * 4)];
-    const cap = el('div', { class: 'mp-lg-cap ' + st, style: { left: r.left + r.width / 2 + 'px', top: Math.min(innerHeight - 70, r.bottom + 10) + 'px', '--lgc': st === 'wlasny' ? (cc.color || '#ff9a1f') : STYLES[st].col } },
+    const cap = el('div', { class: 'mp-lg-cap ' + st, style: { '--lgc': st === 'wlasny' ? (cc.color || '#ff9a1f') : STYLES[st].col } },
       el('div', { class: 'mp-lg-cap-f' }, fl),
       el('div', { class: 'mp-lg-cap-n' }, (names.length > 1 ? 'Zdobyłeś legendy: ' : 'Zdobyłeś: '), names.map((n, i) => el('span', null, i ? ', ' : '', el('b', null, n)))));
     document.body.appendChild(cap);
     me.cap = cap;
+    // napis stoi NAD oknem łupów (nie zasłania „Potwierdź”) i jedzie razem z oknem; pod oknem tylko, gdy u góry brak miejsca
+    let last = '';
+    const place = () => {
+      if (!cap.isConnected) return;
+      if (win.isConnected) {
+        const B = winBox(win), h = cap.offsetHeight || 50;
+        const above = B.t - 8 - h >= 4;
+        const top = Math.round(above ? B.t - 8 - h : Math.min(innerHeight - h - 4, B.b + 8));
+        const key = Math.round(B.cx) + ':' + top + ':' + h;
+        if (key !== last) { last = key; cap.style.left = Math.round(B.cx) + 'px'; cap.style.top = top + 'px'; }
+      }
+      requestAnimationFrame(place);
+    };
+    place();
     requestAnimationFrame(() => cap.classList.add('on'));
     setTimeout(() => { if (cap.isConnected) cap.classList.remove('on'); }, Math.max(1500, me.dur * 1000 - 800));
   }
@@ -7099,8 +7098,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     // (obwódka całego okna łupów — usunięta na życzenie; zostaje tylko wyróżnienie pola z legendą)
     if (w) { const old = w.querySelector(':scope > .mp-lg-winring'); if (old) old.remove(); }
     // efekt na samym przedmiocie
-    FX_CLASSES.forEach((c) => it.classList.remove(c));
-    it.classList.add('mp-lg-fx-' + spec.item); it.style.setProperty('--lgg', spec.glow);
+    const fx = 'mp-lg-fx-' + spec.item;
+    if (!it.classList.contains(fx)) { FX_CLASSES.forEach((c) => it.classList.remove(c)); it.classList.add(fx); }
+    it.style.setProperty('--lgg', spec.glow);
     if ((cfg.hlMode || 'ring') === 'none') return;
     let h = card.querySelector(':scope > .mp-lg-hl');
     if (!h) {
@@ -7108,7 +7108,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       h = el('div'); card.appendChild(h);
     }
     const was = h.className;
-    h.className = hlClass(spec);
+    if (was !== hlClass(spec)) h.className = hlClass(spec);
     h.style.setProperty('--lgc', spec.glow);
     if (spec.ring === 'smoke' && !/\bsmoke\b/.test(was)) try { h.animate([{ opacity: 0, filter: 'blur(8px)' }, { opacity: 1, filter: 'blur(0px)' }], { duration: 3500, easing: 'ease-out' }); } catch {}
     if (spec.item === 'bolts') fieldBolts(h, slot); else { const c = h.querySelector('canvas'); if (c) c.remove(); }
@@ -7121,7 +7121,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     let next = 0, cur = null, t0 = performance.now();
     const loop = (n) => {
       if (!cv.isConnected) return;
-      const W = (cv.width = h.clientWidth || 60), H = (cv.height = h.clientHeight || 100);
+      const W = h.clientWidth || 60, H = h.clientHeight || 100;
+      if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
       const hr = h.getBoundingClientRect(), sr = slot.getBoundingClientRect();
       const tx = sr.left - hr.left + sr.width / 2, ty = sr.top - hr.top + sr.height / 2;
       const t = (n - t0) / 1000;
@@ -7488,7 +7489,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     for (const w of lootWindows()) captureTpl(w);
     if (!cfg.enabled) return;
     for (const w of lootWindows()) for (const it of $$('.item', w)) {
-      if (it.dataset.mpLg) { if (!it.querySelector(':scope > .mp-lg-hl')) markItem(it); continue; }
+      if (it.dataset.mpLg) {
+        // gra mogła przebudować okienko (np. po „Chcę”) — odtwarzamy wyróżnienie tylko, gdy naprawdę zniknęło
+        const card = cardOf(it);
+        if ((cfg.hlMode || 'ring') !== 'none' && card && !card.querySelector(':scope > .mp-lg-hl')) markItem(it);
+        else if (!it.className.includes('mp-lg-fx-')) markItem(it);
+        continue;
+      }
       const id = game.itemIdFromEl(it);
       if (!id) continue;
       const rr = rarityOf(it);
@@ -7655,7 +7662,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
   defineAddon({
     id: 'legenda', name: 'Legendarny Łup', icon: 'legenda', color: ['#ff9a1f', '#ff3d6e'], renderFirst: true,
-    desc: 'Gdy w łupie trafi się przedmiot legendarny — efekt na cały ekran z dźwiękiem: Thor, Smoke, Kasyno, Disco albo Twój własny. Każdy styl ma wbudowany dźwięk i może mieć Twój plik dźwiękowy. Przycisk „Test" pokazuje efekt od razu.',
+    desc: 'Kiedy wypadnie legenda, robi się widowisko: efekt na cały ekran z dźwiękiem — Thor, Smoke, Kasyno, Disco albo Twój własny styl. Legenda w oknie łupów dostaje wyróżnienie, a przyciskiem „Test” sprawdzisz efekt od razu.',
     defaults: { enabled: false, style: 'thor', extras: [], extraOn: null, volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
     notes: () => [{ type: 'info', text: 'Działa samodzielnie — <b>nie wymaga</b> opcji gry „Podświetlenie okna łupów”. Najlepiej ją <b>wyłączyć</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy), żeby efekty gry i dodatku nie nakładały się na siebie. Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
@@ -7797,7 +7804,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       bus.on('data', onData);
       setInterval(() => { try { collectLegends(); } catch {} }, 5000);
       const scan = debounce(scanDom, 80);
-      new MutationObserver(() => { if (cfg.enabled) scan(); }).observe(document.body, { childList: true, subtree: true });
+      // nasze własne elementy (obwódki, płótna, napis) nie wywołują ponownego skanu — inaczej efekty „skaczą”
+      const ours = (n) => n.nodeType !== 1 || /(^|\s)mp-lg|mp-lg-cv/.test(n.className && n.className.baseVal !== undefined ? n.className.baseVal : n.className || '') || (n.tagName === 'CANVAS' && n.closest && n.closest('.mp-lg-hl'));
+      new MutationObserver((recs) => {
+        if (!cfg.enabled) return;
+        for (const r of recs) { for (const n of r.addedNodes) if (!ours(n)) return scan(); for (const n of r.removedNodes) if (!ours(n)) return scan(); }
+      }).observe(document.body, { childList: true, subtree: true });
       MP.legenda = { play, stop: stopFx, STYLES, SOUND, learn: learnItems, debug: () => { const t = store.get('legenda:lootTpl', null); return { ostatnieLupy: lastScan.slice(), trybHeroikow: !!cfg.checkHeroic, rozmiary: store.get('legenda:lootSizes', {}), wzor: t ? t.html.slice(0, 9000) : null, rodzic: t && t.parent }; } };
     },
     onToggle(on) { if (!on) stopFx(); },
@@ -7853,5 +7865,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.2.1";
+MP.version = "1.0.0";
 })();

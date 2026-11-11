@@ -119,7 +119,7 @@
   }
   defineAddon({
     id: 'taxi', name: 'Fake Taxi', icon: 'taxi', color: ['#ffe14d', '#f0b400'],
-    desc: 'Włączony: od razu przyjmuje przywołanie drużyny („…przyzywa do siebie swoją drużynę!") — okno z pytaniem w ogóle się nie pokazuje.',
+    desc: 'Gdy ktoś z drużyny przyzywa grupę do siebie, dodatek od razu przyjmuje przywołanie — bez wyskakującego okienka.',
     defaults: {},
     init(c) {
       cfg = c;
@@ -139,7 +139,7 @@
   let cfg, doneFor = 0;
   defineAddon({
     id: 'autof', name: 'Szybka walka', icon: 'autof', color: ['#ffd447', '#ff8a00'],
-    desc: 'Włącz/wyłącz. Gdy jest włączony, każda walka od razu przechodzi na szybką walkę — np. przy kolosie, gdy odchodzisz od komputera, a reszta nie musi czekać na Twoją turę.',
+    desc: 'Każda walka od razu przechodzi w szybką walkę. Przydatne np. przy kolosie, gdy odchodzisz od komputera, a reszta nie chce czekać na Twoją turę.',
     defaults: { enabled: false, delayMin: 250, delayMax: 600 },
     settings: [
       { adv: true, key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000 },
@@ -392,7 +392,7 @@
 
   defineAddon({
     id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
-    desc: 'Prawy klik na przedmiocie → „Użyj po walce": zaraz po zakończeniu walki przedmiot zostanie użyty (teleporty, mikstury, przywołania…). Przedmiot czekający na użycie ma w rogu ikonkę zegara. Prawy klik na ikonie grupy → „Rozwiąż grupę po walce". Prawy klik na numerze zestawu przy ekwipunku → wybierz zestaw, który ma się założyć zaraz po walce.',
+    desc: 'Zaplanuj coś na koniec walki: użycie przedmiotu (teleport, mikstura, przywołanie), rozwiązanie grupy albo zmianę zestawu. Wybierasz to prawym klikiem, a dodatek zrobi to od razu po walce.',
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
       { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
@@ -1008,7 +1008,7 @@
 
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
-    desc: 'Wskaż przedmiot do ulepszania i wybierz, czym go karmić: rzadkość (zwykłe, unikaty, heroiki — nigdy legendy) i typy przedmiotów. Ulepszasz przyciskiem albo klawiszem (okno Rzemiosło → Ulepszanie otwiera się samo) — to zwykłe ulepszanie z gry, tylko kilka przedmiotów naraz. Każdy typ składników może być przypisany tylko do jednego ulepszanego przedmiotu.',
+    desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
     defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [

@@ -114,7 +114,7 @@
 
   defineAddon({
     id: 'ktotu', name: 'Gracze na mapie+', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
-    desc: 'Lista graczy na mapie z filtrami (nick, klan, poziom, profesja, relacja) i zapisywanymi zestawami. Tryb minimalny pokazuje samą listę po filtrach. Kliknij gracza, żeby zobaczyć jego kartę: EQ, Dobij, zaproszenie do grupy i znajomych, Bratan.',
+    desc: 'Wygodna lista wszystkich graczy na mapie. Filtrujesz po nicku, klanie, poziomie, profesji i relacji, a ulubione filtry zapisujesz. Kliknięcie gracza pokazuje jego kartę: EQ, dobijanie, zaproszenie do grupy i znajomych.',
     defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
     settings: [
@@ -280,7 +280,7 @@
 
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
-    desc: 'Pod kafelkami łupu pokazuje Twoją szansę (%) na złapanie przedmiotu. Liczone są osoby z Twojej drużyny, które brały udział w walce. Przy przedmiocie dla konkretnej profesji pierwszeństwo mają gracze tej profesji; gdy nikogo takiego nie było w walce, losują wszyscy. Zakłada, że wszyscy klikną „Chcę".',
+    desc: 'Przy łupie pokazuje, jaką masz szansę na zdobycie każdego przedmiotu. Bierze pod uwagę osoby z drużyny, które brały udział w walce, i pierwszeństwo profesji.',
     defaults: { enabled: false },
     init(c) {
       cfg = c;
@@ -396,7 +396,7 @@
 
   defineAddon({
     id: 'cook', name: 'Lepsza Grupa', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
-    desc: 'Zaproszenia do grupy pod klawisz dla znajomych, klanowiczów, sojuszników albo wszystkich na mapie oraz rozwiązanie grupy pod klawisz.',
+    desc: 'Szybkie zbieranie drużyny. Jednym klawiszem zapraszasz znajomych, klanowiczów, sojuszników albo wszystkich z mapy, a drugim rozwiązujesz grupę.',
     defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10 },
     keys: [
       { key: 'keyInvite', label: 'zaproś', fn: () => inviteAll() },

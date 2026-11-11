@@ -79,7 +79,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'jakibon', name: 'Jaki To Bon', icon: 'jakibon', color: ['#ff9a3c', '#d4561c'],
-    desc: 'Dodaje do przedmiotów legendarnych skrót bonusu w prawym górnym rogu (OR — Ostatni ratunek, CBK — Cios bardzo krytyczny, FO — Fasada opieki…). Działa na Twoim ekwipunku, w oknie „Ekwipunek Postaci" z gry i w podglądzie Pokaż EQ.',
+    desc: 'Na przedmiotach legendarnych wyświetla skrót bonusu (np. OR, CBK, FO), więc od razu widzisz, co to za legenda — w swoim ekwipunku i u innych graczy.',
     defaults: { enabled: false, allItems: false, abbr: {} },
     settings: [{ key: 'allItems', type: 'bool', label: 'Pokazuj też na przedmiotach w torbach', hint: 'Domyślnie tylko założone.' }],
     render(box) {
@@ -166,7 +166,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
-    desc: 'Własne podpisy na przedmiotach (np. dokąd prowadzi kamień teleportacyjny), widoczne w ekwipunku. Prawy klik na przedmiocie → „Podpisz…" (albo Alt + prawy klik). Podpis trafia od razu na wszystkie takie same przedmioty — np. kamienie ustawione w to samo miejsce.',
+    desc: 'Własne podpisy na przedmiotach — np. dokąd prowadzi kamień teleportacyjny. Prawy klik na przedmiocie → „Podpisz…”. Podpis pojawia się od razu na wszystkich takich samych przedmiotach.',
     defaults: { enabled: false, byId: {}, byKey: {}, rules: [], autoTeleport: true },
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu (jeśli gra ją podaje)' }],
     render(box, c, rerender) {
@@ -742,7 +742,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
-    desc: 'Po najechaniu na gracza — na mapie albo na liście graczy — zamiast zwykłego dymka gry pokazuje rozszerzony: informacje o graczu, jego postać z outfitem, ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych. Zwykłe „Pokaż ekwipunek" z menu gry działa dalej normalnie.',
+    desc: 'Po najechaniu na gracza pokazuje jego postać, cały ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych — bez otwierania żadnych okien.',
     defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, cacheSec: 300, tipSelector: '.tip-wrapper.normal-tip' },
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [

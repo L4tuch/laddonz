@@ -66,7 +66,7 @@
 
   defineAddon({
     id: 'wrogowie', name: 'Wrogowie na mapie', icon: 'wrogowie', color: ['#ff6a5c', '#c0392b'],
-    desc: 'Na czerwonych mapach pokazuje komunikat „Wróg na mapie: Nick [Klan]", gdy pojawi się wróg. Znajomi, klan, sojusznicy, grupa i gracze z listy Bratana nigdy nie są zgłaszani.',
+    desc: 'Na czerwonych mapach daje znać, gdy pojawi się wróg — z nickiem i klanem. Może też od razu napisać o tym na czacie klanowym i zagrać dźwięk. Znajomi, klan, sojusznicy i Twoja grupa nigdy nie są zgłaszani.',
     defaults: { personal: true, enemyClans: true, neutral: false, showLvl: false, pvpCodes: [2], color: '#ff4b3e', clanChat: false, text: 'Wróg! {Nick Gracza} z klanu {Nazwa Klanu} w lokalizacji {Mapa}', sound: 'default', volume: 0.7 },
     settings: [
       { key: 'enemyClans', type: 'bool', label: 'Wrogie klany' },
