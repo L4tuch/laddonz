@@ -284,7 +284,9 @@ const net = {
       if (!obj || typeof obj[name] !== 'function' || obj[name].__mp) return false;
       const orig = obj[name];
       obj[name] = function (...args) {
-        const data = args.find((a) => a && typeof a === 'object');
+        // gra podaje pakiet jako obiekt albo jako tekst JSON (tak samo czyta to lootlog)
+        let data = args.find((a) => a && typeof a === 'object');
+        if (!data) { const t = args.find((a) => typeof a === 'string' && a.charCodeAt(0) === 123); if (t) { try { data = JSON.parse(t); } catch {} } }
         if (data) self.onData(data);
         return orig.apply(this, args);
       };

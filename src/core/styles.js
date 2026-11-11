@@ -113,8 +113,11 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-beta-txt{color:color-mix(in srgb,var(--mp-accent) 40%,#fff);font-weight:600}
 .mp-fbtn{position:fixed;z-index:2147470500;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;background:radial-gradient(circle at 35% 30%,#3a3d44,#15161a);color:#8a8f98;box-shadow:0 0 0 2px #2a2d33,0 4px 10px rgba(0,0,0,.6);transition:color .3s,box-shadow .3s}
 .mp-fbtn:hover{filter:brightness(1.2)}
-#mp-bers{position:fixed;width:22px;height:22px;z-index:2147470300}
-#mp-bers.mp-bers-free{width:26px;height:26px}
+#mp-bers{position:fixed;width:20px;height:20px;z-index:2147470300;cursor:pointer;user-select:none;-webkit-user-drag:none}
+#mp-bers svg{display:block;pointer-events:none}
+#mp-bers .sk{fill:#8d8d93;stroke:#2b2b30;stroke-width:1.1}#mp-bers .ey{fill:#232327}
+#mp-bers.on .sk{fill:#a63cff;stroke:#3b0866}#mp-bers.on .ey{fill:#24003f}#mp-bers.on svg{filter:drop-shadow(0 0 2px rgba(170,70,255,.75))}
+#mp-bers:hover svg{transform:scale(1.12)}
 .mp-fbtn.mp-bers.on{color:#fff;background:radial-gradient(circle at 35% 30%,#ff7a3c,#8a1a00);box-shadow:0 0 0 2px #ffb070,0 0 16px 4px rgba(255,90,30,.75);animation:mpBers 1.2s ease-in-out infinite}
 @keyframes mpBers{0%,100%{box-shadow:0 0 0 2px #ffb070,0 0 10px 2px rgba(255,90,30,.6)}50%{box-shadow:0 0 0 2px #ffd0a0,0 0 22px 7px rgba(255,90,30,.95)}}
 .mp-fbtn.mp-free.on{color:#fff;background:radial-gradient(circle at 35% 30%,#4fe0b8,#0d6b52);box-shadow:0 0 0 2px #9fffe0,0 0 16px 4px rgba(40,220,170,.7);animation:mpFree 1.6s ease-in-out infinite}

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.3
+// @version      1.0.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -841,7 +841,9 @@ const net = {
       if (!obj || typeof obj[name] !== 'function' || obj[name].__mp) return false;
       const orig = obj[name];
       obj[name] = function (...args) {
-        const data = args.find((a) => a && typeof a === 'object');
+        // gra podaje pakiet jako obiekt albo jako tekst JSON (tak samo czyta to lootlog)
+        let data = args.find((a) => a && typeof a === 'object');
+        if (!data) { const t = args.find((a) => typeof a === 'string' && a.charCodeAt(0) === 123); if (t) { try { data = JSON.parse(t); } catch {} } }
         if (data) self.onData(data);
         return orig.apply(this, args);
       };
@@ -1127,8 +1129,11 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-beta-txt{color:color-mix(in srgb,var(--mp-accent) 40%,#fff);font-weight:600}
 .mp-fbtn{position:fixed;z-index:2147470500;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;background:radial-gradient(circle at 35% 30%,#3a3d44,#15161a);color:#8a8f98;box-shadow:0 0 0 2px #2a2d33,0 4px 10px rgba(0,0,0,.6);transition:color .3s,box-shadow .3s}
 .mp-fbtn:hover{filter:brightness(1.2)}
-#mp-bers{position:fixed;width:22px;height:22px;z-index:2147470300}
-#mp-bers.mp-bers-free{width:26px;height:26px}
+#mp-bers{position:fixed;width:20px;height:20px;z-index:2147470300;cursor:pointer;user-select:none;-webkit-user-drag:none}
+#mp-bers svg{display:block;pointer-events:none}
+#mp-bers .sk{fill:#8d8d93;stroke:#2b2b30;stroke-width:1.1}#mp-bers .ey{fill:#232327}
+#mp-bers.on .sk{fill:#a63cff;stroke:#3b0866}#mp-bers.on .ey{fill:#24003f}#mp-bers.on svg{filter:drop-shadow(0 0 2px rgba(170,70,255,.75))}
+#mp-bers:hover svg{transform:scale(1.12)}
 .mp-fbtn.mp-bers.on{color:#fff;background:radial-gradient(circle at 35% 30%,#ff7a3c,#8a1a00);box-shadow:0 0 0 2px #ffb070,0 0 16px 4px rgba(255,90,30,.75);animation:mpBers 1.2s ease-in-out infinite}
 @keyframes mpBers{0%,100%{box-shadow:0 0 0 2px #ffb070,0 0 10px 2px rgba(255,90,30,.6)}50%{box-shadow:0 0 0 2px #ffd0a0,0 0 22px 7px rgba(255,90,30,.95)}}
 .mp-fbtn.mp-free.on{color:#fff;background:radial-gradient(circle at 35% 30%,#4fe0b8,#0d6b52);box-shadow:0 0 0 2px #9fffe0,0 0 16px 4px rgba(40,220,170,.7);animation:mpFree 1.6s ease-in-out infinite}
@@ -7837,23 +7842,29 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     function potions() {
       return game.heroItems().filter((it) => kindOf(it.stats || {}) && !(it.stats.timelimit && false));
     }
-    /** Wybór mikstury: priorytet z listy (jeśli ustawiony), inaczej najmniejsze „przeleczenie" (jak w AutoHeal). */
+    const KINDS = { normal: 'Zwykłe (leczą X punktów)', perc: 'Procentowe (leczą % życia)', full: 'Pełnego leczenia' };
+    const USE = { normal: 'useNormal', perc: 'usePerc', full: 'useFull' };
+    const order = () => { const o = (cfg.order || []).filter((k) => KINDS[k]); for (const k of Object.keys(KINDS)) if (!o.includes(k)) o.push(k); return (cfg.order = o); };
+    /** Najmniej zmarnowanego leczenia wśród podanych mikstur. */
+    const leastWaste = (list, toFull, max) => list.slice().sort((a, b) => {
+      const h1 = healOf(a.stats, max), h2 = healOf(b.stats, max);
+      if (h1 > toFull && h2 > toFull) return h1 - h2;
+      if (h1 > toFull) return 1;
+      if (h2 > toFull) return -1;
+      return h2 - h1;
+    })[0];
+    /** Wybór mikstury: rodzaje w ustawionej kolejności — gdy pierwszego brak, bierze następny; wewnątrz rodzaju najmniej marnuje. */
     function pick(list, toFull, max) {
-      const pr = (cfg.priority || []).filter(Boolean);
-      if (pr.length) {
-        for (const name of pr) { const c = list.filter((i) => i.name === name); if (c.length) return c.sort((a, b) => (Number(a.stats.amount) || 1) - (Number(b.stats.amount) || 1))[0]; }
-        return null;
+      for (const k of order()) {
+        if (!cfg[USE[k]]) continue;
+        const c = list.filter((i) => kindOf(i.stats) === k);
+        if (c.length) return leastWaste(c, toFull, max);
       }
-      return list.slice().sort((a, b) => {
-        const h1 = healOf(a.stats, max), h2 = healOf(b.stats, max);
-        if (h1 > toFull && h2 > toFull) return h1 - h2;
-        if (h1 > toFull) return 1;
-        if (h2 > toFull) return -1;
-        return h2 - h1;
-      })[0];
+      return null;
     }
     let fighting = false, last = { t: 0, why: 'jeszcze nie leczył' };
-    const note = (why) => { last = { t: now(), why }; return why; };
+    const hist = [];
+    const note = (why) => { last = { t: now(), why }; hist.unshift(new Date().toISOString().slice(11, 19) + ' ' + why); hist.length = Math.min(hist.length, 12); return why; };
     /** Leczenie. Zwraca powód, gdy nic nie zrobił (widać w panelu i w raporcie). */
     async function heal(reason, manual) {
       if (!cfg.enabled && !manual) return note('dodatek wyłączony');
@@ -7870,12 +7881,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
           s = hpNow() || s;
           if ((s.hp / s.max) * 100 >= cfg.minHp) break;
           const toFull = Math.max(s.max - s.hp, 0);
-          const list = potions().filter((it) => {
-            const k = kindOf(it.stats);
-            if ((cfg.priority || []).length) return true;
-            return (k === 'normal' && cfg.useNormal) || (k === 'perc' && cfg.usePerc) || (k === 'full' && cfg.useFull);
-          });
-          const it = pick(list, toFull, s.max);
+          const it = pick(potions(), toFull, s.max);
           if (!it) { if (!used && (cfg.warnEmpty || manual)) toast('Medyk: brak mikstur do leczenia', 'warn'); note(used ? `użył ${used} mikstur, skończyły się` : 'brak pasujących mikstur'); break; }
           const before = s.hp;
           send(`moveitem&st=1&id=${it.id}`);
@@ -7899,8 +7905,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     }
     defineAddon({
       id: 'medyk', beta: true, name: 'Medyk', icon: 'medyk', color: ['#2ecc71', '#16a085'],
-      desc: 'Leczy od razu po walce, gdy życie spadnie poniżej ustawionego %. Wybierasz, jakich mikstur używać i w jakiej kolejności — bez listy sam dobiera miksturę tak, żeby nie marnować leczenia.',
-      defaults: { minHp: 80, useNormal: true, usePerc: true, useFull: false, priority: [], delay: 350, warnEmpty: true, idle: false },
+      desc: 'Leczy od razu po walce, gdy życie spadnie poniżej ustawionego %. Wybierasz rodzaje mikstur (zwykłe, procentowe, pełnego leczenia) i ich kolejność — gdy pierwszego rodzaju brak, bierze następny, a w obrębie rodzaju dobiera miksturę tak, żeby nie marnować leczenia.',
+      defaults: { minHp: 80, useNormal: true, usePerc: true, useFull: false, order: ['normal', 'perc', 'full'], delay: 350, warnEmpty: true, idle: false },
       settings: [
         { key: 'minHp', type: 'range', label: 'Lecz poniżej % życia', min: 10, max: 100, step: 1 },
         { key: 'useNormal', type: 'bool', label: 'Mikstury zwykłe (leczą X punktów)' },
@@ -7910,18 +7916,18 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         { key: 'warnEmpty', type: 'bool', label: 'Komunikat, gdy skończą się mikstury' },
       ],
       render(box, c, rerender) {
-        // kolejność mikstur (priorytet)
-        const names = [...new Set(potions().map((p) => p.name))];
-        const pr = c.priority = (c.priority || []).filter(Boolean);
+        // kolejność rodzajów mikstur (priorytet)
+        const o = order(), all = potions();
         const card = el('div', { class: 'mp-card' }, el('h3', null, 'Kolejność mikstur (priorytet)'),
-          el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, pr.length ? 'Medyk używa tylko mikstur z listy, w tej kolejności.' : 'Lista pusta — Medyk sam dobiera miksturę (najmniej zmarnowanego leczenia). Kliknij miksturę, żeby dodać ją do listy.'));
-        pr.forEach((n, i) => card.appendChild(el('div', { class: 'mp-lg-row' }, el('b', { style: { width: '22px' } }, `${i + 1}.`), el('span', { style: { flex: 1 } }, n),
-          el('button', { class: 'mp-btn', disabled: i === 0, onclick: () => { [pr[i - 1], pr[i]] = [pr[i], pr[i - 1]]; config.save(); rerender(); } }, '▲'),
-          el('button', { class: 'mp-btn', disabled: i === pr.length - 1, onclick: () => { [pr[i + 1], pr[i]] = [pr[i], pr[i + 1]]; config.save(); rerender(); } }, '▼'),
-          el('button', { class: 'mp-btn bad', onclick: () => { pr.splice(i, 1); config.save(); rerender(); } }, '×'))));
-        const rest = names.filter((n) => !pr.includes(n));
-        if (rest.length) card.appendChild(el('div', { class: 'mp-btns', style: { marginTop: '6px' } }, rest.map((n) => el('button', { class: 'mp-upchip', onclick: () => { pr.push(n); config.save(); rerender(); } }, '+ ' + n))));
-        else if (!names.length) card.appendChild(el('div', { class: 'mp-dim' }, 'Nie widzę mikstur leczących w torbach.'));
+          el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Medyk najpierw używa rodzaju z góry listy. Gdy go zabraknie, bierze następny. Wyłączonych rodzajów (przełączniki wyżej) nie używa wcale.'));
+        o.forEach((k, i) => {
+          const n = all.filter((p) => kindOf(p.stats) === k).reduce((a, p) => a + (Number(p.stats.amount) || 1), 0);
+          card.appendChild(el('div', { class: 'mp-lg-row', style: { opacity: c[USE[k]] ? 1 : 0.45 } }, el('b', { style: { width: '22px' } }, `${i + 1}.`),
+            el('span', { style: { flex: 1 } }, KINDS[k], el('span', { class: 'mp-dim', style: { marginLeft: '6px' } }, c[USE[k]] ? `w torbach: ${n}` : 'wyłączone')),
+            el('button', { class: 'mp-btn', disabled: i === 0, onclick: () => { [o[i - 1], o[i]] = [o[i], o[i - 1]]; config.save(); rerender(); } }, '▲'),
+            el('button', { class: 'mp-btn', disabled: i === o.length - 1, onclick: () => { [o[i + 1], o[i]] = [o[i], o[i + 1]]; config.save(); rerender(); } }, '▼')));
+        });
+        if (!all.length) card.appendChild(el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, 'Nie widzę mikstur leczących w torbach.'));
         const st = el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, statusText());
         card.appendChild(el('div', { class: 'mp-btns', style: { marginTop: '8px' } }, el('button', { class: 'mp-btn pri', onclick: async () => { const why = await heal('ręcznie', true); st.textContent = statusText(); if (why && !/użył/.test(why)) toast('Medyk: ' + why, 'info', 4000); } }, 'Ulecz teraz')));
         card.appendChild(st);
@@ -7934,7 +7940,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         // zapas: koniec walki z danych serwera (gdyby gra nie zamknęła okna walki)
         bus.on('data', (d) => { const f = d && d.f; if (!f) return; if (f.init == 1) fighting = true; if (f.endBattle == 1 && fighting) { fighting = false; if (cfg.enabled) afterBattle(); } });
         setInterval(() => { if (cfg.enabled && cfg.idle && !fighting && !busy) heal('poza walką'); }, 4000);
-        MP.medyk = { heal, debug: () => ({ zycie: hpNow(), prog: cfg.minHp, walka: fighting, ostatnio: last.why, kiedy: last.t ? new Date(last.t).toISOString().slice(11, 19) : null, mikstury: potions().map((p) => ({ id: p.id, nazwa: p.name, leczy: healOf(p.stats, (hpNow() || {}).max || 1), rodzaj: kindOf(p.stats) })) }) };
+        MP.medyk = { heal, debug: () => ({ historia: hist, zycie: hpNow(), prog: cfg.minHp, walka: fighting, ostatnio: last.why, kiedy: last.t ? new Date(last.t).toISOString().slice(11, 19) : null, mikstury: potions().map((p) => ({ id: p.id, nazwa: p.name, leczy: healOf(p.stats, (hpNow() || {}).max || 1), rodzaj: kindOf(p.stats) })) }) };
       },
     });
   })();
@@ -8048,7 +8054,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       const n = shieldNode();
       if (n) {
         // pod miejscem na tarczę gra ma srebrną ikonkę tarczy — stawiamy się zaraz pod nią
-        const r = n.getBoundingClientRect(), sz = btn.offsetWidth || 22;
+        const r = n.getBoundingClientRect(), sz = btn.offsetWidth || 20;
         let below = null;
         btn.style.visibility = 'hidden';
         try {
@@ -8056,8 +8062,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
           if (probe && probe !== document.body) { const q = probe.getBoundingClientRect(); if (q.height < 60 && q.width < 60 && q.top >= r.bottom - 2) below = q; }
         } catch {}
         btn.style.visibility = '';
-        const ref = below || { left: r.left, width: r.width, bottom: r.bottom + r.height * 0.85 };
-        btn.style.left = Math.round(ref.left + ref.width / 2 - sz / 2) + 'px'; btn.style.top = Math.round(ref.bottom + 2) + 'px';
+        // tuż na prawo od srebrnej tarczy, na jej wysokości
+        const ref = below || { right: r.right, top: r.bottom + 4, height: r.height * 0.75 };
+        btn.style.left = Math.round(ref.right + 3) + 'px'; btn.style.top = Math.round(ref.top + (ref.height - sz) / 2) + 'px';
         btn.classList.remove('mp-bers-free');
       } else {
         const hud = $$('.hud-container').find(isVisible);
@@ -8081,7 +8088,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     function ensure() {
       if (!cfg.enabled) { if (btn) btn.remove(); btn = null; return; }
       if (!btn) {
-        btn = el('div', { id: 'mp-bers', class: 'mp-fbtn mp-bers', html: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M9.5 6.5 14 2h3v3l-4.5 4.5"/></svg>' });
+        btn = el('div', { id: 'mp-bers', html: '<svg viewBox="0 0 20 20" width="20" height="20"><path class="sk" d="M3.2 2.2c.4 2 1.2 3.1 2.3 3.6A6.6 6.6 0 0 1 10 4.2c1.7 0 3.3.6 4.5 1.6 1.1-.5 1.9-1.6 2.3-3.6 1.3 1.7 1.5 3.7.6 5.4.5.9.8 1.9.8 3 0 2.1-1 3.8-2.6 4.8v1.9c0 .7-.5 1.2-1.2 1.2H5.6c-.7 0-1.2-.5-1.2-1.2v-1.9A5.6 5.6 0 0 1 1.8 10.6c0-1.1.3-2.1.8-3-.9-1.7-.7-3.7.6-5.4z"/><path class="ey" d="M5.6 9.2c.9-.6 2.5-.4 3 .6.3.8-.3 2-1.4 2.1-1.2.1-2.1-.7-2.1-1.6 0-.4.2-.8.5-1.1zm8.8 0c-.9-.6-2.5-.4-3 .6-.3.8.3 2 1.4 2.1 1.2.1 2.1-.7 2.1-1.6 0-.4-.2-.8-.5-1.1zM10 12.4l.9 1.7H9.1z"/><path class="ey" d="M7 15.6h1.1v1.9H7zm2.45 0h1.1v1.9h-1.1zm2.45 0H13v1.9h-1.1z"/></svg>' });
         btn.addEventListener('click', toggle);
         document.body.appendChild(btn);
       }
@@ -8089,7 +8096,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     }
     defineAddon({
       id: 'berserk', beta: true, name: 'Podręczny Berserk', icon: 'berserk', color: ['#ff4b2b', '#ff9f1a'],
-      desc: 'Mała ikonka pod srebrną tarczą w Twoim ekwipunku — kliknięcie włącza albo wyłącza berserka (automatyczną agresję wobec potworów) tą samą komendą co ustawienia gry. Świeci na pomarańczowo = włączony, szara = wyłączony.',
+      desc: 'Czaszka obok srebrnej tarczy w Twoim ekwipunku — kliknięcie włącza albo wyłącza berserka (automatyczną agresję wobec potworów) tą samą komendą co ustawienia gry. Fioletowa = włączony, szara = wyłączony.',
       defaults: { on: false, setId: DEF_ID },
       settings: [],
       render(box, c, rerender) {
@@ -8207,7 +8214,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     }
 
     /* ── okno ── */
-    const F = () => (cfg.f = Object.assign({ q: '', min: 1, max: 300, type: 'e2', show: 'all', sort: 'kills', dir: 'desc' }, cfg.f || {}));
+    const F = () => (cfg.f = cfg.f || Object.assign({ q: '', min: 1, max: 300, type: 'all', show: 'all', sort: 'kills', dir: 'desc' }, store.get('lu:filters', {})));
+    const saveF = () => { store.set('lu:filters', cfg.f); config.save(); };
     function rows() {
       const f = F(), q = f.q.trim().toLowerCase();
       let list = Object.values(mobs()).filter((o) => (f.type === 'all' || o.t === f.type)
@@ -8238,13 +8246,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     function sel(key, opts) {
       const f = F();
       const s = el('select', { class: 'mp-lu-in' }, opts.map(([v, t]) => el('option', { value: v }, t)));
-      s.value = f[key]; s.onchange = () => { f[key] = s.value; config.save(); drawList(); };
+      s.value = f[key]; s.onchange = () => { f[key] = s.value; saveF(); drawList(); };
       return s;
     }
     function inp(key, ph, w, num) {
       const f = F();
       const i = el('input', { class: 'mp-lu-in', placeholder: ph, type: num ? 'number' : 'text', style: { width: w } });
-      i.value = f[key]; i.oninput = () => { f[key] = num ? Number(i.value) || '' : i.value; config.save(); drawList(); };
+      i.value = f[key]; i.oninput = () => { f[key] = num ? Number(i.value) || '' : i.value; saveF(); drawList(); };
       i.addEventListener('keydown', (e) => e.stopPropagation());
       return i;
     }
@@ -8255,7 +8263,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         const head = el('div', { class: 'mp-lu-h' },
           el('div', { class: 'mp-lu-hb' },
             el('span', { class: 'mp-lu-hi', title: 'Ustawienia', onclick: () => ui.open('licznik') }, '⚙'),
-            el('span', { class: 'mp-lu-hi', title: 'Wyczyść filtry', onclick: () => { cfg.f = null; config.save(); win.remove(); win = null; open(); } }, '↻')),
+            el('span', { class: 'mp-lu-hi', title: 'Wyczyść filtry', onclick: () => { cfg.f = null; store.set('lu:filters', {}); config.save(); win.remove(); win = null; open(); } }, '↻')),
           el('div', { class: 'mp-lu-tt' }, 'Licznik ubić'),
           el('span', { class: 'mp-lu-x', title: 'Zamknij', onclick: () => open(false) }, '×'));
         win = el('div', { id: 'mp-lu', style: { left: p.x + 'px', top: p.y + 'px' } }, head,
@@ -8293,6 +8301,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         // przeniesienie starych liczników (wersja 1.0.0)
         if (cfg.stats && cfg.stats.names) { seed(); for (const [nm, v] of Object.entries(cfg.stats.names)) { const mm = nm.match(/^(.*) \((\d+)\)$/); const n = mm ? mm[1] : nm; const k = keyOf(n); const o = mobs()[k] = mobs()[k] || { n, t: 'elita', k: 0, d: {}, m: {} }; o.k += Number(v) || 0; if (mm) o.lvl = Number(mm[2]); } }
         if (cfg.stats && !cfg.totals) { cfg.totals = { kills: cfg.stats.kills || {}, loot: cfg.stats.loot || {}, caught: cfg.stats.caught || {}, since: cfg.stats.since || now() }; delete cfg.stats; }
+        if (cfg.f && !store.get('lu:filters', null)) cfg.f.type = 'all';   // wcześniej domyślnie było „Elity II”
         seed();
         bus.on('data', onData);
         keys.bind({ label: 'Licznik Ubić: okno', get: () => cfg.key || '', fn: toggleWin, when: () => cfg.enabled });
@@ -8589,5 +8598,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.3";
+MP.version = "1.0.5";
 })();
