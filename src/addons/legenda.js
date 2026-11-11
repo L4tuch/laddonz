@@ -638,14 +638,15 @@
       el('div', { class: 'mp-lg-cap-n' }, (names.length > 1 ? 'Zdobyłeś legendy: ' : 'Zdobyłeś: '), names.map((n, i) => el('span', null, i ? ', ' : '', el('b', null, n)))));
     document.body.appendChild(cap);
     me.cap = cap;
-    // napis stoi NAD oknem łupów (nie zasłania „Potwierdź”) i jedzie razem z oknem; pod oknem tylko, gdy u góry brak miejsca
+    // napis stoi POD oknem łupów (pod przyciskiem „Potwierdź”, nie zasłania go) i jedzie razem z oknem
     let last = '';
     const place = () => {
       if (!cap.isConnected) return;
       if (win.isConnected) {
         const B = winBox(win), h = cap.offsetHeight || 50;
-        const above = B.t - 8 - h >= 4;
-        const top = Math.round(above ? B.t - 8 - h : Math.min(innerHeight - h - 4, B.b + 8));
+        // pod oknem łupów (pod paskiem z „Potwierdź”); nad oknem tylko, gdy na dole brak miejsca
+        const below = B.b + 8 + h <= innerHeight - 4;
+        const top = Math.round(below ? B.b + 8 : Math.max(4, B.t - 8 - h));
         const key = Math.round(B.cx) + ':' + top + ':' + h;
         if (key !== last) { last = key; cap.style.left = Math.round(B.cx) + 'px'; cap.style.top = top + 'px'; }
       }
