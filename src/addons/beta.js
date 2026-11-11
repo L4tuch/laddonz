@@ -263,7 +263,19 @@
     function avatar(c) {
       const icon = String(c.icon || '');
       const url = /^https?:/.test(icon) ? icon : ICON_BASE + (icon.startsWith('/') ? '' : '/') + icon;
-      return el('div', { class: 'mp-qc-av', title: `${c.nick} — ${c.lvl ?? '?'}${c.prof || ''}\nŚwiat: ${c.world}`, style: { backgroundImage: `url("${url}")` }, onclick: () => switchTo(c) });
+      const label = `${c.nick} (${c.lvl ?? '?'}${c.prof || ''})`;
+      const av = el('div', { class: 'mp-qc-av', style: { backgroundImage: `url("${url}")` }, onclick: () => switchTo(c) });
+      let tip = null;
+      av.addEventListener('mouseenter', () => {
+        tip = el('div', { class: 'mp-qc-tip' }, el('b', null, label), c.world !== worldName() ? el('div', null, c.world) : null);
+        document.body.appendChild(tip);
+        const r = av.getBoundingClientRect();
+        tip.style.left = Math.round(Math.min(innerWidth - tip.offsetWidth - 4, Math.max(4, r.left + r.width / 2 - tip.offsetWidth / 2))) + 'px';
+        tip.style.top = Math.round(r.bottom + 4) + 'px';
+      });
+      av.addEventListener('mouseleave', () => { if (tip) tip.remove(); tip = null; });
+      av.addEventListener('click', () => { if (tip) tip.remove(); tip = null; });
+      return av;
     }
     function worldsMenu(anchor) {
       const me = hero(), w = worldName();
@@ -294,7 +306,7 @@
       if (!bar) { bar = el('div', { id: 'mp-qc' }); document.body.appendChild(bar); }
       bar.textContent = '';
       here.slice(0, cfg.max || 8).forEach((c) => bar.appendChild(avatar(c)));
-      const dots = el('div', { class: 'mp-qc-dots', title: 'Postacie na innych światach' }, '---');
+      const dots = el('div', { class: 'mp-qc-dots', title: 'Zmiana świata' }, el('i'), el('i'), el('i'));
       dots.onclick = () => worldsMenu(dots);
       bar.appendChild(dots);
       place();
@@ -324,36 +336,37 @@
     const isBers = (t) => { const m = String(t).match(SET_RE); return !!m && Number(m[1]) === setId(); };
     /** Klasy przedmiotów, które leżą w miejscu tarczy: tarcze, pomocnicze (orby/księgi), strzały. */
     const SHIELD_CL = [14, 5, 21];
+    const eqNode = (it) => it && $$(`.item-id-${it.id}`).find((n) => isVisible(n) && !n.closest('.loot-wnd, .tip-wrapper, .c-window'));
     function shieldNode() {
+      const it = game.equipped().find((i) => SHIELD_CL.includes(i.cl));
+      const n = eqNode(it);
+      return n ? n.closest('.eq-slot, [class*="slot"]') || n : null;
+    }
+    /** Miejsce srebrnej tarczy pod slotem tarczy: liczymy z siatki ekwipunku (zbroja, hełm), działa też bez założonej tarczy. */
+    function silverRect() {
       const eq = game.equipped();
-      const it = eq.find((i) => SHIELD_CL.includes(i.cl));
-      const pick = (id) => $$(`.item-id-${id}`).find((n) => isVisible(n) && !n.closest('.loot-wnd, .bag, [class*="bag-"], .tip-wrapper'));
-      if (it) { const n = pick(it.id); if (n) return n.closest('.eq-slot, [class*="slot"]') || n; }
-      // brak tarczy: puste miejsce na tarczę w ekwipunku
-      return $$('.eq-slot, [class*="eq-item-slot"], [class*="equipment"] [class*="slot"]').find((n) => isVisible(n) && /shield|tarcz|st-?4\b|slot-?4\b/i.test(n.className + ' ' + (n.getAttribute('data-st') || '') + ' ' + (n.getAttribute('tip') || ''))) || null;
+      const arm = eqNode(eq.find((i) => i.cl === 8)), helm = eqNode(eq.find((i) => i.cl === 9)), sh = shieldNode();
+      let cx, cy, cell;
+      if (arm) {
+        const a = arm.getBoundingClientRect();
+        cell = helm ? Math.abs(a.top - helm.getBoundingClientRect().top) / 2 : a.height + 2;
+        if (!(cell > 20 && cell < 70)) cell = a.height + 2;
+        cx = a.left + a.width / 2 + cell; cy = a.top + a.height / 2 + cell;
+      } else if (sh) {
+        const r = sh.getBoundingClientRect(); cell = r.height + 2;
+        cx = r.left + r.width / 2; cy = r.top + r.height / 2 + cell;
+      } else return null;
+      return { cx, cy, cell };
     }
     function place() {
       if (!btn) return;
-      const n = shieldNode();
-      if (n) {
-        // pod miejscem na tarczę gra ma srebrną ikonkę tarczy — stawiamy się zaraz pod nią
-        const r = n.getBoundingClientRect(), sz = btn.offsetWidth || 20;
-        let below = null;
-        btn.style.visibility = 'hidden';
-        try {
-          const probe = document.elementFromPoint(r.left + r.width / 2, r.bottom + Math.min(r.height * 0.5, 14));
-          if (probe && probe !== document.body) { const q = probe.getBoundingClientRect(); if (q.height < 60 && q.width < 60 && q.top >= r.bottom - 2) below = q; }
-        } catch {}
-        btn.style.visibility = '';
-        // tuż na prawo od srebrnej tarczy, na jej wysokości
-        const ref = below || { right: r.right, top: r.bottom + 4, height: r.height * 0.75 };
-        btn.style.left = Math.round(ref.right + 3) + 'px'; btn.style.top = Math.round(ref.top + (ref.height - sz) / 2) + 'px';
-        btn.classList.remove('mp-bers-free');
-      } else {
-        const hud = $$('.hud-container').find(isVisible);
-        if (hud) { const r = hud.getBoundingClientRect(); btn.style.left = Math.round(r.left - 34) + 'px'; btn.style.top = Math.round(r.top + r.height / 2 - 12) + 'px'; }
-        btn.classList.add('mp-bers-free');
-      }
+      const q = silverRect();
+      if (q) {
+        // jak w Gargonem: tuż na prawo od srebrnej tarczy, na jej wysokości
+        btn.style.left = Math.round(q.cx + q.cell * 0.5 + 1) + 'px';
+        btn.style.top = Math.round(q.cy - btn.offsetHeight / 2) + 'px';
+        btn.style.display = '';
+      } else btn.style.display = 'none';   // ekwipunek niewidoczny — chowamy ikonkę
     }
     function paint() {
       if (!btn) return;
@@ -365,13 +378,14 @@
       if (game.inBattle()) return toast('Berserk: poczekaj do końca walki', 'warn');
       const on = !cfg.on;
       send(`settings&action=update&id=${setId()}&v=${on ? 1 : 0}`);
+      if (cfg.groupId) setTimeout(() => send(`settings&action=update&id=${cfg.groupId}&v=${on ? 1 : 0}`), 250);
       cfg.on = on; config.save(); paint();
       toast(`Berserk ${on ? 'włączony' : 'wyłączony'}`);
     }
     function ensure() {
       if (!cfg.enabled) { if (btn) btn.remove(); btn = null; return; }
       if (!btn) {
-        btn = el('div', { id: 'mp-bers', html: '<svg viewBox="0 0 20 20" width="20" height="20"><path class="sk" d="M3.2 2.2c.4 2 1.2 3.1 2.3 3.6A6.6 6.6 0 0 1 10 4.2c1.7 0 3.3.6 4.5 1.6 1.1-.5 1.9-1.6 2.3-3.6 1.3 1.7 1.5 3.7.6 5.4.5.9.8 1.9.8 3 0 2.1-1 3.8-2.6 4.8v1.9c0 .7-.5 1.2-1.2 1.2H5.6c-.7 0-1.2-.5-1.2-1.2v-1.9A5.6 5.6 0 0 1 1.8 10.6c0-1.1.3-2.1.8-3-.9-1.7-.7-3.7.6-5.4z"/><path class="ey" d="M5.6 9.2c.9-.6 2.5-.4 3 .6.3.8-.3 2-1.4 2.1-1.2.1-2.1-.7-2.1-1.6 0-.4.2-.8.5-1.1zm8.8 0c-.9-.6-2.5-.4-3 .6-.3.8.3 2 1.4 2.1 1.2.1 2.1-.7 2.1-1.6 0-.4-.2-.8-.5-1.1zM10 12.4l.9 1.7H9.1z"/><path class="ey" d="M7 15.6h1.1v1.9H7zm2.45 0h1.1v1.9h-1.1zm2.45 0H13v1.9h-1.1z"/></svg>' });
+        btn = el('div', { id: 'mp-bers', html: '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAPCAYAAADtc08vAAAA9klEQVR4Xo1TOQ4CMQycRfwISij4Ad9BYiuQaHgMNQ0FlEvPY5CCxuyYyXKIkSI59viI7TR4oZjcmOx444x6a1lgjRadyCR+OsEht7cH6FyOKOnAe4uu3Pe30FOmTkGpszuSpGB0IMmPB5Gd/HjCGVdccFBpAeoEl1k+udJFACqIFTaYYZn3Hdo44tBGjvuoiThhG4Y5JpmZDjyCbOISGleOR5MgWWW6vMHUx9qoggjE93kFfJqep+r6EWbysYcTBlmy5GO1R09kDwQ1TRVZxsomeIDGm0MMm0j0nG+rHqi20rfP1/cXcpW1iYNVrvDPr6vGNsz8AMa0mQBcoNzcAAAAAElFTkSuQmCC" draggable="false" alt="">' });
         btn.addEventListener('click', toggle);
         document.body.appendChild(btn);
       }
@@ -379,14 +393,15 @@
     }
     defineAddon({
       id: 'berserk', beta: true, name: 'Podręczny Berserk', icon: 'berserk', color: ['#ff4b2b', '#ff9f1a'],
-      desc: 'Czaszka obok srebrnej tarczy w Twoim ekwipunku — kliknięcie włącza albo wyłącza berserka (automatyczną agresję wobec potworów) tą samą komendą co ustawienia gry. Fioletowa = włączony, szara = wyłączony.',
-      defaults: { on: false, setId: DEF_ID },
+      desc: 'Czaszka agresji obok srebrnej tarczy w Twoim ekwipunku — kliknięcie włącza albo wyłącza berserka solo i grupowego naraz, tymi samymi komendami co ustawienia gry. Fioletowa i pulsująca = włączony, szara = wyłączony.',
+      defaults: { on: false, setId: DEF_ID, groupId: 0 },
       settings: [],
       render(box, c, rerender) {
         box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Stan'),
-          el('div', { class: 'mp-dim' }, `Berserk: ${c.on ? 'włączony' : 'wyłączony'} · ustawienie gry nr ${setId()}. Gdy przełączysz berserka w ustawieniach gry, ikonka sama się zaktualizuje.`),
+          el('div', { class: 'mp-dim' }, `Berserk: ${c.on ? 'włączony' : 'wyłączony'} · solo: ustawienie nr ${setId()} · grupowy: ${c.groupId ? 'ustawienie nr ' + c.groupId : 'jeszcze nieznany — kliknij „Naucz berserka grupowego” i przełącz go raz w ustawieniach gry'}. Ikonka przełącza oba naraz.`),
           el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
             el('button', { class: 'mp-btn pri', onclick: () => { toggle(); rerender(); } }, c.on ? 'Wyłącz berserka' : 'Włącz berserka'),
+            el('button', { class: 'mp-btn', onclick: async () => { toast('Przełącz teraz w ustawieniach gry BERSERKA GRUPOWEGO…', 'info', 8000); const t = await learn((x) => { const m = x.match(SET_RE); return !!m && Number(m[1]) !== setId(); }); if (t) { c.groupId = Number(t.match(SET_RE)[1]); config.save(); toast(`Zapamiętano berserka grupowego (ustawienie nr ${c.groupId})`); rerender(); } else toast('Nie wychwyciłem przełączenia', 'warn'); } }, c.groupId ? 'Naucz grupowego od nowa' : 'Naucz berserka grupowego'),
             el('button', { class: 'mp-btn', onclick: async () => { toast('Przełącz teraz berserka w ustawieniach gry…', 'info', 6000); const t = await learn((x) => SET_RE.test(x)); if (t) { const m = t.match(SET_RE); c.setId = Number(m[1]); c.on = m[2] === '1'; config.save(); toast(`Zapamiętano (ustawienie nr ${c.setId})`); paint(); rerender(); } else toast('Nie wychwyciłem przełączenia', 'warn'); } }, 'Naucz od nowa'))));
       },
       init(c) {
@@ -394,7 +409,7 @@
         bus.on('cmd', (t) => { const m = String(t).match(SET_RE); if (m && Number(m[1]) === setId()) { cfg.on = m[2] === '1'; config.save(); paint(); } });
         setInterval(() => { if (cfg.enabled) { if (!btn) ensure(); place(); } }, 1000);
         addEventListener('resize', () => setTimeout(place, 50));
-        MP.berserk = { debug: () => ({ wlaczony: !!cfg.on, ustawienie: setId(), tarcza: (() => { const n = shieldNode(); return n ? String(n.className).slice(0, 80) : null; })(), zalozone: game.equipped().map((i) => `${i.name} cl${i.cl} st${i.st}`) }) };
+        MP.berserk = { debug: () => ({ wlaczony: !!cfg.on, ustawienie: setId(), grupowy: cfg.groupId, srebrnaTarcza: silverRect(), zalozone: game.equipped().map((i) => `${i.name} cl${i.cl} st${i.st}`) }) };
       },
       onToggle(on) { if (on) ensure(); else if (btn) { btn.remove(); btn = null; } },
     });
@@ -423,7 +438,7 @@
       return 'zwykly';
     };
     const TYPES = [['all', 'Wszystkie'], ['elita', 'Elity'], ['e2', 'Elity II'], ['e3', 'Elity III'], ['heros', 'Herosi'], ['kolos', 'Kolosy'], ['tytan', 'Tytani']];
-    const TAG = { elita: 'E1', e2: 'E2', e3: 'E3', heros: 'HER', kolos: 'KOL', tytan: 'TYT' };
+    const TAG = { elita: 'E', e2: 'E2', e3: 'E3', heros: 'HER', kolos: 'KOL', tytan: 'TYT' };
     const RANK = { zwykly: 0, elita: 1, e2: 2, e3: 3, heros: 4, kolos: 5, tytan: 6 };
     const PROF = { wojownik: 'w', paladyn: 'p', mag: 'm', 'łowca': 'h', tropiciel: 't', 'tancerz ostrzy': 'b' };
     const R3 = { unique: 'u', upgraded: 'u', heroic: 'h', legendary: 'l' };

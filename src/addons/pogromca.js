@@ -87,7 +87,20 @@
   }
 
   /** Nazwa Twojej umiejętności po numerze (z danych gry albo z paska umiejętności w walce). */
+  /** Nazwy umiejętności zbierane z pakietów gry (każdy obiekt pod kluczem z „skill” z polami id→{name}). */
+  const SKILL_NAMES = new Map();
+  function harvestSkills(o, depth = 0, under = false) {
+    if (!o || typeof o !== 'object' || depth > 4) return;
+    for (const [k, v] of Object.entries(o)) {
+      if (!v || typeof v !== 'object') continue;
+      const sk = under || /skill|spell|umiej/i.test(k);
+      if (sk && /^\d+$/.test(k) && (v.name || v.nazwa)) SKILL_NAMES.set(Number(k), { name: strip(v.name || v.nazwa), desc: strip(v.desc || v.opis || v.description || '').slice(0, 160) });
+      else if (sk && (v.id != null) && (v.name || v.nazwa)) SKILL_NAMES.set(Number(v.id), { name: strip(v.name || v.nazwa), desc: strip(v.desc || v.opis || v.description || '').slice(0, 160) });
+      else harvestSkills(v, depth + 1, sk);
+    }
+  }
   function skillName(id) {
+    if (SKILL_NAMES.has(id)) return SKILL_NAMES.get(id).name;
     try {
       const S = E() && E().skills;
       const cand = S && (S.skills || S.list || S.d || S);
@@ -128,6 +141,7 @@
   }
 
   function onData(d) {
+    if (d) try { harvestSkills(d); } catch {}
     if (!d || !d.f) return;
     const f = d.f;
     if (f.init || f.init === 0) state = fresh();
@@ -272,7 +286,7 @@
     const shape = (o, d = 0) => { if (!o || typeof o !== 'object' || d > 2) return typeof o; const r = {}; for (const k of Object.keys(o).slice(0, 60)) { const v = o[k]; r[k] = typeof v === 'function' ? 'fn' : v && typeof v === 'object' ? shape(v, d + 1) : v; } return r; };
     let ws = b && (b.warriorsList || b.warriors); try { if (typeof ws === 'function') ws = ws.call(b); } catch {}
     const arr = Array.isArray(ws) ? ws : Object.values(ws || {});
-    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
+    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), nazwyUmiejetnosci: [...SKILL_NAMES].slice(0, 40), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
     const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
     try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
     toast(`Pogromca Tytanów: skopiowano dane walki (${PACKETS.length} pakietów) — wklej je w rozmowie`, 'ok', 5000);

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.5
+// @version      1.0.6
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1129,11 +1129,11 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-beta-txt{color:color-mix(in srgb,var(--mp-accent) 40%,#fff);font-weight:600}
 .mp-fbtn{position:fixed;z-index:2147470500;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;background:radial-gradient(circle at 35% 30%,#3a3d44,#15161a);color:#8a8f98;box-shadow:0 0 0 2px #2a2d33,0 4px 10px rgba(0,0,0,.6);transition:color .3s,box-shadow .3s}
 .mp-fbtn:hover{filter:brightness(1.2)}
-#mp-bers{position:fixed;width:20px;height:20px;z-index:2147470300;cursor:pointer;user-select:none;-webkit-user-drag:none}
-#mp-bers svg{display:block;pointer-events:none}
-#mp-bers .sk{fill:#8d8d93;stroke:#2b2b30;stroke-width:1.1}#mp-bers .ey{fill:#232327}
-#mp-bers.on .sk{fill:#a63cff;stroke:#3b0866}#mp-bers.on .ey{fill:#24003f}#mp-bers.on svg{filter:drop-shadow(0 0 2px rgba(170,70,255,.75))}
-#mp-bers:hover svg{transform:scale(1.12)}
+#mp-bers{position:fixed;width:16px;height:15px;z-index:2147470300;cursor:pointer;user-select:none;-webkit-user-drag:none}
+#mp-bers img{display:block;width:16px;height:15px;image-rendering:pixelated;pointer-events:none;filter:grayscale(1) brightness(.85) contrast(1.1);transition:filter .25s}
+#mp-bers.on img{filter:drop-shadow(0 0 2px rgba(178,70,255,.9));animation:mpBersSk 1.6s ease-in-out infinite}
+#mp-bers:hover img{transform:scale(1.15)}
+@keyframes mpBersSk{0%,100%{transform:translateY(0);filter:drop-shadow(0 0 1px rgba(178,70,255,.6))}50%{transform:translateY(-1.5px);filter:drop-shadow(0 0 4px rgba(190,90,255,1)) brightness(1.15)}}
 .mp-fbtn.mp-bers.on{color:#fff;background:radial-gradient(circle at 35% 30%,#ff7a3c,#8a1a00);box-shadow:0 0 0 2px #ffb070,0 0 16px 4px rgba(255,90,30,.75);animation:mpBers 1.2s ease-in-out infinite}
 @keyframes mpBers{0%,100%{box-shadow:0 0 0 2px #ffb070,0 0 10px 2px rgba(255,90,30,.6)}50%{box-shadow:0 0 0 2px #ffd0a0,0 0 22px 7px rgba(255,90,30,.95)}}
 .mp-fbtn.mp-free.on{color:#fff;background:radial-gradient(circle at 35% 30%,#4fe0b8,#0d6b52);box-shadow:0 0 0 2px #9fffe0,0 0 16px 4px rgba(40,220,170,.7);animation:mpFree 1.6s ease-in-out infinite}
@@ -1141,7 +1141,9 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 #mp-qc{position:fixed;z-index:2147470400;display:flex;align-items:center;gap:4px;height:46px;padding:0 4px;background:none}
 .mp-qc-av{width:28px;height:40px;flex:none;border-radius:5px;background-size:400% 400%;background-position:0 0;background-repeat:no-repeat;cursor:pointer;image-rendering:pixelated;transition:transform .12s,filter .12s}
 .mp-qc-av:hover{transform:translateY(-1px);filter:drop-shadow(0 0 4px rgba(255,211,77,.8)) brightness(1.1)}
-.mp-qc-dots{flex:none;min-width:22px;height:40px;display:flex;align-items:center;justify-content:center;padding:0 2px;color:#e8e8e8;text-shadow:0 0 3px #000,0 0 2px #000;font:700 13px Arial;letter-spacing:1px;cursor:pointer;border-radius:5px}.mp-qc-dots:hover{background:rgba(255,255,255,.08);color:#ffd34d}
+.mp-qc-dots i{display:block;width:4px;height:4px;border-radius:50%;background:#e8e8e8;box-shadow:0 0 2px #000,0 0 1px #000}.mp-qc-dots:hover i{background:#ffd34d}
+.mp-qc-tip{position:fixed;z-index:2147470600;padding:4px 8px;border-radius:4px;background:rgba(12,12,14,.94);box-shadow:0 0 0 1px rgba(255,255,255,.18),0 3px 8px rgba(0,0,0,.6);color:#eee;font:12px Arimo,Arial,sans-serif;white-space:nowrap;pointer-events:none;text-align:center}.mp-qc-tip b{color:#ffd34d}.mp-qc-tip div{opacity:.75;font-size:11px}
+.mp-qc-dots{flex:none;min-width:14px;height:40px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:0 2px;color:#e8e8e8;text-shadow:0 0 3px #000,0 0 2px #000;font:700 13px Arial;letter-spacing:1px;cursor:pointer;border-radius:5px}.mp-qc-dots:hover{background:rgba(255,255,255,.08);color:#ffd34d}
 .mp-qc-pop{position:fixed;z-index:2147470600;min-width:220px;max-width:260px;padding:8px;border-radius:8px;background:rgba(14,14,18,.96);box-shadow:0 0 0 1px rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.6);color:#eee;font:12px Arial}
 .mp-qc-h{font-weight:700;margin-bottom:6px}.mp-qc-w{margin:4px 0}.mp-qc-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 #mp-lu{position:fixed;z-index:2147470300;width:430px;max-width:calc(100vw - 16px);border-radius:8px;background:rgba(18,18,20,.86);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 0 0 1px rgba(0,0,0,.7),0 8px 22px rgba(0,0,0,.55);color:#e8e8e8;font:12px Arimo,Arial,sans-serif;user-select:none}
@@ -1471,6 +1473,7 @@ function injectCSS() {
 }
 
 MP.injectCSS = injectCSS;
+
 
 // ═══ src/core/addons.js ═══
 /* ───────────────────────── addons.js ─────────────────────────
@@ -7483,7 +7486,20 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 
   /** Nazwa Twojej umiejętności po numerze (z danych gry albo z paska umiejętności w walce). */
+  /** Nazwy umiejętności zbierane z pakietów gry (każdy obiekt pod kluczem z „skill” z polami id→{name}). */
+  const SKILL_NAMES = new Map();
+  function harvestSkills(o, depth = 0, under = false) {
+    if (!o || typeof o !== 'object' || depth > 4) return;
+    for (const [k, v] of Object.entries(o)) {
+      if (!v || typeof v !== 'object') continue;
+      const sk = under || /skill|spell|umiej/i.test(k);
+      if (sk && /^\d+$/.test(k) && (v.name || v.nazwa)) SKILL_NAMES.set(Number(k), { name: strip(v.name || v.nazwa), desc: strip(v.desc || v.opis || v.description || '').slice(0, 160) });
+      else if (sk && (v.id != null) && (v.name || v.nazwa)) SKILL_NAMES.set(Number(v.id), { name: strip(v.name || v.nazwa), desc: strip(v.desc || v.opis || v.description || '').slice(0, 160) });
+      else harvestSkills(v, depth + 1, sk);
+    }
+  }
   function skillName(id) {
+    if (SKILL_NAMES.has(id)) return SKILL_NAMES.get(id).name;
     try {
       const S = E() && E().skills;
       const cand = S && (S.skills || S.list || S.d || S);
@@ -7524,6 +7540,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 
   function onData(d) {
+    if (d) try { harvestSkills(d); } catch {}
     if (!d || !d.f) return;
     const f = d.f;
     if (f.init || f.init === 0) state = fresh();
@@ -7668,7 +7685,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const shape = (o, d = 0) => { if (!o || typeof o !== 'object' || d > 2) return typeof o; const r = {}; for (const k of Object.keys(o).slice(0, 60)) { const v = o[k]; r[k] = typeof v === 'function' ? 'fn' : v && typeof v === 'object' ? shape(v, d + 1) : v; } return r; };
     let ws = b && (b.warriorsList || b.warriors); try { if (typeof ws === 'function') ws = ws.call(b); } catch {}
     const arr = Array.isArray(ws) ? ws : Object.values(ws || {});
-    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
+    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), nazwyUmiejetnosci: [...SKILL_NAMES].slice(0, 40), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
     const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
     try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
     toast(`Pogromca Tytanów: skopiowano dane walki (${PACKETS.length} pakietów) — wklej je w rozmowie`, 'ok', 5000);
@@ -7980,7 +7997,19 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     function avatar(c) {
       const icon = String(c.icon || '');
       const url = /^https?:/.test(icon) ? icon : ICON_BASE + (icon.startsWith('/') ? '' : '/') + icon;
-      return el('div', { class: 'mp-qc-av', title: `${c.nick} — ${c.lvl ?? '?'}${c.prof || ''}\nŚwiat: ${c.world}`, style: { backgroundImage: `url("${url}")` }, onclick: () => switchTo(c) });
+      const label = `${c.nick} (${c.lvl ?? '?'}${c.prof || ''})`;
+      const av = el('div', { class: 'mp-qc-av', style: { backgroundImage: `url("${url}")` }, onclick: () => switchTo(c) });
+      let tip = null;
+      av.addEventListener('mouseenter', () => {
+        tip = el('div', { class: 'mp-qc-tip' }, el('b', null, label), c.world !== worldName() ? el('div', null, c.world) : null);
+        document.body.appendChild(tip);
+        const r = av.getBoundingClientRect();
+        tip.style.left = Math.round(Math.min(innerWidth - tip.offsetWidth - 4, Math.max(4, r.left + r.width / 2 - tip.offsetWidth / 2))) + 'px';
+        tip.style.top = Math.round(r.bottom + 4) + 'px';
+      });
+      av.addEventListener('mouseleave', () => { if (tip) tip.remove(); tip = null; });
+      av.addEventListener('click', () => { if (tip) tip.remove(); tip = null; });
+      return av;
     }
     function worldsMenu(anchor) {
       const me = hero(), w = worldName();
@@ -8011,7 +8040,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (!bar) { bar = el('div', { id: 'mp-qc' }); document.body.appendChild(bar); }
       bar.textContent = '';
       here.slice(0, cfg.max || 8).forEach((c) => bar.appendChild(avatar(c)));
-      const dots = el('div', { class: 'mp-qc-dots', title: 'Postacie na innych światach' }, '---');
+      const dots = el('div', { class: 'mp-qc-dots', title: 'Zmiana świata' }, el('i'), el('i'), el('i'));
       dots.onclick = () => worldsMenu(dots);
       bar.appendChild(dots);
       place();
@@ -8041,36 +8070,37 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const isBers = (t) => { const m = String(t).match(SET_RE); return !!m && Number(m[1]) === setId(); };
     /** Klasy przedmiotów, które leżą w miejscu tarczy: tarcze, pomocnicze (orby/księgi), strzały. */
     const SHIELD_CL = [14, 5, 21];
+    const eqNode = (it) => it && $$(`.item-id-${it.id}`).find((n) => isVisible(n) && !n.closest('.loot-wnd, .tip-wrapper, .c-window'));
     function shieldNode() {
+      const it = game.equipped().find((i) => SHIELD_CL.includes(i.cl));
+      const n = eqNode(it);
+      return n ? n.closest('.eq-slot, [class*="slot"]') || n : null;
+    }
+    /** Miejsce srebrnej tarczy pod slotem tarczy: liczymy z siatki ekwipunku (zbroja, hełm), działa też bez założonej tarczy. */
+    function silverRect() {
       const eq = game.equipped();
-      const it = eq.find((i) => SHIELD_CL.includes(i.cl));
-      const pick = (id) => $$(`.item-id-${id}`).find((n) => isVisible(n) && !n.closest('.loot-wnd, .bag, [class*="bag-"], .tip-wrapper'));
-      if (it) { const n = pick(it.id); if (n) return n.closest('.eq-slot, [class*="slot"]') || n; }
-      // brak tarczy: puste miejsce na tarczę w ekwipunku
-      return $$('.eq-slot, [class*="eq-item-slot"], [class*="equipment"] [class*="slot"]').find((n) => isVisible(n) && /shield|tarcz|st-?4\b|slot-?4\b/i.test(n.className + ' ' + (n.getAttribute('data-st') || '') + ' ' + (n.getAttribute('tip') || ''))) || null;
+      const arm = eqNode(eq.find((i) => i.cl === 8)), helm = eqNode(eq.find((i) => i.cl === 9)), sh = shieldNode();
+      let cx, cy, cell;
+      if (arm) {
+        const a = arm.getBoundingClientRect();
+        cell = helm ? Math.abs(a.top - helm.getBoundingClientRect().top) / 2 : a.height + 2;
+        if (!(cell > 20 && cell < 70)) cell = a.height + 2;
+        cx = a.left + a.width / 2 + cell; cy = a.top + a.height / 2 + cell;
+      } else if (sh) {
+        const r = sh.getBoundingClientRect(); cell = r.height + 2;
+        cx = r.left + r.width / 2; cy = r.top + r.height / 2 + cell;
+      } else return null;
+      return { cx, cy, cell };
     }
     function place() {
       if (!btn) return;
-      const n = shieldNode();
-      if (n) {
-        // pod miejscem na tarczę gra ma srebrną ikonkę tarczy — stawiamy się zaraz pod nią
-        const r = n.getBoundingClientRect(), sz = btn.offsetWidth || 20;
-        let below = null;
-        btn.style.visibility = 'hidden';
-        try {
-          const probe = document.elementFromPoint(r.left + r.width / 2, r.bottom + Math.min(r.height * 0.5, 14));
-          if (probe && probe !== document.body) { const q = probe.getBoundingClientRect(); if (q.height < 60 && q.width < 60 && q.top >= r.bottom - 2) below = q; }
-        } catch {}
-        btn.style.visibility = '';
-        // tuż na prawo od srebrnej tarczy, na jej wysokości
-        const ref = below || { right: r.right, top: r.bottom + 4, height: r.height * 0.75 };
-        btn.style.left = Math.round(ref.right + 3) + 'px'; btn.style.top = Math.round(ref.top + (ref.height - sz) / 2) + 'px';
-        btn.classList.remove('mp-bers-free');
-      } else {
-        const hud = $$('.hud-container').find(isVisible);
-        if (hud) { const r = hud.getBoundingClientRect(); btn.style.left = Math.round(r.left - 34) + 'px'; btn.style.top = Math.round(r.top + r.height / 2 - 12) + 'px'; }
-        btn.classList.add('mp-bers-free');
-      }
+      const q = silverRect();
+      if (q) {
+        // jak w Gargonem: tuż na prawo od srebrnej tarczy, na jej wysokości
+        btn.style.left = Math.round(q.cx + q.cell * 0.5 + 1) + 'px';
+        btn.style.top = Math.round(q.cy - btn.offsetHeight / 2) + 'px';
+        btn.style.display = '';
+      } else btn.style.display = 'none';   // ekwipunek niewidoczny — chowamy ikonkę
     }
     function paint() {
       if (!btn) return;
@@ -8082,13 +8112,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (game.inBattle()) return toast('Berserk: poczekaj do końca walki', 'warn');
       const on = !cfg.on;
       send(`settings&action=update&id=${setId()}&v=${on ? 1 : 0}`);
+      if (cfg.groupId) setTimeout(() => send(`settings&action=update&id=${cfg.groupId}&v=${on ? 1 : 0}`), 250);
       cfg.on = on; config.save(); paint();
       toast(`Berserk ${on ? 'włączony' : 'wyłączony'}`);
     }
     function ensure() {
       if (!cfg.enabled) { if (btn) btn.remove(); btn = null; return; }
       if (!btn) {
-        btn = el('div', { id: 'mp-bers', html: '<svg viewBox="0 0 20 20" width="20" height="20"><path class="sk" d="M3.2 2.2c.4 2 1.2 3.1 2.3 3.6A6.6 6.6 0 0 1 10 4.2c1.7 0 3.3.6 4.5 1.6 1.1-.5 1.9-1.6 2.3-3.6 1.3 1.7 1.5 3.7.6 5.4.5.9.8 1.9.8 3 0 2.1-1 3.8-2.6 4.8v1.9c0 .7-.5 1.2-1.2 1.2H5.6c-.7 0-1.2-.5-1.2-1.2v-1.9A5.6 5.6 0 0 1 1.8 10.6c0-1.1.3-2.1.8-3-.9-1.7-.7-3.7.6-5.4z"/><path class="ey" d="M5.6 9.2c.9-.6 2.5-.4 3 .6.3.8-.3 2-1.4 2.1-1.2.1-2.1-.7-2.1-1.6 0-.4.2-.8.5-1.1zm8.8 0c-.9-.6-2.5-.4-3 .6-.3.8.3 2 1.4 2.1 1.2.1 2.1-.7 2.1-1.6 0-.4-.2-.8-.5-1.1zM10 12.4l.9 1.7H9.1z"/><path class="ey" d="M7 15.6h1.1v1.9H7zm2.45 0h1.1v1.9h-1.1zm2.45 0H13v1.9h-1.1z"/></svg>' });
+        btn = el('div', { id: 'mp-bers', html: '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAPCAYAAADtc08vAAAA9klEQVR4Xo1TOQ4CMQycRfwISij4Ad9BYiuQaHgMNQ0FlEvPY5CCxuyYyXKIkSI59viI7TR4oZjcmOx444x6a1lgjRadyCR+OsEht7cH6FyOKOnAe4uu3Pe30FOmTkGpszuSpGB0IMmPB5Gd/HjCGVdccFBpAeoEl1k+udJFACqIFTaYYZn3Hdo44tBGjvuoiThhG4Y5JpmZDjyCbOISGleOR5MgWWW6vMHUx9qoggjE93kFfJqep+r6EWbysYcTBlmy5GO1R09kDwQ1TRVZxsomeIDGm0MMm0j0nG+rHqi20rfP1/cXcpW1iYNVrvDPr6vGNsz8AMa0mQBcoNzcAAAAAElFTkSuQmCC" draggable="false" alt="">' });
         btn.addEventListener('click', toggle);
         document.body.appendChild(btn);
       }
@@ -8096,14 +8127,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     }
     defineAddon({
       id: 'berserk', beta: true, name: 'Podręczny Berserk', icon: 'berserk', color: ['#ff4b2b', '#ff9f1a'],
-      desc: 'Czaszka obok srebrnej tarczy w Twoim ekwipunku — kliknięcie włącza albo wyłącza berserka (automatyczną agresję wobec potworów) tą samą komendą co ustawienia gry. Fioletowa = włączony, szara = wyłączony.',
-      defaults: { on: false, setId: DEF_ID },
+      desc: 'Czaszka agresji obok srebrnej tarczy w Twoim ekwipunku — kliknięcie włącza albo wyłącza berserka solo i grupowego naraz, tymi samymi komendami co ustawienia gry. Fioletowa i pulsująca = włączony, szara = wyłączony.',
+      defaults: { on: false, setId: DEF_ID, groupId: 0 },
       settings: [],
       render(box, c, rerender) {
         box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Stan'),
-          el('div', { class: 'mp-dim' }, `Berserk: ${c.on ? 'włączony' : 'wyłączony'} · ustawienie gry nr ${setId()}. Gdy przełączysz berserka w ustawieniach gry, ikonka sama się zaktualizuje.`),
+          el('div', { class: 'mp-dim' }, `Berserk: ${c.on ? 'włączony' : 'wyłączony'} · solo: ustawienie nr ${setId()} · grupowy: ${c.groupId ? 'ustawienie nr ' + c.groupId : 'jeszcze nieznany — kliknij „Naucz berserka grupowego” i przełącz go raz w ustawieniach gry'}. Ikonka przełącza oba naraz.`),
           el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
             el('button', { class: 'mp-btn pri', onclick: () => { toggle(); rerender(); } }, c.on ? 'Wyłącz berserka' : 'Włącz berserka'),
+            el('button', { class: 'mp-btn', onclick: async () => { toast('Przełącz teraz w ustawieniach gry BERSERKA GRUPOWEGO…', 'info', 8000); const t = await learn((x) => { const m = x.match(SET_RE); return !!m && Number(m[1]) !== setId(); }); if (t) { c.groupId = Number(t.match(SET_RE)[1]); config.save(); toast(`Zapamiętano berserka grupowego (ustawienie nr ${c.groupId})`); rerender(); } else toast('Nie wychwyciłem przełączenia', 'warn'); } }, c.groupId ? 'Naucz grupowego od nowa' : 'Naucz berserka grupowego'),
             el('button', { class: 'mp-btn', onclick: async () => { toast('Przełącz teraz berserka w ustawieniach gry…', 'info', 6000); const t = await learn((x) => SET_RE.test(x)); if (t) { const m = t.match(SET_RE); c.setId = Number(m[1]); c.on = m[2] === '1'; config.save(); toast(`Zapamiętano (ustawienie nr ${c.setId})`); paint(); rerender(); } else toast('Nie wychwyciłem przełączenia', 'warn'); } }, 'Naucz od nowa'))));
       },
       init(c) {
@@ -8111,7 +8143,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
         bus.on('cmd', (t) => { const m = String(t).match(SET_RE); if (m && Number(m[1]) === setId()) { cfg.on = m[2] === '1'; config.save(); paint(); } });
         setInterval(() => { if (cfg.enabled) { if (!btn) ensure(); place(); } }, 1000);
         addEventListener('resize', () => setTimeout(place, 50));
-        MP.berserk = { debug: () => ({ wlaczony: !!cfg.on, ustawienie: setId(), tarcza: (() => { const n = shieldNode(); return n ? String(n.className).slice(0, 80) : null; })(), zalozone: game.equipped().map((i) => `${i.name} cl${i.cl} st${i.st}`) }) };
+        MP.berserk = { debug: () => ({ wlaczony: !!cfg.on, ustawienie: setId(), grupowy: cfg.groupId, srebrnaTarcza: silverRect(), zalozone: game.equipped().map((i) => `${i.name} cl${i.cl} st${i.st}`) }) };
       },
       onToggle(on) { if (on) ensure(); else if (btn) { btn.remove(); btn = null; } },
     });
@@ -8140,7 +8172,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       return 'zwykly';
     };
     const TYPES = [['all', 'Wszystkie'], ['elita', 'Elity'], ['e2', 'Elity II'], ['e3', 'Elity III'], ['heros', 'Herosi'], ['kolos', 'Kolosy'], ['tytan', 'Tytani']];
-    const TAG = { elita: 'E1', e2: 'E2', e3: 'E3', heros: 'HER', kolos: 'KOL', tytan: 'TYT' };
+    const TAG = { elita: 'E', e2: 'E2', e3: 'E3', heros: 'HER', kolos: 'KOL', tytan: 'TYT' };
     const RANK = { zwykly: 0, elita: 1, e2: 2, e3: 3, heros: 4, kolos: 5, tytan: 6 };
     const PROF = { wojownik: 'w', paladyn: 'p', mag: 'm', 'łowca': 'h', tropiciel: 't', 'tancerz ostrzy': 'b' };
     const R3 = { unique: 'u', upgraded: 'u', heroic: 'h', legendary: 'l' };
@@ -8598,5 +8630,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.5";
+MP.version = "1.0.6";
 })();
