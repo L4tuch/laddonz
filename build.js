@@ -27,6 +27,7 @@ const ORDER = [
   'src/core/ui.js',
   'src/core/quickbar.js',
   'src/addons/_shared.js',
+  'src/addons/_dzwieki.js',
   'src/addons/napad.js',
   'src/addons/wakeup_bratan_minichat.js',
   'src/addons/ktotu_ktozlapie_cook.js',
@@ -35,8 +36,6 @@ const ORDER = [
   'src/addons/wrogowie.js',
   'src/addons/motywnik.js',
   'src/addons/legenda.js',
-  'src/addons/pogromca.js',
-  'src/addons/beta.js',
   'src/main.js',
 ];
 
@@ -45,9 +44,7 @@ const header = fs.readFileSync(path.join(root, 'src/header.js'), 'utf8')
   .replace(/__GITHUB_REPO__/g, cfg.githubRepo)
   .replace(/__VERSION__/g, cfg.version);
 
-// baza potworów (aktualizowana automatycznie z margoworld.pl — patrz scripts/update-potwory.js)
-const potwory = fs.existsSync(path.join(root, 'data/potwory.json')) ? fs.readFileSync(path.join(root, 'data/potwory.json'), 'utf8') : '{"potwory":[]}';
-const body = `const POTWORY_DB = ${JSON.stringify(JSON.parse(potwory))};\n` + ORDER.map((f) => `// ═══ ${f} ═══\n` + fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
+const body = ORDER.map((f) => `// ═══ ${f} ═══\n` + fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
 const out = `${header}\n(function () {\n'use strict';\n${body}\nMP.version = ${JSON.stringify(cfg.version)};\n})();\n`;
 
 fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
