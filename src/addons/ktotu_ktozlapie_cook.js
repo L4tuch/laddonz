@@ -295,7 +295,7 @@
   });
 })();
 
-/* ───────── Let's Cook Together ─────────
+/* ───────── Lepsza Grupa (dawniej Let's Cook Together) ─────────
  * Zaproszenia do grupy pod klawisz (znajomi / klan / sojusz / wszyscy na mapie) i rozwiązanie grupy pod klawisz.
  * Bez automatów — każde zaproszenie wysyłasz sam (klawisz albo przycisk).
  */
@@ -342,7 +342,7 @@
       await sleep(400);
       if (await menus.choosePlayerOption(p.id, /^zapro[śs] do grupy/i)) return 'ok';
     }
-    const r = await net.send('partyInvite', { id: p.id }, { src: 'Let\'s Cook' });
+    const r = await net.send('partyInvite', { id: p.id }, { src: 'Lepsza Grupa' });
     return r.ok ? 'cmd' : 'fail';
   }
 
@@ -371,7 +371,7 @@
       if (inParty.length) why.push(`już w grupie: ${inParty.map((p) => p.nick).join(', ')}`);
       if (recent.length) why.push(`zaproszeni przed chwilą: ${recent.map((p) => p.nick).join(', ')} (naciśnij klawisz 2× szybko, żeby zaprosić ponownie)`);
       if (l.length && !room) why.push('grupa jest pełna');
-      toast(why.length ? `Let's Cook: ${why.join('; ')}` : total ? `Let's Cook: nikt z ${total} graczy na mapie nie pasuje do ustawień` : 'Let\'s Cook: brak graczy na mapie', 'warn', 2500);
+      toast(why.length ? `Lepsza Grupa: ${why.join('; ')}` : total ? `Lepsza Grupa: nikt z ${total} graczy na mapie nie pasuje do ustawień` : 'Lepsza Grupa: brak graczy na mapie', 'warn', 2500);
       return;
     }
     // jak gracz: menu gracza → „Zaproś do grupy"; zapas: komenda zaproszenia
@@ -382,20 +382,20 @@
         await sleep(250);
       }
     })();
-    toast(`Let's Cook: zapraszam ${pick.map((p) => p.nick).join(', ')}`, 'ok', 1800);
+    toast(`Lepsza Grupa: zapraszam ${pick.map((p) => p.nick).join(', ')}`, 'ok', 1800);
   }
 
   async function disband() {
     invited = {};
     game._partyCache = [];
     // bez okienka „Czy na pewno chcesz rozwiązać grupę?" — od razu komenda rozwiązania (działała od początku)
-    await net.send('partyDisband', {}, { src: 'Let\'s Cook', urgent: true });
+    await net.send('partyDisband', {}, { src: 'Lepsza Grupa', urgent: true });
     toast('Rozwiązuję grupę');
   }
   MP.cook = { disband };
 
   defineAddon({
-    id: 'cook', name: 'Let\'s Cook Together', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
+    id: 'cook', name: 'Lepsza Grupa', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
     desc: 'Zaproszenia do grupy pod klawisz dla znajomych, klanowiczów, sojuszników albo wszystkich na mapie oraz rozwiązanie grupy pod klawisz.',
     defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10 },
     keys: [

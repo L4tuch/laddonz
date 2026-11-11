@@ -1157,7 +1157,7 @@
   const unb64 = (str) => { const s = atob(str); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; };
   /** Eksport własnego efektu do pliku .json (ustawienia + Twoja animacja i dźwięk, jeśli są). */
   async function exportOwn() {
-    const out = { l4tools: 'legenda', v: 1, custom: cfg.custom, dur: cfg.dur, volume: cfg.volume };
+    const out = { l4tools: 'legenda', v: 1, name: (cfg.custom && cfg.custom.text) || 'Mój efekt', custom: cfg.custom, dur: cfg.dur, volume: cfg.volume };
     const m = await idb.get('media:wlasny').catch(() => null); if (m && m.data) out.media = { name: m.name, type: m.type, data: b64(m.data) };
     const a = await idb.get('snd:wlasny').catch(() => null); if (a && a.data) out.sound = { name: a.name, size: a.size, data: b64(a.data) };
     const link = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(out)], { type: 'application/json' })), download: 'legendarny-lup-efekt.json' });
@@ -1177,6 +1177,42 @@
       } catch (e) { toast('Legendarny Łup: nie udało się wczytać pliku — ' + e.message, 'warn'); }
     });
     document.body.appendChild(inp); inp.click();
+  }
+  /* ── dodatkowe style: zaimportowane pliki efektów, każdy jako osobna karta ── */
+  function importExtra(done) {
+    const inp = el('input', { type: 'file', accept: '.json,application/json', style: { display: 'none' } });
+    inp.addEventListener('change', async () => {
+      const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+      try {
+        const o = JSON.parse(await f.text());
+        if (!o || o.l4tools !== 'legenda' || !o.custom) throw new Error('to nie jest plik efektu Legendarnego Łupu');
+        const name = await MP.promptBox({ title: 'Nazwa stylu', label: 'Pod tą nazwą styl pojawi się na liście', value: (o.name || f.name.replace(/\.json$/i, '')).slice(0, 30), maxLength: 30, okText: 'Dodaj styl' });
+        if (!name) return;
+        const id = 'x' + Date.now().toString(36);
+        if (o.media) await idb.put('media:' + id, { name: o.media.name, type: o.media.type, data: unb64(o.media.data) });
+        if (o.sound) await idb.put('snd:' + id, { name: o.sound.name, size: o.sound.size, data: unb64(o.sound.data) });
+        cfg.extras = (cfg.extras || []).concat({ id, name, custom: o.custom, dur: o.dur || null });
+        config.save(); await useExtra(id); toast(`Legendarny Łup: dodano styl „${name}"`); done();
+      } catch (e) { toast('Legendarny Łup: nie udało się wczytać pliku — ' + e.message, 'warn'); }
+    });
+    document.body.appendChild(inp); inp.click();
+  }
+  /** Wybór dodatkowego stylu = wczytanie go do silnika „Własnego” (ustawienia, animacja, dźwięk). */
+  async function useExtra(id) {
+    const x = (cfg.extras || []).find((e) => e.id === id); if (!x) return;
+    cfg.custom = JSON.parse(JSON.stringify(x.custom)); if (x.dur) cfg.dur = x.dur;
+    const m = await idb.get('media:' + id).catch(() => null);
+    if (m) await idb.put('media:wlasny', m); else await idb.del('media:wlasny').catch(() => {});
+    const a = await idb.get('snd:' + id).catch(() => null);
+    if (a) await idb.put('snd:wlasny', a); else await idb.del('snd:wlasny').catch(() => {});
+    if (mediaUrl) URL.revokeObjectURL(mediaUrl); mediaUrl = null; delete bufCache.wlasny;
+    cfg.style = 'wlasny'; cfg.extraOn = id; config.save();
+  }
+  async function delExtra(id) {
+    cfg.extras = (cfg.extras || []).filter((e) => e.id !== id);
+    if (cfg.extraOn === id) cfg.extraOn = null;
+    await idb.del('media:' + id).catch(() => {}); await idb.del('snd:' + id).catch(() => {});
+    config.save();
   }
   function pickMedia(done) {
     const inp = el('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,.gif,.png,.webp,.apng,.mp4,.webm', style: { display: 'none' } });
@@ -1211,20 +1247,33 @@
   defineAddon({
     id: 'legenda', name: 'Legendarny Łup', icon: 'legenda', color: ['#ff9a1f', '#ff3d6e'], renderFirst: true,
     desc: 'Gdy w łupie trafi się przedmiot legendarny — efekt na cały ekran z dźwiękiem: Thor, Smoke, Kasyno, Disco albo Twój własny. Każdy styl ma wbudowany dźwięk i może mieć Twój plik dźwiękowy. Przycisk „Test" pokazuje efekt od razu.',
-    defaults: { enabled: false, style: 'thor', volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
+    defaults: { enabled: false, style: 'thor', extras: [], extraOn: null, volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
     notes: () => [{ type: 'info', text: 'Działa samodzielnie — <b>nie wymaga</b> opcji gry „Podświetlenie okna łupów”. Najlepiej ją <b>wyłączyć</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy), żeby efekty gry i dodatku nie nakładały się na siebie. Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
     render(box, c, rerender) {
       // style
       const grid = el('div', { class: 'mp-lg-grid' });
       for (const [k, s] of Object.entries(STYLES)) {
-        grid.appendChild(el('div', { class: 'mp-lg-card' + (c.style === k ? ' on' : ''), style: { '--a': s.grad[0], '--b': s.grad[1], '--c': s.col }, onclick: () => { c.style = k; config.save(); rerender(); } },
+        grid.appendChild(el('div', { class: 'mp-lg-card' + (c.style === k && !(k === 'wlasny' && c.extraOn) ? ' on' : ''), style: { '--a': s.grad[0], '--b': s.grad[1], '--c': s.col }, onclick: () => { c.style = k; c.extraOn = null; config.save(); rerender(); } },
           el('div', { class: 'mp-lg-art ' + k }, svgI(k)),
           el('div', { class: 'mp-lg-name' }, s.name),
           el('div', { class: 'mp-lg-desc' }, s.desc),
           el('button', { class: 'mp-btn mp-lg-test', onclick: (e) => { e.stopPropagation(); play(k, { test: true }); } }, 'Test')));
       }
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Styl efektu'), grid));
+      for (const x of c.extras || []) {
+        const col = (x.custom && x.custom.color) || '#7c5cff';
+        grid.appendChild(el('div', { class: 'mp-lg-card' + (c.style === 'wlasny' && c.extraOn === x.id ? ' on' : ''), style: { '--a': '#151520', '--b': col, '--c': col }, onclick: async () => { await useExtra(x.id); rerender(); } },
+          el('div', { class: 'mp-lg-art wlasny' }, svgI('wlasny')),
+          el('div', { class: 'mp-lg-name' }, x.name),
+          el('div', { class: 'mp-lg-desc' }, 'Zaimportowany styl'),
+          el('div', { class: 'mp-btns', style: { justifyContent: 'center', gap: '4px' } },
+            el('button', { class: 'mp-btn mp-lg-test', onclick: async (e) => { e.stopPropagation(); await useExtra(x.id); rerender(); play('wlasny', { test: true }); } }, 'Test'),
+            el('button', { class: 'mp-btn bad mp-lg-test', title: 'Usuń styl', onclick: async (e) => { e.stopPropagation(); if (await MP.confirmBox({ title: `Usunąć styl „${x.name}"?`, okText: 'Usuń', danger: true })) { await delExtra(x.id); rerender(); } } }, '×'))));
+      }
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Styl efektu'), grid,
+        el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
+          el('button', { class: 'mp-btn pri', onclick: () => importExtra(rerender) }, 'Importuj dodatkowy styl (.json)'),
+          el('span', { class: 'mp-dim', style: { fontSize: '11.5px' } }, 'Plik efektu z przycisku „Eksportuj efekt” w stylu Własny — od Ciebie albo od znajomych.'))));
       const HL = [['ring', 'Obwódka w okienku'], ['glow', 'Obwódka + poświata'], ['pulse', 'Pulsujące tło'], ['none', 'Bez wyróżnienia']];
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Wyróżnienie okienka z legendą'),
         el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Okno łupów z legendą świeci dookoła kolorem stylu, a okienko z legendą dostaje wyróżnienie. Wyróżnienie mieści się w okienku, więc kilka legend obok siebie nie nachodzi na siebie.'),

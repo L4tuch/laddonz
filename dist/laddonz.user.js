@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.1.0
-// @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together, Legendarny Łup, Motywnik i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
+// @version      1.2.0
+// @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
 // @icon64       data:image/png;base64,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
@@ -1018,7 +1018,7 @@ const ICON_PATHS = {
   bratan: '<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6z"/><path d="M8.5 12.5l2.3 2.3 4.7-5"/>',
   ktotu: '<circle cx="9" cy="8" r="3.3"/><path d="M3 20c.4-3.6 2.8-5.6 6-5.6s5.6 2 6 5.6"/><circle cx="17.5" cy="15.5" r="2.6"/><path d="M19.4 17.4L22 20"/>',
   ktozlapie: '<path d="M7 4h10l-1 6.5a4 4 0 01-8 0z"/><path d="M12 14.5V18"/><path d="M8.5 20.5h7"/><path d="M17 5.5h2.5a2 2 0 010 4H16.6"/><path d="M7 5.5H4.5a2 2 0 000 4h2.9"/>',
-  cook: '<path d="M5 11h14v3a7 7 0 01-14 0z"/><path d="M3 11h18"/><path d="M9 7.5c0-1.5 1-1.5 1-3"/><path d="M12.5 7.5c0-1.5 1-1.5 1-3"/><path d="M16 7.5c0-1.5 1-1.5 1-3"/>',
+  cook: '<circle cx="12" cy="7" r="3"/><circle cx="5" cy="9.5" r="2.3"/><circle cx="19" cy="9.5" r="2.3"/><path d="M6.5 20v-2.5a5.5 5.5 0 0111 0V20"/><path d="M1.5 19v-1.5a3.5 3.5 0 014.6-3.3M22.5 19v-1.5a3.5 3.5 0 00-4.6-3.3"/>',
   podpis: '<path d="M4 20h5l10.5-10.5a2.1 2.1 0 00-3-3L6 17v3"/><path d="M14.5 8.5l3 3"/><path d="M13 20h7"/>',
   pokazeq: '<path d="M7 7V5.5A2.5 2.5 0 019.5 3h5A2.5 2.5 0 0117 5.5V7"/><rect x="3.5" y="7" width="17" height="13" rx="2.5"/><circle cx="12" cy="13.5" r="2.4"/><path d="M3.5 12h6.1M14.4 12h6.1"/>',
   jakibon: '<path d="M12 3l2.6 5.5 6 .8-4.4 4.1 1.1 5.9L12 16.4l-5.3 2.9 1.1-5.9-4.4-4.1 6-.8z"/><path d="M10 11.5h4"/>',
@@ -1586,14 +1586,20 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .l4-lay-pic.pgp,.l4-lay-pic.lgp{flex-direction:column}
 .l4-lay-pic.pgp{align-items:flex-end;padding-right:13px}.l4-lay-pic.lgp{align-items:flex-start;padding-left:13px}
 .l4-lay-pic.lgh{padding-left:13px}.l4-lay-pic.ldh{padding-left:13px;align-items:flex-end}
-/* kafelek L4 (jak przyciski gry) */
-#mp-launcher.l4-tile{width:34px;height:34px;border-radius:4px;transition:filter .12s;background:linear-gradient(#5b8b3d,#3a6224 48%,#2c4d1a 52%,#33572080);background-color:#2f501d;box-shadow:inset 0 0 0 1px #a3c47f,inset 0 0 0 2px #1f3512,inset 0 2px 0 2px rgba(255,255,255,.18),0 0 0 1px #0b0f07,0 2px 4px rgba(0,0,0,.6)}
+/* kafelek L4 (jak przyciski widżetów gry) */
+#mp-launcher.l4-tile{position:fixed;z-index:2147483000;width:44px;height:44px;box-sizing:border-box;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;touch-action:none;transition:filter .12s;background:linear-gradient(#b8332b,#8a1f19 48%,#6e1612 52%,#82201a);box-shadow:inset 0 0 0 1px #e9a07a,inset 0 0 0 2px #3d0905,inset 0 3px 0 2px rgba(255,255,255,.16),0 0 0 1px #140302,0 2px 4px rgba(0,0,0,.6)}
+#mp-launcher.l4-tile.in-row{z-index:5}
 #mp-launcher.l4-tile:hover{transform:none;filter:brightness(1.15)}
-.l4-tile-t{font:900 15px/1 Georgia,"Times New Roman",serif;letter-spacing:-.5px;color:#fff3c4;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000,0 -1px 0 #000,0 0 5px rgba(255,214,110,.55);pointer-events:none}
+#mp-launcher.l4-tile.drag{z-index:2147483600;opacity:.85;cursor:grabbing;filter:drop-shadow(0 4px 10px rgba(0,0,0,.7))}
+.l4-tile-t{font:900 19px/1 Georgia,"Times New Roman",serif;letter-spacing:-.6px;background:linear-gradient(#fff8d2,#ffd54a 45%,#d08a12);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 0 4px rgba(255,200,60,.55));pointer-events:none}
+.l4-mini{background:radial-gradient(circle at 35% 30%,#b8332b,#5e110d)!important;box-shadow:0 0 0 1px #e9a07a,0 0 0 2px #140302!important;color:#ffd54a!important}
+/* zębatka przy ustawieniach dodatków */
+.l4-gears .mp-card > h3{display:flex;align-items:center;gap:6px}
+.l4-gears .mp-card > h3::before{content:"";width:12px;height:12px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4L5.3 5.3'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4L5.3 5.3'/></svg>") center/contain no-repeat}
 /* pasek skrótów — kafelki jak przyciski gry */
 #mp-qbar{position:fixed;z-index:2147482998;display:flex;flex-direction:column;gap:5px;padding:0;background:none!important;border:0!important;box-shadow:none!important;width:auto!important;opacity:1}
 #mp-qbar.hz{flex-direction:row}
-#mp-qbar .mp-qtile{width:30px;height:30px;border-radius:4px;color:#fff;background:linear-gradient(#262628,#0d0d0f);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 0 0 1px #000,0 2px 4px rgba(0,0,0,.55)}
+#mp-qbar .mp-qtile{width:27px;height:27px;border-radius:4px;color:#fff;background:linear-gradient(#262628,#0d0d0f);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 0 0 1px #000,0 2px 4px rgba(0,0,0,.55)}
 #mp-qbar .mp-qtile:hover{background:linear-gradient(#36363a,#151517);color:#fff}
 #mp-qbar .mp-qtile.off{color:rgba(255,255,255,.35)}
 #mp-qbar .mp-qtile.on::before{content:"";position:absolute;right:3px;top:3px;width:5px;height:5px;border-radius:50%;background:var(--mp-accent);box-shadow:0 0 4px var(--mp-accent)}
@@ -2141,6 +2147,13 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.2.0', d: '11.11.2026', items: [
+    'Kafelek L4 na czerwonym tle ze złotym napisem, w rzędzie przycisków gry — ma stałe miejsce jak inne przyciski, a przeciągnięty przeskakuje na wolne miejsce w dowolnym rzędzie.',
+    'Mniejsze ikonki skrótów dodatków; bez kafelka panelu na pasku skrótów.',
+    'Let\'s Cook Together nazywa się teraz Lepsza Grupa (nowa ikonka).',
+    'Legendarny Łup: import dodatkowych stylów z plików .json — każdy jako osobna karta z testem i usuwaniem.',
+    'Ustawienia dodatków oznaczone zębatką.',
+  ] },
   { v: '1.1.0', d: '11.11.2026', items: [
     'Nowy wygląd panelu w stylu okien gry: zakładki Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
     'Lista dodatków z wyszukiwarką, filtrem (wszystkie / włączone / wyłączone) i licznikiem włączonych.',
@@ -2230,13 +2243,95 @@ const ui = {
     R.setProperty('--mp-glass', String(g.glass ?? 0.9));
   },
 
-  /** Kafelek L4 — w stylu przycisków gry. */
+  /**
+   * Kafelek L4 — jak przyciski widżetów gry: stoi w ich rzędzie (stałe miejsce w siatce),
+   * a przeciągnięty przeskakuje na wolne miejsce w dowolnym rzędzie widżetów.
+   */
   launcher() {
-    const p = config.data.global.launcher || { x: 16, y: 120 };
-    const b = el('div', { id: 'mp-launcher', class: 'l4-tile', title: `L4Tools (${config.data.global.panelKey || 'brak skrótu'})`, style: { left: p.x + 'px', top: p.y + 'px' } }, el('span', { class: 'l4-tile-t' }, 'L4'));
+    const b = el('div', { id: 'mp-launcher', class: 'l4-tile', title: `L4Tools (${config.data.global.panelKey || 'brak skrótu'}) — przeciągnij, żeby przenieść` }, el('span', { class: 'l4-tile-t' }, 'L4'));
+    this.lb = b;
     document.body.appendChild(b);
-    const moved = makeDraggable(b, b, (pos) => { config.data.global.launcher = pos; config.save(); });
-    b.addEventListener('click', () => { if (!moved()) this.toggle(); });
+    let drag = null;
+    const move = (e) => {
+      if (!drag) return;
+      if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 5) return;
+      if (!drag.moved) { drag.moved = true; document.body.appendChild(b); b.classList.add('drag'); Object.assign(b.style, { position: 'fixed', width: '', height: '' }); }
+      b.style.left = e.clientX - drag.dx + 'px'; b.style.top = e.clientY - drag.dy + 'px';
+    };
+    const up = (e) => {
+      removeEventListener('pointermove', move, true); removeEventListener('pointerup', up, true);
+      if (!drag) return;
+      const d = drag; drag = null; b.classList.remove('drag');
+      if (!d.moved) { this.toggle(); return; }
+      this.dropLauncher(e.clientX, e.clientY);
+    };
+    b.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      const r = b.getBoundingClientRect();
+      drag = { x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false };
+      addEventListener('pointermove', move, true); addEventListener('pointerup', up, true);
+    });
+    b.addEventListener('mousedown', (e) => e.stopPropagation());
+    this.placeLauncher();
+    setInterval(() => { if (!drag) this.placeLauncher(); }, 2000);
+  },
+  /** Rzędy widżetów gry: kontener, rozmiar kafelka, kierunek i zajęte miejsca. */
+  widgetRows() {
+    const rows = new Map();
+    for (const w of document.querySelectorAll('.widget-button')) {
+      if (w.id === 'mp-launcher' || !w.offsetParent) continue;
+      const p = w.parentElement; if (!p) continue;
+      const r = rows.get(p) || { el: p, pos: w.getAttribute('widget-pos') || p.className, items: [] };
+      r.items.push({ l: parseFloat(w.style.left) || w.offsetLeft, t: parseFloat(w.style.top) || w.offsetTop, s: w.offsetWidth || 44 });
+      rows.set(p, r);
+    }
+    return [...rows.values()].map((r) => {
+      const s = Math.round(r.items[0].s) || 44;
+      const lefts = new Set(r.items.map((i) => Math.round(i.l))), tops = new Set(r.items.map((i) => Math.round(i.t)));
+      const hz = lefts.size >= tops.size;
+      const used = new Set(r.items.map((i) => Math.round((hz ? i.l : i.t) / s)));
+      return { el: r.el, pos: r.pos, s, hz, used, max: Math.max(...used), rect: r.el.getBoundingClientRect() };
+    });
+  },
+  freeIdx(row, want) {
+    for (let d = 0; d < 40; d++) { for (const i of [want + d, want - d]) if (i >= 0 && !row.used.has(i)) return i; }
+    return row.max + 1;
+  },
+  placeLauncher() {
+    const b = this.lb; if (!b) return;
+    const g = config.data.global, rows = this.widgetRows();
+    if (!rows.length) {   // brak widżetów gry (inny interfejs) — zwykły kafelek w zapamiętanym miejscu
+      const p = g.launcher || { x: 16, y: 120 };
+      if (b.parentElement !== document.body) document.body.appendChild(b);
+      Object.assign(b.style, { position: 'fixed', left: p.x + 'px', top: p.y + 'px', width: '', height: '' });
+      b.classList.remove('in-row');
+      return;
+    }
+    const slot = g.l4slot || {};
+    let row = rows.find((r) => r.pos === slot.pos) || rows.find((r) => /top-left/.test(r.pos)) || rows[0];
+    let idx = Number.isInteger(slot.idx) ? slot.idx : row.max + 1;
+    if (row.used.has(idx)) idx = this.freeIdx(row, idx);
+    if (b.parentElement !== row.el) row.el.appendChild(b);
+    b.classList.add('in-row');
+    Object.assign(b.style, { position: 'absolute', width: row.s + 'px', height: row.s + 'px', left: (row.hz ? idx * row.s : (parseFloat(getComputedStyle(row.el).paddingLeft) || 0)) + 'px', top: (row.hz ? 0 : idx * row.s) + 'px' });
+    if (!g.l4slot || g.l4slot.pos !== row.pos || g.l4slot.idx !== idx) { g.l4slot = { pos: row.pos, idx }; config.save(); }
+  },
+  dropLauncher(x, y) {
+    const rows = this.widgetRows(), g = config.data.global;
+    let best = null;
+    for (const r of rows) {
+      const R = r.rect, pad = r.s;
+      if (x < R.left - pad || x > R.right + pad * 2 || y < R.top - pad || y > R.bottom + pad * 2) continue;
+      const want = Math.max(0, Math.round(((r.hz ? x - R.left : y - R.top) - r.s / 2) / r.s));
+      const d = r.hz ? Math.abs(y - (R.top + r.s / 2)) : Math.abs(x - (R.left + r.s / 2));
+      if (!best || d < best.d) best = { r, want, d };
+    }
+    if (best) g.l4slot = { pos: best.r.pos, idx: this.freeIdx(best.r, best.want) };
+    else if (!rows.length) { const r = this.lb.getBoundingClientRect(); g.launcher = { x: Math.round(r.left), y: Math.round(r.top) }; }
+    else toast('L4: upuść kafelek w rzędzie przycisków gry');
+    config.save();
+    this.placeLauncher();
   },
 
   toggle() { if (this.panel) this.close(); else this.open(); },
@@ -2282,6 +2377,7 @@ const ui = {
     if (!this.main) return;
     const st = this.main.scrollTop;
     this.main.innerHTML = '';
+    this.main.classList.toggle('l4-gears', (this.tab === 'addons' && !!this.sel) || this.tab === 'motywy');
     if (this.tab === 'addons') { if (this.sel && addons.byId[this.sel]) this.renderDetail(); else this.renderList(); }
     else if (this.tab === 'motywy') this.renderMotywy();
     else if (this.tab === 'settings') this.renderGeneral();
@@ -2675,7 +2771,7 @@ const quickbar = {
     this.bar.innerHTML = '';
     for (const a of this.enabledList()) {
       const on = addons.on(a.id);
-      const t = el('div', { class: 'mp-qtile' + (on ? ' on' : ' off') + (this.popId === a.id ? ' sel' : ''), 'data-name': `${a.name} — ${on ? 'włączony' : 'wyłączony'}` }, icon(a.icon, 17));
+      const t = el('div', { class: 'mp-qtile' + (on ? ' on' : ' off') + (this.popId === a.id ? ' sel' : ''), 'data-name': `${a.name} — ${on ? 'włączony' : 'wyłączony'}` }, icon(a.icon, 15));
       t.addEventListener('click', (e) => { e.stopPropagation(); if (on && typeof a.quick === 'function') { try { a.quick(); } catch (err) { console.warn('[L4Tools]', err); } return; } this.openPop(a.id, t); });
       t.addEventListener('contextmenu', async (e) => {
         e.preventDefault(); e.stopPropagation();
@@ -2686,7 +2782,6 @@ const quickbar = {
       });
       this.bar.appendChild(t);
     }
-    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Panel L4Tools', onclick: () => ui.toggle() }, el('span', null, 'L4')));
     this.bar.dataset.lay = this.layout();
     this.place();
   },
@@ -3525,7 +3620,7 @@ function parseProtection(data) {
   });
 })();
 
-/* ───────── Let's Cook Together ─────────
+/* ───────── Lepsza Grupa (dawniej Let's Cook Together) ─────────
  * Zaproszenia do grupy pod klawisz (znajomi / klan / sojusz / wszyscy na mapie) i rozwiązanie grupy pod klawisz.
  * Bez automatów — każde zaproszenie wysyłasz sam (klawisz albo przycisk).
  */
@@ -3572,7 +3667,7 @@ function parseProtection(data) {
       await sleep(400);
       if (await menus.choosePlayerOption(p.id, /^zapro[śs] do grupy/i)) return 'ok';
     }
-    const r = await net.send('partyInvite', { id: p.id }, { src: 'Let\'s Cook' });
+    const r = await net.send('partyInvite', { id: p.id }, { src: 'Lepsza Grupa' });
     return r.ok ? 'cmd' : 'fail';
   }
 
@@ -3601,7 +3696,7 @@ function parseProtection(data) {
       if (inParty.length) why.push(`już w grupie: ${inParty.map((p) => p.nick).join(', ')}`);
       if (recent.length) why.push(`zaproszeni przed chwilą: ${recent.map((p) => p.nick).join(', ')} (naciśnij klawisz 2× szybko, żeby zaprosić ponownie)`);
       if (l.length && !room) why.push('grupa jest pełna');
-      toast(why.length ? `Let's Cook: ${why.join('; ')}` : total ? `Let's Cook: nikt z ${total} graczy na mapie nie pasuje do ustawień` : 'Let\'s Cook: brak graczy na mapie', 'warn', 2500);
+      toast(why.length ? `Lepsza Grupa: ${why.join('; ')}` : total ? `Lepsza Grupa: nikt z ${total} graczy na mapie nie pasuje do ustawień` : 'Lepsza Grupa: brak graczy na mapie', 'warn', 2500);
       return;
     }
     // jak gracz: menu gracza → „Zaproś do grupy"; zapas: komenda zaproszenia
@@ -3612,20 +3707,20 @@ function parseProtection(data) {
         await sleep(250);
       }
     })();
-    toast(`Let's Cook: zapraszam ${pick.map((p) => p.nick).join(', ')}`, 'ok', 1800);
+    toast(`Lepsza Grupa: zapraszam ${pick.map((p) => p.nick).join(', ')}`, 'ok', 1800);
   }
 
   async function disband() {
     invited = {};
     game._partyCache = [];
     // bez okienka „Czy na pewno chcesz rozwiązać grupę?" — od razu komenda rozwiązania (działała od początku)
-    await net.send('partyDisband', {}, { src: 'Let\'s Cook', urgent: true });
+    await net.send('partyDisband', {}, { src: 'Lepsza Grupa', urgent: true });
     toast('Rozwiązuję grupę');
   }
   MP.cook = { disband };
 
   defineAddon({
-    id: 'cook', name: 'Let\'s Cook Together', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
+    id: 'cook', name: 'Lepsza Grupa', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
     desc: 'Zaproszenia do grupy pod klawisz dla znajomych, klanowiczów, sojuszników albo wszystkich na mapie oraz rozwiązanie grupy pod klawisz.',
     defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10 },
     keys: [
@@ -7454,7 +7549,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   const unb64 = (str) => { const s = atob(str); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; };
   /** Eksport własnego efektu do pliku .json (ustawienia + Twoja animacja i dźwięk, jeśli są). */
   async function exportOwn() {
-    const out = { l4tools: 'legenda', v: 1, custom: cfg.custom, dur: cfg.dur, volume: cfg.volume };
+    const out = { l4tools: 'legenda', v: 1, name: (cfg.custom && cfg.custom.text) || 'Mój efekt', custom: cfg.custom, dur: cfg.dur, volume: cfg.volume };
     const m = await idb.get('media:wlasny').catch(() => null); if (m && m.data) out.media = { name: m.name, type: m.type, data: b64(m.data) };
     const a = await idb.get('snd:wlasny').catch(() => null); if (a && a.data) out.sound = { name: a.name, size: a.size, data: b64(a.data) };
     const link = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify(out)], { type: 'application/json' })), download: 'legendarny-lup-efekt.json' });
@@ -7474,6 +7569,42 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       } catch (e) { toast('Legendarny Łup: nie udało się wczytać pliku — ' + e.message, 'warn'); }
     });
     document.body.appendChild(inp); inp.click();
+  }
+  /* ── dodatkowe style: zaimportowane pliki efektów, każdy jako osobna karta ── */
+  function importExtra(done) {
+    const inp = el('input', { type: 'file', accept: '.json,application/json', style: { display: 'none' } });
+    inp.addEventListener('change', async () => {
+      const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+      try {
+        const o = JSON.parse(await f.text());
+        if (!o || o.l4tools !== 'legenda' || !o.custom) throw new Error('to nie jest plik efektu Legendarnego Łupu');
+        const name = await MP.promptBox({ title: 'Nazwa stylu', label: 'Pod tą nazwą styl pojawi się na liście', value: (o.name || f.name.replace(/\.json$/i, '')).slice(0, 30), maxLength: 30, okText: 'Dodaj styl' });
+        if (!name) return;
+        const id = 'x' + Date.now().toString(36);
+        if (o.media) await idb.put('media:' + id, { name: o.media.name, type: o.media.type, data: unb64(o.media.data) });
+        if (o.sound) await idb.put('snd:' + id, { name: o.sound.name, size: o.sound.size, data: unb64(o.sound.data) });
+        cfg.extras = (cfg.extras || []).concat({ id, name, custom: o.custom, dur: o.dur || null });
+        config.save(); await useExtra(id); toast(`Legendarny Łup: dodano styl „${name}"`); done();
+      } catch (e) { toast('Legendarny Łup: nie udało się wczytać pliku — ' + e.message, 'warn'); }
+    });
+    document.body.appendChild(inp); inp.click();
+  }
+  /** Wybór dodatkowego stylu = wczytanie go do silnika „Własnego” (ustawienia, animacja, dźwięk). */
+  async function useExtra(id) {
+    const x = (cfg.extras || []).find((e) => e.id === id); if (!x) return;
+    cfg.custom = JSON.parse(JSON.stringify(x.custom)); if (x.dur) cfg.dur = x.dur;
+    const m = await idb.get('media:' + id).catch(() => null);
+    if (m) await idb.put('media:wlasny', m); else await idb.del('media:wlasny').catch(() => {});
+    const a = await idb.get('snd:' + id).catch(() => null);
+    if (a) await idb.put('snd:wlasny', a); else await idb.del('snd:wlasny').catch(() => {});
+    if (mediaUrl) URL.revokeObjectURL(mediaUrl); mediaUrl = null; delete bufCache.wlasny;
+    cfg.style = 'wlasny'; cfg.extraOn = id; config.save();
+  }
+  async function delExtra(id) {
+    cfg.extras = (cfg.extras || []).filter((e) => e.id !== id);
+    if (cfg.extraOn === id) cfg.extraOn = null;
+    await idb.del('media:' + id).catch(() => {}); await idb.del('snd:' + id).catch(() => {});
+    config.save();
   }
   function pickMedia(done) {
     const inp = el('input', { type: 'file', accept: 'image/*,video/mp4,video/webm,.gif,.png,.webp,.apng,.mp4,.webm', style: { display: 'none' } });
@@ -7508,20 +7639,33 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   defineAddon({
     id: 'legenda', name: 'Legendarny Łup', icon: 'legenda', color: ['#ff9a1f', '#ff3d6e'], renderFirst: true,
     desc: 'Gdy w łupie trafi się przedmiot legendarny — efekt na cały ekran z dźwiękiem: Thor, Smoke, Kasyno, Disco albo Twój własny. Każdy styl ma wbudowany dźwięk i może mieć Twój plik dźwiękowy. Przycisk „Test" pokazuje efekt od razu.',
-    defaults: { enabled: false, style: 'thor', volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
+    defaults: { enabled: false, style: 'thor', extras: [], extraOn: null, volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
     notes: () => [{ type: 'info', text: 'Działa samodzielnie — <b>nie wymaga</b> opcji gry „Podświetlenie okna łupów”. Najlepiej ją <b>wyłączyć</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy), żeby efekty gry i dodatku nie nakładały się na siebie. Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],
     render(box, c, rerender) {
       // style
       const grid = el('div', { class: 'mp-lg-grid' });
       for (const [k, s] of Object.entries(STYLES)) {
-        grid.appendChild(el('div', { class: 'mp-lg-card' + (c.style === k ? ' on' : ''), style: { '--a': s.grad[0], '--b': s.grad[1], '--c': s.col }, onclick: () => { c.style = k; config.save(); rerender(); } },
+        grid.appendChild(el('div', { class: 'mp-lg-card' + (c.style === k && !(k === 'wlasny' && c.extraOn) ? ' on' : ''), style: { '--a': s.grad[0], '--b': s.grad[1], '--c': s.col }, onclick: () => { c.style = k; c.extraOn = null; config.save(); rerender(); } },
           el('div', { class: 'mp-lg-art ' + k }, svgI(k)),
           el('div', { class: 'mp-lg-name' }, s.name),
           el('div', { class: 'mp-lg-desc' }, s.desc),
           el('button', { class: 'mp-btn mp-lg-test', onclick: (e) => { e.stopPropagation(); play(k, { test: true }); } }, 'Test')));
       }
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Styl efektu'), grid));
+      for (const x of c.extras || []) {
+        const col = (x.custom && x.custom.color) || '#7c5cff';
+        grid.appendChild(el('div', { class: 'mp-lg-card' + (c.style === 'wlasny' && c.extraOn === x.id ? ' on' : ''), style: { '--a': '#151520', '--b': col, '--c': col }, onclick: async () => { await useExtra(x.id); rerender(); } },
+          el('div', { class: 'mp-lg-art wlasny' }, svgI('wlasny')),
+          el('div', { class: 'mp-lg-name' }, x.name),
+          el('div', { class: 'mp-lg-desc' }, 'Zaimportowany styl'),
+          el('div', { class: 'mp-btns', style: { justifyContent: 'center', gap: '4px' } },
+            el('button', { class: 'mp-btn mp-lg-test', onclick: async (e) => { e.stopPropagation(); await useExtra(x.id); rerender(); play('wlasny', { test: true }); } }, 'Test'),
+            el('button', { class: 'mp-btn bad mp-lg-test', title: 'Usuń styl', onclick: async (e) => { e.stopPropagation(); if (await MP.confirmBox({ title: `Usunąć styl „${x.name}"?`, okText: 'Usuń', danger: true })) { await delExtra(x.id); rerender(); } } }, '×'))));
+      }
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Styl efektu'), grid,
+        el('div', { class: 'mp-btns', style: { marginTop: '8px' } },
+          el('button', { class: 'mp-btn pri', onclick: () => importExtra(rerender) }, 'Importuj dodatkowy styl (.json)'),
+          el('span', { class: 'mp-dim', style: { fontSize: '11.5px' } }, 'Plik efektu z przycisku „Eksportuj efekt” w stylu Własny — od Ciebie albo od znajomych.'))));
       const HL = [['ring', 'Obwódka w okienku'], ['glow', 'Obwódka + poświata'], ['pulse', 'Pulsujące tło'], ['none', 'Bez wyróżnienia']];
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Wyróżnienie okienka z legendą'),
         el('div', { class: 'mp-dim', style: { marginBottom: '6px' } }, 'Okno łupów z legendą świeci dookoła kolorem stylu, a okienko z legendą dostaje wyróżnienie. Wyróżnienie mieści się w okienku, więc kilka legend obok siebie nie nachodzi na siebie.'),
@@ -7692,5 +7836,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.1.0";
+MP.version = "1.2.0";
 })();

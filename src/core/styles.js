@@ -522,14 +522,20 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .l4-lay-pic.pgp,.l4-lay-pic.lgp{flex-direction:column}
 .l4-lay-pic.pgp{align-items:flex-end;padding-right:13px}.l4-lay-pic.lgp{align-items:flex-start;padding-left:13px}
 .l4-lay-pic.lgh{padding-left:13px}.l4-lay-pic.ldh{padding-left:13px;align-items:flex-end}
-/* kafelek L4 (jak przyciski gry) */
-#mp-launcher.l4-tile{width:34px;height:34px;border-radius:4px;transition:filter .12s;background:linear-gradient(#5b8b3d,#3a6224 48%,#2c4d1a 52%,#33572080);background-color:#2f501d;box-shadow:inset 0 0 0 1px #a3c47f,inset 0 0 0 2px #1f3512,inset 0 2px 0 2px rgba(255,255,255,.18),0 0 0 1px #0b0f07,0 2px 4px rgba(0,0,0,.6)}
+/* kafelek L4 (jak przyciski widżetów gry) */
+#mp-launcher.l4-tile{position:fixed;z-index:2147483000;width:44px;height:44px;box-sizing:border-box;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;touch-action:none;transition:filter .12s;background:linear-gradient(#b8332b,#8a1f19 48%,#6e1612 52%,#82201a);box-shadow:inset 0 0 0 1px #e9a07a,inset 0 0 0 2px #3d0905,inset 0 3px 0 2px rgba(255,255,255,.16),0 0 0 1px #140302,0 2px 4px rgba(0,0,0,.6)}
+#mp-launcher.l4-tile.in-row{z-index:5}
 #mp-launcher.l4-tile:hover{transform:none;filter:brightness(1.15)}
-.l4-tile-t{font:900 15px/1 Georgia,"Times New Roman",serif;letter-spacing:-.5px;color:#fff3c4;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000,0 -1px 0 #000,0 0 5px rgba(255,214,110,.55);pointer-events:none}
+#mp-launcher.l4-tile.drag{z-index:2147483600;opacity:.85;cursor:grabbing;filter:drop-shadow(0 4px 10px rgba(0,0,0,.7))}
+.l4-tile-t{font:900 19px/1 Georgia,"Times New Roman",serif;letter-spacing:-.6px;background:linear-gradient(#fff8d2,#ffd54a 45%,#d08a12);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 0 4px rgba(255,200,60,.55));pointer-events:none}
+.l4-mini{background:radial-gradient(circle at 35% 30%,#b8332b,#5e110d)!important;box-shadow:0 0 0 1px #e9a07a,0 0 0 2px #140302!important;color:#ffd54a!important}
+/* zębatka przy ustawieniach dodatków */
+.l4-gears .mp-card > h3{display:flex;align-items:center;gap:6px}
+.l4-gears .mp-card > h3::before{content:"";width:12px;height:12px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4L5.3 5.3'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='3.2'/><path d='M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4L5.3 5.3'/></svg>") center/contain no-repeat}
 /* pasek skrótów — kafelki jak przyciski gry */
 #mp-qbar{position:fixed;z-index:2147482998;display:flex;flex-direction:column;gap:5px;padding:0;background:none!important;border:0!important;box-shadow:none!important;width:auto!important;opacity:1}
 #mp-qbar.hz{flex-direction:row}
-#mp-qbar .mp-qtile{width:30px;height:30px;border-radius:4px;color:#fff;background:linear-gradient(#262628,#0d0d0f);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 0 0 1px #000,0 2px 4px rgba(0,0,0,.55)}
+#mp-qbar .mp-qtile{width:27px;height:27px;border-radius:4px;color:#fff;background:linear-gradient(#262628,#0d0d0f);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 0 0 1px #000,0 2px 4px rgba(0,0,0,.55)}
 #mp-qbar .mp-qtile:hover{background:linear-gradient(#36363a,#151517);color:#fff}
 #mp-qbar .mp-qtile.off{color:rgba(255,255,255,.35)}
 #mp-qbar .mp-qtile.on::before{content:"";position:absolute;right:3px;top:3px;width:5px;height:5px;border-radius:50%;background:var(--mp-accent);box-shadow:0 0 4px var(--mp-accent)}

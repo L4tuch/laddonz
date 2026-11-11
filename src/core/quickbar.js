@@ -68,7 +68,7 @@ const quickbar = {
     this.bar.innerHTML = '';
     for (const a of this.enabledList()) {
       const on = addons.on(a.id);
-      const t = el('div', { class: 'mp-qtile' + (on ? ' on' : ' off') + (this.popId === a.id ? ' sel' : ''), 'data-name': `${a.name} — ${on ? 'włączony' : 'wyłączony'}` }, icon(a.icon, 17));
+      const t = el('div', { class: 'mp-qtile' + (on ? ' on' : ' off') + (this.popId === a.id ? ' sel' : ''), 'data-name': `${a.name} — ${on ? 'włączony' : 'wyłączony'}` }, icon(a.icon, 15));
       t.addEventListener('click', (e) => { e.stopPropagation(); if (on && typeof a.quick === 'function') { try { a.quick(); } catch (err) { console.warn('[L4Tools]', err); } return; } this.openPop(a.id, t); });
       t.addEventListener('contextmenu', async (e) => {
         e.preventDefault(); e.stopPropagation();
@@ -79,7 +79,6 @@ const quickbar = {
       });
       this.bar.appendChild(t);
     }
-    this.bar.appendChild(el('div', { class: 'mp-qtile mp-qmore', 'data-name': 'Panel L4Tools', onclick: () => ui.toggle() }, el('span', null, 'L4')));
     this.bar.dataset.lay = this.layout();
     this.place();
   },

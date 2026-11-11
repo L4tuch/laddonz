@@ -5,6 +5,13 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.2.0', d: '11.11.2026', items: [
+    'Kafelek L4 na czerwonym tle ze złotym napisem, w rzędzie przycisków gry — ma stałe miejsce jak inne przyciski, a przeciągnięty przeskakuje na wolne miejsce w dowolnym rzędzie.',
+    'Mniejsze ikonki skrótów dodatków; bez kafelka panelu na pasku skrótów.',
+    'Let\'s Cook Together nazywa się teraz Lepsza Grupa (nowa ikonka).',
+    'Legendarny Łup: import dodatkowych stylów z plików .json — każdy jako osobna karta z testem i usuwaniem.',
+    'Ustawienia dodatków oznaczone zębatką.',
+  ] },
   { v: '1.1.0', d: '11.11.2026', items: [
     'Nowy wygląd panelu w stylu okien gry: zakładki Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
     'Lista dodatków z wyszukiwarką, filtrem (wszystkie / włączone / wyłączone) i licznikiem włączonych.',
@@ -94,13 +101,95 @@ const ui = {
     R.setProperty('--mp-glass', String(g.glass ?? 0.9));
   },
 
-  /** Kafelek L4 — w stylu przycisków gry. */
+  /**
+   * Kafelek L4 — jak przyciski widżetów gry: stoi w ich rzędzie (stałe miejsce w siatce),
+   * a przeciągnięty przeskakuje na wolne miejsce w dowolnym rzędzie widżetów.
+   */
   launcher() {
-    const p = config.data.global.launcher || { x: 16, y: 120 };
-    const b = el('div', { id: 'mp-launcher', class: 'l4-tile', title: `L4Tools (${config.data.global.panelKey || 'brak skrótu'})`, style: { left: p.x + 'px', top: p.y + 'px' } }, el('span', { class: 'l4-tile-t' }, 'L4'));
+    const b = el('div', { id: 'mp-launcher', class: 'l4-tile', title: `L4Tools (${config.data.global.panelKey || 'brak skrótu'}) — przeciągnij, żeby przenieść` }, el('span', { class: 'l4-tile-t' }, 'L4'));
+    this.lb = b;
     document.body.appendChild(b);
-    const moved = makeDraggable(b, b, (pos) => { config.data.global.launcher = pos; config.save(); });
-    b.addEventListener('click', () => { if (!moved()) this.toggle(); });
+    let drag = null;
+    const move = (e) => {
+      if (!drag) return;
+      if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 5) return;
+      if (!drag.moved) { drag.moved = true; document.body.appendChild(b); b.classList.add('drag'); Object.assign(b.style, { position: 'fixed', width: '', height: '' }); }
+      b.style.left = e.clientX - drag.dx + 'px'; b.style.top = e.clientY - drag.dy + 'px';
+    };
+    const up = (e) => {
+      removeEventListener('pointermove', move, true); removeEventListener('pointerup', up, true);
+      if (!drag) return;
+      const d = drag; drag = null; b.classList.remove('drag');
+      if (!d.moved) { this.toggle(); return; }
+      this.dropLauncher(e.clientX, e.clientY);
+    };
+    b.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      const r = b.getBoundingClientRect();
+      drag = { x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false };
+      addEventListener('pointermove', move, true); addEventListener('pointerup', up, true);
+    });
+    b.addEventListener('mousedown', (e) => e.stopPropagation());
+    this.placeLauncher();
+    setInterval(() => { if (!drag) this.placeLauncher(); }, 2000);
+  },
+  /** Rzędy widżetów gry: kontener, rozmiar kafelka, kierunek i zajęte miejsca. */
+  widgetRows() {
+    const rows = new Map();
+    for (const w of document.querySelectorAll('.widget-button')) {
+      if (w.id === 'mp-launcher' || !w.offsetParent) continue;
+      const p = w.parentElement; if (!p) continue;
+      const r = rows.get(p) || { el: p, pos: w.getAttribute('widget-pos') || p.className, items: [] };
+      r.items.push({ l: parseFloat(w.style.left) || w.offsetLeft, t: parseFloat(w.style.top) || w.offsetTop, s: w.offsetWidth || 44 });
+      rows.set(p, r);
+    }
+    return [...rows.values()].map((r) => {
+      const s = Math.round(r.items[0].s) || 44;
+      const lefts = new Set(r.items.map((i) => Math.round(i.l))), tops = new Set(r.items.map((i) => Math.round(i.t)));
+      const hz = lefts.size >= tops.size;
+      const used = new Set(r.items.map((i) => Math.round((hz ? i.l : i.t) / s)));
+      return { el: r.el, pos: r.pos, s, hz, used, max: Math.max(...used), rect: r.el.getBoundingClientRect() };
+    });
+  },
+  freeIdx(row, want) {
+    for (let d = 0; d < 40; d++) { for (const i of [want + d, want - d]) if (i >= 0 && !row.used.has(i)) return i; }
+    return row.max + 1;
+  },
+  placeLauncher() {
+    const b = this.lb; if (!b) return;
+    const g = config.data.global, rows = this.widgetRows();
+    if (!rows.length) {   // brak widżetów gry (inny interfejs) — zwykły kafelek w zapamiętanym miejscu
+      const p = g.launcher || { x: 16, y: 120 };
+      if (b.parentElement !== document.body) document.body.appendChild(b);
+      Object.assign(b.style, { position: 'fixed', left: p.x + 'px', top: p.y + 'px', width: '', height: '' });
+      b.classList.remove('in-row');
+      return;
+    }
+    const slot = g.l4slot || {};
+    let row = rows.find((r) => r.pos === slot.pos) || rows.find((r) => /top-left/.test(r.pos)) || rows[0];
+    let idx = Number.isInteger(slot.idx) ? slot.idx : row.max + 1;
+    if (row.used.has(idx)) idx = this.freeIdx(row, idx);
+    if (b.parentElement !== row.el) row.el.appendChild(b);
+    b.classList.add('in-row');
+    Object.assign(b.style, { position: 'absolute', width: row.s + 'px', height: row.s + 'px', left: (row.hz ? idx * row.s : (parseFloat(getComputedStyle(row.el).paddingLeft) || 0)) + 'px', top: (row.hz ? 0 : idx * row.s) + 'px' });
+    if (!g.l4slot || g.l4slot.pos !== row.pos || g.l4slot.idx !== idx) { g.l4slot = { pos: row.pos, idx }; config.save(); }
+  },
+  dropLauncher(x, y) {
+    const rows = this.widgetRows(), g = config.data.global;
+    let best = null;
+    for (const r of rows) {
+      const R = r.rect, pad = r.s;
+      if (x < R.left - pad || x > R.right + pad * 2 || y < R.top - pad || y > R.bottom + pad * 2) continue;
+      const want = Math.max(0, Math.round(((r.hz ? x - R.left : y - R.top) - r.s / 2) / r.s));
+      const d = r.hz ? Math.abs(y - (R.top + r.s / 2)) : Math.abs(x - (R.left + r.s / 2));
+      if (!best || d < best.d) best = { r, want, d };
+    }
+    if (best) g.l4slot = { pos: best.r.pos, idx: this.freeIdx(best.r, best.want) };
+    else if (!rows.length) { const r = this.lb.getBoundingClientRect(); g.launcher = { x: Math.round(r.left), y: Math.round(r.top) }; }
+    else toast('L4: upuść kafelek w rzędzie przycisków gry');
+    config.save();
+    this.placeLauncher();
   },
 
   toggle() { if (this.panel) this.close(); else this.open(); },
@@ -146,6 +235,7 @@ const ui = {
     if (!this.main) return;
     const st = this.main.scrollTop;
     this.main.innerHTML = '';
+    this.main.classList.toggle('l4-gears', (this.tab === 'addons' && !!this.sel) || this.tab === 'motywy');
     if (this.tab === 'addons') { if (this.sel && addons.byId[this.sel]) this.renderDetail(); else this.renderList(); }
     else if (this.tab === 'motywy') this.renderMotywy();
     else if (this.tab === 'settings') this.renderGeneral();
