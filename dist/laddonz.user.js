@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.6
+// @version      1.0.7
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1130,7 +1130,7 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 .mp-fbtn{position:fixed;z-index:2147470500;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;background:radial-gradient(circle at 35% 30%,#3a3d44,#15161a);color:#8a8f98;box-shadow:0 0 0 2px #2a2d33,0 4px 10px rgba(0,0,0,.6);transition:color .3s,box-shadow .3s}
 .mp-fbtn:hover{filter:brightness(1.2)}
 #mp-bers{position:fixed;width:16px;height:15px;z-index:2147470300;cursor:pointer;user-select:none;-webkit-user-drag:none}
-#mp-bers img{display:block;width:16px;height:15px;image-rendering:pixelated;pointer-events:none;filter:grayscale(1) brightness(.85) contrast(1.1);transition:filter .25s}
+#mp-bers img{display:block;width:16px;height:15px;image-rendering:pixelated;pointer-events:none;filter:grayscale(1) brightness(1.9) contrast(.85);transition:filter .25s}
 #mp-bers.on img{filter:drop-shadow(0 0 2px rgba(178,70,255,.9));animation:mpBersSk 1.6s ease-in-out infinite}
 #mp-bers:hover img{transform:scale(1.15)}
 @keyframes mpBersSk{0%,100%{transform:translateY(0);filter:drop-shadow(0 0 1px rgba(178,70,255,.6))}50%{transform:translateY(-1.5px);filter:drop-shadow(0 0 4px rgba(190,90,255,1)) brightness(1.15)}}
@@ -1138,12 +1138,12 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 @keyframes mpBers{0%,100%{box-shadow:0 0 0 2px #ffb070,0 0 10px 2px rgba(255,90,30,.6)}50%{box-shadow:0 0 0 2px #ffd0a0,0 0 22px 7px rgba(255,90,30,.95)}}
 .mp-fbtn.mp-free.on{color:#fff;background:radial-gradient(circle at 35% 30%,#4fe0b8,#0d6b52);box-shadow:0 0 0 2px #9fffe0,0 0 16px 4px rgba(40,220,170,.7);animation:mpFree 1.6s ease-in-out infinite}
 @keyframes mpFree{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-#mp-qc{position:fixed;z-index:2147470400;display:flex;align-items:center;gap:4px;height:46px;padding:0 4px;background:none}
-.mp-qc-av{width:28px;height:40px;flex:none;border-radius:5px;background-size:400% 400%;background-position:0 0;background-repeat:no-repeat;cursor:pointer;image-rendering:pixelated;transition:transform .12s,filter .12s}
-.mp-qc-av:hover{transform:translateY(-1px);filter:drop-shadow(0 0 4px rgba(255,211,77,.8)) brightness(1.1)}
+#mp-qc{position:fixed;z-index:2147470400;display:flex;align-items:flex-end;gap:6px;height:50px;padding:0 4px;background:none}
+.mp-qc-av{width:32px;height:48px;flex:none;background-size:400% 400%;background-position:0 0;background-repeat:no-repeat;cursor:pointer;image-rendering:pixelated;transition:filter .12s;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+.mp-qc-av:hover{filter:drop-shadow(0 0 3px rgba(255,211,77,.9)) brightness(1.1)}
 .mp-qc-dots i{display:block;width:4px;height:4px;border-radius:50%;background:#e8e8e8;box-shadow:0 0 2px #000,0 0 1px #000}.mp-qc-dots:hover i{background:#ffd34d}
 .mp-qc-tip{position:fixed;z-index:2147470600;padding:4px 8px;border-radius:4px;background:rgba(12,12,14,.94);box-shadow:0 0 0 1px rgba(255,255,255,.18),0 3px 8px rgba(0,0,0,.6);color:#eee;font:12px Arimo,Arial,sans-serif;white-space:nowrap;pointer-events:none;text-align:center}.mp-qc-tip b{color:#ffd34d}.mp-qc-tip div{opacity:.75;font-size:11px}
-.mp-qc-dots{flex:none;min-width:14px;height:40px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:0 2px;color:#e8e8e8;text-shadow:0 0 3px #000,0 0 2px #000;font:700 13px Arial;letter-spacing:1px;cursor:pointer;border-radius:5px}.mp-qc-dots:hover{background:rgba(255,255,255,.08);color:#ffd34d}
+.mp-qc-dots{flex:none;min-width:14px;height:48px;align-self:center;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:0 2px;color:#e8e8e8;text-shadow:0 0 3px #000,0 0 2px #000;font:700 13px Arial;letter-spacing:1px;cursor:pointer;border-radius:5px}.mp-qc-dots:hover{background:rgba(255,255,255,.08);color:#ffd34d}
 .mp-qc-pop{position:fixed;z-index:2147470600;min-width:220px;max-width:260px;padding:8px;border-radius:8px;background:rgba(14,14,18,.96);box-shadow:0 0 0 1px rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.6);color:#eee;font:12px Arial}
 .mp-qc-h{font-weight:700;margin-bottom:6px}.mp-qc-w{margin:4px 0}.mp-qc-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
 #mp-lu{position:fixed;z-index:2147470300;width:430px;max-width:calc(100vw - 16px);border-radius:8px;background:rgba(18,18,20,.86);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 0 0 1px rgba(0,0,0,.7),0 8px 22px rgba(0,0,0,.55);color:#e8e8e8;font:12px Arimo,Arial,sans-serif;user-select:none}
@@ -7498,8 +7498,20 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       else harvestSkills(v, depth + 1, sk);
     }
   }
+  /** Opis umiejętności z dymka gry, zapamiętany przy kliknięciu w nią w walce (nazwa, działanie, czas trwania). */
+  let pendingTip = null;
+  const durOf = (txt) => { const m = String(txt).match(/(?:przez|na|trwa(?:jący|jąca)?)\s*(\d{1,2})\s*(?:tur|rund)/i) || String(txt).match(/(\d{1,2})\s*(?:tur|rund)/i); return m ? Number(m[1]) : null; };
+  function readTip() {
+    const t = [...document.querySelectorAll('.tip-wrapper, [class*="tip-wrapper"], .tooltip')].find((n) => n.offsetParent !== null && (n.innerText || '').trim().length > 2);
+    if (!t) return null;
+    const lines = (t.innerText || '').split('\n').map((x) => x.trim()).filter(Boolean);
+    if (!lines.length) return null;
+    const desc = lines.slice(1).filter((l) => !/^(koszt|wymagan|poziom umiej|cooldown|odnowienie|mana|energia|lvl)/i.test(l)).join(' ').slice(0, 220);
+    return { name: lines[0].slice(0, 50), desc, dur: durOf(desc) };
+  }
+  const knownSkill = (id) => (cfg && cfg.known && cfg.known[id]) || (SKILL_NAMES.has(id) ? SKILL_NAMES.get(id) : null);
   function skillName(id) {
-    if (SKILL_NAMES.has(id)) return SKILL_NAMES.get(id).name;
+    const k = knownSkill(id); if (k && k.name) return k.name;
     try {
       const S = E() && E().skills;
       const cand = S && (S.skills || S.list || S.d || S);
@@ -7595,8 +7607,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (!o) continue;
       const ago = turn - c.at;
       if (ago > 12) continue;
-      const nm = `${c.name} (Ty)`;
-      if (!o.eff.some((e) => e.name.toLowerCase().startsWith(c.name.toLowerCase()))) o.eff.push({ name: nm, left: null, ago, k: kind(c.name) === 'neu' ? (Number(o.id) < 0 ? 'neg' : 'pos') : kind(c.name) });
+      const left = c.dur ? c.dur - ago : null;
+      if (left !== null && left <= 0) continue;
+      const nm = `${c.name} · rzucił: Ty`;
+      if (!o.eff.some((e) => e.name.toLowerCase().startsWith(c.name.toLowerCase()))) o.eff.push({ name: nm, left, ago, desc: c.desc, k: kind(c.name + ' ' + (c.desc || '')) === 'neu' ? (Number(o.id) < 0 ? 'neg' : 'pos') : kind(c.name + ' ' + (c.desc || '')) });
     }
     // drużyny: ta z bohaterem = „my"
     const me = h && out[String(h.id)];
@@ -7628,7 +7642,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const c = e.k === 'pos' ? P.pos : e.k === 'neg' ? P.neg : P.neu;
     const soon = e.left != null && e.left <= warnAt;
     return el('div', { class: 'mp-pt-e' + (soon ? ' soon' : ''), style: { '--c': c, background: P.chip } },
-      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), el('span', { class: 'mp-pt-t' }, e.left == null ? (e.ago === 0 ? 'teraz' : `${e.ago} t. temu`) : e.left === 1 ? '1 tura' : e.left > 1 && e.left < 5 ? `${e.left} tury` : `${e.left} tur`));
+      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), el('span', { class: 'mp-pt-t' }, e.left == null ? (e.ago === 0 ? 'teraz' : `${e.ago} t. temu`) : e.ago != null ? `jeszcze ${e.left} ${e.left === 1 ? 'tura' : e.left < 5 ? 'tury' : 'tur'}` : e.left === 1 ? '1 tura' : e.left > 1 && e.left < 5 ? `${e.left} tury` : `${e.left} tur`));
   }
   function row(o, P) {
     const box = el('div', { class: 'mp-pt-w' },
@@ -7641,6 +7655,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const eff = o.eff.slice().sort((a, b) => (a.left ?? 99) - (b.left ?? 99));
     if (eff.length) box.appendChild(el('div', { class: 'mp-pt-es' }, eff.map((e) => chip(e, P, cfg.warnAt ?? 1))));
     else if (!o.charge) box.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'brak efektów'));
+    eff.filter((e) => e.desc).forEach((e) => box.appendChild(el('div', { class: 'mp-pt-cd', style: { color: P.dim } }, el('b', { style: { color: P.text } }, e.name.split(' · ')[0] + ': '), e.desc)));
     return box;
   }
 
@@ -7685,7 +7700,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const shape = (o, d = 0) => { if (!o || typeof o !== 'object' || d > 2) return typeof o; const r = {}; for (const k of Object.keys(o).slice(0, 60)) { const v = o[k]; r[k] = typeof v === 'function' ? 'fn' : v && typeof v === 'object' ? shape(v, d + 1) : v; } return r; };
     let ws = b && (b.warriorsList || b.warriors); try { if (typeof ws === 'function') ws = ws.call(b); } catch {}
     const arr = Array.isArray(ws) ? ws : Object.values(ws || {});
-    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), nazwyUmiejetnosci: [...SKILL_NAMES].slice(0, 40), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
+    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), nazwyUmiejetnosci: [...SKILL_NAMES].slice(0, 40), zapamietane: cfg.known, dymek: readTip(), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
     const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
     try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
     toast(`Pogromca Tytanów: skopiowano dane walki (${PACKETS.length} pakietów) — wklej je w rozmowie`, 'ok', 5000);
@@ -7694,7 +7709,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   defineAddon({
     id: 'pogromca', beta: true, name: 'Pogromca Tytanów', icon: 'pogromca', color: ['#ff6a3d', '#7a1fff'],
     desc: 'W walce pokazuje okienko z efektami na Twojej drużynie (albo na Tobie solo) i na przeciwnikach: nazwa efektu i za ile tur zniknie. Przy tytanach, kolosach i mobach — kto ładuje atak i za ile uderzy. Pomaga trafić z szadzią, furią, aurą czy wyzwaniem. Pozytywne efekty mają kolor stylu, negatywne — czerwony.',
-    defaults: { enabled: false, showAllies: true, showEnemies: true, warnAt: 1, scale: 100 },
+    defaults: { enabled: false, showAllies: true, showEnemies: true, warnAt: 1, scale: 100, known: {} },
     settings: [
       { key: 'showAllies', type: 'bool', label: 'Pokazuj moją drużynę' },
       { key: 'showEnemies', type: 'bool', label: 'Pokazuj przeciwników' },
@@ -7714,13 +7729,22 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     init(c) {
       cfg = c;
       bus.on('data', onData);
+      // kliknięcie w umiejętność w walce: w tym momencie gra pokazuje jej dymek — zapamiętujemy nazwę i opis
+      const grab = () => { if (!cfg.enabled || !game.inBattle()) return; const t = readTip(); if (t) pendingTip = Object.assign(t, { t: now() }); };
+      document.addEventListener('pointerdown', grab, true);
+      document.addEventListener('mouseover', (e) => { if (cfg.enabled && game.inBattle() && e.target && e.target.closest && e.target.closest('[class*="skill"]')) setTimeout(grab, 250); }, true);
       bus.on('battle:start', () => { state = fresh(); preview = false; });
       // Twoje ruchy w walce = kolejne tury (zapas, gdy gra nie podaje numeru tury)
       bus.on('cmd', (t) => {
         const m = String(t || '').match(/^fight&a=(attack|spell|move|skip|wait|turn|use)(?:&s=(\d+))?(?:.*?&id=(-?\d+))?/);
         if (!m || !game.inBattle()) return;
         state.acts++;
-        if (m[1] === 'spell' && m[2]) state.casts.push({ s: Number(m[2]), id: m[3] ? Number(m[3]) : null, at: turnNow(), name: skillName(Number(m[2])) });
+        if (m[1] === 'spell' && m[2]) {
+          const sid = Number(m[2]);
+          if (pendingTip && now() - pendingTip.t < 4000) { cfg.known = cfg.known || {}; cfg.known[sid] = { name: pendingTip.name, desc: pendingTip.desc, dur: pendingTip.dur }; config.save(); pendingTip = null; }
+          const k = knownSkill(sid) || {};
+          state.casts.push({ s: sid, id: m[3] ? Number(m[3]) : null, at: turnNow(), name: skillName(sid), desc: k.desc || '', dur: k.dur || null });
+        }
         if (win && cfg.enabled && !preview) setTimeout(render, 50);
       });
       bus.on('battle:end', () => { if (win && !preview) win.style.display = 'none'; });
@@ -7879,7 +7903,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       }
       return null;
     }
-    let fighting = false, last = { t: 0, why: 'jeszcze nie leczył' };
+    let fighting = false, refused = false, last = { t: 0, why: 'jeszcze nie leczył' };
+    /** Okno walki nadal na ekranie (gra potrafi nie przyjmować przedmiotów, dopóki go nie zamkniesz). */
+    const battleOpen = () => { try { const b = E().battle; return !!(b && typeof b.isBattleShow === 'function' && b.isBattleShow()); } catch { return false; } };
     const hist = [];
     const note = (why) => { last = { t: now(), why }; hist.unshift(new Date().toISOString().slice(11, 19) + ' ' + why); hist.length = Math.min(hist.length, 12); return why; };
     /** Leczenie. Zwraca powód, gdy nic nie zrobił (widać w panelu i w raporcie). */
@@ -7892,7 +7918,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (!s) return note('nie mogę odczytać życia postaci');
       if ((s.hp / s.max) * 100 >= cfg.minHp) return note(`życie ${Math.round((s.hp / s.max) * 100)}% — powyżej progu ${cfg.minHp}%`);
       busy = true;
-      let used = 0;
+      let used = 0; refused = false;
       try {
         for (let n = 0; n < 15 && !fighting; n++) {
           s = hpNow() || s;
@@ -7902,22 +7928,30 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
           if (!it) { if (!used && (cfg.warnEmpty || manual)) toast('Medyk: brak mikstur do leczenia', 'warn'); note(used ? `użył ${used} mikstur, skończyły się` : 'brak pasujących mikstur'); break; }
           const before = s.hp;
           send(`moveitem&st=1&id=${it.id}`);
+          // czekamy, aż gra zaktualizuje życie (maks. ~2 s), zamiast zgadywać ile wyleczyło
+          let changed = false;
+          for (let w = 0; w < 13; w++) { await sleep(150); const x = hpNow(); if (x && x.hp !== before) { changed = true; break; } }
+          if (!changed) { note(`gra nie przyjęła mikstury (${battleOpen() ? 'okno walki jeszcze otwarte' : 'brak odpowiedzi'}) — ponowię za chwilę`); refused = true; break; }
           used++;
-          // czekamy, aż gra zaktualizuje życie (maks. ~1,5 s), zamiast zgadywać ile wyleczyło
-          for (let w = 0; w < 10; w++) { await sleep(150); const x = hpNow(); if (x && x.hp !== before) break; }
           await sleep(Math.max(0, (cfg.delay || 350) - 150));
         }
         if (used) note(`${reason}: użył ${used} ${used === 1 ? 'mikstury' : 'mikstur'}`);
       } finally { busy = false; }
       return last.why;
     }
-    /** Po walce próbujemy kilka razy — gra przysyła nowe życie z opóźnieniem, a okno walki bywa jeszcze otwarte. */
+    /** Po walce: próbujemy od razu, a jeśli gra nie przyjmuje mikstur (okno walki), ponawiamy aż do skutku (maks. 3 min). */
+    let afterRun = 0;
     async function afterBattle() {
-      for (let i = 0; i < 8 && !fighting; i++) {
-        await sleep(i ? 900 : 500);
+      const run = ++afterRun, start = now();
+      await sleep(400);
+      while (run === afterRun && !fighting && now() - start < 180000) {
         const s = hpNow();
         if (s && (s.hp / s.max) * 100 >= cfg.minHp) return;
-        if (!busy) await heal('po walce');
+        if (!busy) {
+          await heal('po walce');
+          if (!refused && /użył|brak/.test(last.why)) { const x = hpNow(); if (!x || (x.hp / x.max) * 100 >= cfg.minHp || /brak/.test(last.why)) return; }
+        }
+        await sleep(refused && battleOpen() ? 500 : 1200);
       }
     }
     defineAddon({
@@ -7999,6 +8033,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       const url = /^https?:/.test(icon) ? icon : ICON_BASE + (icon.startsWith('/') ? '' : '/') + icon;
       const label = `${c.nick} (${c.lvl ?? '?'}${c.prof || ''})`;
       const av = el('div', { class: 'mp-qc-av', style: { backgroundImage: `url("${url}")` }, onclick: () => switchTo(c) });
+      // naturalny rozmiar klatki postaci (obrazek ma 4×4 klatki) — bez rozciągania
+      const img = new Image();
+      img.onload = () => { const w = img.naturalWidth / 4, h = img.naturalHeight / 4; if (w > 0 && h > 0) { const k = Math.min(1, 48 / h); av.style.width = Math.round(w * k) + 'px'; av.style.height = Math.round(h * k) + 'px'; } };
+      img.src = url;
       let tip = null;
       av.addEventListener('mouseenter', () => {
         tip = el('div', { class: 'mp-qc-tip' }, el('b', null, label), c.world !== worldName() ? el('div', null, c.world) : null);
@@ -8630,5 +8668,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.6";
+MP.version = "1.0.7";
 })();

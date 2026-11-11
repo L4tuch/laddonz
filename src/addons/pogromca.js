@@ -99,8 +99,20 @@
       else harvestSkills(v, depth + 1, sk);
     }
   }
+  /** Opis umiejętności z dymka gry, zapamiętany przy kliknięciu w nią w walce (nazwa, działanie, czas trwania). */
+  let pendingTip = null;
+  const durOf = (txt) => { const m = String(txt).match(/(?:przez|na|trwa(?:jący|jąca)?)\s*(\d{1,2})\s*(?:tur|rund)/i) || String(txt).match(/(\d{1,2})\s*(?:tur|rund)/i); return m ? Number(m[1]) : null; };
+  function readTip() {
+    const t = [...document.querySelectorAll('.tip-wrapper, [class*="tip-wrapper"], .tooltip')].find((n) => n.offsetParent !== null && (n.innerText || '').trim().length > 2);
+    if (!t) return null;
+    const lines = (t.innerText || '').split('\n').map((x) => x.trim()).filter(Boolean);
+    if (!lines.length) return null;
+    const desc = lines.slice(1).filter((l) => !/^(koszt|wymagan|poziom umiej|cooldown|odnowienie|mana|energia|lvl)/i.test(l)).join(' ').slice(0, 220);
+    return { name: lines[0].slice(0, 50), desc, dur: durOf(desc) };
+  }
+  const knownSkill = (id) => (cfg && cfg.known && cfg.known[id]) || (SKILL_NAMES.has(id) ? SKILL_NAMES.get(id) : null);
   function skillName(id) {
-    if (SKILL_NAMES.has(id)) return SKILL_NAMES.get(id).name;
+    const k = knownSkill(id); if (k && k.name) return k.name;
     try {
       const S = E() && E().skills;
       const cand = S && (S.skills || S.list || S.d || S);
@@ -196,8 +208,10 @@
       if (!o) continue;
       const ago = turn - c.at;
       if (ago > 12) continue;
-      const nm = `${c.name} (Ty)`;
-      if (!o.eff.some((e) => e.name.toLowerCase().startsWith(c.name.toLowerCase()))) o.eff.push({ name: nm, left: null, ago, k: kind(c.name) === 'neu' ? (Number(o.id) < 0 ? 'neg' : 'pos') : kind(c.name) });
+      const left = c.dur ? c.dur - ago : null;
+      if (left !== null && left <= 0) continue;
+      const nm = `${c.name} · rzucił: Ty`;
+      if (!o.eff.some((e) => e.name.toLowerCase().startsWith(c.name.toLowerCase()))) o.eff.push({ name: nm, left, ago, desc: c.desc, k: kind(c.name + ' ' + (c.desc || '')) === 'neu' ? (Number(o.id) < 0 ? 'neg' : 'pos') : kind(c.name + ' ' + (c.desc || '')) });
     }
     // drużyny: ta z bohaterem = „my"
     const me = h && out[String(h.id)];
@@ -229,7 +243,7 @@
     const c = e.k === 'pos' ? P.pos : e.k === 'neg' ? P.neg : P.neu;
     const soon = e.left != null && e.left <= warnAt;
     return el('div', { class: 'mp-pt-e' + (soon ? ' soon' : ''), style: { '--c': c, background: P.chip } },
-      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), el('span', { class: 'mp-pt-t' }, e.left == null ? (e.ago === 0 ? 'teraz' : `${e.ago} t. temu`) : e.left === 1 ? '1 tura' : e.left > 1 && e.left < 5 ? `${e.left} tury` : `${e.left} tur`));
+      el('span', { class: 'mp-pt-dot' }), el('span', { class: 'mp-pt-n' }, e.name), el('span', { class: 'mp-pt-t' }, e.left == null ? (e.ago === 0 ? 'teraz' : `${e.ago} t. temu`) : e.ago != null ? `jeszcze ${e.left} ${e.left === 1 ? 'tura' : e.left < 5 ? 'tury' : 'tur'}` : e.left === 1 ? '1 tura' : e.left > 1 && e.left < 5 ? `${e.left} tury` : `${e.left} tur`));
   }
   function row(o, P) {
     const box = el('div', { class: 'mp-pt-w' },
@@ -242,6 +256,7 @@
     const eff = o.eff.slice().sort((a, b) => (a.left ?? 99) - (b.left ?? 99));
     if (eff.length) box.appendChild(el('div', { class: 'mp-pt-es' }, eff.map((e) => chip(e, P, cfg.warnAt ?? 1))));
     else if (!o.charge) box.appendChild(el('div', { class: 'mp-pt-none', style: { color: P.dim } }, 'brak efektów'));
+    eff.filter((e) => e.desc).forEach((e) => box.appendChild(el('div', { class: 'mp-pt-cd', style: { color: P.dim } }, el('b', { style: { color: P.text } }, e.name.split(' · ')[0] + ': '), e.desc)));
     return box;
   }
 
@@ -286,7 +301,7 @@
     const shape = (o, d = 0) => { if (!o || typeof o !== 'object' || d > 2) return typeof o; const r = {}; for (const k of Object.keys(o).slice(0, 60)) { const v = o[k]; r[k] = typeof v === 'function' ? 'fn' : v && typeof v === 'object' ? shape(v, d + 1) : v; } return r; };
     let ws = b && (b.warriorsList || b.warriors); try { if (typeof ws === 'function') ws = ws.call(b); } catch {}
     const arr = Array.isArray(ws) ? ws : Object.values(ws || {});
-    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), nazwyUmiejetnosci: [...SKILL_NAMES].slice(0, 40), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
+    const txt = JSON.stringify({ wersja: MP.version, wWalce: game.inBattle(), battleKeys: b ? Object.keys(b).slice(0, 120) : null, wojownicy: arr.slice(0, 6).map((w) => shape(w)), pakiety: PACKETS.slice(-25), dziennik: LOGS.slice(-40), tura: turnNow(), stan: { round: state.round, domTurn: state.domTurn, acts: state.acts, casts: state.casts }, komendy: (net.recent || []).slice(0, 25), skills: (() => { try { const S = E().skills; return S ? Object.keys(S).slice(0, 40) : null; } catch { return null; } })(), nazwyUmiejetnosci: [...SKILL_NAMES].slice(0, 40), zapamietane: cfg.known, dymek: readTip(), okno: (document.querySelector('.battle-controller, .battle-window') || {}).outerHTML?.slice(0, 4000) });
     const fallback = () => { const t = el('textarea', { style: { position: 'fixed', left: '-9999px' } }); t.value = txt; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); };
     try { navigator.clipboard.writeText(txt).catch(fallback); } catch { fallback(); }
     toast(`Pogromca Tytanów: skopiowano dane walki (${PACKETS.length} pakietów) — wklej je w rozmowie`, 'ok', 5000);
@@ -295,7 +310,7 @@
   defineAddon({
     id: 'pogromca', beta: true, name: 'Pogromca Tytanów', icon: 'pogromca', color: ['#ff6a3d', '#7a1fff'],
     desc: 'W walce pokazuje okienko z efektami na Twojej drużynie (albo na Tobie solo) i na przeciwnikach: nazwa efektu i za ile tur zniknie. Przy tytanach, kolosach i mobach — kto ładuje atak i za ile uderzy. Pomaga trafić z szadzią, furią, aurą czy wyzwaniem. Pozytywne efekty mają kolor stylu, negatywne — czerwony.',
-    defaults: { enabled: false, showAllies: true, showEnemies: true, warnAt: 1, scale: 100 },
+    defaults: { enabled: false, showAllies: true, showEnemies: true, warnAt: 1, scale: 100, known: {} },
     settings: [
       { key: 'showAllies', type: 'bool', label: 'Pokazuj moją drużynę' },
       { key: 'showEnemies', type: 'bool', label: 'Pokazuj przeciwników' },
@@ -315,13 +330,22 @@
     init(c) {
       cfg = c;
       bus.on('data', onData);
+      // kliknięcie w umiejętność w walce: w tym momencie gra pokazuje jej dymek — zapamiętujemy nazwę i opis
+      const grab = () => { if (!cfg.enabled || !game.inBattle()) return; const t = readTip(); if (t) pendingTip = Object.assign(t, { t: now() }); };
+      document.addEventListener('pointerdown', grab, true);
+      document.addEventListener('mouseover', (e) => { if (cfg.enabled && game.inBattle() && e.target && e.target.closest && e.target.closest('[class*="skill"]')) setTimeout(grab, 250); }, true);
       bus.on('battle:start', () => { state = fresh(); preview = false; });
       // Twoje ruchy w walce = kolejne tury (zapas, gdy gra nie podaje numeru tury)
       bus.on('cmd', (t) => {
         const m = String(t || '').match(/^fight&a=(attack|spell|move|skip|wait|turn|use)(?:&s=(\d+))?(?:.*?&id=(-?\d+))?/);
         if (!m || !game.inBattle()) return;
         state.acts++;
-        if (m[1] === 'spell' && m[2]) state.casts.push({ s: Number(m[2]), id: m[3] ? Number(m[3]) : null, at: turnNow(), name: skillName(Number(m[2])) });
+        if (m[1] === 'spell' && m[2]) {
+          const sid = Number(m[2]);
+          if (pendingTip && now() - pendingTip.t < 4000) { cfg.known = cfg.known || {}; cfg.known[sid] = { name: pendingTip.name, desc: pendingTip.desc, dur: pendingTip.dur }; config.save(); pendingTip = null; }
+          const k = knownSkill(sid) || {};
+          state.casts.push({ s: sid, id: m[3] ? Number(m[3]) : null, at: turnNow(), name: skillName(sid), desc: k.desc || '', dur: k.dur || null });
+        }
         if (win && cfg.enabled && !preview) setTimeout(render, 50);
       });
       bus.on('battle:end', () => { if (win && !preview) win.style.display = 'none'; });

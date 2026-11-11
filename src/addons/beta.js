@@ -145,7 +145,9 @@
       }
       return null;
     }
-    let fighting = false, last = { t: 0, why: 'jeszcze nie leczył' };
+    let fighting = false, refused = false, last = { t: 0, why: 'jeszcze nie leczył' };
+    /** Okno walki nadal na ekranie (gra potrafi nie przyjmować przedmiotów, dopóki go nie zamkniesz). */
+    const battleOpen = () => { try { const b = E().battle; return !!(b && typeof b.isBattleShow === 'function' && b.isBattleShow()); } catch { return false; } };
     const hist = [];
     const note = (why) => { last = { t: now(), why }; hist.unshift(new Date().toISOString().slice(11, 19) + ' ' + why); hist.length = Math.min(hist.length, 12); return why; };
     /** Leczenie. Zwraca powód, gdy nic nie zrobił (widać w panelu i w raporcie). */
@@ -158,7 +160,7 @@
       if (!s) return note('nie mogę odczytać życia postaci');
       if ((s.hp / s.max) * 100 >= cfg.minHp) return note(`życie ${Math.round((s.hp / s.max) * 100)}% — powyżej progu ${cfg.minHp}%`);
       busy = true;
-      let used = 0;
+      let used = 0; refused = false;
       try {
         for (let n = 0; n < 15 && !fighting; n++) {
           s = hpNow() || s;
@@ -168,22 +170,30 @@
           if (!it) { if (!used && (cfg.warnEmpty || manual)) toast('Medyk: brak mikstur do leczenia', 'warn'); note(used ? `użył ${used} mikstur, skończyły się` : 'brak pasujących mikstur'); break; }
           const before = s.hp;
           send(`moveitem&st=1&id=${it.id}`);
+          // czekamy, aż gra zaktualizuje życie (maks. ~2 s), zamiast zgadywać ile wyleczyło
+          let changed = false;
+          for (let w = 0; w < 13; w++) { await sleep(150); const x = hpNow(); if (x && x.hp !== before) { changed = true; break; } }
+          if (!changed) { note(`gra nie przyjęła mikstury (${battleOpen() ? 'okno walki jeszcze otwarte' : 'brak odpowiedzi'}) — ponowię za chwilę`); refused = true; break; }
           used++;
-          // czekamy, aż gra zaktualizuje życie (maks. ~1,5 s), zamiast zgadywać ile wyleczyło
-          for (let w = 0; w < 10; w++) { await sleep(150); const x = hpNow(); if (x && x.hp !== before) break; }
           await sleep(Math.max(0, (cfg.delay || 350) - 150));
         }
         if (used) note(`${reason}: użył ${used} ${used === 1 ? 'mikstury' : 'mikstur'}`);
       } finally { busy = false; }
       return last.why;
     }
-    /** Po walce próbujemy kilka razy — gra przysyła nowe życie z opóźnieniem, a okno walki bywa jeszcze otwarte. */
+    /** Po walce: próbujemy od razu, a jeśli gra nie przyjmuje mikstur (okno walki), ponawiamy aż do skutku (maks. 3 min). */
+    let afterRun = 0;
     async function afterBattle() {
-      for (let i = 0; i < 8 && !fighting; i++) {
-        await sleep(i ? 900 : 500);
+      const run = ++afterRun, start = now();
+      await sleep(400);
+      while (run === afterRun && !fighting && now() - start < 180000) {
         const s = hpNow();
         if (s && (s.hp / s.max) * 100 >= cfg.minHp) return;
-        if (!busy) await heal('po walce');
+        if (!busy) {
+          await heal('po walce');
+          if (!refused && /użył|brak/.test(last.why)) { const x = hpNow(); if (!x || (x.hp / x.max) * 100 >= cfg.minHp || /brak/.test(last.why)) return; }
+        }
+        await sleep(refused && battleOpen() ? 500 : 1200);
       }
     }
     defineAddon({
@@ -265,6 +275,10 @@
       const url = /^https?:/.test(icon) ? icon : ICON_BASE + (icon.startsWith('/') ? '' : '/') + icon;
       const label = `${c.nick} (${c.lvl ?? '?'}${c.prof || ''})`;
       const av = el('div', { class: 'mp-qc-av', style: { backgroundImage: `url("${url}")` }, onclick: () => switchTo(c) });
+      // naturalny rozmiar klatki postaci (obrazek ma 4×4 klatki) — bez rozciągania
+      const img = new Image();
+      img.onload = () => { const w = img.naturalWidth / 4, h = img.naturalHeight / 4; if (w > 0 && h > 0) { const k = Math.min(1, 48 / h); av.style.width = Math.round(w * k) + 'px'; av.style.height = Math.round(h * k) + 'px'; } };
+      img.src = url;
       let tip = null;
       av.addEventListener('mouseenter', () => {
         tip = el('div', { class: 'mp-qc-tip' }, el('b', null, label), c.world !== worldName() ? el('div', null, c.world) : null);
