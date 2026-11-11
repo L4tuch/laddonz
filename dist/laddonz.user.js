@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.0
+// @version      1.0.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2150,6 +2150,10 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.1', d: '11.11.2026', items: [
+    'Ulepszarka: licznik dzisiejszych ulepszeń aktualizuje się na bieżąco — także gdy ulepszasz ręcznie w oknie Rzemiosła.',
+    'Skróty: gdy nie wybrano żadnego dodatku do skrótów, pasek pokazuje wszystkie włączone dodatki (wcześniej po włączeniu skrótów pasek był pusty).',
+  ] },
   { v: '1.0.0', d: '11.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
@@ -2520,11 +2524,11 @@ const ui = {
     if (!Array.isArray(q.pinned)) q.pinned = [];
     if (!q.layout) q.layout = 'pgp';
     const qc = el('div', { class: 'mp-card' }, el('h3', null, 'Skróty dodatków'),
-      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj skróty', el('small', null, 'Lewy klik na ikonce = szybkie ustawienia, prawy klik = włącz/wyłącz.')), switchEl(q.show, (v) => { q.show = v; config.save(); quickbar.draw(); })),
+      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj skróty', el('small', null, 'Lewy klik na ikonce = szybkie ustawienia, prawy klik = włącz/wyłącz.')), switchEl(q.show !== false, (v) => { q.show = v; config.save(); quickbar.draw(); if (v && !quickbar.enabledList().length) toast('Skróty: włącz jakiś dodatek albo dodaj go do skrótów pinezką', 'info', 5000); })),
       el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } }, el('div', { class: 'lb' }, 'Ułożenie'),
         el('div', { class: 'l4-lays' }, this.LAYOUTS.map(([k, n, d]) => el('button', { class: 'l4-lay' + (q.layout === k ? ' on' : ''), onclick: () => { q.layout = k; config.save(); quickbar.draw(); this.renderMain(); } },
           el('div', { class: 'l4-lay-pic ' + k }, el('i'), el('i'), el('i')), el('b', null, n), el('small', null, d))))),
-      el('div', { class: 'mp-dim', style: { margin: '8px 0 4px', fontSize: '11.5px' } }, 'Dodatki w skrótach (kliknij, żeby dodać albo usunąć):'),
+      el('div', { class: 'mp-dim', style: { margin: '8px 0 4px', fontSize: '11.5px' } }, 'Dodatki w skrótach (kliknij, żeby dodać albo usunąć). Gdy nie wybierzesz żadnego, na pasku są wszystkie włączone dodatki:'),
       el('div', { class: 'mp-chips' }, this.listAddons().map((a) => {
         const b = el('button', { class: 'mp-pf' + (quickbar.isPinned(a.id) ? ' on' : '') }, a.name);
         b.onclick = () => { quickbar.togglePin(a.id); b.classList.toggle('on'); };
@@ -2725,8 +2729,10 @@ const quickbar = {
     bus.emit('quickbar:pins');
     return i < 0;
   },
+  /** Na pasku: wybrane dodatki. Gdy nic nie wybrano — wszystkie włączone (żeby pasek nie był pusty po włączeniu skrótów). */
   enabledList() {
     const order = this.pinned();
+    if (!order.length) return addons.list.filter((a) => a.id !== 'motywnik' && addons.on(a.id));
     return addons.list.filter((a) => order.includes(a.id));
   },
 
@@ -2754,7 +2760,8 @@ const quickbar = {
   draw() {
     const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, pinned: [] });
     if (!Array.isArray(q.pinned)) q.pinned = [];
-    if (!q.show || !q.pinned.length) { this.bar && this.bar.remove(); this.bar = null; return; }
+    if (q.show === undefined) q.show = true;
+    if (!q.show || !this.enabledList().length) { this.bar && this.bar.remove(); this.bar = null; return; }
     if (!this.bar) {
       this.bar = el('div', { id: 'mp-qbar' });
       document.body.appendChild(this.bar);
@@ -5092,6 +5099,19 @@ MP.itemDeco = itemDeco;
     return out.filter((o) => o.target && o.list.length);
   }
 
+  /** Licznik dziennych ulepszeń — z KAŻDEJ odpowiedzi gry (też gdy ulepszasz ręcznie w oknie Rzemiosła). */
+  bus.on('data', (d) => {
+    try {
+      const u = cfg && d && d.enhancement && d.enhancement.usages_preview;
+      if (!u) return;
+      const nu = { count: Number(u.count) || 0, limit: Number(u.limit) || 0, day: new Date().toDateString() };
+      const o = cfg.usages || {};
+      if (o.count === nu.count && o.limit === nu.limit && o.day === nu.day) return;
+      cfg.usages = nu; config.save();
+      const box = document.querySelector('.mp-ul-usages');
+      if (box) box.textContent = `Dzisiejsze ulepszenia: ${nu.count} / ${nu.limit}`;
+    } catch {}
+  });
   /** Odpowiedź gry „maksymalny poziom" → przedmiot znika z listy. */
   const maxResp = (o) => (data) => {
     // postęp ulepszania i dzienny limit — z odpowiedzi gry (enhancement.progressing / usages_preview)
@@ -5558,7 +5578,7 @@ MP.itemDeco = itemDeco;
       } else {
         box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));
       }
-      if (cfg.usages && cfg.usages.limit && cfg.usages.day === new Date().toDateString()) box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, `Dzisiejsze ulepszenia: ${cfg.usages.count} / ${cfg.usages.limit}`));
+      if (cfg.usages && cfg.usages.limit && cfg.usages.day === new Date().toDateString()) box.appendChild(el('div', { class: 'mp-dim mp-ul-usages', style: { margin: '4px 2px' } }, `Dzisiejsze ulepszenia: ${cfg.usages.count} / ${cfg.usages.limit}`));
       if (cfg.freeAuto) {
         const f = game.freeBagSlots();
         box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, f == null ? 'Nie udało się odczytać wolnych miejsc w torbie.' : `Wolne miejsca w torbie teraz: ${f} · ulepszę przy ${Number(cfg.freeAt) ? cfg.freeAt + ' lub mniej' : 'pełnej torbie'}`));
@@ -7866,5 +7886,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.0";
+MP.version = "1.0.1";
 })();

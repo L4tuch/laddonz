@@ -5,6 +5,10 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.1', d: '11.11.2026', items: [
+    'Ulepszarka: licznik dzisiejszych ulepszeń aktualizuje się na bieżąco — także gdy ulepszasz ręcznie w oknie Rzemiosła.',
+    'Skróty: gdy nie wybrano żadnego dodatku do skrótów, pasek pokazuje wszystkie włączone dodatki (wcześniej po włączeniu skrótów pasek był pusty).',
+  ] },
   { v: '1.0.0', d: '11.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
@@ -375,11 +379,11 @@ const ui = {
     if (!Array.isArray(q.pinned)) q.pinned = [];
     if (!q.layout) q.layout = 'pgp';
     const qc = el('div', { class: 'mp-card' }, el('h3', null, 'Skróty dodatków'),
-      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj skróty', el('small', null, 'Lewy klik na ikonce = szybkie ustawienia, prawy klik = włącz/wyłącz.')), switchEl(q.show, (v) => { q.show = v; config.save(); quickbar.draw(); })),
+      el('div', { class: 'mp-field' }, el('div', { class: 'lb' }, 'Pokazuj skróty', el('small', null, 'Lewy klik na ikonce = szybkie ustawienia, prawy klik = włącz/wyłącz.')), switchEl(q.show !== false, (v) => { q.show = v; config.save(); quickbar.draw(); if (v && !quickbar.enabledList().length) toast('Skróty: włącz jakiś dodatek albo dodaj go do skrótów pinezką', 'info', 5000); })),
       el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } }, el('div', { class: 'lb' }, 'Ułożenie'),
         el('div', { class: 'l4-lays' }, this.LAYOUTS.map(([k, n, d]) => el('button', { class: 'l4-lay' + (q.layout === k ? ' on' : ''), onclick: () => { q.layout = k; config.save(); quickbar.draw(); this.renderMain(); } },
           el('div', { class: 'l4-lay-pic ' + k }, el('i'), el('i'), el('i')), el('b', null, n), el('small', null, d))))),
-      el('div', { class: 'mp-dim', style: { margin: '8px 0 4px', fontSize: '11.5px' } }, 'Dodatki w skrótach (kliknij, żeby dodać albo usunąć):'),
+      el('div', { class: 'mp-dim', style: { margin: '8px 0 4px', fontSize: '11.5px' } }, 'Dodatki w skrótach (kliknij, żeby dodać albo usunąć). Gdy nie wybierzesz żadnego, na pasku są wszystkie włączone dodatki:'),
       el('div', { class: 'mp-chips' }, this.listAddons().map((a) => {
         const b = el('button', { class: 'mp-pf' + (quickbar.isPinned(a.id) ? ' on' : '') }, a.name);
         b.onclick = () => { quickbar.togglePin(a.id); b.classList.toggle('on'); };

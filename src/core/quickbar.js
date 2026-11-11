@@ -30,8 +30,10 @@ const quickbar = {
     bus.emit('quickbar:pins');
     return i < 0;
   },
+  /** Na pasku: wybrane dodatki. Gdy nic nie wybrano — wszystkie włączone (żeby pasek nie był pusty po włączeniu skrótów). */
   enabledList() {
     const order = this.pinned();
+    if (!order.length) return addons.list.filter((a) => a.id !== 'motywnik' && addons.on(a.id));
     return addons.list.filter((a) => order.includes(a.id));
   },
 
@@ -59,7 +61,8 @@ const quickbar = {
   draw() {
     const q = (config.data.global.quickbar = config.data.global.quickbar || { show: true, pinned: [] });
     if (!Array.isArray(q.pinned)) q.pinned = [];
-    if (!q.show || !q.pinned.length) { this.bar && this.bar.remove(); this.bar = null; return; }
+    if (q.show === undefined) q.show = true;
+    if (!q.show || !this.enabledList().length) { this.bar && this.bar.remove(); this.bar = null; return; }
     if (!this.bar) {
       this.bar = el('div', { id: 'mp-qbar' });
       document.body.appendChild(this.bar);

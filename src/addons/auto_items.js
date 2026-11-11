@@ -571,6 +571,19 @@
     return out.filter((o) => o.target && o.list.length);
   }
 
+  /** Licznik dziennych ulepszeń — z KAŻDEJ odpowiedzi gry (też gdy ulepszasz ręcznie w oknie Rzemiosła). */
+  bus.on('data', (d) => {
+    try {
+      const u = cfg && d && d.enhancement && d.enhancement.usages_preview;
+      if (!u) return;
+      const nu = { count: Number(u.count) || 0, limit: Number(u.limit) || 0, day: new Date().toDateString() };
+      const o = cfg.usages || {};
+      if (o.count === nu.count && o.limit === nu.limit && o.day === nu.day) return;
+      cfg.usages = nu; config.save();
+      const box = document.querySelector('.mp-ul-usages');
+      if (box) box.textContent = `Dzisiejsze ulepszenia: ${nu.count} / ${nu.limit}`;
+    } catch {}
+  });
   /** Odpowiedź gry „maksymalny poziom" → przedmiot znika z listy. */
   const maxResp = (o) => (data) => {
     // postęp ulepszania i dzienny limit — z odpowiedzi gry (enhancement.progressing / usages_preview)
@@ -1037,7 +1050,7 @@
       } else {
         box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));
       }
-      if (cfg.usages && cfg.usages.limit && cfg.usages.day === new Date().toDateString()) box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, `Dzisiejsze ulepszenia: ${cfg.usages.count} / ${cfg.usages.limit}`));
+      if (cfg.usages && cfg.usages.limit && cfg.usages.day === new Date().toDateString()) box.appendChild(el('div', { class: 'mp-dim mp-ul-usages', style: { margin: '4px 2px' } }, `Dzisiejsze ulepszenia: ${cfg.usages.count} / ${cfg.usages.limit}`));
       if (cfg.freeAuto) {
         const f = game.freeBagSlots();
         box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, f == null ? 'Nie udało się odczytać wolnych miejsc w torbie.' : `Wolne miejsca w torbie teraz: ${f} · ulepszę przy ${Number(cfg.freeAt) ? cfg.freeAt + ' lub mniej' : 'pełnej torbie'}`));
