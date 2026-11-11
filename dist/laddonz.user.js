@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.2.0
+// @version      1.2.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -1553,6 +1553,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .l4-ds{margin-top:3px;font-size:11.5px;color:#a8a8a8;line-height:1.3;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 .l4-gearb{all:unset;cursor:pointer;flex:none;width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#bdbdbd;background:rgba(40,40,42,.9);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
 .l4-gearb:hover{color:#fff;background:rgba(60,60,62,.95)}
+.l4-pinb{color:#7a7a7a}.l4-pinb.on{color:#fff;background:linear-gradient(#5b8b3d,#2c4d1a);box-shadow:inset 0 0 0 1px #a3c47f}
 .l4-empty{padding:20px;text-align:center;color:#999}
 /* nagłówek ustawień dodatku */
 .l4-dhead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:6px 8px;margin-bottom:8px;border-radius:5px;background:rgba(14,14,16,.97);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
@@ -1587,8 +1588,9 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .l4-lay-pic.pgp{align-items:flex-end;padding-right:13px}.l4-lay-pic.lgp{align-items:flex-start;padding-left:13px}
 .l4-lay-pic.lgh{padding-left:13px}.l4-lay-pic.ldh{padding-left:13px;align-items:flex-end}
 /* kafelek L4 (jak przyciski widżetów gry) */
-#mp-launcher.l4-tile{position:fixed;z-index:2147483000;width:44px;height:44px;box-sizing:border-box;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;touch-action:none;transition:filter .12s;background:linear-gradient(#b8332b,#8a1f19 48%,#6e1612 52%,#82201a);box-shadow:inset 0 0 0 1px #e9a07a,inset 0 0 0 2px #3d0905,inset 0 3px 0 2px rgba(255,255,255,.16),0 0 0 1px #140302,0 2px 4px rgba(0,0,0,.6)}
+#mp-launcher.l4-tile{position:fixed;z-index:2147483000;width:42px;height:42px;box-sizing:border-box;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;touch-action:none;transition:filter .12s;background:linear-gradient(#b8332b,#8a1f19 48%,#6e1612 52%,#82201a);box-shadow:inset 0 0 0 1px #e9a07a,inset 0 0 0 2px #3d0905,inset 0 3px 0 2px rgba(255,255,255,.16),0 0 0 1px #140302,0 2px 4px rgba(0,0,0,.6)}
 #mp-launcher.l4-tile.in-row{z-index:5}
+#mp-launcher.l4-tile.edit{cursor:grab}
 #mp-launcher.l4-tile:hover{transform:none;filter:brightness(1.15)}
 #mp-launcher.l4-tile.drag{z-index:2147483600;opacity:.85;cursor:grabbing;filter:drop-shadow(0 4px 10px rgba(0,0,0,.7))}
 .l4-tile-t{font:900 19px/1 Georgia,"Times New Roman",serif;letter-spacing:-.6px;background:linear-gradient(#fff8d2,#ffd54a 45%,#d08a12);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 0 4px rgba(255,200,60,.55));pointer-events:none}
@@ -1599,11 +1601,12 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 /* pasek skrótów — kafelki jak przyciski gry */
 #mp-qbar{position:fixed;z-index:2147482998;display:flex;flex-direction:column;gap:5px;padding:0;background:none!important;border:0!important;box-shadow:none!important;width:auto!important;opacity:1}
 #mp-qbar.hz{flex-direction:row}
-#mp-qbar .mp-qtile{width:27px;height:27px;border-radius:4px;color:#fff;background:linear-gradient(#262628,#0d0d0f);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 0 0 1px #000,0 2px 4px rgba(0,0,0,.55)}
-#mp-qbar .mp-qtile:hover{background:linear-gradient(#36363a,#151517);color:#fff}
-#mp-qbar .mp-qtile.off{color:rgba(255,255,255,.35)}
-#mp-qbar .mp-qtile.on::before{content:"";position:absolute;right:3px;top:3px;width:5px;height:5px;border-radius:50%;background:var(--mp-accent);box-shadow:0 0 4px var(--mp-accent)}
-#mp-qbar .mp-qtile.sel{box-shadow:inset 0 0 0 1px var(--mp-accent),0 0 0 1px #000,0 0 8px color-mix(in srgb,var(--mp-accent) 45%,transparent)}
+#mp-qbar .mp-qtile{width:27px;height:27px;border-radius:4px;transition:filter .12s}
+#mp-qbar .mp-qtile.on{color:#fff;background:linear-gradient(#5b8b3d,#3a6224 48%,#2c4d1a 52%,#33571f);box-shadow:inset 0 0 0 1px #a3c47f,inset 0 0 0 2px #1f3512,0 0 0 1px #0b0f07,0 2px 4px rgba(0,0,0,.55)}
+#mp-qbar .mp-qtile.on .mp-ico{filter:drop-shadow(0 1px 0 rgba(0,0,0,.7))}
+#mp-qbar .mp-qtile.off{color:#9a9a9a;background:linear-gradient(#4a4a4c,#2a2a2c 48%,#1e1e20 52%,#262628);box-shadow:inset 0 0 0 1px #8a8a8a,inset 0 0 0 2px #151515,0 0 0 1px #050505,0 2px 4px rgba(0,0,0,.55)}
+#mp-qbar .mp-qtile:hover{filter:brightness(1.18)}
+#mp-qbar .mp-qtile.sel{outline:2px solid #ffd54a;outline-offset:1px}
 #mp-qbar .mp-qmore{background:linear-gradient(#5b8b3d,#2c4d1a);box-shadow:inset 0 0 0 1px #a3c47f,inset 0 0 0 2px #1f3512,0 0 0 1px #0b0f07}
 #mp-qbar .mp-qmore span{font:900 12px Georgia,serif;color:#fff3c4;text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000,0 -1px 0 #000}
 #mp-qbar .mp-qtile:hover::after{right:auto;left:auto}
@@ -2147,8 +2150,14 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.2.1', d: '11.11.2026', items: [
+    'Kafelek L4 ma 42×42 jak przyciski gry.',
+    'Skróty: włączony dodatek ma zieloną ikonkę, wyłączony — szarą.',
+    'Dodawanie i usuwanie skrótu bez włączania dodatku — przycisk pinezki na liście i w ustawieniach dodatku.',
+    'Kafelek L4 da się przesunąć tylko w trybie edycji przycisków gry (Konfiguracja → Sterowanie, gdy widać puste miejsca) — tak samo jak pozostałe przyciski.',
+  ] },
   { v: '1.2.0', d: '11.11.2026', items: [
-    'Kafelek L4 na czerwonym tle ze złotym napisem, w rzędzie przycisków gry — ma stałe miejsce jak inne przyciski, a przeciągnięty przeskakuje na wolne miejsce w dowolnym rzędzie.',
+    'Kafelek L4 (42×42) na czerwonym tle ze złotym napisem, w rzędzie przycisków gry — ma stałe miejsce jak inne przyciski. Przenosisz go tak jak przyciski gry: w trybie ich edycji (Konfiguracja → Sterowanie).',
     'Mniejsze ikonki skrótów dodatków; bez kafelka panelu na pasku skrótów.',
     'Let\'s Cook Together nazywa się teraz Lepsza Grupa (nowa ikonka).',
     'Legendarny Łup: import dodatkowych stylów z plików .json — każdy jako osobna karta z testem i usuwaniem.',
@@ -2248,12 +2257,12 @@ const ui = {
    * a przeciągnięty przeskakuje na wolne miejsce w dowolnym rzędzie widżetów.
    */
   launcher() {
-    const b = el('div', { id: 'mp-launcher', class: 'l4-tile', title: `L4Tools (${config.data.global.panelKey || 'brak skrótu'}) — przeciągnij, żeby przenieść` }, el('span', { class: 'l4-tile-t' }, 'L4'));
+    const b = el('div', { id: 'mp-launcher', class: 'l4-tile', title: `L4Tools (${config.data.global.panelKey || 'brak skrótu'})` }, el('span', { class: 'l4-tile-t' }, 'L4'));
     this.lb = b;
     document.body.appendChild(b);
     let drag = null;
     const move = (e) => {
-      if (!drag) return;
+      if (!drag || drag.lock) return;
       if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 5) return;
       if (!drag.moved) { drag.moved = true; document.body.appendChild(b); b.classList.add('drag'); Object.assign(b.style, { position: 'fixed', width: '', height: '' }); }
       b.style.left = e.clientX - drag.dx + 'px'; b.style.top = e.clientY - drag.dy + 'px';
@@ -2262,12 +2271,14 @@ const ui = {
       removeEventListener('pointermove', move, true); removeEventListener('pointerup', up, true);
       if (!drag) return;
       const d = drag; drag = null; b.classList.remove('drag');
-      if (!d.moved) { this.toggle(); return; }
+      if (!d.moved) { if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) this.toggle(); return; }
       this.dropLauncher(e.clientX, e.clientY);
     };
     b.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       e.preventDefault(); e.stopPropagation();
+      // przesuwanie tylko wtedy, gdy gra pozwala przesuwać swoje przyciski (tryb edycji widżetów — widać puste miejsca)
+      if (!this.widgetEdit()) { drag = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, moved: false, lock: true }; addEventListener('pointermove', move, true); addEventListener('pointerup', up, true); return; }
       const r = b.getBoundingClientRect();
       drag = { x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false };
       addEventListener('pointermove', move, true); addEventListener('pointerup', up, true);
@@ -2276,6 +2287,8 @@ const ui = {
     this.placeLauncher();
     setInterval(() => { if (!drag) this.placeLauncher(); }, 2000);
   },
+  /** Tryb edycji widżetów gry (np. otwarta Konfiguracja → Sterowanie): widać puste miejsca na przyciski. */
+  widgetEdit() { return [...document.querySelectorAll('.empty-slot-widget, [class*="empty-slot"]')].some((n) => n.offsetWidth > 20 && n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden'); },
   /** Rzędy widżetów gry: kontener, rozmiar kafelka, kierunek i zajęte miejsca. */
   widgetRows() {
     const rows = new Map();
@@ -2314,7 +2327,10 @@ const ui = {
     if (row.used.has(idx)) idx = this.freeIdx(row, idx);
     if (b.parentElement !== row.el) row.el.appendChild(b);
     b.classList.add('in-row');
-    Object.assign(b.style, { position: 'absolute', width: row.s + 'px', height: row.s + 'px', left: (row.hz ? idx * row.s : (parseFloat(getComputedStyle(row.el).paddingLeft) || 0)) + 'px', top: (row.hz ? 0 : idx * row.s) + 'px' });
+    // przycisk gry zajmuje miejsce 44 px, ale sam kafelek ma 42 px (1 px odstępu z każdej strony)
+    const inner = row.s - 2;
+    Object.assign(b.style, { position: 'absolute', width: inner + 'px', height: inner + 'px', left: (row.hz ? idx * row.s : (parseFloat(getComputedStyle(row.el).paddingLeft) || 0)) + 1 + 'px', top: (row.hz ? 0 : idx * row.s) + 1 + 'px' });
+    b.classList.toggle('edit', this.widgetEdit());
     if (!g.l4slot || g.l4slot.pos !== row.pos || g.l4slot.idx !== idx) { g.l4slot = { pos: row.pos, idx }; config.save(); }
   },
   dropLauncher(x, y) {
@@ -2404,6 +2420,7 @@ const ui = {
         list.appendChild(el('div', { class: 'l4-card' + (on ? ' on' : ''), onclick: (e) => { if (e.target.closest('.mp-sw, .l4-gearb')) return; this.sel = a.id; this.renderMain(); } },
           el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
           el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, a.desc)),
+          el('button', { class: 'l4-gearb l4-pinb' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'W skrótach — kliknij, żeby usunąć' : 'Dodaj do skrótów', onclick: () => { const p = quickbar.togglePin(a.id); toast(`${a.name}: ${p ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); draw(); } }, icon('pin', 14)),
           sw,
           el('button', { class: 'l4-gearb', title: 'Ustawienia', onclick: () => { this.sel = a.id; this.renderMain(); } }, icon('gear', 15))));
       }
@@ -2443,7 +2460,7 @@ const ui = {
       el('button', { class: 'l4-sq', title: 'Wróć do listy', onclick: () => { this.sel = null; this.renderMain(); } }, icon('back', 16)),
       el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
       el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
-      cfg.enabled ? el('button', { class: 'l4-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); this.renderMain(); } }, icon('pin', 13), quickbar.isPinned(a.id) ? 'W skrótach' : 'Do skrótów') : null,
+      el('button', { class: 'l4-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'Usuń ikonkę z paska skrótów' : 'Dodaj ikonkę na pasek skrótów (także gdy dodatek jest wyłączony)', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); this.renderMain(); } }, icon('pin', 13), quickbar.isPinned(a.id) ? 'Usuń ze skrótów' : 'Dodaj do skrótów'),
       sw));
     M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
     this.renderAddon(M, a.id, () => this.renderMain(), true);
@@ -7836,5 +7853,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.2.0";
+MP.version = "1.2.1";
 })();

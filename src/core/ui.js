@@ -5,8 +5,14 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.2.1', d: '11.11.2026', items: [
+    'Kafelek L4 ma 42×42 jak przyciski gry.',
+    'Skróty: włączony dodatek ma zieloną ikonkę, wyłączony — szarą.',
+    'Dodawanie i usuwanie skrótu bez włączania dodatku — przycisk pinezki na liście i w ustawieniach dodatku.',
+    'Kafelek L4 da się przesunąć tylko w trybie edycji przycisków gry (Konfiguracja → Sterowanie, gdy widać puste miejsca) — tak samo jak pozostałe przyciski.',
+  ] },
   { v: '1.2.0', d: '11.11.2026', items: [
-    'Kafelek L4 na czerwonym tle ze złotym napisem, w rzędzie przycisków gry — ma stałe miejsce jak inne przyciski, a przeciągnięty przeskakuje na wolne miejsce w dowolnym rzędzie.',
+    'Kafelek L4 (42×42) na czerwonym tle ze złotym napisem, w rzędzie przycisków gry — ma stałe miejsce jak inne przyciski. Przenosisz go tak jak przyciski gry: w trybie ich edycji (Konfiguracja → Sterowanie).',
     'Mniejsze ikonki skrótów dodatków; bez kafelka panelu na pasku skrótów.',
     'Let\'s Cook Together nazywa się teraz Lepsza Grupa (nowa ikonka).',
     'Legendarny Łup: import dodatkowych stylów z plików .json — każdy jako osobna karta z testem i usuwaniem.',
@@ -106,12 +112,12 @@ const ui = {
    * a przeciągnięty przeskakuje na wolne miejsce w dowolnym rzędzie widżetów.
    */
   launcher() {
-    const b = el('div', { id: 'mp-launcher', class: 'l4-tile', title: `L4Tools (${config.data.global.panelKey || 'brak skrótu'}) — przeciągnij, żeby przenieść` }, el('span', { class: 'l4-tile-t' }, 'L4'));
+    const b = el('div', { id: 'mp-launcher', class: 'l4-tile', title: `L4Tools (${config.data.global.panelKey || 'brak skrótu'})` }, el('span', { class: 'l4-tile-t' }, 'L4'));
     this.lb = b;
     document.body.appendChild(b);
     let drag = null;
     const move = (e) => {
-      if (!drag) return;
+      if (!drag || drag.lock) return;
       if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 5) return;
       if (!drag.moved) { drag.moved = true; document.body.appendChild(b); b.classList.add('drag'); Object.assign(b.style, { position: 'fixed', width: '', height: '' }); }
       b.style.left = e.clientX - drag.dx + 'px'; b.style.top = e.clientY - drag.dy + 'px';
@@ -120,12 +126,14 @@ const ui = {
       removeEventListener('pointermove', move, true); removeEventListener('pointerup', up, true);
       if (!drag) return;
       const d = drag; drag = null; b.classList.remove('drag');
-      if (!d.moved) { this.toggle(); return; }
+      if (!d.moved) { if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) this.toggle(); return; }
       this.dropLauncher(e.clientX, e.clientY);
     };
     b.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       e.preventDefault(); e.stopPropagation();
+      // przesuwanie tylko wtedy, gdy gra pozwala przesuwać swoje przyciski (tryb edycji widżetów — widać puste miejsca)
+      if (!this.widgetEdit()) { drag = { x: e.clientX, y: e.clientY, dx: 0, dy: 0, moved: false, lock: true }; addEventListener('pointermove', move, true); addEventListener('pointerup', up, true); return; }
       const r = b.getBoundingClientRect();
       drag = { x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false };
       addEventListener('pointermove', move, true); addEventListener('pointerup', up, true);
@@ -134,6 +142,8 @@ const ui = {
     this.placeLauncher();
     setInterval(() => { if (!drag) this.placeLauncher(); }, 2000);
   },
+  /** Tryb edycji widżetów gry (np. otwarta Konfiguracja → Sterowanie): widać puste miejsca na przyciski. */
+  widgetEdit() { return [...document.querySelectorAll('.empty-slot-widget, [class*="empty-slot"]')].some((n) => n.offsetWidth > 20 && n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden'); },
   /** Rzędy widżetów gry: kontener, rozmiar kafelka, kierunek i zajęte miejsca. */
   widgetRows() {
     const rows = new Map();
@@ -172,7 +182,10 @@ const ui = {
     if (row.used.has(idx)) idx = this.freeIdx(row, idx);
     if (b.parentElement !== row.el) row.el.appendChild(b);
     b.classList.add('in-row');
-    Object.assign(b.style, { position: 'absolute', width: row.s + 'px', height: row.s + 'px', left: (row.hz ? idx * row.s : (parseFloat(getComputedStyle(row.el).paddingLeft) || 0)) + 'px', top: (row.hz ? 0 : idx * row.s) + 'px' });
+    // przycisk gry zajmuje miejsce 44 px, ale sam kafelek ma 42 px (1 px odstępu z każdej strony)
+    const inner = row.s - 2;
+    Object.assign(b.style, { position: 'absolute', width: inner + 'px', height: inner + 'px', left: (row.hz ? idx * row.s : (parseFloat(getComputedStyle(row.el).paddingLeft) || 0)) + 1 + 'px', top: (row.hz ? 0 : idx * row.s) + 1 + 'px' });
+    b.classList.toggle('edit', this.widgetEdit());
     if (!g.l4slot || g.l4slot.pos !== row.pos || g.l4slot.idx !== idx) { g.l4slot = { pos: row.pos, idx }; config.save(); }
   },
   dropLauncher(x, y) {
@@ -262,6 +275,7 @@ const ui = {
         list.appendChild(el('div', { class: 'l4-card' + (on ? ' on' : ''), onclick: (e) => { if (e.target.closest('.mp-sw, .l4-gearb')) return; this.sel = a.id; this.renderMain(); } },
           el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
           el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, a.desc)),
+          el('button', { class: 'l4-gearb l4-pinb' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'W skrótach — kliknij, żeby usunąć' : 'Dodaj do skrótów', onclick: () => { const p = quickbar.togglePin(a.id); toast(`${a.name}: ${p ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); draw(); } }, icon('pin', 14)),
           sw,
           el('button', { class: 'l4-gearb', title: 'Ustawienia', onclick: () => { this.sel = a.id; this.renderMain(); } }, icon('gear', 15))));
       }
@@ -301,7 +315,7 @@ const ui = {
       el('button', { class: 'l4-sq', title: 'Wróć do listy', onclick: () => { this.sel = null; this.renderMain(); } }, icon('back', 16)),
       el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
       el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, cfg.enabled ? 'Włączony' : 'Wyłączony')),
-      cfg.enabled ? el('button', { class: 'l4-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: 'Ikonka na pasku skrótów', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); this.renderMain(); } }, icon('pin', 13), quickbar.isPinned(a.id) ? 'W skrótach' : 'Do skrótów') : null,
+      el('button', { class: 'l4-btn' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'Usuń ikonkę z paska skrótów' : 'Dodaj ikonkę na pasek skrótów (także gdy dodatek jest wyłączony)', onclick: () => { const on = quickbar.togglePin(a.id); toast(`${a.name}: ${on ? 'dodano do skrótów' : 'usunięto ze skrótów'}`); this.renderMain(); } }, icon('pin', 13), quickbar.isPinned(a.id) ? 'Usuń ze skrótów' : 'Dodaj do skrótów'),
       sw));
     M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
     this.renderAddon(M, a.id, () => this.renderMain(), true);
