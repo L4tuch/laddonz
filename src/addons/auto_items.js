@@ -572,10 +572,19 @@
   }
 
   /** Licznik dziennych ulepszeń — z KAŻDEJ odpowiedzi gry (też gdy ulepszasz ręcznie w oknie Rzemiosła). */
-  bus.on('data', (d) => {
+  const limitSeen = [];   // skąd ostatnio przyszedł licznik (do raportu)
+  /** Licznik może przyjść pod różnymi nazwami — szukamy obiektu z count + limit w części „enhancement”. */
+  const findUsages = (e) => {
+    if (!e || typeof e !== 'object') return null;
+    for (const k of ['usages_preview', 'usages', 'usage', 'daily', 'limit_info']) { const u = e[k]; if (u && typeof u === 'object' && u.limit != null && u.count != null) return u; }
+    return null;
+  };
+  const onUsages = (d, src) => {
     try {
-      const u = cfg && d && d.enhancement && d.enhancement.usages_preview;
+      const e = d && (d.enhancement || (d.d && d.d.enhancement));
+      const u = cfg && findUsages(e);
       if (!u) return;
+      limitSeen.unshift({ t: new Date().toISOString().slice(11, 19), src, count: u.count, limit: u.limit }); limitSeen.length = Math.min(limitSeen.length, 8);
       const nu = { count: Number(u.count) || 0, limit: Number(u.limit) || 0, day: new Date().toDateString() };
       const o = cfg.usages || {};
       if (o.count === nu.count && o.limit === nu.limit && o.day === nu.day) return;
@@ -583,7 +592,9 @@
       const box = document.querySelector('.mp-ul-usages');
       if (box) box.textContent = `Dzisiejsze ulepszenia: ${nu.count} / ${nu.limit}`;
     } catch {}
-  });
+  };
+  bus.on('data', (d) => onUsages(d, 'pakiet'));
+  bus.on('enhresp', (d) => onUsages(d, 'okno rzemiosła'));
   /** Odpowiedź gry „maksymalny poziom" → przedmiot znika z listy. */
   const maxResp = (o) => (data) => {
     // postęp ulepszania i dzienny limit — z odpowiedzi gry (enhancement.progressing / usages_preview)
@@ -592,7 +603,7 @@
       const pr = e && (e.progressing || e.progress_preview);
       const sl = slots().find((s) => Number(s.id) === o.target.id);
       if (pr && sl) { sl.prog = { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 }; config.save(); }
-      if (e && e.usages_preview) { cfg.usages = { count: Number(e.usages_preview.count) || 0, limit: Number(e.usages_preview.limit) || 0, day: new Date().toDateString() }; config.save(); }
+      onUsages(data, 'Ulepszarka');
     } catch {}
     let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
     if (/maksymaln|max(imum)? ?(lvl|level|poziom)/i.test(txt)) {
@@ -930,6 +941,7 @@
     const E0 = W.Engine || {};
     return {
       wersja: MP.version, komenda: net.cmd('enhance'),
+      dziennyLimit: { zapisany: cfg.usages || null, ostatnieOdczyty: limitSeen },
       ostatnieUlepszanie: store.get('up:last', null),
       rzemiosloOtwarte: craftState(),
       ostatnieKomendyGry: net.recent.slice(0, 40),

@@ -5,8 +5,11 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.2', d: '11.11.2026', items: [
+    'Ulepszarka: dzienny limit odczytywany także z odpowiedzi okna Rzemiosła, gdy ulepszasz ręcznie; w raporcie widać, skąd przyszedł ostatni odczyt.',
+  ] },
   { v: '1.0.1', d: '11.11.2026', items: [
-    'Ulepszarka: licznik dzisiejszych ulepszeń aktualizuje się na bieżąco — także gdy ulepszasz ręcznie w oknie Rzemiosła.',
+    'Ulepszarka: licznik dzisiejszych ulepszeń aktualizuje się na bieżąco — także gdy ulepszasz ręcznie w oknie Rzemiosła (odczyt także z odpowiedzi okna Rzemiosła).',
     'Skróty: gdy nie wybrano żadnego dodatku do skrótów, pasek pokazuje wszystkie włączone dodatki (wcześniej po włączeniu skrótów pasek był pusty).',
   ] },
   { v: '1.0.0', d: '11.11.2026', items: [

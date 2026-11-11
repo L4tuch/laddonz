@@ -183,6 +183,18 @@ const net = {
           return;
         }
       }
+      // odpowiedzi na komendy ulepszania z gry (okno Rzemiosła) — też trafiają do dodatków (np. licznik dziennego limitu)
+      if (!self._ours && /^enhancement&/.test(t)) {
+        for (let i = 1; i < args.length; i++) {
+          const cb = args[i];
+          if (typeof cb !== 'function' || cb.__mpWrapped) continue;
+          const wcb = function (...r) {
+            try { const d = typeof r[0] === 'string' && r[0].charCodeAt(0) === 123 ? JSON.parse(r[0]) : r[0]; if (d && typeof d === 'object') bus.emit('enhresp', d); } catch {}
+            return cb.apply(this, r);
+          };
+          wcb.__mpWrapped = true; args[i] = wcb;
+        }
+      }
       self._depth++;
       try { return orig.apply(this, args); } finally { self._depth--; }
     };
