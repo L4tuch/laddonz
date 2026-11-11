@@ -247,7 +247,7 @@ const ui = {
       for (const a of rows) {
         const on = addons.on(a.id);
         const sw = switchEl(on, (v) => this.toggleAddon(a, v, sw), true);
-        list.appendChild(el('div', { class: 'l4-card' + (on ? ' on' : ''), onclick: (e) => { if (e.target.closest('.mp-sw, .l4-gearb')) return; this.sel = a.id; this.renderMain(); } },
+        list.appendChild(el('div', { class: 'l4-card' + (on ? ' on' : '') },
           el('div', { class: 'l4-ico' }, icon(a.icon, 20)),
           el('div', { class: 'l4-txt' }, el('div', { class: 'l4-nm' }, a.name), el('div', { class: 'l4-ds' }, a.desc)),
           el('button', { class: 'l4-gearb l4-pinb' + (quickbar.isPinned(a.id) ? ' on' : ''), title: quickbar.isPinned(a.id) ? 'W skrótach — kliknij, żeby usunąć' : 'Dodaj do skrótów', onclick: () => { quickbar.togglePin(a.id); draw(); } }, icon('pin', 14)),

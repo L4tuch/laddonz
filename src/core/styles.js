@@ -478,8 +478,8 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .l4-count{cursor:default}
 /* karty dodatków */
 .l4-list{display:flex;flex-direction:column;gap:6px}
-.l4-card{display:flex;align-items:center;gap:10px;min-height:58px;padding:7px 8px;border-radius:5px;cursor:pointer;background:linear-gradient(rgba(255,255,255,.035),rgba(0,0,0,.1)),rgba(18,18,20,.85);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
-.l4-card:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+.l4-card{display:flex;align-items:center;gap:10px;min-height:58px;padding:7px 8px;border-radius:5px;cursor:default;background:linear-gradient(rgba(255,255,255,.035),rgba(0,0,0,.1)),rgba(18,18,20,.85);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.l4-card:hover{box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
 .l4-card.on{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mp-accent) 60%,rgba(255,255,255,.2)),inset 3px 0 0 var(--mp-accent)}
 .l4-ico{width:36px;height:36px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:4px;color:#fff;background:linear-gradient(#2c2c2e,#121214);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 0 0 1px #000}
 .l4-card:not(.on) .l4-ico{color:#9b9b9b}
