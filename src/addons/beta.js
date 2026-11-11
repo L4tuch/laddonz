@@ -277,7 +277,7 @@
       const av = el('div', { class: 'mp-qc-av', style: { backgroundImage: `url("${url}")` }, onclick: () => switchTo(c) });
       // naturalny rozmiar klatki postaci (obrazek ma 4×4 klatki) — bez rozciągania
       const img = new Image();
-      img.onload = () => { const w = img.naturalWidth / 4, h = img.naturalHeight / 4; if (w > 0 && h > 0) { const k = Math.min(1, 48 / h); av.style.width = Math.round(w * k) + 'px'; av.style.height = Math.round(h * k) + 'px'; } };
+      img.onload = () => { const w = img.naturalWidth / 4, h = img.naturalHeight / 4; if (w > 0 && h > 0) { const k = Math.min(1, 34 / h); av.style.width = Math.round(w * k) + 'px'; av.style.height = Math.round(h * k) + 'px'; } };
       img.src = url;
       let tip = null;
       av.addEventListener('mouseenter', () => {
@@ -291,17 +291,24 @@
       av.addEventListener('click', () => { if (tip) tip.remove(); tip = null; });
       return av;
     }
+    /** Trzy kropki: lista światów — wybrany świat podmienia miniaturki na postacie z tego świata. */
+    let viewWorld = null;
     function worldsMenu(anchor) {
-      const me = hero(), w = worldName();
-      const others = chars.filter((c) => c.world !== w);
-      const byWorld = {}; others.forEach((c) => (byWorld[c.world] = byWorld[c.world] || []).push(c));
-      const pop = el('div', { class: 'mp-qc-pop' }, el('div', { class: 'mp-qc-h' }, 'Inne światy'),
-        Object.keys(byWorld).length ? Object.entries(byWorld).map(([wn, list]) => el('div', { class: 'mp-qc-w' }, el('b', null, wn), el('div', { class: 'mp-qc-row' }, list.map(avatar)))) : el('div', { class: 'mp-dim' }, 'Brak postaci na innych światach.'));
+      const cur = worldName();
+      const worlds = [...new Set([cur].concat(chars.map((c) => c.world)).filter(Boolean))];
+      const shown = viewWorld || cur;
+      const pop = el('div', { class: 'mp-qc-pop' },
+        worlds.map((wn) => {
+          const n = chars.filter((c) => c.world === wn && !(wn === cur && hero() && c.id === Number(hero().id))).length;
+          return el('div', { class: 'mp-qc-wl' + (wn === shown ? ' on' : ''), onclick: () => { viewWorld = wn === cur ? null : wn; pop.remove(); draw(); } },
+            el('span', null, wn.charAt(0).toUpperCase() + wn.slice(1) + (wn === cur ? ' (tu jesteś)' : '')), el('i', null, String(n)));
+        }));
       const r = anchor.getBoundingClientRect();
-      Object.assign(pop.style, { left: Math.min(innerWidth - 260, r.left) + 'px', top: r.bottom + 6 + 'px' });
       document.body.appendChild(pop);
+      Object.assign(pop.style, { left: Math.round(Math.min(innerWidth - pop.offsetWidth - 4, r.left - pop.offsetWidth / 2 + r.width / 2)) + 'px', top: Math.round(r.bottom + 4) + 'px' });
       setTimeout(() => document.addEventListener('mousedown', function off(e) { if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener('mousedown', off); } }), 0);
     }
+
     /** Stałe miejsce: tuż po prawej od tarczy HUD-a na górze (jak w grze), bez przesuwania. */
     function place() {
       if (!bar) return;
@@ -316,11 +323,12 @@
       if (!cfg.enabled) { if (bar) bar.remove(); bar = null; return; }
       await loadChars();
       const me = hero(), w = worldName();
-      const here = chars.filter((c) => c.world === w && (!me || c.id !== Number(me.id)));
+      const vw = viewWorld || w;
+      const here = chars.filter((c) => c.world === vw && (!me || c.id !== Number(me.id)));
       if (!bar) { bar = el('div', { id: 'mp-qc' }); document.body.appendChild(bar); }
       bar.textContent = '';
       here.slice(0, cfg.max || 8).forEach((c) => bar.appendChild(avatar(c)));
-      const dots = el('div', { class: 'mp-qc-dots', title: 'Zmiana świata' }, el('i'), el('i'), el('i'));
+      const dots = el('div', { class: 'mp-qc-dots' + (viewWorld ? ' other' : ''), title: viewWorld ? `Pokazuję postacie ze świata ${viewWorld}` : 'Wybierz świat' }, el('i'), el('i'), el('i'));
       dots.onclick = () => worldsMenu(dots);
       bar.appendChild(dots);
       place();

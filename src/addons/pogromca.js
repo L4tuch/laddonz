@@ -203,9 +203,15 @@
       if (!o.charge || o.charge.left > ul[0].left) o.charge = { name: ul[0].name, left: ul[0].left, desc: ul[0].desc };
     }
     // Twoje umiejętności rzucone na wojowników (np. Wyzwanie, Szadź): ile tur temu
-    for (const c of state.casts) {
-      const o = c.id != null ? out[String(c.id)] : null;
-      if (!o) continue;
+    const AREA = /wszystk|każd|kazd|obszar|wrog(?:ów|ow|om)|przeciwnik(?:ów|ow|om)|drużyn|druzyn/i;
+    const castTargets = (c) => {
+      const t = c.id != null ? out[String(c.id)] : null;
+      if (!t) return [];
+      if (!AREA.test(c.desc || '')) return [t];
+      // umiejętność obszarowa: wszyscy żywi z drużyny celu
+      return Object.values(out).filter((o) => (t.team !== null && o.team !== null ? String(o.team) === String(t.team) : Math.sign(Number(o.id)) === Math.sign(Number(t.id))) && !(o.hpp === 0));
+    };
+    for (const c of state.casts) for (const o of castTargets(c)) {
       const ago = turn - c.at;
       if (ago > 12) continue;
       const left = c.dur ? c.dur - ago : null;
@@ -350,7 +356,7 @@
       });
       bus.on('battle:end', () => { if (win && !preview) win.style.display = 'none'; });
       timer = setInterval(tick, 500);
-      MP.pogromca = { render, sample, collect, state: () => state, preview: () => { preview = true; render(sample()); } };
+      MP.pogromca = { debug: () => ({ zapamietaneUmiejetnosci: cfg.known, rzucone: state.casts.slice(-8), tura: turnNow() }), render, sample, collect, state: () => state, preview: () => { preview = true; render(sample()); } };
     },
     onToggle(on) { if (!on && win) win.style.display = 'none'; },
   });

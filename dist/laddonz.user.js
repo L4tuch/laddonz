@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.7
+// @version      1.0.8
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Let's Cook Together i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @match        https://*.margonem.pl/*
@@ -1138,14 +1138,14 @@ textarea.mp-in{width:100%;min-height:90px;font-family:Consolas,monospace;font-si
 @keyframes mpBers{0%,100%{box-shadow:0 0 0 2px #ffb070,0 0 10px 2px rgba(255,90,30,.6)}50%{box-shadow:0 0 0 2px #ffd0a0,0 0 22px 7px rgba(255,90,30,.95)}}
 .mp-fbtn.mp-free.on{color:#fff;background:radial-gradient(circle at 35% 30%,#4fe0b8,#0d6b52);box-shadow:0 0 0 2px #9fffe0,0 0 16px 4px rgba(40,220,170,.7);animation:mpFree 1.6s ease-in-out infinite}
 @keyframes mpFree{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-#mp-qc{position:fixed;z-index:2147470400;display:flex;align-items:flex-end;gap:6px;height:50px;padding:0 4px;background:none}
-.mp-qc-av{width:32px;height:48px;flex:none;background-size:400% 400%;background-position:0 0;background-repeat:no-repeat;cursor:pointer;image-rendering:pixelated;transition:filter .12s;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+#mp-qc{position:fixed;z-index:2147470400;display:flex;align-items:center;gap:2px;height:36px;padding:0 2px;background:none}
+.mp-qc-av{width:22px;height:34px;flex:none;background-size:400% 400%;background-position:0 0;background-repeat:no-repeat;cursor:pointer;image-rendering:pixelated;transition:filter .12s;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
 .mp-qc-av:hover{filter:drop-shadow(0 0 3px rgba(255,211,77,.9)) brightness(1.1)}
-.mp-qc-dots i{display:block;width:4px;height:4px;border-radius:50%;background:#e8e8e8;box-shadow:0 0 2px #000,0 0 1px #000}.mp-qc-dots:hover i{background:#ffd34d}
+.mp-qc-dots i{display:block;width:3px;height:3px;border-radius:50%;background:#e8e8e8;box-shadow:0 0 2px #000,0 0 1px #000}.mp-qc-dots:hover i,.mp-qc-dots.other i{background:#ffd34d}
 .mp-qc-tip{position:fixed;z-index:2147470600;padding:4px 8px;border-radius:4px;background:rgba(12,12,14,.94);box-shadow:0 0 0 1px rgba(255,255,255,.18),0 3px 8px rgba(0,0,0,.6);color:#eee;font:12px Arimo,Arial,sans-serif;white-space:nowrap;pointer-events:none;text-align:center}.mp-qc-tip b{color:#ffd34d}.mp-qc-tip div{opacity:.75;font-size:11px}
-.mp-qc-dots{flex:none;min-width:14px;height:48px;align-self:center;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:0 2px;color:#e8e8e8;text-shadow:0 0 3px #000,0 0 2px #000;font:700 13px Arial;letter-spacing:1px;cursor:pointer;border-radius:5px}.mp-qc-dots:hover{background:rgba(255,255,255,.08);color:#ffd34d}
-.mp-qc-pop{position:fixed;z-index:2147470600;min-width:220px;max-width:260px;padding:8px;border-radius:8px;background:rgba(14,14,18,.96);box-shadow:0 0 0 1px rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.6);color:#eee;font:12px Arial}
-.mp-qc-h{font-weight:700;margin-bottom:6px}.mp-qc-w{margin:4px 0}.mp-qc-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.mp-qc-dots{flex:none;min-width:10px;height:30px;align-self:center;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:0 2px;color:#e8e8e8;text-shadow:0 0 3px #000,0 0 2px #000;font:700 13px Arial;letter-spacing:1px;cursor:pointer;border-radius:5px}.mp-qc-dots:hover{background:rgba(255,255,255,.08);color:#ffd34d}
+.mp-qc-pop{position:fixed;z-index:2147470600;min-width:120px;padding:4px;border-radius:6px;background:rgba(14,14,18,.95);box-shadow:0 0 0 1px rgba(255,255,255,.14),0 6px 16px rgba(0,0,0,.6);color:#eee;font:12px Arimo,Arial,sans-serif}
+.mp-qc-wl{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 8px;border-radius:4px;cursor:pointer;white-space:nowrap}.mp-qc-wl:hover{background:rgba(255,255,255,.09)}.mp-qc-wl.on{color:#ffd34d}.mp-qc-wl i{font-style:normal;opacity:.55;font-size:11px}
 #mp-lu{position:fixed;z-index:2147470300;width:430px;max-width:calc(100vw - 16px);border-radius:8px;background:rgba(18,18,20,.86);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 0 0 1px rgba(0,0,0,.7),0 8px 22px rgba(0,0,0,.55);color:#e8e8e8;font:12px Arimo,Arial,sans-serif;user-select:none}
 .mp-lu-h{position:relative;display:flex;align-items:center;height:24px;padding:0 6px}
 .mp-lu-hb{display:flex;gap:4px;z-index:1}.mp-lu-hi{width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:11px;color:#bbb;background:rgba(255,255,255,.08);cursor:pointer}.mp-lu-hi:hover{color:#fff;background:rgba(255,255,255,.18)}
@@ -2334,6 +2334,7 @@ function copyReport() {
       szybka: MP.szybka ? MP.szybka.debug() : null,
       wrogowie: MP.wrogowie ? MP.wrogowie.debug() : null,
       medyk: MP.medyk && MP.medyk.debug ? MP.medyk.debug() : null,
+      pogromca: MP.pogromca && MP.pogromca.debug ? MP.pogromca.debug() : null,
       berserk: MP.berserk && MP.berserk.debug ? MP.berserk.debug() : null,
       zestawUM: MP.zestawum && MP.zestawum.debug ? MP.zestawum.debug() : null,
       quickChange: MP.quickchange && MP.quickchange.debug ? MP.quickchange.debug() : null,
@@ -7602,9 +7603,15 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (!o.charge || o.charge.left > ul[0].left) o.charge = { name: ul[0].name, left: ul[0].left, desc: ul[0].desc };
     }
     // Twoje umiejętności rzucone na wojowników (np. Wyzwanie, Szadź): ile tur temu
-    for (const c of state.casts) {
-      const o = c.id != null ? out[String(c.id)] : null;
-      if (!o) continue;
+    const AREA = /wszystk|każd|kazd|obszar|wrog(?:ów|ow|om)|przeciwnik(?:ów|ow|om)|drużyn|druzyn/i;
+    const castTargets = (c) => {
+      const t = c.id != null ? out[String(c.id)] : null;
+      if (!t) return [];
+      if (!AREA.test(c.desc || '')) return [t];
+      // umiejętność obszarowa: wszyscy żywi z drużyny celu
+      return Object.values(out).filter((o) => (t.team !== null && o.team !== null ? String(o.team) === String(t.team) : Math.sign(Number(o.id)) === Math.sign(Number(t.id))) && !(o.hpp === 0));
+    };
+    for (const c of state.casts) for (const o of castTargets(c)) {
       const ago = turn - c.at;
       if (ago > 12) continue;
       const left = c.dur ? c.dur - ago : null;
@@ -7749,7 +7756,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       });
       bus.on('battle:end', () => { if (win && !preview) win.style.display = 'none'; });
       timer = setInterval(tick, 500);
-      MP.pogromca = { render, sample, collect, state: () => state, preview: () => { preview = true; render(sample()); } };
+      MP.pogromca = { debug: () => ({ zapamietaneUmiejetnosci: cfg.known, rzucone: state.casts.slice(-8), tura: turnNow() }), render, sample, collect, state: () => state, preview: () => { preview = true; render(sample()); } };
     },
     onToggle(on) { if (!on && win) win.style.display = 'none'; },
   });
@@ -8035,7 +8042,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       const av = el('div', { class: 'mp-qc-av', style: { backgroundImage: `url("${url}")` }, onclick: () => switchTo(c) });
       // naturalny rozmiar klatki postaci (obrazek ma 4×4 klatki) — bez rozciągania
       const img = new Image();
-      img.onload = () => { const w = img.naturalWidth / 4, h = img.naturalHeight / 4; if (w > 0 && h > 0) { const k = Math.min(1, 48 / h); av.style.width = Math.round(w * k) + 'px'; av.style.height = Math.round(h * k) + 'px'; } };
+      img.onload = () => { const w = img.naturalWidth / 4, h = img.naturalHeight / 4; if (w > 0 && h > 0) { const k = Math.min(1, 34 / h); av.style.width = Math.round(w * k) + 'px'; av.style.height = Math.round(h * k) + 'px'; } };
       img.src = url;
       let tip = null;
       av.addEventListener('mouseenter', () => {
@@ -8049,17 +8056,24 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       av.addEventListener('click', () => { if (tip) tip.remove(); tip = null; });
       return av;
     }
+    /** Trzy kropki: lista światów — wybrany świat podmienia miniaturki na postacie z tego świata. */
+    let viewWorld = null;
     function worldsMenu(anchor) {
-      const me = hero(), w = worldName();
-      const others = chars.filter((c) => c.world !== w);
-      const byWorld = {}; others.forEach((c) => (byWorld[c.world] = byWorld[c.world] || []).push(c));
-      const pop = el('div', { class: 'mp-qc-pop' }, el('div', { class: 'mp-qc-h' }, 'Inne światy'),
-        Object.keys(byWorld).length ? Object.entries(byWorld).map(([wn, list]) => el('div', { class: 'mp-qc-w' }, el('b', null, wn), el('div', { class: 'mp-qc-row' }, list.map(avatar)))) : el('div', { class: 'mp-dim' }, 'Brak postaci na innych światach.'));
+      const cur = worldName();
+      const worlds = [...new Set([cur].concat(chars.map((c) => c.world)).filter(Boolean))];
+      const shown = viewWorld || cur;
+      const pop = el('div', { class: 'mp-qc-pop' },
+        worlds.map((wn) => {
+          const n = chars.filter((c) => c.world === wn && !(wn === cur && hero() && c.id === Number(hero().id))).length;
+          return el('div', { class: 'mp-qc-wl' + (wn === shown ? ' on' : ''), onclick: () => { viewWorld = wn === cur ? null : wn; pop.remove(); draw(); } },
+            el('span', null, wn.charAt(0).toUpperCase() + wn.slice(1) + (wn === cur ? ' (tu jesteś)' : '')), el('i', null, String(n)));
+        }));
       const r = anchor.getBoundingClientRect();
-      Object.assign(pop.style, { left: Math.min(innerWidth - 260, r.left) + 'px', top: r.bottom + 6 + 'px' });
       document.body.appendChild(pop);
+      Object.assign(pop.style, { left: Math.round(Math.min(innerWidth - pop.offsetWidth - 4, r.left - pop.offsetWidth / 2 + r.width / 2)) + 'px', top: Math.round(r.bottom + 4) + 'px' });
       setTimeout(() => document.addEventListener('mousedown', function off(e) { if (!pop.contains(e.target)) { pop.remove(); document.removeEventListener('mousedown', off); } }), 0);
     }
+
     /** Stałe miejsce: tuż po prawej od tarczy HUD-a na górze (jak w grze), bez przesuwania. */
     function place() {
       if (!bar) return;
@@ -8074,11 +8088,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (!cfg.enabled) { if (bar) bar.remove(); bar = null; return; }
       await loadChars();
       const me = hero(), w = worldName();
-      const here = chars.filter((c) => c.world === w && (!me || c.id !== Number(me.id)));
+      const vw = viewWorld || w;
+      const here = chars.filter((c) => c.world === vw && (!me || c.id !== Number(me.id)));
       if (!bar) { bar = el('div', { id: 'mp-qc' }); document.body.appendChild(bar); }
       bar.textContent = '';
       here.slice(0, cfg.max || 8).forEach((c) => bar.appendChild(avatar(c)));
-      const dots = el('div', { class: 'mp-qc-dots', title: 'Zmiana świata' }, el('i'), el('i'), el('i'));
+      const dots = el('div', { class: 'mp-qc-dots' + (viewWorld ? ' other' : ''), title: viewWorld ? `Pokazuję postacie ze świata ${viewWorld}` : 'Wybierz świat' }, el('i'), el('i'), el('i'));
       dots.onclick = () => worldsMenu(dots);
       bar.appendChild(dots);
       place();
@@ -8668,5 +8683,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.7";
+MP.version = "1.0.8";
 })();

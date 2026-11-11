@@ -342,6 +342,7 @@ function copyReport() {
       szybka: MP.szybka ? MP.szybka.debug() : null,
       wrogowie: MP.wrogowie ? MP.wrogowie.debug() : null,
       medyk: MP.medyk && MP.medyk.debug ? MP.medyk.debug() : null,
+      pogromca: MP.pogromca && MP.pogromca.debug ? MP.pogromca.debug() : null,
       berserk: MP.berserk && MP.berserk.debug ? MP.berserk.debug() : null,
       zestawUM: MP.zestawum && MP.zestawum.debug ? MP.zestawum.debug() : null,
       quickChange: MP.quickchange && MP.quickchange.debug ? MP.quickchange.debug() : null,
