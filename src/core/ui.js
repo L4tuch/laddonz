@@ -5,6 +5,10 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.6', d: '13.11.2026', items: [
+    'Ulepszarka: okno Rzemiosła działa w tle — zamiast niego na środku ekranu młot z kowadłem i obwód, który zapełnia się wraz z ulepszaniem; po 100% znika.',
+    'Ulepszarka: komunikat o dziennym limicie jest opcjonalny (domyślnie wyłączony) i pokazuje się tylko raz po ulepszeniu, a nie kilka razy.',
+  ] },
   { v: '1.0.5', d: '13.11.2026', items: [
     'Panel ma jeden kolor — zieleń gry (usunięty wybór koloru akcentu).',
     'Ulepszarka: po każdym ulepszeniu komunikat na ekranie — ile ulepszeń dziś już zużyto (np. 125 / 2000) i postęp przedmiotu do +5 w %. Działa też przy ulepszaniu ręcznym w oknie Rzemiosła. Można wyłączyć w ustawieniach Ulepszarki.',

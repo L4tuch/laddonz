@@ -554,6 +554,14 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 
 /* Ulepszarka: ciche pobranie licznika — okno Rzemiosła niewidoczne przez chwilę */
 .mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){opacity:0!important;pointer-events:none!important}
+.mp-ulov{position:fixed;left:50%;top:50%;width:112px;height:112px;margin:-56px 0 0 -56px;z-index:2147483000;pointer-events:none;opacity:0;transform:scale(.85);transition:opacity .22s,transform .22s;border-radius:50%;background:radial-gradient(circle,rgba(20,24,20,.92) 58%,rgba(10,12,10,.85) 70%,transparent 72%);filter:drop-shadow(0 4px 14px rgba(0,0,0,.6))}
+.mp-ulov.on{opacity:1;transform:scale(1)}
+.mp-ulov-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.mp-ulov-ring circle{fill:none;stroke-width:6}
+.mp-ulov-ring .bg{stroke:rgba(255,255,255,.12)}
+.mp-ulov-ring .fg{stroke:#4fd46a;stroke-linecap:round;transition:stroke-dashoffset .45s ease;filter:drop-shadow(0 0 4px rgba(79,212,106,.8))}
+.mp-ulov-ic{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);line-height:0}
+.mp-ulov-pc{position:absolute;left:0;right:0;bottom:22px;text-align:center;font:700 11px/1 Arial,sans-serif;color:#cfe9d4;text-shadow:0 1px 2px #000}
 `;
 
 function injectCSS() {

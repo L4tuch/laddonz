@@ -618,7 +618,7 @@
     } catch {}
     try { if (net.craftOpen() && !openedByUs) closeCraft(); } catch {}
     for (let i = 0; i < 10 && net.craftOpen(); i++) { await sleep(100); try { closeCraft(); } catch {} }
-    setTimeout(() => { document.documentElement.classList.remove('mp-ul-silent'); silentRun = false; prevCount = cfg.usages ? Number(cfg.usages.count) : prevCount; }, 250);
+    setTimeout(() => { if (!running) document.documentElement.classList.remove('mp-ul-silent'); silentRun = false; prevCount = cfg.usages ? Number(cfg.usages.count) : prevCount; }, 250);
     limitSeen.unshift({ t: new Date().toISOString().slice(11, 19), src: 'start gry (w tle)', count: got ? (cfg.usages || {}).count : '—', limit: got ? (cfg.usages || {}).limit : '—' });
     void before;
   }
@@ -653,15 +653,17 @@
   bus.on('data', onProgress);
   bus.on('enhresp', onProgress);
   /** Komunikat na ekranie po ulepszeniu: dzienny limit + postęp przedmiotu do +5. */
-  const announce = debounce(() => {
-    if (!cfg || !cfg.enabled || cfg.notify === false || !cfg.usages) return;
+  const announceNow = () => {
+    if (!cfg || !cfg.enabled || !cfg.notifyUse || !cfg.usages) return;
     const u = cfg.usages;
     let msg = `Ulepszarka: dziś ${u.count} / ${u.limit} ulepszeń`;
     if (u.limit && u.count >= u.limit) msg += ' — limit wyczerpany';
     if (lastItem && lastItem.prog) { const p = pctTo5(lastItem.prog); msg += ` · ${lastItem.name}: +${lastItem.prog.lvl}${p != null ? ` (${String(p).replace('.', ',')}% do +5)` : ''}`; }
     toast(msg, u.limit && u.count >= u.limit ? 'warn' : 'ok', 4500);
-  }, 900);
-  bus.on('enhusage', (u) => { if (silentRun) return; if (prevCount != null && Number(u.count) > prevCount) announce(); prevCount = Number(u.count); });
+  };
+  const announce = debounce(announceNow, 1500);
+  // ręczne ulepszanie w oknie Rzemiosła → jeden komunikat; w trakcie pracy Ulepszarki — jeden na koniec
+  bus.on('enhusage', (u) => { if (silentRun) return; if (!running && prevCount != null && Number(u.count) > prevCount) announce(); prevCount = Number(u.count); });
   let prevCount = null, silentRun = false;
   /** Odpowiedź gry „maksymalny poziom" → przedmiot znika z listy. */
   const maxResp = (o) => (data) => {
@@ -693,6 +695,40 @@
     }
   }).observe(document.body, { childList: true, subtree: true });
 
+  /*
+   * W trakcie pracy Ulepszarki okno Rzemiosła działa w tle (niewidoczne), a na środku ekranu jest młot z kowadłem
+   * i obwód, który zapełnia się wraz z kolejnymi zużytymi przedmiotami; na 100% chwilę zostaje i znika.
+   */
+  const ANVIL = '<svg viewBox="0 0 64 64" width="54" height="54"><defs><linearGradient id="mpUlSt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9dde3"/><stop offset="1" stop-color="#7d8692"/></linearGradient><linearGradient id="mpUlWd" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a8703d"/><stop offset="1" stop-color="#6b4220"/></linearGradient></defs>'
+    + '<path d="M10 36h36c0 4 4 6 8 6v3H38l-2 4h4v5H20v-5h4l-2-4H18c-5 0-8-4-8-9z" fill="url(#mpUlSt)" stroke="#2a2f36" stroke-width="1.5" stroke-linejoin="round"/>'
+    + '<g transform="rotate(-38 34 22)"><rect x="31" y="14" width="5" height="26" rx="2" fill="url(#mpUlWd)" stroke="#2a2f36" stroke-width="1.2"/><rect x="22" y="7" width="23" height="10" rx="2" fill="url(#mpUlSt)" stroke="#2a2f36" stroke-width="1.5"/></g>'
+    + '<g fill="#ffd36b"><circle cx="16" cy="31" r="1.4"/><circle cx="12" cy="27" r="1"/><circle cx="20" cy="27" r="1.1"/></g></svg>';
+  const R_OV = 44, C_OV = 2 * Math.PI * R_OV;
+  let ovEl = null, ovHide = 0;
+  function ovShow() {
+    clearTimeout(ovHide);
+    if (!ovEl || !ovEl.isConnected) {
+      ovEl = el('div', { class: 'mp-ulov' });
+      ovEl.innerHTML = `<svg class="mp-ulov-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="${R_OV}" class="bg"/><circle cx="50" cy="50" r="${R_OV}" class="fg" stroke-dasharray="${C_OV}" stroke-dashoffset="${C_OV}"/></svg><div class="mp-ulov-ic">${ANVIL}</div><div class="mp-ulov-pc">0%</div>`;
+      document.body.appendChild(ovEl);
+    }
+    ovSet(0);
+    requestAnimationFrame(() => ovEl && ovEl.classList.add('on'));
+  }
+  function ovSet(f) {
+    if (!ovEl) return;
+    f = Math.max(0, Math.min(1, f || 0));
+    const c = ovEl.querySelector('.fg'); if (c) c.style.strokeDashoffset = String(C_OV * (1 - f));
+    const t = ovEl.querySelector('.mp-ulov-pc'); if (t) t.textContent = Math.round(f * 100) + '%';
+  }
+  function ovEnd(full) {
+    if (!ovEl) return;
+    const e = ovEl;
+    if (full) ovSet(1);
+    ovHide = setTimeout(() => { e.classList.remove('on'); setTimeout(() => { e.remove(); if (ovEl === e) ovEl = null; }, 250); }, full ? 650 : 150);
+  }
+  let progressCb = null;
+
   async function run(src, limit = 0) {
     if (running) return;
     if (game.inBattle()) { toast('Ulepszarka: najpierw skończ walkę', 'warn'); return; }
@@ -703,6 +739,8 @@
     if (usagesLeft() === 0) { limitMsg(); return; }
     running = true;
     hushUntil = now() + 120000;
+    document.documentElement.classList.add('mp-ul-silent');   // okno rzemiosła w tle
+    let ovOn = false, full = false;
     try {
       // serwer przyjmuje ulepszanie tylko przy otwartym Rzemiośle (bez tego wyrzuca) — otwieramy jak gra, a jak się nie da, nic nie wysyłamy
       if (!(await ensureCraft())) { toast('Ulepszarka: nie udało się otworzyć Rzemiosło → Ulepszanie', 'warn'); return 'nocraft'; }
@@ -716,12 +754,20 @@
         const ok = await confirmBox({ title: 'Ulepszyć teraz?', okText: 'Ulepsz', html: `Zużyję <b>${items.length}</b> przedmiotów:`, items });
         if (!ok) return;
       }
-      await sendAll(p);
+      const total = p.reduce((a, o) => a + o.list.length, 0) || 1;
+      ovShow(); ovOn = true;
+      progressCb = (n) => ovSet(Math.min(0.97, n / total));
+      const res = await sendAll(p);
+      full = !!(res && res.n > 0 && !res.failed);
     } finally {
+      progressCb = null;
+      if (ovOn) ovEnd(full);
       running = false;
       await sleep(400);
       setTimeout(() => { hushUntil = 0; }, 1500);
       closeCraft();                   // okno rzemiosła zawsze zamykamy po ulepszaniu
+      setTimeout(() => { if (!running && !silentRun) document.documentElement.classList.remove('mp-ul-silent'); }, 300);
+      if (ovOn) setTimeout(announceNow, 200);   // jeden komunikat o limicie po całym ulepszaniu (jeśli włączony)
       dropMaxed();
       rr();
     }
@@ -845,6 +891,7 @@
           steps.push({ a: 'gone', n: gone }); saveSteps();
           if (!gone) { if (usagesLeft() === 0) limitHit = true; else failed = true; break outer; }
           n += gone;
+          try { progressCb && progressCb(n); } catch {}
           rest = rest.filter((i) => !useIds.includes(i.id));
           const sl = slots().find((x) => Number(x.id) === o.target.id);
           if (!sl) continue outer;
@@ -860,6 +907,7 @@
       else if (n) toast(`Ulepszarka: ulepszono — zużyto ${n} przedmiotów`, 'ok');
       rr();
     }
+    return { n, failed: failed || limitHit };
   }
   /** Odpowiedź serwera z błędem (np. „Błąd wewnętrzny", t:stop) → przerywamy natychmiast. */
   /*
@@ -1103,14 +1151,14 @@
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
     desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
-    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notify: true, freeAuto: false, freeAt: 0 },
+    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: false, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
       !net.cmd('enhance').verified ? { type: 'info', text: 'Ulepsz raz ręcznie w oknie rzemiosła — Ulepszarka sama się nauczy.' } : null,
     ],
     settings: [
       { group: 'Ustawienia', key: 'key', type: 'key', label: 'Klawisz: ulepsz teraz' },
-      { group: 'Ustawienia', key: 'notify', type: 'bool', label: 'Komunikat po ulepszeniu', hint: 'Na ekranie: ile ulepszeń dziś już zużyto (np. 125 / 2000) i jak idzie całe ulepszenie przedmiotu do +5 w %.' },
+      { group: 'Ustawienia', key: 'notifyUse', type: 'bool', label: 'Komunikat o dziennym limicie', hint: 'Po ulepszeniu jeden komunikat na ekranie: ile ulepszeń dziś już zużyto (np. 125 / 2000) i jak idzie całe ulepszenie przedmiotu do +5 w %. Domyślnie wyłączony.' },
       { group: 'Ustawienia', key: 'confirm', type: 'bool', label: 'Pokazuj listę przedmiotów przed ulepszeniem', hint: 'Lista zużywanych przedmiotów z ich rzadkością (zwykły, unikat, heroiczny…).' },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAuto', type: 'bool', label: 'Włączone', rerender: true },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAt', type: 'number', show: (c) => c.freeAuto, label: 'Ulepsz, gdy w torbie zostanie tyle wolnych miejsc (0 = torba pełna)', min: 0, max: 100, hint: 'Gdy zostanie tyle wolnych miejsc (lub mniej), Ulepszarka sama ulepszy wszystkie wybrane przedmioty. 0 = dopiero gdy torba jest pełna. Nie działa w trakcie walki.' },
@@ -1163,7 +1211,7 @@
       // licznik dziennych ulepszeń w tle po wejściu do gry (i po północy, gdy zacznie się nowy dzień)
       setTimeout(silentUsages, 6000);
       setInterval(() => { if (cfg.usages && cfg.usages.day !== new Date().toDateString()) { silentDone = false; silentUsages(); } }, 60000);
-      MP.ulepszarka = { addTarget, plan, run, craftState, typeOf, closeCraft, reportData: report, dropMaxed, enhLevel };
+      MP.ulepszarka = { addTarget, plan, run, craftState, typeOf, closeCraft, reportData: report, dropMaxed, enhLevel, _ov: { ovShow, ovSet, ovEnd } };
       menus.add('item', (id) => {
         if (!cfg.enabled) return [];
         const it = game.itemById(id);
