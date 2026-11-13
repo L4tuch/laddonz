@@ -466,7 +466,7 @@
   const TYPES = [
     ['helm', 'Hełm', [9]], ['neck', 'Naszyjnik', [13]], ['ring', 'Pierścień', [12]], ['gloves', 'Rękawice', [11]],
     ['armor', 'Zbroja', [8]], ['boots', 'Buty', [10]], ['weapon', 'Broń', [1, 2, 3, 4, 6]],
-    ['offhand', 'Tarcza / pomocnicze', [5, 7, 14]], ['arrows', 'Strzały', [21, 29]],
+    ['shield', 'Tarcza', [14]], ['offhand', 'Pomocnicze', [5, 7]], ['arrows', 'Strzały', [21, 29]],
   ];
   const typeOf = (cl) => (TYPES.find((t) => t[2].includes(Number(cl))) || [])[0] || null;
   const typeName = (k) => (TYPES.find((t) => t[0] === k) || [, k])[1];
@@ -1419,6 +1419,16 @@
         config.save();
       }
       if (!Array.isArray(c.protect)) c.protect = [];
+      // tarcze i przedmioty pomocnicze to od teraz osobne typy — dotychczasowe zaznaczenie „Tarcza / pomocnicze” obejmuje oba
+      if (!c._v102s) {
+        c._v102s = true;
+        (c.slots || []).forEach((sl) => {
+          if (Array.isArray(sl.types) && sl.types.includes('offhand') && !sl.types.includes('shield')) sl.types.push('shield');
+          const it = game.itemById(sl.id);
+          if (sl.type === 'offhand' && it && Number(it.cl) === 14) sl.type = 'shield';
+        });
+        config.save();
+      }
       if (!c._v112) { c._v112 = true; c.notifyUse = true; c.notifyUsed = false; c.confirm = true; c.warnBoundUnique = false; config.save(); }   // nowe domyślne komunikaty
       { const u = new Set(); slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => !u.has(t)); sl.types.forEach((t) => u.add(t)); }); }   // typ składników tylko u jednego przedmiotu
       watchPointer();

@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.2', d: '13.11.2026', items: [
+    'Ulepszarka: tarcze i przedmioty pomocnicze to teraz dwie osobne kategorie składników. Jeśli wcześniej miałeś zaznaczone „Tarcza / pomocnicze”, zaznaczone są obie.',
+  ] },
   { v: '1.0.1', d: '13.11.2026', items: [
     'Dobijarka zmieniła nazwę na Slayer.',
     'Slayer: klawisz namierza najbliższego gracza, drugie kliknięcie odwołuje atak.',
