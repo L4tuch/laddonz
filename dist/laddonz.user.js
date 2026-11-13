@@ -16,7 +16,7 @@
 // @grant        none
 // @noframes
 // @updateURL    https://raw.githubusercontent.com/L4tuch/laddonz/refs/heads/main/dist/laddonz.user.js
-// @downloadURL  f
+// @downloadURL  https://raw.githubusercontent.com/L4tuch/laddonz/refs/heads/main/dist/laddonz.user.js
 // @supportURL   https://github.com/L4tuch/laddonz/issues
 // ==/UserScript==
 
