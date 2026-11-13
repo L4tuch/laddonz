@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.17', d: '13.11.2026', items: [
+    'Slayer: kliknięcie strzałki prowadzi postać w stronę celu — tak samo jak strzałka zadania (gra sama wyznacza drogę do miejsca, w którym cel stoi w chwili kliknięcia).',
+  ] },
   { v: '1.0.16', d: '13.11.2026', items: [
     'Slayer: strzałka gry wskazuje teraz namierzonego przeciwnika (nie zadanie), jest czerwona tylko ona — strzałka zadania zostaje niebieska.',
     'Slayer: strzałka jest bliżej postaci niż strzałka zadania (nie nachodzą na siebie), a po najechaniu pokazuje „Slayer: Nick celu”.',

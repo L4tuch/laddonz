@@ -270,7 +270,7 @@
       get rx() { return this.x; }, get ry() { return this.y; },
     };
     // typ „SRAJ_TRACKING_ARROW" — gra bierze wtedy pozycję wprost z rodzica (x, y)
-    try { T.addArrow(NA_ID, 'Slayer: ' + p.nick, par, false, 'SRAJ_TRACKING_ARROW'); } catch (e) { naFail(e); return false; }
+    try { T.addArrow(NA_ID, 'Slayer: ' + p.nick, par, true, 'SRAJ_TRACKING_ARROW'); } catch (e) { naFail(e); return false; }
     const inst = naFind();
     if (!inst) { naFail('brak strzałki na liście'); return false; }
     naCloser(inst);
