@@ -7,7 +7,9 @@ const itemDeco = {
       const id = game.itemIdFromEl(node);
       if (!id) continue;
       // przedmioty z okna „Ekwipunek Postaci" innego gracza — dane z szablonów gry (Pokaż EQ)
-      const it = /-showeq/.test(String(node.className)) ? (MP.eqLookup ? MP.eqLookup(node) : null) : game.itemById(id);
+      let it = /-showeq/.test(String(node.className)) ? (MP.eqLookup ? MP.eqLookup(node) : null) : game.itemById(id);
+      // przedmioty z dymka gracza w grze (EQ innego gracza) — dane z magazynu przedmiotów gry
+      if (!it && node.closest('.tip-wrapper') && MP.anyLookup) it = MP.anyLookup(node, id);
       const want = [];
       for (const p of this.painters) { try { const r = p(node, it, id); if (r) want.push(...[].concat(r)); } catch {} }
       const have = Array.from(node.querySelectorAll(':scope > .mp-ibadge:not(.chance)'));
@@ -98,7 +100,7 @@ MP.itemDeco = itemDeco;
       if (!c._v17) { c._v17 = true; delete c.map; c.abbr = c.abbr || {}; config.save(); }
       itemDeco.add((node, it) => {
         if (!cfg.enabled || !it || !it.legbon) return null;
-        const other = /-showeq/.test(String(node.className));
+        const other = /-showeq/.test(String(node.className)) || !!node.closest('.tip-wrapper');
         if (!cfg.allItems && !other && !(it.st > 0)) return null;
         return { cls: 'bon', text: abbr(it.legbon, it.raw), title: MP.legName(it.legbon) };
       });
@@ -697,6 +699,27 @@ MP.itemDeco = itemDeco;
     for (let p = n; p && p !== document.body && i < 4; p = p.parentElement, i++) { const cs = getComputedStyle(p); if (cs.display === 'none' || cs.opacity === '0') return false; }
     return true;
   }
+  /** Podsumowanie bonusów dopisane na dole dymka gry (gdy gra sama pokazuje EQ gracza). */
+  function augmentTip(t) {
+    try {
+      const els = $$('[class*="item-id-"]', t).filter((n) => /item-id-\d+/.test(String(n.className)));
+      const sig = els.map((n) => String(n.className).match(/item-id-(\d+)/)[1]).join(',');
+      const have = t.querySelector(':scope .mp-tipsum');
+      if (have && have.dataset.sig === sig) return;
+      const items = els.map((n) => {
+        const iid = Number(String(n.className).match(/item-id-(\d+)/)[1]);
+        const tpl = Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0;
+        const r0 = lookupRaw(iid, tpl, n, null, null);
+        if (!r0) return { id: iid, name: '', rarity: rarityFromEl(n), legbon: null };
+        const it = game.normItem(r0); it.id = iid; return it;
+      });
+      if (have) have.remove();
+      const box = el('div', { class: 'mp-tipsum' }, summaryEl(items));
+      box.dataset.sig = sig;
+      t.appendChild(box);
+      bus.emit('deco');   // znaczki bonusów na przedmiotach w dymku
+    } catch {}
+  }
   function watchHover() {
     let mx = 0, my = 0, rmx = 0, rmy = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
     const want = (id, from, anc) => {
@@ -732,8 +755,12 @@ MP.itemDeco = itemDeco;
           if (p) { tipNode = n; break; }
         }
       }
-      // dymek gracza z INNEGO dodatku (np. własny podgląd EQ) — nasz podgląd ma pierwszeństwo: pokazujemy się w jego miejscu, a jego chowamy
-      if (!p) { const f = findForeign(); if (f) { p = f.p; tipNode = f.n; f.n.classList.add('mp-foreign-tip'); } }
+      // dymek gry sam pokazuje EQ gracza → nie zasłaniamy go, tylko dopisujemy nasze informacje (bonusy na przedmiotach i podsumowanie)
+      if (p && tipNode && tipNode.querySelector('[class*="item-id-"]')) {
+        if (src === 'map') { src = null; hide(); }
+        augmentTip(tipNode);
+        return;
+      }
       // gra potrafi na ułamek sekundy przerysować/odświeżyć swój dymek — chowamy dopiero, gdy dymka nie ma przez 250 ms
       if (p) { lastMapSeen = now(); clearTimeout(graceT); want(p.id, 'map', tipNode); }
       else if (src === 'map') {
