@@ -462,9 +462,6 @@
  */
 (() => {
   let cfg, running = false, pickSlot = null, dragId = null;
-  // ten sam komunikat Ulepszarki najwyżej raz na 4 s (bez dublowania)
-  const _seenToast = {};
-  const toast = (m, t, ms) => { const k = String(m); const n0 = Date.now(); if (_seenToast[k] > n0) return; _seenToast[k] = n0 + 4000; MP.toast(m, t, ms); };
   const RAR = [['common', 'Zwykłe'], ['unique', 'Unikaty'], ['heroic', 'Heroiki']];
   const TYPES = [
     ['helm', 'Hełm', [9]], ['neck', 'Naszyjnik', [13]], ['ring', 'Pierścień', [12]], ['gloves', 'Rękawice', [11]],
@@ -689,7 +686,7 @@
   function sayMaxed(id, name) {
     if (maxSaid.has(Number(id))) return;
     maxSaid.add(Number(id));
-    toast(`Ulepszarka: „${name}” ma pełny postęp na +4. Wybierz bonus w Rzemiośle, żeby wbić +5.`, 'ok', 7000);
+    toast(`Ulepszarka: przedmiot „${name}” został ulepszony na najwyższy poziom.`, 'ok', 7000);
   }
   /** % do +5 dla przedmiotu: z punktów z gry, ale nigdy poniżej tego, co wynika z jego aktualnego poziomu. */
   function pctItem(li) {
@@ -1163,8 +1160,11 @@
       box.__mpUp = true;
       const txt = (box.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200);
       askSeen.unshift({ t: new Date().toISOString().slice(11, 19), txt }); if (askSeen.length > 5) askSeen.length = 5;
-      box.style.setProperty('visibility', 'hidden', 'important');
+      // chowamy okienko tylko na chwilę — potem ZAWSZE przywracamy (inaczej znikały też inne okienka gry, np. potwierdzenie ekstrakcji)
+      const hideEl = btn.closest('[class*="dialog"], [class*="alert"], [class*="confirm"], [class*="popup"]') || null;
+      if (hideEl && hideEl !== document.body) hideEl.style.setProperty('visibility', 'hidden', 'important');
       setTimeout(() => btn.click(), 30);
+      setTimeout(() => { try { if (hideEl) hideEl.style.removeProperty('visibility'); } catch {} }, 600);
       net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: 'Potwierdzono pytanie gry: ' + txt.slice(0, 120) });
     },
   };
@@ -1398,7 +1398,7 @@
           el('div', { class: 'mp-dim' }, `Zużyto ${L.used} ${L.used === 1 ? 'przedmiot' : L.used % 10 >= 2 && L.used % 10 <= 4 && (L.used % 100 < 12 || L.used % 100 > 14) ? 'przedmioty' : 'przedmiotów'}`),
           ...L.items.map((x) => el('div', { style: { marginTop: '5px' } },
             el('b', null, x.name), el('span', { class: 'mp-dim' }, ` · zużyto ${x.used} · ${lvl(x.from)} → ${lvl(x.to)}`),
-            x.maxed ? el('div', { class: 'mp-okc', style: { fontSize: '12px' } }, 'Pełny postęp na +4 — wybierz bonus w Rzemiośle, żeby wbić +5. Po tym nie zużyto już żadnego przedmiotu.') : null)),
+            x.maxed ? el('div', { class: 'mp-okc', style: { fontSize: '12px' } }, 'Ulepszony na najwyższy poziom. Po tym nie zużyto już żadnego przedmiotu.') : null)),
           stopTxt ? el('div', { class: 'mp-warnc', style: { marginTop: '5px' } }, stopTxt) : null));
       }
       if (cfg.freeAuto) {
@@ -1429,6 +1429,8 @@
       try { if ((config.data.commands || {}).enhance) net.resetCmd('enhance'); } catch {}   // komenda jest wbudowana — żadnych nauczonych zamienników
       setInterval(() => { if (cfg.enabled && !running) dropMaxed(); }, 5000);
       setInterval(freeWatch, 1500);
+      // sprzątanie po starszych wersjach: okienka gry ukryte na stałe przy potwierdzaniu
+      setInterval(() => { if (now() < ask.until) return; document.querySelectorAll('[style*="visibility"]').forEach((n) => { if (n.__mpUp && n.style.visibility === 'hidden') n.style.removeProperty('visibility'); }); }, 2000);
       // okno Rzemiosła nigdy nie zostaje ukryte, gdy Ulepszarka nic nie robi
       setInterval(() => { if (!running && !silentRun) document.documentElement.classList.remove('mp-ul-silent'); }, 2000);
       // licznik dziennych ulepszeń w tle po wejściu do gry (i po północy, gdy zacznie się nowy dzień)
