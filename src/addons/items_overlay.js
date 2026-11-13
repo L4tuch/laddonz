@@ -810,7 +810,7 @@ MP.itemDeco = itemDeco;
       found.forEach((f) => { if (!f.it || !f.it.legbon) return; const k = MP.legKey(f.it.legbon); sum[k] = sum[k] || { n: 0, code: f.it.legbon, raw: f.it.raw }; sum[k].n++; });
       let body;
       if (!legs.length) body = el('div', { class: 'mp-dim' }, 'Brak legend');
-      else if (Object.keys(sum).length) body = el('div', { class: 'mp-eqbons' }, Object.values(sum).map((x) => el('span', { class: 'mp-chip', title: MP.legName(x.code) }, `${MP.legAbbr(x.code, x.raw)} ×${x.n}`)), missing ? el('span', { class: 'mp-dim' }, ' …') : null);
+      else if (Object.keys(sum).length) body = el('div', { class: 'mp-eqbons' }, Object.values(sum).map((x) => el('span', { class: 'mp-chip', title: MP.legName(x.code) }, `${MP.legAbbr(x.code, x.raw)} ×${x.n}`)));
       else body = el('div', { class: 'mp-dim' }, 'Wczytuję bonusy…');
       const box = el('div', { class: 'mp-tipsum' }, body);
       box.dataset.sig = sig; box.dataset.base = base; box.dataset.full = missing ? '0' : '1'; box.dataset.t = String(now());
@@ -911,14 +911,17 @@ MP.itemDeco = itemDeco;
       }
       // dymek BEZ EQ — gra/dodatek często dokłada EQ do dymka po chwili. Czekamy krótko, zanim pokażemy nasz podgląd,
       // żeby nie było przeskoku „nasz podgląd → dymek z EQ”.
+      // kursor nad mapą główną gry? (na podręcznej mapie i w oknach dymek nie dostaje EQ — tam pokazujemy nasz podgląd)
+      const atEl = document.elementFromPoint(mx, my);
+      const onMain = !!(atEl && (atEl.tagName === 'CANVAS' || atEl.closest('.map, .map-overlay, .tip-wrapper')) && !atEl.closest('.c-window, [class*="window"]:not(.game-window-positioner)'));
       // dymki z EQ już się pojawiały — EQ tego gracza też dojdzie (pierwszy raz bywa wolniej), więc NIE pokazujemy w tym czasie naszego podglądu
-      if (p && tipNode && dadSeen) {
+      if (p && tipNode && dadSeen && onMain) {
         if (src === 'map') { src = null; hide(); }
         // od razu pobieramy EQ gracza w tle (równolegle z dymkiem), żeby bonusy były gotowe, gdy EQ pojawi się w dymku
         if (!knownItems(p.id)) bgFetch(p.id);
         return;
       }
-      if (p && tipNode && src !== 'map') {
+      if (p && tipNode && src !== 'map' && onMain) {
         const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
         if (now() - first < 700) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 720 - (now() - first)); return; }
       }

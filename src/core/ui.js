@@ -5,65 +5,11 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
-  { v: '1.0.9', d: '14.11.2026', items: [
-    'Pokaż EQ: podgląd z listy graczy wygląda jak dymek gracza w grze (sam ekwipunek, ramki jak w grze) i dalej ma skróty bonusów oraz podsumowanie legend.',
-    'Pokaż EQ: przy pierwszym najechaniu podgląd wczytuje się sam, nie trzeba już zjeżdżać kursorem i najeżdżać ponownie. Wczytuje się też szybciej.',
-  ] },
-  { v: '1.0.8', d: '14.11.2026', items: [
-    'Pokaż EQ: bonusy w dymku gracza pojawiają się dużo szybciej. Dodatek pobiera EQ od razu po najechaniu i dopisuje bonusy, gdy tylko je dostanie.',
-  ] },
-  { v: '1.0.7', d: '14.11.2026', items: [
-    'Pokaż EQ: dymek gracza z EQ nie jest już zastępowany starym podglądem, nawet przy pierwszym najechaniu.',
-    'Pokaż EQ: raz poznane bonusy legend dodatek pamięta na stałe, więc przy kolejnych graczach dopisuje je od razu.',
-  ] },
-  { v: '1.0.6', d: '14.11.2026', items: [
-    'Pokaż EQ: bez przeskoku przy najechaniu na gracza (najpierw stary podgląd, a po chwili właściwy).',
-  ] },
-  { v: '1.0.5', d: '14.11.2026', items: [
-    'Pokaż EQ: podgląd ze skrótami bonusów działa też dla obcych graczy i wrogów.',
-  ] },
-  { v: '1.0.4', d: '14.11.2026', items: [
-    'Pokaż EQ: skróty bonusów na legendach i podsumowanie legend działają też w nowym dymku gracza z EQ.',
-  ] },
-  { v: '1.0.3', d: '14.11.2026', items: [
-    'Pokaż EQ: na mapie zostaje dymek z gry, a dodatek dopisuje do niego skróty bonusów na legendach i podsumowanie legend na dole. Działa płynnie.',
-    'Pokaż EQ: podsumowanie legend także w oknie „Pokaż ekwipunek”. Bez liczby heroików.',
-    'Kto złapie: zamiast „…” zawsze pokazuje procenty i nie obciąża gry.',
-    'Legendarny Łup: lżejsze efekty, więcej FPS.',
-    'Lepsza Grupa: bez dodatkowych komunikatów przy zapraszaniu, wystarczy komunikat gry.',
-    'Podpisownik: teleporty nie są już podpisywane automatycznie.',
-  ] },
-  { v: '1.0.2', d: '13.11.2026', items: [
-    'Ulepszarka: tarcze i przedmioty pomocnicze to teraz dwie osobne kategorie składników. Jeśli wcześniej miałeś zaznaczone „Tarcza / pomocnicze”, zaznaczone są obie.',
-  ] },
-  { v: '1.0.1', d: '13.11.2026', items: [
-    'Dobijarka zmieniła nazwę na Slayer.',
-    'Slayer: klawisz namierza najbliższego gracza, drugie kliknięcie odwołuje atak.',
-    'Slayer: atak na wszystkich w pobliżu jest teraz osobną opcją, z małym okienkiem do ustawienia poziomów od–do.',
-    'Slayer: czerwona strzałka do celu, taka jak przy zadaniach. Po kliknięciu idziesz w stronę celu.',
-    'Slayer: nie dubluje już komunikatów z gry i szybciej ponawia atak po odmowie albo teleporcie.',
-    'Ulepszarka: Rzemiosło otwiera się w tle, a w trakcie ulepszania widać na środku młot z kowadłem i pasek postępu.',
-    'Ulepszarka: przy przedmiocie widać, ile procent zostało do +5, a po dojściu do +5 wyskakuje komunikat.',
-    'Ulepszarka: dzienny licznik ulepszeń wczytuje się sam po wejściu do gry.',
-    'Ulepszarka: pomija bezużyteczne składniki i nie rusza przedmiotów, które same są ulepszone.',
-    'Ulepszarka: ostrzega, zanim zużyje związane heroiki (unikaty opcjonalnie).',
-    'Ulepszarka: w ustawieniach sam wybierasz, które komunikaty chcesz widzieć.',
-    'Szybka Rączka: przy zmianie zestawu po walce pokazuje tylko kupione zestawy.',
-    'Skróty: czarne kafelki, włączony dodatek świeci na zielono. Bez przypiętych dodatków pokazują wszystkie włączone.',
-    'Ulepszarka: działa szybciej i kończy dokładnie na +5, nic nie przepala.',
-    'Ulepszarka: w panelu widać podsumowanie ostatniego ulepszania.',
-    'Ulepszarka: przedmiot po ekstrakcji można znowu ulepszać.',
-    'Lepsza Grupa: lista graczy odświeża się od razu po zmianie ustawień.',
-    'Legendarny Łup: w teście okno łupu zamykasz przyciskiem „Potwierdź”.',
-    'Usunięty dodatek Wrogowie na mapie.',
-    'Nowe opisy wszystkich dodatków.',
-    'Panel ma już tylko jeden, zielony kolor.',
-  ] },
-  { v: '1.0.0', d: '11.11.2026', items: [
+  { v: '1.0.0', d: '14.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
     'Kafelek L4 przy przyciskach gry i pasek skrótów do dodatków.',
-    'Dodatki: Dobijarka, Hey WakeUP!, Bratan, Wrogowie na mapie, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup i Motywy.',
+    'Dodatki: Slayer, Hey WakeUP!, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup i Motywy.',
   ] },
 ];
 

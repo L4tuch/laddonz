@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.9
+// @version      1.0.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -1461,9 +1461,10 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .showeq-window .mp-tipsum{text-align:center;border-top:1px solid #3c3c3c;margin:6px 8px 4px;padding-top:4px;font:12px/1.35 Arial,sans-serif;color:#e8e8e8}
 .showeq-window .mp-tipsum .mp-eqbons{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
 .showeq-window .mp-tipsum .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px;padding:0 4px}
-.tip-wrapper .mp-tipsum{text-align:center;border-top:1px solid #3c3c3c;margin-top:4px;padding-top:3px;font:11.5px/1.35 Arial,sans-serif;color:#e8e8e8}
+.tip-wrapper .mp-tipsum,.tip-wrapper .mp-tipsum *{white-space:normal!important;text-overflow:clip!important;overflow:visible!important}
+.tip-wrapper .mp-tipsum{max-width:190px;margin-left:auto!important;margin-right:auto!important;text-align:center;border-top:1px solid #3c3c3c;margin-top:4px;padding-top:3px;font:11.5px/1.35 Arial,sans-serif;color:#e8e8e8}
 .tip-wrapper .mp-tipsum .mp-eqbons{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
-.tip-wrapper .mp-tipsum .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px;padding:0 4px}
+.tip-wrapper .mp-tipsum .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:10.5px;padding:0 3px;line-height:1.5}
 .tip-wrapper .mp-tipsum .mp-dim{color:#9a9a9a}
 #mp-eqtip .mp-clone{text-align:center;position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:none!important;border:0!important;box-shadow:none!important;background:transparent!important;margin:0 0 4px!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;clip-path:none!important;max-width:none!important;width:auto!important;pointer-events:none!important}
 #mp-eqtip.gamey{max-width:360px;height:auto!important;max-height:92vh;overflow:hidden}
@@ -2207,65 +2208,11 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
-  { v: '1.0.9', d: '14.11.2026', items: [
-    'Pokaż EQ: podgląd z listy graczy wygląda jak dymek gracza w grze (sam ekwipunek, ramki jak w grze) i dalej ma skróty bonusów oraz podsumowanie legend.',
-    'Pokaż EQ: przy pierwszym najechaniu podgląd wczytuje się sam, nie trzeba już zjeżdżać kursorem i najeżdżać ponownie. Wczytuje się też szybciej.',
-  ] },
-  { v: '1.0.8', d: '14.11.2026', items: [
-    'Pokaż EQ: bonusy w dymku gracza pojawiają się dużo szybciej. Dodatek pobiera EQ od razu po najechaniu i dopisuje bonusy, gdy tylko je dostanie.',
-  ] },
-  { v: '1.0.7', d: '14.11.2026', items: [
-    'Pokaż EQ: dymek gracza z EQ nie jest już zastępowany starym podglądem, nawet przy pierwszym najechaniu.',
-    'Pokaż EQ: raz poznane bonusy legend dodatek pamięta na stałe, więc przy kolejnych graczach dopisuje je od razu.',
-  ] },
-  { v: '1.0.6', d: '14.11.2026', items: [
-    'Pokaż EQ: bez przeskoku przy najechaniu na gracza (najpierw stary podgląd, a po chwili właściwy).',
-  ] },
-  { v: '1.0.5', d: '14.11.2026', items: [
-    'Pokaż EQ: podgląd ze skrótami bonusów działa też dla obcych graczy i wrogów.',
-  ] },
-  { v: '1.0.4', d: '14.11.2026', items: [
-    'Pokaż EQ: skróty bonusów na legendach i podsumowanie legend działają też w nowym dymku gracza z EQ.',
-  ] },
-  { v: '1.0.3', d: '14.11.2026', items: [
-    'Pokaż EQ: na mapie zostaje dymek z gry, a dodatek dopisuje do niego skróty bonusów na legendach i podsumowanie legend na dole. Działa płynnie.',
-    'Pokaż EQ: podsumowanie legend także w oknie „Pokaż ekwipunek”. Bez liczby heroików.',
-    'Kto złapie: zamiast „…” zawsze pokazuje procenty i nie obciąża gry.',
-    'Legendarny Łup: lżejsze efekty, więcej FPS.',
-    'Lepsza Grupa: bez dodatkowych komunikatów przy zapraszaniu, wystarczy komunikat gry.',
-    'Podpisownik: teleporty nie są już podpisywane automatycznie.',
-  ] },
-  { v: '1.0.2', d: '13.11.2026', items: [
-    'Ulepszarka: tarcze i przedmioty pomocnicze to teraz dwie osobne kategorie składników. Jeśli wcześniej miałeś zaznaczone „Tarcza / pomocnicze”, zaznaczone są obie.',
-  ] },
-  { v: '1.0.1', d: '13.11.2026', items: [
-    'Dobijarka zmieniła nazwę na Slayer.',
-    'Slayer: klawisz namierza najbliższego gracza, drugie kliknięcie odwołuje atak.',
-    'Slayer: atak na wszystkich w pobliżu jest teraz osobną opcją, z małym okienkiem do ustawienia poziomów od–do.',
-    'Slayer: czerwona strzałka do celu, taka jak przy zadaniach. Po kliknięciu idziesz w stronę celu.',
-    'Slayer: nie dubluje już komunikatów z gry i szybciej ponawia atak po odmowie albo teleporcie.',
-    'Ulepszarka: Rzemiosło otwiera się w tle, a w trakcie ulepszania widać na środku młot z kowadłem i pasek postępu.',
-    'Ulepszarka: przy przedmiocie widać, ile procent zostało do +5, a po dojściu do +5 wyskakuje komunikat.',
-    'Ulepszarka: dzienny licznik ulepszeń wczytuje się sam po wejściu do gry.',
-    'Ulepszarka: pomija bezużyteczne składniki i nie rusza przedmiotów, które same są ulepszone.',
-    'Ulepszarka: ostrzega, zanim zużyje związane heroiki (unikaty opcjonalnie).',
-    'Ulepszarka: w ustawieniach sam wybierasz, które komunikaty chcesz widzieć.',
-    'Szybka Rączka: przy zmianie zestawu po walce pokazuje tylko kupione zestawy.',
-    'Skróty: czarne kafelki, włączony dodatek świeci na zielono. Bez przypiętych dodatków pokazują wszystkie włączone.',
-    'Ulepszarka: działa szybciej i kończy dokładnie na +5, nic nie przepala.',
-    'Ulepszarka: w panelu widać podsumowanie ostatniego ulepszania.',
-    'Ulepszarka: przedmiot po ekstrakcji można znowu ulepszać.',
-    'Lepsza Grupa: lista graczy odświeża się od razu po zmianie ustawień.',
-    'Legendarny Łup: w teście okno łupu zamykasz przyciskiem „Potwierdź”.',
-    'Usunięty dodatek Wrogowie na mapie.',
-    'Nowe opisy wszystkich dodatków.',
-    'Panel ma już tylko jeden, zielony kolor.',
-  ] },
-  { v: '1.0.0', d: '11.11.2026', items: [
+  { v: '1.0.0', d: '14.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
     'Kafelek L4 przy przyciskach gry i pasek skrótów do dodatków.',
-    'Dodatki: Dobijarka, Hey WakeUP!, Bratan, Wrogowie na mapie, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup i Motywy.',
+    'Dodatki: Slayer, Hey WakeUP!, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup i Motywy.',
   ] },
 ];
 
@@ -4880,7 +4827,7 @@ MP.itemDeco = itemDeco;
       found.forEach((f) => { if (!f.it || !f.it.legbon) return; const k = MP.legKey(f.it.legbon); sum[k] = sum[k] || { n: 0, code: f.it.legbon, raw: f.it.raw }; sum[k].n++; });
       let body;
       if (!legs.length) body = el('div', { class: 'mp-dim' }, 'Brak legend');
-      else if (Object.keys(sum).length) body = el('div', { class: 'mp-eqbons' }, Object.values(sum).map((x) => el('span', { class: 'mp-chip', title: MP.legName(x.code) }, `${MP.legAbbr(x.code, x.raw)} ×${x.n}`)), missing ? el('span', { class: 'mp-dim' }, ' …') : null);
+      else if (Object.keys(sum).length) body = el('div', { class: 'mp-eqbons' }, Object.values(sum).map((x) => el('span', { class: 'mp-chip', title: MP.legName(x.code) }, `${MP.legAbbr(x.code, x.raw)} ×${x.n}`)));
       else body = el('div', { class: 'mp-dim' }, 'Wczytuję bonusy…');
       const box = el('div', { class: 'mp-tipsum' }, body);
       box.dataset.sig = sig; box.dataset.base = base; box.dataset.full = missing ? '0' : '1'; box.dataset.t = String(now());
@@ -4981,14 +4928,17 @@ MP.itemDeco = itemDeco;
       }
       // dymek BEZ EQ — gra/dodatek często dokłada EQ do dymka po chwili. Czekamy krótko, zanim pokażemy nasz podgląd,
       // żeby nie było przeskoku „nasz podgląd → dymek z EQ”.
+      // kursor nad mapą główną gry? (na podręcznej mapie i w oknach dymek nie dostaje EQ — tam pokazujemy nasz podgląd)
+      const atEl = document.elementFromPoint(mx, my);
+      const onMain = !!(atEl && (atEl.tagName === 'CANVAS' || atEl.closest('.map, .map-overlay, .tip-wrapper')) && !atEl.closest('.c-window, [class*="window"]:not(.game-window-positioner)'));
       // dymki z EQ już się pojawiały — EQ tego gracza też dojdzie (pierwszy raz bywa wolniej), więc NIE pokazujemy w tym czasie naszego podglądu
-      if (p && tipNode && dadSeen) {
+      if (p && tipNode && dadSeen && onMain) {
         if (src === 'map') { src = null; hide(); }
         // od razu pobieramy EQ gracza w tle (równolegle z dymkiem), żeby bonusy były gotowe, gdy EQ pojawi się w dymku
         if (!knownItems(p.id)) bgFetch(p.id);
         return;
       }
-      if (p && tipNode && src !== 'map') {
+      if (p && tipNode && src !== 'map' && onMain) {
         const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
         if (now() - first < 700) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 720 - (now() - first)); return; }
       }
@@ -8797,5 +8747,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.9";
+MP.version = "1.0.0";
 })();
