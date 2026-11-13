@@ -530,7 +530,7 @@ MP.itemDeco = itemDeco;
     if (anchor && anchor.isConnected && anchor.getBoundingClientRect().width > 0) {
       const r = anchor.getBoundingClientRect();
       lastAnchorRect = r;
-      tip.style.minWidth = Math.min(260, Math.round(r.width)) + 'px';
+      tip.style.minWidth = cfg.compact ? '' : Math.min(260, Math.round(r.width)) + 'px';
       const h = tip.offsetHeight || 200, wd = tip.offsetWidth || r.width;
       tip.style.left = clamp(r.left, 4, innerWidth - wd - 4) + 'px';
       tip.style.top = clamp(r.top, 4, Math.max(4, innerHeight - h - 4)) + 'px';
@@ -548,7 +548,7 @@ MP.itemDeco = itemDeco;
       it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
       it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null);
     if (!items.length) return el('div');
-    const S = 36;
+    const S = cfg.compact ? 34 : 36;
     // Układ okna „Ekwipunek Postaci": 3 kolumny × 4 rzędy. Geometrię (rozstaw slotów i przesunięcie siatki)
     // uczymy się z graczy z pełnym EQ i zapamiętujemy — dzięki temu niepełne EQ ma przedmioty na swoich miejscach.
     let geo = store.get('eq:geo', null);
@@ -623,7 +623,8 @@ MP.itemDeco = itemDeco;
     tip.innerHTML = '';
     eqBox = el('div', { class: 'mp-eqmain' }, el('div', { class: 'mp-dim mp-eqload' }, 'Wczytuję ekwipunek…'));
     sumBox = el('div');
-    tip.append(headerEl(id), el('div', { class: 'mp-eqbody' }, outfitEl(id), eqBox), sumBox);
+    tip.classList.toggle('compact', !!cfg.compact);
+    tip.append(headerEl(id), el('div', { class: 'mp-eqbody' }, cfg.compact ? null : outfitEl(id), eqBox), sumBox);
   }
   async function fill(id) {
     const items = await fetchEq(id);
@@ -678,6 +679,8 @@ MP.itemDeco = itemDeco;
           if (p) { tipNode = n; break; }
         }
       }
+      // dymek gracza z INNEGO dodatku (np. własny podgląd EQ) — nasz podgląd ma pierwszeństwo: pokazujemy się w jego miejscu, a jego chowamy
+      if (!p) { const f = findForeign(); if (f) { p = f.p; tipNode = f.n; f.n.classList.add('mp-foreign-tip'); } }
       // gra potrafi na ułamek sekundy przerysować/odświeżyć swój dymek — chowamy dopiero, gdy dymka nie ma przez 250 ms
       if (p) { lastMapSeen = now(); clearTimeout(graceT); want(p.id, 'map', tipNode); }
       else if (src === 'map') {
@@ -685,6 +688,43 @@ MP.itemDeco = itemDeco;
         else { clearTimeout(graceT); graceT = setTimeout(mapCheck, 260); }
       }
     };
+
+    /** Okienko gracza z innego dodatku przy kursorze: element z tekstem „Nick (poziom…” gracza z mapy. */
+    let foreign = null;
+    const nickOf = (txt) => game.others().filter((o) => o.nick && new RegExp(o.nick.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(\\d').test(txt)).sort((a, b) => b.nick.length - a.nick.length)[0] || null;
+    const ours = (n) => !n || n === document.body || n === document.documentElement || n.tagName === 'CANVAS' || n.closest('#mp-eqtip, .mp-glass, #mp-qbar, #mp-launcher, .tip-wrapper');
+    function findForeign() {
+      if (foreign && foreign.n.isConnected && foreign.n.getBoundingClientRect().width > 0) {
+        const r = foreign.n.getBoundingClientRect();
+        const dx = Math.max(r.left - mx, 0, mx - r.right), dy = Math.max(r.top - my, 0, my - r.bottom);
+        if (Math.hypot(dx, dy) < 140 && nickOf((foreign.n.textContent || '').toLowerCase())) return foreign;
+      }
+      foreign = null;
+      // tylko gdy kursor jest nad mapą (oszczędnie — bez szukania przy każdym ruchu myszy nad panelami)
+      const at = document.elementFromPoint(mx, my);
+      if (!at || !(at.tagName === 'CANVAS' || (at.closest && at.closest('.map, .map-overlay, .game-window-positioner')))) return null;
+      const pts = [[20, 20], [40, 40], [60, 30], [-60, 40], [20, -40], [0, 60], [80, 0]];
+      const seen = new Set();
+      for (const [ox, oy] of pts) {
+        for (const e0 of document.elementsFromPoint(mx + ox, my + oy).slice(0, 6)) {
+          if (seen.has(e0) || ours(e0)) continue;
+          seen.add(e0);
+          // najwyższy „pływający” pojemnik okienka (nie cała strona)
+          let n = e0;
+          while (n.parentElement && n.parentElement !== document.body) {
+            const r = n.parentElement.getBoundingClientRect();
+            if (r.width > 520 || r.height > 700) break;
+            n = n.parentElement;
+          }
+          if (ours(n)) continue;
+          const r = n.getBoundingClientRect();
+          if (r.width < 60 || r.width > 520 || r.height > 700) continue;
+          const p = nickOf((n.textContent || '').toLowerCase());
+          if (p) { foreign = { n, p }; return foreign; }
+        }
+      }
+      return null;
+    }
 
     /* LISTA GRACZY (w grze i w L4Tools) */
     const listRow = (t) => t && t.closest && t.closest('.one-other, .tw-list-item, .mp-prow');
@@ -744,12 +784,13 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
     desc: 'Po najechaniu kursorem na gracza pokazuje jego postać, pełny ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych. Nie musisz otwierać żadnych okien.',
-    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, cacheSec: 300, tipSelector: '.tip-wrapper.normal-tip' },
+    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, compact: true, cacheSec: 300, tipSelector: '.tip-wrapper.normal-tip' },
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
       { key: 'listHover', type: 'bool', label: 'Najechanie na gracza na liście graczy (w grze i w L4Tools)' },
       { key: 'needShift', type: 'bool', label: 'Na mapie tylko z wciśniętym Shift' },
+      { key: 'compact', type: 'bool', label: 'Mały podgląd', hint: 'Sam ekwipunek, bez postaci — mniejsze okienko.' },
       { adv: true, key: 'cacheSec', type: 'number', label: 'Pamiętaj wynik przez (s)', min: 10, max: 1800 },
       { adv: true, key: 'tipSelector', type: 'text', label: 'Selektor dymka gracza w grze', hint: 'Domyślnie .tip-wrapper.normal-tip' },
     ],
@@ -757,6 +798,7 @@ MP.itemDeco = itemDeco;
       cfg = c;
       if (!c._v12) { c._v12 = true; c.needShift = false; c.tipSelector = '.tip-wrapper.normal-tip'; }
       if (!c._v16) { c._v16 = true; c.cacheSec = 300; }
+      if (!c._v102c) { c._v102c = true; c.compact = true; }
       config.save();
       hookItemFlow();
       watchHover();

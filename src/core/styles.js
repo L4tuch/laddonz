@@ -381,6 +381,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-eqtip.gamey .mp-eqhead{display:none}
 .mp-eq-on .tip-wrapper:not(.mp-glass){clip-path:inset(0 0 100% 0)!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
 .mp-eq-on .tip-wrapper:not(.mp-glass) *{visibility:hidden!important}
+.mp-eq-on .mp-foreign-tip{clip-path:inset(50%)!important}
 #mp-eqtip .mp-clone{text-align:center;position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:none!important;border:0!important;box-shadow:none!important;background:transparent!important;margin:0 0 4px!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;clip-path:none!important;max-width:none!important;width:auto!important;pointer-events:none!important}
 #mp-eqtip.gamey{max-width:360px;height:auto!important;max-height:92vh;overflow:hidden}
 /* izolacja od stylów gry (gra ma własne klasy o podobnych nazwach) */
@@ -409,6 +410,14 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-eqtip .mp-eqlayout .mp-eqcell{position:absolute;width:34px;height:34px}
 #mp-eqtip .mp-eqcell.mp-eqslot{background:rgba(255,255,255,.025)!important;border:1px dashed rgba(255,255,255,.07)!important;box-shadow:none!important}
 #mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
+#mp-eqtip.gamey.compact{min-width:0;padding:4px 6px;font-size:11.5px}
+#mp-eqtip.compact .mp-eqbody{padding-top:4px;gap:0}
+#mp-eqtip.compact .mp-eqmain{min-width:0}
+#mp-eqtip.compact .mp-eqlayout{margin:2px auto 4px}
+#mp-eqtip.compact .mp-eqlayout .mp-eqcell{width:32px!important;height:32px!important}
+#mp-eqtip.compact .mp-eqcell img{max-width:30px;max-height:30px}
+#mp-eqtip.compact .mp-eqhead2{margin-bottom:2px}
+#mp-eqtip.compact .mp-eqbons{margin-top:2px;gap:3px}
 #mp-eqtip.gamey .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px}
 .mp-eqgrid{display:grid;grid-template-columns:repeat(6,40px);gap:5px;margin:6px 0}
 .mp-eqcell{width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);position:relative;display:flex;align-items:center;justify-content:center}
