@@ -5,6 +5,11 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.7', d: '13.11.2026', items: [
+    'Ulepszarka: naprawione „nie udało się otworzyć Rzemiosło → Ulepszanie” (błąd z 1.0.6 przy ukrywaniu okna w tle).',
+    'Dobijarka: działa tylko przy włączonym dodatku. Klawisz namierza najbliższego gracza, a drugie naciśnięcie anuluje atak (nie zmienia celu) — żeby wybrać bliższy cel, anuluj i naciśnij ponownie.',
+    'Dobijarka: „Atakuj każdego w pobliżu” to osobny przełącznik (też pod klawisz). Gdy włączony, na ekranie jest małe okienko z zakresem poziomów od – do (można je przesuwać i zamknąć ×).',
+  ] },
   { v: '1.0.6', d: '13.11.2026', items: [
     'Ulepszarka: okno Rzemiosła działa w tle — zamiast niego na środku ekranu młot z kowadłem i obwód, który zapełnia się wraz z ulepszaniem; po 100% znika.',
     'Ulepszarka: komunikat o dziennym limicie jest opcjonalny (domyślnie wyłączony) i pokazuje się tylko raz po ulepszeniu, a nie kilka razy.',

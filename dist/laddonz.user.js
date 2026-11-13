@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.6
+// @version      1.0.7
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -1629,7 +1629,13 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-qpop{border-radius:8px!important}
 
 /* Ulepszarka: ciche pobranie licznika — okno Rzemiosła niewidoczne przez chwilę */
-.mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){opacity:0!important;pointer-events:none!important}
+.mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){clip-path:inset(50%)!important;pointer-events:none!important}
+.mp-dbw{position:fixed;left:calc(50% - 120px);top:90px;width:240px;z-index:2147482000;background:rgba(16,20,16,.94);border:1px solid #3c5a3f;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.55);font:12px/1.3 Arial,sans-serif;color:#e4eee5;user-select:none}
+.mp-dbw-h{display:flex;align-items:center;justify-content:space-between;padding:5px 6px 5px 9px;cursor:move;border-bottom:1px solid #2b3d2d;font-weight:700;color:#ff8a9c}
+.mp-dbw-h button{background:none;border:0;color:#cfd8d0;font-size:16px;line-height:1;cursor:pointer;padding:0 4px}
+.mp-dbw-h button:hover{color:#ff6b6b}
+.mp-dbw-b{display:flex;align-items:center;gap:6px;padding:8px 9px;white-space:nowrap}
+.mp-dbw-b input{width:52px;background:#0b0e0b;border:1px solid #3c5a3f;border-radius:4px;color:#fff;padding:3px 4px;font:12px Arial,sans-serif}
 .mp-ulov{position:fixed;left:50%;top:50%;width:112px;height:112px;margin:-56px 0 0 -56px;z-index:2147483000;pointer-events:none;opacity:0;transform:scale(.85);transition:opacity .22s,transform .22s;border-radius:50%;background:radial-gradient(circle,rgba(20,24,20,.92) 58%,rgba(10,12,10,.85) 70%,transparent 72%);filter:drop-shadow(0 4px 14px rgba(0,0,0,.6))}
 .mp-ulov.on{opacity:1;transform:scale(1)}
 .mp-ulov-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
@@ -2172,6 +2178,11 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.7', d: '13.11.2026', items: [
+    'Ulepszarka: naprawione „nie udało się otworzyć Rzemiosło → Ulepszanie” (błąd z 1.0.6 przy ukrywaniu okna w tle).',
+    'Dobijarka: działa tylko przy włączonym dodatku. Klawisz namierza najbliższego gracza, a drugie naciśnięcie anuluje atak (nie zmienia celu) — żeby wybrać bliższy cel, anuluj i naciśnij ponownie.',
+    'Dobijarka: „Atakuj każdego w pobliżu” to osobny przełącznik (też pod klawisz). Gdy włączony, na ekranie jest małe okienko z zakresem poziomów od – do (można je przesuwać i zamknąć ×).',
+  ] },
   { v: '1.0.6', d: '13.11.2026', items: [
     'Ulepszarka: okno Rzemiosła działa w tle — zamiast niego na środku ekranu młot z kowadłem i obwód, który zapełnia się wraz z ulepszaniem; po 100% znika.',
     'Ulepszarka: komunikat o dziennym limicie jest opcjonalny (domyślnie wyłączony) i pokazuje się tylko raz po ulepszeniu, a nie kilka razy.',
@@ -2978,9 +2989,11 @@ function parseProtection(data) {
 
 // ═══ src/addons/napad.js ═══
 /* ───────── Dobijarka (id: napad — zostawione dla zgodności ustawień) ─────────
- * Włączony  → atakuje każdego gracza, który wejdzie w zasięg (w zakresie poziomów).
- * Klawisz   → działa ZAWSZE (także gdy dodatek jest wyłączony): namierza najbliższego gracza
- *             i atakuje go w chwili, gdy będzie w zasięgu. Postać nie podchodzi sama.
+ * Wszystko działa tylko przy WŁĄCZONYM dodatku.
+ * Klawisz   → namierza najbliższego gracza i atakuje go w chwili, gdy będzie w zasięgu. Ponowne
+ *             naciśnięcie przy namierzonym celu = anulowanie (bez zmiany celu). Postać nie podchodzi sama.
+ * „Atakuj każdego w pobliżu" → osobny przełącznik (też pod klawisz); gdy włączony, na ekranie jest małe
+ *             okienko z zakresem poziomów „od – do" i atakowany jest każdy w zasięgu z tego zakresu.
  * Menu gracza (prawy klik) → „Dobij": namierza tego gracza, atak gdy będzie w zasięgu.
  * Kogo NIE atakować (klan, znajomi…) — decyduje Bratan; Dobijarka takich graczy po prostu pomija.
  */
@@ -3065,18 +3078,52 @@ function parseProtection(data) {
     if (ui.panel && ui.sel === 'napad') ui.renderMain();
   }
   function keyNearest() {
+    if (!cfg.enabled) return;
+    // ponowne naciśnięcie przy namierzonym celu = anulowanie (żeby zmienić cel: anuluj i naciśnij jeszcze raz)
+    if (S.lock) { unlock(`Dobijarka: anulowano atak na ${S.lock.nick}`); return; }
     const h = game.hero(); if (!h) return;
     const list = game.others().filter(allowed).sort((a, b) => dist(h, a) - dist(h, b));
     if (!list.length) { toast('Dobijarka: brak graczy na mapie'); return; }
-    // ponowne naciśnięcie przy tym samym celu = następny najbliższy
-    let p = list[0];
-    if (S.lock && S.lock.id === p.id && list[1]) p = list[1];
-    lockOn(p);
+    lockOn(list[0]);
+  }
+
+  /* ── „Atakuj każdego w pobliżu" — osobny przełącznik z małym okienkiem zakresu poziomów ── */
+  function setAll(on, quiet) {
+    cfg.allMode = !!on; config.save();
+    allWin();
+    ensureLoop();
+    if (!quiet) toast(on ? `Dobijarka: atak na każdego w pobliżu (poz. ${Number(cfg.lvlMin) || 0}–${Number(cfg.lvlMax) || 500})` : 'Dobijarka: atak na każdego w pobliżu wyłączony', on ? 'ok' : 'info');
+    if (ui.panel && ui.sel === 'napad') ui.renderMain();
+  }
+  function allWin() {
+    let w = document.getElementById('mp-dbw');
+    const show = cfg && cfg.enabled && cfg.allMode;
+    if (!show) { if (w) w.remove(); return; }
+    if (w) return;
+    const num = (key, def) => el('input', { type: 'number', min: 0, max: 500, value: cfg[key] ?? def,
+      onkeydown: (e) => e.stopPropagation(), onkeyup: (e) => e.stopPropagation(),
+      oninput: (e) => { const v = Math.max(0, Math.min(500, parseInt(e.target.value, 10) || 0)); cfg[key] = v; config.save(); } });
+    const head = el('div', { class: 'mp-dbw-h' }, el('span', null, 'Dobijarka — każdy w pobliżu'),
+      el('button', { title: 'Wyłącz', onclick: () => setAll(false) }, '×'));
+    w = el('div', { id: 'mp-dbw', class: 'mp-dbw' }, head,
+      el('div', { class: 'mp-dbw-b' }, el('span', null, 'Poziom od'), num('lvlMin', 0), el('span', null, 'do'), num('lvlMax', 500)));
+    const pos = cfg.allPos;
+    if (pos) { w.style.left = pos.x + 'px'; w.style.top = pos.y + 'px'; }
+    document.body.appendChild(w);
+    // przesuwanie za nagłówek
+    head.addEventListener('pointerdown', (e) => {
+      if (e.target.tagName === 'BUTTON') return;
+      e.preventDefault();
+      const r = w.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+      const mv = (ev) => { w.style.left = clamp(ev.clientX - dx, 0, innerWidth - r.width) + 'px'; w.style.top = clamp(ev.clientY - dy, 0, innerHeight - r.height) + 'px'; };
+      const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); cfg.allPos = { x: parseInt(w.style.left, 10) || 0, y: parseInt(w.style.top, 10) || 0 }; config.save(); };
+      addEventListener('pointermove', mv); addEventListener('pointerup', up);
+    });
   }
 
   /* ── pętla: namierzony cel + tryb włączony ── */
   function ensureLoop() {
-    const need = !!S.lock || (cfg && cfg.enabled);
+    const need = !!(cfg && cfg.enabled) && (!!S.lock || !!cfg.allMode);
     if (need && !S.timer) S.timer = setInterval(tick, 150);
     if (!need && S.timer) { clearInterval(S.timer); S.timer = null; }
   }
@@ -3088,6 +3135,7 @@ function parseProtection(data) {
     return p;
   }
   function tick() {
+    if (!cfg || !cfg.enabled) return;
     if (!game.ready()) return;
     const h = game.hero(); if (!h) return;
     if (game.inBattle()) return;
@@ -3101,8 +3149,8 @@ function parseProtection(data) {
       if (p) return;              // cel jest na mapie, ale daleko — czekamy
       // celu nie ma na mapie — w międzyczasie (gdy włączona) atakuje innych w zasięgu
     }
-    // 2) dodatek włączony → każdy w zasięgu
-    if (!cfg.enabled) return;
+    // 2) „Atakuj każdego w pobliżu" włączone → każdy w zasięgu z zakresu poziomów
+    if (!cfg.allMode) return;
     const t = now();
     for (const p of game.others()) if (dist(h, p) <= RANGE && inLvl(p) && !allowed(p)) say('br' + p.id, `Dobijarka: pomijam ${p.nick} — chroniony przez Bratana`, 120000, 'info');
     const c = game.others()
@@ -3147,14 +3195,14 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'napad', name: 'Dobijarka', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
-    desc: 'Pomaga dopaść przeciwnika. Klawiszem namierzasz najbliższego gracza, a dodatek zaatakuje go, gdy tylko znajdzie się w zasięgu. Po włączeniu atakuje też każdego, kto wejdzie w zasięg w ustawionym przedziale poziomów. To samo zrobisz z menu gracza: „Dobij” i „Przerwij dobijanie”. Kogo oszczędzić, ustawiasz w Bratanie.',
-    defaults: { enabled: false, keyAttack: '', lvlMin: 0, lvlMax: 500, target: null, remember: true },
-    notes: () => [{ type: 'warn', text: 'Włączona Dobijarka atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
+    desc: 'Pomaga dopaść przeciwnika. Klawiszem namierzasz najbliższego gracza, a dodatek zaatakuje go, gdy tylko znajdzie się w zasięgu — drugie naciśnięcie anuluje atak. Osobno możesz włączyć atak na każdego w pobliżu w wybranym przedziale poziomów (małe okienko „od – do”). Działa tylko przy włączonym dodatku. Kogo oszczędzić, ustawiasz w Bratanie.',
+    defaults: { enabled: false, keyAttack: '', keyAll: '', allMode: false, lvlMin: 0, lvlMax: 500, target: null, remember: true },
+    notes: () => [{ type: 'warn', text: '„Atakuj każdego w pobliżu” atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
     settings: [
-      { key: 'lvlMin', type: 'number', label: 'Atakuj od poziomu', min: 0, max: 500, hint: 'Dotyczy ataku na każdego w zasięgu.' },
-      { key: 'lvlMax', type: 'number', label: 'Atakuj do poziomu', min: 0, max: 500 },
-      { key: 'remember', type: 'bool', label: 'Zapamiętuj cel po jego zniknięciu', hint: 'Cel zostaje (z podświetleniem) także po zniknięciu z mapy, zmianie mapy i odświeżeniu gry — aż wybierzesz inny albo przerwiesz. Wyłączone: namierzenie znika razem z celem.' },
-      { key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Działa także przy wyłączonym dodatku. Ponowne naciśnięcie = następny najbliższy. Przerwanie: prawy klik na celu → „Przerwij dobijanie".' },
+      { group: 'Namierzanie klawiszem', key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Pierwsze naciśnięcie namierza najbliższego gracza, drugie anuluje atak. Żeby zmienić cel na bliższy: anuluj i naciśnij jeszcze raz.' },
+      { group: 'Namierzanie klawiszem', key: 'remember', type: 'bool', label: 'Zapamiętuj cel po jego zniknięciu', hint: 'Cel zostaje (z podświetleniem) także po zniknięciu z mapy, zmianie mapy i odświeżeniu gry — aż go anulujesz. Wyłączone: namierzenie znika razem z celem.' },
+      { group: 'Atakuj każdego w pobliżu', key: 'allMode', type: 'bool', label: 'Włączone', hint: 'Na ekranie pojawi się małe okienko z zakresem poziomów „od – do” — atakowany jest każdy w zasięgu z tego zakresu.' },
+      { group: 'Atakuj każdego w pobliżu', key: 'keyAll', type: 'key', label: 'Klawisz: włącz / wyłącz' },
     ],
     render(box, c, rerender) {
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Zapamiętany cel'),
@@ -3166,9 +3214,11 @@ function parseProtection(data) {
     init(c) {
       cfg = c;
       if (!c._v15) { c._v15 = true; c.lvlMin = 0; c.lvlMax = 500; config.save(); }
-      // klawisz działa niezależnie od włączenia dodatku
-      keys.bind({ label: 'Dobijarka: namierz najbliższego', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
+      if (!c._v106) { c._v106 = true; c.allMode = false; config.save(); }   // dawniej: włączony dodatek = atak na każdego; teraz to osobny przełącznik
+      keys.bind({ label: 'Dobijarka: namierz / anuluj', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
+      keys.bind({ label: 'Dobijarka: każdy w pobliżu', get: () => cfg.keyAll || '', fn: () => { if (cfg.enabled) setAll(!cfg.allMode); } });
       menus.add('player', (id) => {
+        if (!cfg.enabled) return [];
         // namierzony gracz → zamiast „Dobij" jest „Przerwij dobijanie" (cofa polecenie ataku)
         const pp = game.otherById(id);
         if (S.lock && (S.lock.id === Number(id) || (pp && pp.nick === S.lock.nick))) return [{ label: 'Przerwij dobijanie', fn: () => unlock(`Dobijarka: przerwano atak na ${S.lock ? S.lock.nick : 'cel'}`) }];
@@ -3179,10 +3229,12 @@ function parseProtection(data) {
       bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; if (!cfg.remember) unlock(); });
       // przywróć zapamiętany cel
       if (cfg.remember && cfg.target && cfg.target.nick) S.lock = { id: Number(cfg.target.id), nick: cfg.target.nick, t: now() };
-      MP.napad = { attack: (p) => lockOn(p), lockOn, unlock };
+      MP.napad = { attack: (p) => lockOn(p), lockOn, unlock, setAll };
       ensureLoop();
+      allWin();
     },
-    onToggle() { ensureLoop(); },
+    onChange(k) { if (k === 'allMode') { allWin(); ensureLoop(); } },
+    onToggle(on) { if (!on && S.lock) unlock(); ensureLoop(); allWin(); },
   });
 })();
 
@@ -8057,5 +8109,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.6";
+MP.version = "1.0.7";
 })();

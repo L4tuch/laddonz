@@ -553,7 +553,13 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-qpop{border-radius:8px!important}
 
 /* Ulepszarka: ciche pobranie licznika — okno Rzemiosła niewidoczne przez chwilę */
-.mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){opacity:0!important;pointer-events:none!important}
+.mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){clip-path:inset(50%)!important;pointer-events:none!important}
+.mp-dbw{position:fixed;left:calc(50% - 120px);top:90px;width:240px;z-index:2147482000;background:rgba(16,20,16,.94);border:1px solid #3c5a3f;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.55);font:12px/1.3 Arial,sans-serif;color:#e4eee5;user-select:none}
+.mp-dbw-h{display:flex;align-items:center;justify-content:space-between;padding:5px 6px 5px 9px;cursor:move;border-bottom:1px solid #2b3d2d;font-weight:700;color:#ff8a9c}
+.mp-dbw-h button{background:none;border:0;color:#cfd8d0;font-size:16px;line-height:1;cursor:pointer;padding:0 4px}
+.mp-dbw-h button:hover{color:#ff6b6b}
+.mp-dbw-b{display:flex;align-items:center;gap:6px;padding:8px 9px;white-space:nowrap}
+.mp-dbw-b input{width:52px;background:#0b0e0b;border:1px solid #3c5a3f;border-radius:4px;color:#fff;padding:3px 4px;font:12px Arial,sans-serif}
 .mp-ulov{position:fixed;left:50%;top:50%;width:112px;height:112px;margin:-56px 0 0 -56px;z-index:2147483000;pointer-events:none;opacity:0;transform:scale(.85);transition:opacity .22s,transform .22s;border-radius:50%;background:radial-gradient(circle,rgba(20,24,20,.92) 58%,rgba(10,12,10,.85) 70%,transparent 72%);filter:drop-shadow(0 4px 14px rgba(0,0,0,.6))}
 .mp-ulov.on{opacity:1;transform:scale(1)}
 .mp-ulov-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
