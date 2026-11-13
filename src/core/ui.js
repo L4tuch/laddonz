@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.8', d: '14.11.2026', items: [
+    'Pokaż EQ: bonusy w dymku gracza pojawiają się dużo szybciej. Dodatek pobiera EQ od razu po najechaniu i dopisuje bonusy, gdy tylko je dostanie.',
+  ] },
   { v: '1.0.7', d: '14.11.2026', items: [
     'Pokaż EQ: dymek gracza z EQ nie jest już zastępowany starym podglądem, nawet przy pierwszym najechaniu.',
     'Pokaż EQ: raz poznane bonusy legend dodatek pamięta na stałe, więc przy kolejnych graczach dopisuje je od razu.',

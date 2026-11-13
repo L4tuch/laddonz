@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.7
+// @version      1.0.8
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2197,6 +2197,9 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.8', d: '14.11.2026', items: [
+    'Pokaż EQ: bonusy w dymku gracza pojawiają się dużo szybciej. Dodatek pobiera EQ od razu po najechaniu i dopisuje bonusy, gdy tylko je dostanie.',
+  ] },
   { v: '1.0.7', d: '14.11.2026', items: [
     'Pokaż EQ: dymek gracza z EQ nie jest już zastępowany starym podglądem, nawet przy pierwszym najechaniu.',
     'Pokaż EQ: raz poznane bonusy legend dodatek pamięta na stałe, więc przy kolejnych graczach dopisuje je od razu.',
@@ -4782,16 +4785,26 @@ MP.itemDeco = itemDeco;
     }
     return null;
   }
-  async function bgFetch(pid) {
-    if (bgBusy.has(pid) || busy) return;
+  const bgProm = new Map();
+  function bgFetch(pid) {
+    if (bgProm.has(pid)) return bgProm.get(pid);
+    const pr = bgFetchRun(pid).finally(() => bgProm.delete(pid));
+    bgProm.set(pid, pr);
+    return pr;
+  }
+  async function bgFetchRun(pid) {
+    if (bgBusy.has(pid) || knownItems(pid)) return;
     bgBusy.add(pid);
     try {
+      // inne pobieranie w toku — czekamy na swoją kolej (zamiast odpuszczać i próbować dopiero przy kolejnym ruchu myszy)
+      for (let i = 0; i < 30 && busy; i++) await sleep(60);
+      if (busy || knownItems(pid)) return;
       busy = true;
       const items = await fetchRaw(pid);
       if (Array.isArray(items) && items.length) { cache[pid] = { t: now(), items }; learnLegs(items); }
     } catch {} finally { busy = false; bgBusy.delete(pid); }
   }
-  function augmentTip(t, p) {
+  function augmentTip(t, p, force) {
     try {
       const grid = t.querySelector('.dad-eq-grid');
       if (!grid) return augmentTipIds(t);
@@ -4801,7 +4814,7 @@ MP.itemDeco = itemDeco;
       // szybkie wyjście (wywołujemy to przy każdym ruchu myszy): dopisek już jest i nic nowego się nie dowiemy
       const base = pid + '|' + legs.map((sl) => sl.dataset.st).join(',');
       const cur = t.querySelector(':scope .mp-tipsum');
-      if (cur && cur.dataset.base === base && (cur.dataset.full === '1' || bgBusy.has(pid) || now() - Number(cur.dataset.t || 0) < 800)) return;
+      if (!force && cur && cur.dataset.base === base && (cur.dataset.full === '1' || bgBusy.has(pid) || now() - Number(cur.dataset.t || 0) < 800)) return;
       const found = legs.map((sl) => ({ sl, it: pid ? itemForSlot(pid, Number(sl.dataset.st), (sl.querySelector('img.icon, img') || {}).src) : null }));
       const missing = found.filter((f) => !f.it || !f.it.legbon).length;
       const sig = pid + '|' + legs.map((sl) => sl.dataset.st).join(',') + '|' + (legs.length - missing);
@@ -4829,7 +4842,8 @@ MP.itemDeco = itemDeco;
       box.dataset.sig = sig; box.dataset.base = base; box.dataset.full = missing ? '0' : '1'; box.dataset.t = String(now());
       t.querySelector('.content') ? t.querySelector('.content').appendChild(box) : t.appendChild(box);
       // czegoś nie znamy — raz pobieramy EQ gracza w tle, potem dopisujemy od nowa
-      if (missing && pid && !bgBusy.has(pid) && !knownItems(pid)) bgFetch(pid).then(() => { if (t.isConnected) augmentTip(t, p); });
+      // czegoś nie znamy — pobieranie EQ w tle (albo dołączamy do już trwającego), potem dopisujemy od nowa
+      if (missing && pid && !t.__mpWait && (bgProm.has(pid) || !knownItems(pid))) { t.__mpWait = true; bgFetch(pid).then(() => { t.__mpWait = false; if (t.isConnected) augmentTip(t, p, true); }); }
     } catch (e) { console.warn('[L4Tools] Pokaż EQ', e); }
   }
   /** Stary rodzaj dymka z przedmiotami z numerami (item-id). */
@@ -4924,7 +4938,12 @@ MP.itemDeco = itemDeco;
       // dymek BEZ EQ — gra/dodatek często dokłada EQ do dymka po chwili. Czekamy krótko, zanim pokażemy nasz podgląd,
       // żeby nie było przeskoku „nasz podgląd → dymek z EQ”.
       // dymki z EQ już się pojawiały — EQ tego gracza też dojdzie (pierwszy raz bywa wolniej), więc NIE pokazujemy w tym czasie naszego podglądu
-      if (p && tipNode && dadSeen) { if (src === 'map') { src = null; hide(); } return; }
+      if (p && tipNode && dadSeen) {
+        if (src === 'map') { src = null; hide(); }
+        // od razu pobieramy EQ gracza w tle (równolegle z dymkiem), żeby bonusy były gotowe, gdy EQ pojawi się w dymku
+        if (!knownItems(p.id)) bgFetch(p.id);
+        return;
+      }
       if (p && tipNode && src !== 'map') {
         const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
         if (now() - first < 700) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 720 - (now() - first)); return; }
@@ -8733,5 +8752,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.7";
+MP.version = "1.0.8";
 })();

@@ -729,16 +729,26 @@ MP.itemDeco = itemDeco;
     }
     return null;
   }
-  async function bgFetch(pid) {
-    if (bgBusy.has(pid) || busy) return;
+  const bgProm = new Map();
+  function bgFetch(pid) {
+    if (bgProm.has(pid)) return bgProm.get(pid);
+    const pr = bgFetchRun(pid).finally(() => bgProm.delete(pid));
+    bgProm.set(pid, pr);
+    return pr;
+  }
+  async function bgFetchRun(pid) {
+    if (bgBusy.has(pid) || knownItems(pid)) return;
     bgBusy.add(pid);
     try {
+      // inne pobieranie w toku — czekamy na swoją kolej (zamiast odpuszczać i próbować dopiero przy kolejnym ruchu myszy)
+      for (let i = 0; i < 30 && busy; i++) await sleep(60);
+      if (busy || knownItems(pid)) return;
       busy = true;
       const items = await fetchRaw(pid);
       if (Array.isArray(items) && items.length) { cache[pid] = { t: now(), items }; learnLegs(items); }
     } catch {} finally { busy = false; bgBusy.delete(pid); }
   }
-  function augmentTip(t, p) {
+  function augmentTip(t, p, force) {
     try {
       const grid = t.querySelector('.dad-eq-grid');
       if (!grid) return augmentTipIds(t);
@@ -748,7 +758,7 @@ MP.itemDeco = itemDeco;
       // szybkie wyjście (wywołujemy to przy każdym ruchu myszy): dopisek już jest i nic nowego się nie dowiemy
       const base = pid + '|' + legs.map((sl) => sl.dataset.st).join(',');
       const cur = t.querySelector(':scope .mp-tipsum');
-      if (cur && cur.dataset.base === base && (cur.dataset.full === '1' || bgBusy.has(pid) || now() - Number(cur.dataset.t || 0) < 800)) return;
+      if (!force && cur && cur.dataset.base === base && (cur.dataset.full === '1' || bgBusy.has(pid) || now() - Number(cur.dataset.t || 0) < 800)) return;
       const found = legs.map((sl) => ({ sl, it: pid ? itemForSlot(pid, Number(sl.dataset.st), (sl.querySelector('img.icon, img') || {}).src) : null }));
       const missing = found.filter((f) => !f.it || !f.it.legbon).length;
       const sig = pid + '|' + legs.map((sl) => sl.dataset.st).join(',') + '|' + (legs.length - missing);
@@ -776,7 +786,8 @@ MP.itemDeco = itemDeco;
       box.dataset.sig = sig; box.dataset.base = base; box.dataset.full = missing ? '0' : '1'; box.dataset.t = String(now());
       t.querySelector('.content') ? t.querySelector('.content').appendChild(box) : t.appendChild(box);
       // czegoś nie znamy — raz pobieramy EQ gracza w tle, potem dopisujemy od nowa
-      if (missing && pid && !bgBusy.has(pid) && !knownItems(pid)) bgFetch(pid).then(() => { if (t.isConnected) augmentTip(t, p); });
+      // czegoś nie znamy — pobieranie EQ w tle (albo dołączamy do już trwającego), potem dopisujemy od nowa
+      if (missing && pid && !t.__mpWait && (bgProm.has(pid) || !knownItems(pid))) { t.__mpWait = true; bgFetch(pid).then(() => { t.__mpWait = false; if (t.isConnected) augmentTip(t, p, true); }); }
     } catch (e) { console.warn('[L4Tools] Pokaż EQ', e); }
   }
   /** Stary rodzaj dymka z przedmiotami z numerami (item-id). */
@@ -871,7 +882,12 @@ MP.itemDeco = itemDeco;
       // dymek BEZ EQ — gra/dodatek często dokłada EQ do dymka po chwili. Czekamy krótko, zanim pokażemy nasz podgląd,
       // żeby nie było przeskoku „nasz podgląd → dymek z EQ”.
       // dymki z EQ już się pojawiały — EQ tego gracza też dojdzie (pierwszy raz bywa wolniej), więc NIE pokazujemy w tym czasie naszego podglądu
-      if (p && tipNode && dadSeen) { if (src === 'map') { src = null; hide(); } return; }
+      if (p && tipNode && dadSeen) {
+        if (src === 'map') { src = null; hide(); }
+        // od razu pobieramy EQ gracza w tle (równolegle z dymkiem), żeby bonusy były gotowe, gdy EQ pojawi się w dymku
+        if (!knownItems(p.id)) bgFetch(p.id);
+        return;
+      }
       if (p && tipNode && src !== 'map') {
         const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
         if (now() - first < 700) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 720 - (now() - first)); return; }
