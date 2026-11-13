@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.4', d: '14.11.2026', items: [
+    'Pokaż EQ: skróty bonusów na legendach i podsumowanie legend działają też w nowym dymku gracza z EQ.',
+  ] },
   { v: '1.0.3', d: '14.11.2026', items: [
     'Pokaż EQ: na mapie zostaje dymek z gry, a dodatek dopisuje do niego skróty bonusów na legendach i podsumowanie legend na dole. Działa płynnie.',
     'Pokaż EQ: podsumowanie legend także w oknie „Pokaż ekwipunek”. Bez liczby heroików.',
