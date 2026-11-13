@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.14
+// @version      1.0.15
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2180,6 +2180,10 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.15', d: '13.11.2026', items: [
+    'Slayer: strzałka do celu to teraz ta sama strzałka, której gra używa przy śledzeniu zadań (identyczny rozmiar, wygląd i płynność) — tylko czerwona. Gdyby gra jej nie udostępniła, zostaje strzałka Slayera.',
+    'Szybka Rączka: „Zmień po walce” pokazuje tylko kupione zestawy (lista prosto z gry) — niekupionego nie da się już wybrać.',
+  ] },
   { v: '1.0.14', d: '13.11.2026', items: [
     'Slayer: strzałka do celu działa jak strzałka zadań z gry — płynnie krąży wokół postaci i płynnie się obraca (dowolny kąt, nie skokami), a światło zostaje z lewej-góry jak w grze.',
   ] },
@@ -3186,10 +3190,96 @@ function parseProtection(data) {
   let arrowTimer = null, arrowRaf = 0, arTarget = null;
   const AR = { x: 0, y: 0, a: 0, on: false };
   /** Co ~100 ms: gdzie jest cel (logika gry). */
+  /*
+   * Strzałka gry (ta sama co przy śledzeniu zadań: Engine.targets.addArrow + /img/qt-arrow.png), przefarbowana na
+   * czerwono. Gra sama ją rysuje i przesuwa — identyczny wygląd i płynność. Gdyby gra zgłosiła przy niej jakikolwiek
+   * błąd, strzałka gry jest od razu usuwana, a Slayer wraca do własnej strzałki.
+   */
+  const NA_ID = 'l4-slayer';
+  const NA = { failed: false, parent: null, red: null, redLoading: false };
+  function redArrowUrl(cb) {
+    if (NA.red) return cb(NA.red);
+    if (NA.redLoading) return setTimeout(() => redArrowUrl(cb), 120);
+    NA.redLoading = true;
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+        const d = x.getImageData(0, 0, c.width, c.height), a = d.data;
+        for (let i = 0; i < a.length; i += 4) {
+          const r = a[i], g = a[i + 1], b = a[i + 2];
+          if (b > r + 12 && b > g) { a[i] = b; a[i + 1] = Math.round(g * 0.35); a[i + 2] = Math.round(r * 0.6); }   // niebieskie wnętrze → czerwone, obwódka bez zmian
+        }
+        x.putImageData(d, 0, 0);
+        NA.red = c.toDataURL('image/png');
+      } catch { NA.red = ''; }
+      NA.redLoading = false; cb(NA.red);
+    };
+    img.onerror = () => { NA.red = ''; NA.redLoading = false; cb(''); };
+    img.src = '/img/qt-arrow.png';
+  }
+  const naTargets = () => { const E = W.Engine; return E && E.targets && typeof E.targets.addArrow === 'function' ? E.targets : null; };
+  function naFind() {
+    try {
+      const l = naTargets().getDrawableList();
+      const arr = Array.isArray(l) ? l : Object.values(l || {});
+      return arr.find((o) => o && o.id === NA_ID) || null;
+    } catch { return null; }
+  }
+  function naDel() {
+    NA.parent = null;
+    try { const T = naTargets(); if (T) T.deleteArrow(NA_ID); } catch {}
+  }
+  function naFail(e) {
+    if (NA.failed) return;
+    NA.failed = true; naDel();
+    try { console.warn('[L4Tools] Slayer: strzałka gry niedostępna — własna strzałka', e); } catch {}
+  }
+  /** Każda metoda strzałki zabezpieczona: błąd = usunięcie strzałki (gra działa dalej). */
+  function naGuard(inst) {
+    const seen = new Set();
+    for (let pr = inst; pr && pr !== Object.prototype; pr = Object.getPrototypeOf(pr)) {
+      for (const k of Object.getOwnPropertyNames(pr)) {
+        if (k === 'constructor' || seen.has(k)) continue; seen.add(k);
+        let fn; try { fn = inst[k]; } catch { continue; }
+        if (typeof fn !== 'function' || fn.__l4) continue;
+        const w = function (...a) { try { return fn.apply(this, a); } catch (e) { naFail(e); return undefined; } };
+        w.__l4 = true;
+        try { inst[k] = w; } catch {}
+      }
+    }
+  }
+  function naRecolor(inst) {
+    redArrowUrl((url) => {
+      if (!url || !inst) return;
+      try {
+        if (typeof inst.src === 'string') inst.src = url;
+        for (const k of Object.keys(inst)) { const v = inst[k]; if (v instanceof HTMLImageElement && !/^data:/.test(v.src)) v.src = url; }
+      } catch {}
+    });
+  }
+  function naAdd(p) {
+    const T = naTargets(); if (!T) return false;
+    const raw = game.otherRaw(p.id);
+    if (!raw || !raw.d) return false;
+    if (NA.parent === raw && naFind()) return true;
+    naDel();
+    try { T.addArrow(NA_ID, p.nick, raw, false, 'L4_SLAYER', 'qt'); } catch (e) { naFail(e); return false; }
+    const inst = naFind();
+    if (!inst) { naFail('brak strzałki na liście'); return false; }
+    naGuard(inst); naRecolor(inst);
+    try { if (typeof inst.afterUpdate === 'function') inst.afterUpdate(); } catch (e) { naFail(e); return false; }
+    NA.parent = raw;
+    return true;
+  }
+
   function arrowTick() {
     const p = cfg && cfg.enabled && S.lock && lockedPlayer();
     const h = p && game.hero();
-    if (!p || !h || game.inBattle() || dist(h, p) <= RANGE) { arTarget = null; return; }
+    if (!p || !h || game.inBattle() || dist(h, p) <= RANGE) { arTarget = null; if (NA.parent) naDel(); return; }
+    if (!NA.failed && naAdd(p)) { arTarget = null; return; }   // strzałka gry
+
     const raw = p.raw || {};
     const tx = Number(raw.rx != null ? raw.rx : raw.d && raw.d.rx != null ? raw.d.rx : p.x), ty = Number(raw.ry != null ? raw.ry : raw.d && raw.d.ry != null ? raw.d.ry : p.y);
     arTarget = { x: Number.isFinite(tx) ? tx : p.x, y: Number.isFinite(ty) ? ty : p.y, nick: p.nick, d: dist(h, p) };
@@ -3225,7 +3315,7 @@ function parseProtection(data) {
     if (need && !arrowTimer) arrowTimer = setInterval(arrowTick, 100);
     if (!need && arrowTimer) { clearInterval(arrowTimer); arrowTimer = null; }
     arrowTick();
-    if (!need) { arTarget = null; if (!arrowRaf) arrowRaf = requestAnimationFrame(arrowFrame); }
+    if (!need) { arTarget = null; naDel(); if (!arrowRaf) arrowRaf = requestAnimationFrame(arrowFrame); }
   }
 
   /* ── pętla: namierzony cel + tryb włączony ── */
@@ -4908,7 +4998,18 @@ MP.itemDeco = itemDeco;
    */
   const BUILD_ANC = '[class*="build"], [class*="Build"], [class*="zestaw"], [class*="eq-set"], [class*="eqset"]';
   /** Lista zestawów: z danych gry (moduł zestawów), z listy rozwijanej w grze albo zapamiętana. */
+  /** Kupione zestawy prosto z gry (buildsManager) — null, gdy niedostępne. */
+  function ownedBuilds() {
+    try {
+      const c = W.Engine.buildsManager.getBuildsCommons();
+      const n = c.getBuildsName();
+      const out = Object.keys(n || {}).map((id) => { const raw = String((n[id] && n[id].name) || ''); return { id: Number(id), name: /^\[SET\.\d+\]$/.test(raw) || !raw ? `Zestaw ${id}` : raw }; }).filter((b) => b.id > 0);
+      return out.length ? out.sort((x, y) => x.id - y.id) : null;
+    } catch { return null; }
+  }
   function buildList() {
+    const own = ownedBuilds();
+    if (own) return own;   // tylko kupione zestawy (niekupionych nie da się wybrać)
     let list = [];
     try {
       const E0 = W.Engine || {};
@@ -4951,6 +5052,7 @@ MP.itemDeco = itemDeco;
     return n;
   }
   function currentBuild() {
+    try { const id = Number(W.Engine.buildsManager.getBuildsCommons().getCurrentId()); if (id > 0) return id; } catch {}
     const b = buildBtn();
     return b ? Number((b.textContent || '').trim()) : 0;
   }
@@ -4964,6 +5066,8 @@ MP.itemDeco = itemDeco;
     btn.appendChild(el('div', { class: 'mp-ibadge queued mp-setclock', title: `Po walce: ${S.set.id}. ${S.set.name}` }, icon('clock', 11)));
   }
   function armSet(b) {
+    const own = b && ownedBuilds();
+    if (own && !own.some((x) => x.id === b.id)) { toast(`Szybka Rączka: zestaw ${b.id} nie jest kupiony`, 'warn'); return; }
     if (!b || (S.set && S.set.id === b.id)) { S.set = null; markSet(); toast('Szybka Rączka: zestaw nie zmieni się po walce'); return; }
     S.set = b; markSet();
     toast(`Szybka Rączka: po walce zmienię zestaw na „${b.name}"`);
@@ -5039,6 +5143,8 @@ MP.itemDeco = itemDeco;
       if (!t || t.classList.contains('mp-buildq')) return;
       const m = (t.textContent || '').trim().match(/^(\d{1,2})\.\s*(.{1,30})$/);
       if (!m || !gameSetItems().includes(t)) return;
+      const own = ownedBuilds();
+      if (own && !own.some((b) => b.id === Number(m[1]))) return;   // niekupiony zestaw — zostawiamy grze (np. zakup)
       e.preventDefault(); e.stopPropagation();
       armSet({ id: Number(m[1]), name: m[2].trim() });
     }, true);
@@ -8335,5 +8441,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.14";
+MP.version = "1.0.15";
 })();

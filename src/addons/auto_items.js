@@ -173,7 +173,18 @@
    */
   const BUILD_ANC = '[class*="build"], [class*="Build"], [class*="zestaw"], [class*="eq-set"], [class*="eqset"]';
   /** Lista zestawów: z danych gry (moduł zestawów), z listy rozwijanej w grze albo zapamiętana. */
+  /** Kupione zestawy prosto z gry (buildsManager) — null, gdy niedostępne. */
+  function ownedBuilds() {
+    try {
+      const c = W.Engine.buildsManager.getBuildsCommons();
+      const n = c.getBuildsName();
+      const out = Object.keys(n || {}).map((id) => { const raw = String((n[id] && n[id].name) || ''); return { id: Number(id), name: /^\[SET\.\d+\]$/.test(raw) || !raw ? `Zestaw ${id}` : raw }; }).filter((b) => b.id > 0);
+      return out.length ? out.sort((x, y) => x.id - y.id) : null;
+    } catch { return null; }
+  }
   function buildList() {
+    const own = ownedBuilds();
+    if (own) return own;   // tylko kupione zestawy (niekupionych nie da się wybrać)
     let list = [];
     try {
       const E0 = W.Engine || {};
@@ -216,6 +227,7 @@
     return n;
   }
   function currentBuild() {
+    try { const id = Number(W.Engine.buildsManager.getBuildsCommons().getCurrentId()); if (id > 0) return id; } catch {}
     const b = buildBtn();
     return b ? Number((b.textContent || '').trim()) : 0;
   }
@@ -229,6 +241,8 @@
     btn.appendChild(el('div', { class: 'mp-ibadge queued mp-setclock', title: `Po walce: ${S.set.id}. ${S.set.name}` }, icon('clock', 11)));
   }
   function armSet(b) {
+    const own = b && ownedBuilds();
+    if (own && !own.some((x) => x.id === b.id)) { toast(`Szybka Rączka: zestaw ${b.id} nie jest kupiony`, 'warn'); return; }
     if (!b || (S.set && S.set.id === b.id)) { S.set = null; markSet(); toast('Szybka Rączka: zestaw nie zmieni się po walce'); return; }
     S.set = b; markSet();
     toast(`Szybka Rączka: po walce zmienię zestaw na „${b.name}"`);
@@ -304,6 +318,8 @@
       if (!t || t.classList.contains('mp-buildq')) return;
       const m = (t.textContent || '').trim().match(/^(\d{1,2})\.\s*(.{1,30})$/);
       if (!m || !gameSetItems().includes(t)) return;
+      const own = ownedBuilds();
+      if (own && !own.some((b) => b.id === Number(m[1]))) return;   // niekupiony zestaw — zostawiamy grze (np. zakup)
       e.preventDefault(); e.stopPropagation();
       armSet({ id: Number(m[1]), name: m[2].trim() });
     }, true);

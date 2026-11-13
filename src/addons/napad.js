@@ -160,10 +160,96 @@
   let arrowTimer = null, arrowRaf = 0, arTarget = null;
   const AR = { x: 0, y: 0, a: 0, on: false };
   /** Co ~100 ms: gdzie jest cel (logika gry). */
+  /*
+   * Strzałka gry (ta sama co przy śledzeniu zadań: Engine.targets.addArrow + /img/qt-arrow.png), przefarbowana na
+   * czerwono. Gra sama ją rysuje i przesuwa — identyczny wygląd i płynność. Gdyby gra zgłosiła przy niej jakikolwiek
+   * błąd, strzałka gry jest od razu usuwana, a Slayer wraca do własnej strzałki.
+   */
+  const NA_ID = 'l4-slayer';
+  const NA = { failed: false, parent: null, red: null, redLoading: false };
+  function redArrowUrl(cb) {
+    if (NA.red) return cb(NA.red);
+    if (NA.redLoading) return setTimeout(() => redArrowUrl(cb), 120);
+    NA.redLoading = true;
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+        const d = x.getImageData(0, 0, c.width, c.height), a = d.data;
+        for (let i = 0; i < a.length; i += 4) {
+          const r = a[i], g = a[i + 1], b = a[i + 2];
+          if (b > r + 12 && b > g) { a[i] = b; a[i + 1] = Math.round(g * 0.35); a[i + 2] = Math.round(r * 0.6); }   // niebieskie wnętrze → czerwone, obwódka bez zmian
+        }
+        x.putImageData(d, 0, 0);
+        NA.red = c.toDataURL('image/png');
+      } catch { NA.red = ''; }
+      NA.redLoading = false; cb(NA.red);
+    };
+    img.onerror = () => { NA.red = ''; NA.redLoading = false; cb(''); };
+    img.src = '/img/qt-arrow.png';
+  }
+  const naTargets = () => { const E = W.Engine; return E && E.targets && typeof E.targets.addArrow === 'function' ? E.targets : null; };
+  function naFind() {
+    try {
+      const l = naTargets().getDrawableList();
+      const arr = Array.isArray(l) ? l : Object.values(l || {});
+      return arr.find((o) => o && o.id === NA_ID) || null;
+    } catch { return null; }
+  }
+  function naDel() {
+    NA.parent = null;
+    try { const T = naTargets(); if (T) T.deleteArrow(NA_ID); } catch {}
+  }
+  function naFail(e) {
+    if (NA.failed) return;
+    NA.failed = true; naDel();
+    try { console.warn('[L4Tools] Slayer: strzałka gry niedostępna — własna strzałka', e); } catch {}
+  }
+  /** Każda metoda strzałki zabezpieczona: błąd = usunięcie strzałki (gra działa dalej). */
+  function naGuard(inst) {
+    const seen = new Set();
+    for (let pr = inst; pr && pr !== Object.prototype; pr = Object.getPrototypeOf(pr)) {
+      for (const k of Object.getOwnPropertyNames(pr)) {
+        if (k === 'constructor' || seen.has(k)) continue; seen.add(k);
+        let fn; try { fn = inst[k]; } catch { continue; }
+        if (typeof fn !== 'function' || fn.__l4) continue;
+        const w = function (...a) { try { return fn.apply(this, a); } catch (e) { naFail(e); return undefined; } };
+        w.__l4 = true;
+        try { inst[k] = w; } catch {}
+      }
+    }
+  }
+  function naRecolor(inst) {
+    redArrowUrl((url) => {
+      if (!url || !inst) return;
+      try {
+        if (typeof inst.src === 'string') inst.src = url;
+        for (const k of Object.keys(inst)) { const v = inst[k]; if (v instanceof HTMLImageElement && !/^data:/.test(v.src)) v.src = url; }
+      } catch {}
+    });
+  }
+  function naAdd(p) {
+    const T = naTargets(); if (!T) return false;
+    const raw = game.otherRaw(p.id);
+    if (!raw || !raw.d) return false;
+    if (NA.parent === raw && naFind()) return true;
+    naDel();
+    try { T.addArrow(NA_ID, p.nick, raw, false, 'L4_SLAYER', 'qt'); } catch (e) { naFail(e); return false; }
+    const inst = naFind();
+    if (!inst) { naFail('brak strzałki na liście'); return false; }
+    naGuard(inst); naRecolor(inst);
+    try { if (typeof inst.afterUpdate === 'function') inst.afterUpdate(); } catch (e) { naFail(e); return false; }
+    NA.parent = raw;
+    return true;
+  }
+
   function arrowTick() {
     const p = cfg && cfg.enabled && S.lock && lockedPlayer();
     const h = p && game.hero();
-    if (!p || !h || game.inBattle() || dist(h, p) <= RANGE) { arTarget = null; return; }
+    if (!p || !h || game.inBattle() || dist(h, p) <= RANGE) { arTarget = null; if (NA.parent) naDel(); return; }
+    if (!NA.failed && naAdd(p)) { arTarget = null; return; }   // strzałka gry
+
     const raw = p.raw || {};
     const tx = Number(raw.rx != null ? raw.rx : raw.d && raw.d.rx != null ? raw.d.rx : p.x), ty = Number(raw.ry != null ? raw.ry : raw.d && raw.d.ry != null ? raw.d.ry : p.y);
     arTarget = { x: Number.isFinite(tx) ? tx : p.x, y: Number.isFinite(ty) ? ty : p.y, nick: p.nick, d: dist(h, p) };
@@ -199,7 +285,7 @@
     if (need && !arrowTimer) arrowTimer = setInterval(arrowTick, 100);
     if (!need && arrowTimer) { clearInterval(arrowTimer); arrowTimer = null; }
     arrowTick();
-    if (!need) { arTarget = null; if (!arrowRaf) arrowRaf = requestAnimationFrame(arrowFrame); }
+    if (!need) { arTarget = null; naDel(); if (!arrowRaf) arrowRaf = requestAnimationFrame(arrowFrame); }
   }
 
   /* ── pętla: namierzony cel + tryb włączony ── */

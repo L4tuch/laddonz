@@ -5,6 +5,10 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.15', d: '13.11.2026', items: [
+    'Slayer: strzałka do celu to teraz ta sama strzałka, której gra używa przy śledzeniu zadań (identyczny rozmiar, wygląd i płynność) — tylko czerwona. Gdyby gra jej nie udostępniła, zostaje strzałka Slayera.',
+    'Szybka Rączka: „Zmień po walce” pokazuje tylko kupione zestawy (lista prosto z gry) — niekupionego nie da się już wybrać.',
+  ] },
   { v: '1.0.14', d: '13.11.2026', items: [
     'Slayer: strzałka do celu działa jak strzałka zadań z gry — płynnie krąży wokół postaci i płynnie się obraca (dowolny kąt, nie skokami), a światło zostaje z lewej-góry jak w grze.',
   ] },
