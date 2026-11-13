@@ -23,7 +23,7 @@ const config = {
     global: {
       perCharacter: true,   // osobne ustawienia dla każdej postaci
       dryRun: false,        // tryb próbny: nic nie wysyłamy do serwera, tylko logujemy
-      minInterval: 300,     // minimalny odstęp (ms) między KAŻDYM żądaniem wysłanym przez panel
+      minInterval: 200 + Math.floor(Math.random() * 151), // losowo 200–350 ms
       panelKey: 'F8',       // skrót otwierający panel
       launcher: { x: 16, y: 120 },
       panelPos: null,
