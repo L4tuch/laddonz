@@ -5,6 +5,14 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.3', d: '14.11.2026', items: [
+    'Pokaż EQ: na mapie zostaje dymek z gry, a dodatek dopisuje do niego skróty bonusów na legendach i podsumowanie legend na dole. Działa płynnie.',
+    'Pokaż EQ: podsumowanie legend także w oknie „Pokaż ekwipunek”. Bez liczby heroików.',
+    'Kto złapie: zamiast „…” zawsze pokazuje procenty i nie obciąża gry.',
+    'Legendarny Łup: lżejsze efekty, więcej FPS.',
+    'Lepsza Grupa: bez dodatkowych komunikatów przy zapraszaniu, wystarczy komunikat gry.',
+    'Podpisownik: teleporty nie są już podpisywane automatycznie.',
+  ] },
   { v: '1.0.2', d: '13.11.2026', items: [
     'Ulepszarka: tarcze i przedmioty pomocnicze to teraz dwie osobne kategorie składników. Jeśli wcześniej miałeś zaznaczone „Tarcza / pomocnicze”, zaznaczone są obie.',
   ] },
