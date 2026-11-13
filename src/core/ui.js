@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.2', d: '13.11.2026', items: [
+    'Pasek skrótów nie zjeżdża już w dół po walce.',
+  ] },
   { v: '1.0.1', d: '13.11.2026', items: [
     'Dobijarka zmieniła nazwę na Slayer.',
     'Slayer: klawisz namierza najbliższego gracza, drugie kliknięcie odwołuje atak.',

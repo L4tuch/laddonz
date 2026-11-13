@@ -42,8 +42,29 @@ const quickbar = {
   area() {
     const vis = (sel, col) => [...document.querySelectorAll(sel)].map((n) => n.getBoundingClientRect()).find((r) => (col ? r.width > 20 && r.height > 50 : r.width > 200 && r.height > 8));
     const L = vis('.left-column.main-column', 1), R = vis('.right-column.main-column', 1);
-    const T = vis('.top.positioner'), B = vis('.bottom.positioner');
-    return { l: L ? L.right : 0, r: R ? R.left : innerWidth, t: T && T.bottom < innerHeight / 3 ? T.bottom : 0, b: B && B.top > innerHeight / 2 ? B.top : innerHeight };
+    // górna / dolna belka: najniższa / najwyższa granica ze wszystkich pasujących elementów, zapamiętana do zmiany rozmiaru okna —
+    // w trakcie i po walce gra potrafi chwilowo powiększyć belkę i pasek „zjeżdżał" w dół
+    const rects = (sel) => [...document.querySelectorAll(sel)].map((n) => n.getBoundingClientRect()).filter((r) => r.width > 200 && r.height > 8);
+    const tops = rects('.top.positioner').map((r) => r.bottom).filter((b) => b > 0 && b < innerHeight / 3);
+    const bots = rects('.bottom.positioner').map((r) => r.top).filter((t) => t > innerHeight / 2 && t < innerHeight);
+    let t = tops.length ? Math.min(...tops) : 0, b = bots.length ? Math.max(...bots) : innerHeight;
+    const k = innerWidth + 'x' + innerHeight;
+    if (this._areaKey !== k) { this._areaKey = k; this._t = null; this._b = null; }
+    // zmiana w „gorszą" stronę przyjmowana dopiero, gdy utrzyma się dłużej niż minutę (chwilowe zmiany w walce ignorujemy)
+    const T0 = Date.now();
+    if (tops.length) {
+      if (this._t == null || t <= this._t) { this._t = t; this._tUp = 0; }
+      else if (!this._tUp) this._tUp = T0;
+      else if (T0 - this._tUp > 60000) { this._t = t; this._tUp = 0; }
+    }
+    if (bots.length) {
+      if (this._b == null || b >= this._b) { this._b = b; this._bDn = 0; }
+      else if (!this._bDn) this._bDn = T0;
+      else if (T0 - this._bDn > 60000) { this._b = b; this._bDn = 0; }
+    }
+    if (this._t != null) t = this._t;
+    if (this._b != null) b = this._b;
+    return { l: L ? L.right : 0, r: R ? R.left : innerWidth, t, b };
   },
   place() {
     if (!this.bar) return;
