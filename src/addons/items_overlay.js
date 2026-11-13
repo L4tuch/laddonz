@@ -508,7 +508,7 @@ MP.itemDeco = itemDeco;
     busy = true; lastReq = now();
     let items = null;
     try { items = await fetchRaw(id); } finally { busy = false; }
-    if (Array.isArray(items) && items.length) cache[id] = { t: now(), items };
+    if (Array.isArray(items) && items.length) { cache[id] = { t: now(), items }; try { learnLegs(items); } catch {} }
     if (wanted && wanted !== id && hoverId === wanted) { const w = wanted; wanted = null; setTimeout(() => fill(w), 0); }
     return items;
   }
@@ -701,6 +701,13 @@ MP.itemDeco = itemDeco;
    */
   const iconKey = (src) => String(src || '').split('?')[0].replace(/^.*?\/(obrazki|itemy|items?)\//i, '').toLowerCase().split('/').slice(-2).join('/');
   const bgBusy = new Set();
+  /** Zapamiętane na stałe: obrazek legendy → jej bonus (żeby przy kolejnych graczach dopisać od razu, bez pobierania). */
+  const legIdx = store.get('eq:legIcons', {}) || {};
+  let legIdxDirty = false;
+  function learnLegs(items) {
+    for (const it of items || []) if (it && it.legbon && it.icon) { const k = iconKey(game.iconUrl(it.icon)); if (legIdx[k] !== it.legbon) { legIdx[k] = it.legbon; legIdxDirty = true; } }
+    if (legIdxDirty) { legIdxDirty = false; store.set('eq:legIcons', legIdx); }
+  }
   function knownItems(pid) {
     const c = cache[pid];
     return c && Array.isArray(c.items) && now() - c.t < (cfg.cacheSec || 300) * 1000 ? c.items : null;
@@ -714,6 +721,8 @@ MP.itemDeco = itemDeco;
       const byIcon = list.find((it) => it.icon && iconKey(game.iconUrl(it.icon)) === k);
       if (byIcon) return byIcon;
     }
+    // zapamiętane wcześniej: obrazek legendy → bonus
+    if (legIdx[k]) return { legbon: legIdx[k], raw: null, name: '?', st };
     // przedmioty widziane wcześniej w grze — po obrazku
     for (const v of seenItems.values()) {
       if (v && v.icon && iconKey(game.iconUrl(v.icon)) === k && String(v.stat || '').includes('legbon')) { try { return game.normItem(v); } catch {} }
@@ -726,7 +735,7 @@ MP.itemDeco = itemDeco;
     try {
       busy = true;
       const items = await fetchRaw(pid);
-      if (Array.isArray(items) && items.length) cache[pid] = { t: now(), items };
+      if (Array.isArray(items) && items.length) { cache[pid] = { t: now(), items }; learnLegs(items); }
     } catch {} finally { busy = false; bgBusy.delete(pid); }
   }
   function augmentTip(t, p) {
@@ -853,6 +862,7 @@ MP.itemDeco = itemDeco;
       }
       // dymek gry sam pokazuje EQ gracza → nie zasłaniamy go, tylko dopisujemy nasze informacje (bonusy na przedmiotach i podsumowanie)
       if (p && tipNode && tipNode.querySelector('.dad-eq-grid, [class*="item-id-"]')) {
+        dadSeen = true;
         // dymek sam pokazuje EQ gracza — zostaje, dopisujemy tylko bonusy (bez własnego okienka)
         if (src === 'map') { src = null; hide(); }
         augmentTip(tipNode, p);
@@ -860,6 +870,8 @@ MP.itemDeco = itemDeco;
       }
       // dymek BEZ EQ — gra/dodatek często dokłada EQ do dymka po chwili. Czekamy krótko, zanim pokażemy nasz podgląd,
       // żeby nie było przeskoku „nasz podgląd → dymek z EQ”.
+      // dymki z EQ już się pojawiały — EQ tego gracza też dojdzie (pierwszy raz bywa wolniej), więc NIE pokazujemy w tym czasie naszego podglądu
+      if (p && tipNode && dadSeen) { if (src === 'map') { src = null; hide(); } return; }
       if (p && tipNode && src !== 'map') {
         const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
         if (now() - first < 700) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 720 - (now() - first)); return; }
@@ -877,6 +889,7 @@ MP.itemDeco = itemDeco;
     let foreign = null, lastForeignScan = 0;
     const tipMemo = new WeakMap();
     const tipFirst = new WeakMap();   // kiedy pierwszy raz zobaczyliśmy dany dymek
+    let dadSeen = false;              // czy dymki graczy pokazują już EQ (wtedy nie zastępujemy ich naszym podglądem)
     // nowe elementy na stronie (do szukania okienek innych dodatków) — zamiast przeszukiwać cały DOM
     const added = [];
     new MutationObserver((muts) => {

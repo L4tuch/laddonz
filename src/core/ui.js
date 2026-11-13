@@ -5,6 +5,10 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.7', d: '14.11.2026', items: [
+    'Pokaż EQ: dymek gracza z EQ nie jest już zastępowany starym podglądem, nawet przy pierwszym najechaniu.',
+    'Pokaż EQ: raz poznane bonusy legend dodatek pamięta na stałe, więc przy kolejnych graczach dopisuje je od razu.',
+  ] },
   { v: '1.0.6', d: '14.11.2026', items: [
     'Pokaż EQ: bez przeskoku przy najechaniu na gracza (najpierw stary podgląd, a po chwili właściwy).',
   ] },
