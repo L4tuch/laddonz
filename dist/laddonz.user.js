@@ -1274,6 +1274,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 @keyframes mpLgWin{0%,100%{filter:drop-shadow(0 0 6px var(--lgc))}50%{filter:drop-shadow(0 0 18px var(--lgc))}}
 @keyframes mpLgWinThor{0%,100%{filter:drop-shadow(0 0 7px #4f9dff)}31%{filter:drop-shadow(0 0 22px #cfe8ff)}34%{filter:drop-shadow(0 0 5px #4f9dff)}37%{filter:drop-shadow(0 0 16px #9fd0ff)}}
 .mp-lg-fake{position:fixed!important;left:50%!important;top:46%!important;transform:translate(-50%,-50%);z-index:900!important;pointer-events:none!important}
+.mp-lg-fake .button,.mp-lg-fake button,.mp-lg-fake .close-button{pointer-events:auto!important;cursor:pointer}
 .mp-lg-fake:not(.mp-lg-fake-tpl){box-sizing:border-box;min-width:300px;border-style:solid;border-width:32px 20px;display:block!important}
 .c-window.mp-lg-fake:not(.mp-lg-fake-tpl) > .content{position:relative!important;inset:auto!important;padding:4px 0 8px;background-color:rgb(24,16,12)}
 .mp-lg-fake:not(.mp-lg-fake-tpl) .header-label-positioner{position:absolute;left:0;right:0;top:-28px;display:flex;justify-content:center}
@@ -1684,7 +1685,7 @@ const addons = {
   cfg(id) { return config.data.addons[id]; },
   on(id) { return !!(config.data.addons[id] && config.data.addons[id].enabled); },
 
-  ORDER: ['napad', 'wakeup', 'bratan', 'wrogowie', 'ktotu', 'ktozlapie', 'cook', 'podpis', 'pokazeq', 'jakibon', 'taxi', 'autof', 'szybka', 'ulepszarka', 'minichat', 'legenda', 'motywnik'],
+  ORDER: ['napad', 'wakeup', 'bratan', 'ktotu', 'ktozlapie', 'cook', 'podpis', 'pokazeq', 'jakibon', 'taxi', 'autof', 'szybka', 'ulepszarka', 'minichat', 'legenda', 'motywnik'],
 
   initAll() {
     this.list.sort((a, b) => this.ORDER.indexOf(a.id) - this.ORDER.indexOf(b.id));
@@ -2182,6 +2183,12 @@ MP.menus = menus;
 const CHANGELOG = [
   { v: '1.0.2', d: '13.11.2026', items: [
     'Pasek skrótów nie zjeżdża już w dół po walce.',
+    'Usunięty dodatek Wrogowie na mapie.',
+    'Lepsza Grupa: lista graczy odświeża się od razu po zmianie ustawień. Zniknęły techniczne dopiski przy graczach.',
+    'Legendarny Łup: w teście okno łupu zamyka się przyciskiem „Potwierdź” albo krzyżykiem.',
+    'MiniChat: bez technicznych informacji o oknie czatu.',
+    'Szybka Rączka: czytelny opis, co jest zaplanowane i jak to ustawić.',
+    'Nowe, dopracowane opisy wszystkich dodatków.',
   ] },
   { v: '1.0.1', d: '13.11.2026', items: [
     'Dobijarka zmieniła nazwę na Slayer.',
@@ -2625,7 +2632,6 @@ function copyReport() {
       ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,
       pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
       szybka: MP.szybka ? MP.szybka.debug() : null,
-      wrogowie: MP.wrogowie ? MP.wrogowie.debug() : null,
       oknoLupow: MP.legenda && MP.legenda.debug ? MP.legenda.debug() : null,
       klasyUI: (() => { const c = new Map(); document.querySelectorAll('body *').forEach((n) => { if (typeof n.className !== 'string' || n.closest('.mp-glass')) return; n.className.split(/\s+/).forEach((k) => k && !/^mp-|^mt-/.test(k) && c.set(k, (c.get(k) || 0) + 1)); }); return [...c].sort((a, b) => b[1] - a[1]).slice(0, 300).map(([k]) => k); })(),
     };
@@ -2926,81 +2932,6 @@ function parseProtection(data) {
   const n = Number(m[1]);
   return /min|^m$/i.test(m[2]) ? n * 60 : n;
 }
-
-// ═══ src/addons/_dzwieki.js ═══
-/* ───────── Wspólne: czat klanowy i dźwięki (wbudowany sygnał albo własny plik) ─────────
- * Używane przez dodatek „Wrogowie na mapie”.
- */
-(() => {
-  /** Wiadomość na czat (kanał: CLAN, GROUP, LOCAL…) — ta sama komenda, której używa czat gry. */
-  function chat(channel, text) {
-    const t = String(text || '').trim().slice(0, 200);
-    if (!t) return;
-    try { W._g(`chat&channel=${channel}`, false, { c: t }); } catch (e) { console.warn('[L4Tools] czat', e); }
-  }
-  const fill = (tpl, map) => String(tpl || '').replace(/\{([^}]+)\}/g, (m, k) => (map[k] !== undefined ? map[k] : m));
-
-  /* ── dźwięki: wbudowany sygnał albo Twój plik (IndexedDB) ── */
-  const sdb = {
-    db: null,
-    open() { if (this.db) return Promise.resolve(this.db); return new Promise((res, rej) => { const q = indexedDB.open('l4tools-snd', 1); q.onupgradeneeded = () => q.result.createObjectStore('s'); q.onsuccess = () => { this.db = q.result; res(this.db); }; q.onerror = () => rej(q.error); }); },
-    async op(m, fn) { const db = await this.open(); return new Promise((res, rej) => { const tx = db.transaction('s', m); const r = fn(tx.objectStore('s')); tx.oncomplete = () => res(r && r.result); tx.onerror = () => rej(tx.error); }); },
-    get(k) { return this.op('readonly', (s) => s.get(k)); },
-    put(k, v) { return this.op('readwrite', (s) => s.put(v, k)); },
-    del(k) { return this.op('readwrite', (s) => s.delete(k)); },
-  };
-  let AC = null;
-  function chime(kind, vol) {
-    try {
-      AC = AC || new (W.AudioContext || W.webkitAudioContext)();
-      if (AC.state === 'suspended') AC.resume();
-      const t0 = AC.currentTime + 0.02, g = AC.createGain(); g.gain.value = vol; g.connect(AC.destination);
-      const notes = kind === 'alarm' ? [[880, 0], [660, 0.18], [880, 0.36], [660, 0.54]] : [[784, 0], [1046.5, 0.12], [1318.5, 0.24]];
-      notes.forEach(([f, d]) => {
-        const o = AC.createOscillator(), e = AC.createGain(); o.type = kind === 'alarm' ? 'square' : 'triangle'; o.frequency.value = f;
-        e.gain.setValueAtTime(0.0001, t0 + d); e.gain.exponentialRampToValueAtTime(kind === 'alarm' ? 0.18 : 0.35, t0 + d + 0.01); e.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.32);
-        o.connect(e).connect(g); o.start(t0 + d); o.stop(t0 + d + 0.35);
-      });
-    } catch {}
-  }
-  async function playSound(key, kind, vol = 0.7, mode = 'default') {
-    if (mode === 'none') return;
-    if (mode === 'own') {
-      const r = await sdb.get(key).catch(() => null);
-      if (r && r.data) { try { const a = new Audio(URL.createObjectURL(new Blob([r.data], { type: r.type || 'audio/mpeg' }))); a.volume = vol; await a.play(); return; } catch {} }
-    }
-    chime(kind, vol);
-  }
-  /** Ustawienia dźwięku (wbudowany / własny / brak + głośność + test) jako pole w panelu. */
-  function soundField(key, kind) {
-    return {
-      key: '_snd', type: 'custom', render: (obj, save) => {
-        const box = el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch', gap: '6px' } }, el('div', { class: 'lb' }, 'Dźwięk'));
-        const draw = async () => {
-          box.querySelectorAll('.mp-btns, .mp-dim').forEach((n) => n.remove());
-          const own = await sdb.get(key).catch(() => null);
-          const mode = obj.sound || 'default';
-          box.appendChild(el('div', { class: 'mp-btns' },
-            el('button', { class: 'mp-upchip' + (mode === 'default' ? ' on' : ''), onclick: () => { obj.sound = 'default'; save(); draw(); } }, 'Domyślny'),
-            el('button', { class: 'mp-upchip' + (mode === 'own' ? ' on' : ''), onclick: () => { if (!own) return toast('Najpierw wgraj plik', 'warn'); obj.sound = 'own'; save(); draw(); } }, own ? `Własny: ${own.name}` : 'Własny (brak pliku)'),
-            el('button', { class: 'mp-upchip' + (mode === 'none' ? ' on' : ''), onclick: () => { obj.sound = 'none'; save(); draw(); } }, 'Bez dźwięku')));
-          box.appendChild(el('div', { class: 'mp-btns' },
-            el('button', { class: 'mp-btn', onclick: () => playSound(key, kind, obj.volume ?? 0.7, obj.sound || 'default') }, 'Odsłuchaj'),
-            el('button', { class: 'mp-btn', onclick: () => {
-              const inp = el('input', { type: 'file', accept: 'audio/*', style: { display: 'none' } });
-              inp.onchange = async () => { const f = inp.files[0]; inp.remove(); if (!f) return; if (f.size > 8e6) return toast('Plik za duży (max 8 MB)', 'warn'); await sdb.put(key, { name: f.name, type: f.type, data: await f.arrayBuffer() }); obj.sound = 'own'; save(); draw(); };
-              document.body.appendChild(inp); inp.click();
-            } }, own ? 'Zmień plik' : 'Wgraj własny plik'),
-            own ? el('button', { class: 'mp-btn bad', onclick: async () => { await sdb.del(key).catch(() => {}); obj.sound = 'default'; save(); draw(); } }, 'Usuń plik') : null));
-        };
-        draw();
-        return box;
-      },
-    };
-  }
-  
-  MP.betaSound = MP.sound = { playSound, soundField, chat, fill };
-})();
 
 // ═══ src/addons/napad.js ═══
 /* ───────── Slayer (id: napad — zostawione dla zgodności ustawień) ─────────
@@ -3412,7 +3343,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'napad', name: 'Slayer', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
-    desc: 'Pomaga dopaść przeciwnika. Klawiszem namierzasz najbliższego gracza, a dodatek zaatakuje go, gdy tylko znajdzie się w zasięgu — drugie naciśnięcie anuluje atak. Osobno możesz włączyć atak na każdego w pobliżu w wybranym przedziale poziomów (małe okienko „od – do”). Działa tylko przy włączonym dodatku. Kogo oszczędzić, ustawiasz w Bratanie.',
+    desc: 'Pomaga dopaść wybranego przeciwnika. Namierzasz go klawiszem albo opcją „Dobij” w menu gracza, a Slayer zaatakuje go, gdy tylko znajdzie się w zasięgu. Czerwona strzałka przy postaci pokazuje, w którą stronę iść. Osobno możesz włączyć atak na każdego gracza w pobliżu z wybranego przedziału poziomów. Gracze chronieni przez Bratana są zawsze pomijani.',
     defaults: { enabled: false, keyAttack: '', keyAll: '', allMode: false, lvlMin: 0, lvlMax: 500, target: null, remember: true },
     notes: () => [{ type: 'warn', text: '„Atakuj każdego w pobliżu” atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
     settings: [
@@ -3516,7 +3447,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'], renderFirst: true,
-    desc: 'Odświeża wygląd dużych komunikatów gry, które wyskakują na środku ekranu. Wybierz jeden z gotowych stylów albo ułóż własny — kolor, czcionkę, tło i ramkę.',
+    desc: 'Zmienia wygląd dużych komunikatów, które gra wyświetla na środku ekranu. Wybierasz jeden z gotowych stylów albo tworzysz własny: kolor, czcionkę, tło i ramkę.',
     defaults: { enabled: false, style: 'mini', fg: '#ffe500', glow: '#ffb547', bg: '#10111c', bgAlpha: 0, frame: false, radius: 10, font: 'Arial,"Segoe UI",sans-serif', size: 24, bold: true, outline: true, shadow: false, gameSelectors: '.big-messages .message' },
     settings: [
       { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
@@ -3557,7 +3488,7 @@ function parseProtection(data) {
   let cfg;
   defineAddon({
     id: 'bratan', name: 'Bratan', icon: 'bratan', color: ['#3ddc97', '#1c9b6c'],
-    desc: 'Chroni swoich. Nie pozwoli zaatakować klanowicza, znajomego ani sojusznika — nawet jeśli klikniesz go przez pomyłkę.',
+    desc: 'Chroni Twoich ludzi przed przypadkowym atakiem. Blokuje atak na klanowiczów, znajomych, sojuszników klanu i graczy z Twojej listy, nawet jeśli klikniesz ich przez pomyłkę.',
     defaults: { enabled: false, clan: true, friends: true, allies: true, nicks: [] },
     settings: [
       { key: 'clan', type: 'bool', label: 'Chroń klanowiczów' },
@@ -3607,17 +3538,12 @@ function parseProtection(data) {
   }
   defineAddon({
     id: 'minichat', name: 'MiniChat', icon: 'minichat', color: ['#5b8cff', '#3a5bd9'],
-    desc: 'Pozwala ustawić wysokość okna czatu tak, jak Ci wygodnie.',
+    desc: 'Pozwala ustawić wysokość okna czatu według własnych potrzeb.',
     defaults: { height: 160, selector: '.new-chat-window' },
     settings: [
       { key: 'height', type: 'range', label: 'Wysokość czatu (px)', min: 60, max: 700, step: 10, live: () => apply() },
       { adv: true, key: 'selector', type: 'text', label: 'Selektor okna czatu', hint: 'Domyślnie .new-chat-window — zmień tylko, jeśli gra zmieni wygląd czatu.' },
     ],
-    render(box) {
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Okno czatu'),
-        el('div', { class: found ? 'mp-mono mp-okc' : 'mp-warnc' }, found || 'Nie znaleziono — otwórz czat w grze i kliknij „Wykryj ponownie".'),
-        el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { apply(); ui.renderMain(); } }, 'Wykryj ponownie'))));
-    },
     init(c) {
       cfg = c;
       if (cfg.selector === '.chat-tpl\n.chat-window\n#chat' || cfg.selector === '') cfg.selector = '.new-chat-window';
@@ -3746,7 +3672,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'ktotu', name: 'Gracze na mapie+', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
-    desc: 'Wygodna lista wszystkich graczy na mapie. Filtrujesz po nicku, klanie, poziomie, profesji i relacji, a ulubione filtry zapisujesz. Kliknięcie gracza pokazuje jego kartę: EQ, dobijanie, zaproszenie do grupy i znajomych.',
+    desc: 'Przejrzysta lista wszystkich graczy na mapie. Możesz ją filtrować po nicku, klanie, poziomie, profesji i relacji oraz zapisywać ulubione filtry. Po kliknięciu gracza zobaczysz jego kartę z ekwipunkiem i szybkimi akcjami: dobijaniem, zaproszeniem do grupy i do znajomych.',
     defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
     settings: [
@@ -3912,7 +3838,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
-    desc: 'Przy łupie pokazuje, jaką masz szansę na zdobycie każdego przedmiotu. Bierze pod uwagę osoby z drużyny, które brały udział w walce, i pierwszeństwo profesji.',
+    desc: 'Przy oknie łupu pokazuje, jaką masz szansę na zdobycie każdego przedmiotu. Uwzględnia członków drużyny, którzy brali udział w walce, oraz pierwszeństwo profesji.',
     defaults: { enabled: false },
     init(c) {
       cfg = c;
@@ -3932,7 +3858,7 @@ function parseProtection(data) {
  * Bez automatów — każde zaproszenie wysyłasz sam (klawisz albo przycisk).
  */
 (() => {
-  let cfg, invited = {};
+  let cfg, invited = {}, drawList = () => {};
 
   /** Nicki znajomych z listy znajomych gry (Engine.society) — dodatkowe źródło obok relacji gracza. */
   let frCache = { t: 0, set: new Set() };
@@ -4028,7 +3954,7 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'cook', name: 'Lepsza Grupa', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
-    desc: 'Szybkie zbieranie drużyny. Jednym klawiszem zapraszasz znajomych, klanowiczów, sojuszników albo wszystkich z mapy, a drugim rozwiązujesz grupę.',
+    desc: 'Ułatwia zbieranie drużyny. Jednym klawiszem zapraszasz wybrane osoby: znajomych, klanowiczów, sojuszników albo wszystkich graczy na mapie, a drugim rozwiązujesz grupę. Lista w ustawieniach od razu pokazuje, kogo dodatek zaprosi.',
     defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10 },
     keys: [
       { key: 'keyInvite', label: 'zaproś', fn: () => inviteAll() },
@@ -4050,14 +3976,22 @@ function parseProtection(data) {
       box.appendChild(el('div', { class: 'mp-btns' },
         el('button', { class: 'mp-btn pri', onclick: () => inviteAll() }, 'Zaproś teraz'),
         el('button', { class: 'mp-btn', onclick: () => disband() }, 'Rozwiąż grupę')));
-      // podgląd: kogo by zaprosił i dlaczego — pomaga sprawdzić ustawienia
-      const ok = new Set(eligible().map((p) => p.id));
-      const party = new Set(game.partyMembers());
-      const rows = game.others().map((p) => el('tr', null, el('td', null, p.nick, el('span', { class: 'mp-dim' }, ` (${p.lvl}${p.prof})`)),
-        el('td', { class: 'mp-dim' }, [isFriendP(p) && 'znajomy', p.isClan && 'klan', p.isAlly && 'sojusz'].filter(Boolean).join(', ') || '—', el('span', { class: 'mp-mono' }, ` [rel ${p.relation || '?'}]`)),
-        el('td', null, party.has(p.id) ? el('span', { class: 'mp-dim' }, 'w grupie') : ok.has(p.id) ? el('span', { class: 'mp-okc' }, 'zaprosi') : el('span', { class: 'mp-dim' }, 'pominie'))));
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Gracze na mapie'), rows.length ? el('table', { class: 'mp-table' }, el('tbody', null, rows)) : el('div', { class: 'mp-dim' }, 'Brak graczy.')));
+      // podgląd: kogo zaprosi — odświeża się od razu po zmianie ustawień
+      const card = el('div', { class: 'mp-card' });
+      box.appendChild(card);
+      drawList = () => {
+        if (!card.isConnected) { drawList = () => {}; return; }
+        const ok = new Set(eligible().map((p) => p.id));
+        const party = new Set(game.partyMembers());
+        const rows = game.others().map((p) => el('tr', null, el('td', null, p.nick, el('span', { class: 'mp-dim' }, ` (${p.lvl}${p.prof})`)),
+          el('td', { class: 'mp-dim' }, [isFriendP(p) && 'znajomy', p.isClan && 'klan', p.isAlly && 'sojusz'].filter(Boolean).join(', ') || '—'),
+          el('td', null, party.has(p.id) ? el('span', { class: 'mp-dim' }, 'w grupie') : ok.has(p.id) ? el('span', { class: 'mp-okc' }, 'zaprosi') : el('span', { class: 'mp-dim' }, 'pominie'))));
+        card.innerHTML = '';
+        card.append(el('h3', null, 'Gracze na mapie'), rows.length ? el('table', { class: 'mp-table' }, el('tbody', null, rows)) : el('div', { class: 'mp-dim' }, 'Brak graczy.'));
+      };
+      drawList();
     },
+    onChange() { drawList(); },
     init(c) {
       cfg = c;
       if ('auto' in c) { delete c.auto; config.save(); }   // usunięty automat z wcześniejszych wersji
@@ -4148,7 +4082,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'jakibon', name: 'Jaki To Bon', icon: 'jakibon', color: ['#ff9a3c', '#d4561c'],
-    desc: 'Na przedmiotach legendarnych wyświetla skrót bonusu (np. OR, CBK, FO), więc od razu widzisz, co to za legenda — w swoim ekwipunku i u innych graczy.',
+    desc: 'Wyświetla na przedmiotach legendarnych skrót ich bonusu (np. OR, CBK, FO). Od razu widzisz, z jaką legendą masz do czynienia, we własnym ekwipunku i u innych graczy.',
     defaults: { enabled: false, allItems: false, abbr: {} },
     settings: [{ key: 'allItems', type: 'bool', label: 'Pokazuj też na przedmiotach w torbach', hint: 'Domyślnie tylko założone.' }],
     render(box) {
@@ -4235,7 +4169,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
-    desc: 'Własne podpisy na przedmiotach — np. dokąd prowadzi kamień teleportacyjny. Prawy klik na przedmiocie → „Podpisz…”. Podpis pojawia się od razu na wszystkich takich samych przedmiotach.',
+    desc: 'Pozwala dodawać własne podpisy do przedmiotów, np. dokąd prowadzi dany kamień teleportacyjny. Podpis nadajesz z menu przedmiotu („Podpisz…”) i od razu widzisz go na wszystkich takich samych przedmiotach.',
     defaults: { enabled: false, byId: {}, byKey: {}, rules: [], autoTeleport: true },
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu (jeśli gra ją podaje)' }],
     render(box, c, rerender) {
@@ -4255,7 +4189,7 @@ MP.itemDeco = itemDeco;
             el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.byKey[k]; config.save(); bus.emit('deco'); rerender(); } }, '×')))),
           ids.map(([id, lb]) => el('tr', null, el('td', null, game.itemById(id)?.name || el('span', { class: 'mp-dim' }, '#' + id + ' (nie w EQ)')), el('td', null, lb),
             el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.byId[id]; config.save(); bus.emit('deco'); rerender(); } }, '×'))))))
-          : el('div', { class: 'mp-dim' }, 'Brak — prawy klik na przedmiocie → „Podpisz…".')));
+          : el('div', { class: 'mp-dim' }, 'Nie masz jeszcze podpisów. Kliknij przedmiot prawym przyciskiem i wybierz „Podpisz…”.')));
     },
     init(c) {
       cfg = c;
@@ -4811,7 +4745,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
-    desc: 'Po najechaniu na gracza pokazuje jego postać, cały ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych — bez otwierania żadnych okien.',
+    desc: 'Po najechaniu kursorem na gracza pokazuje jego postać, pełny ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych. Nie musisz otwierać żadnych okien.',
     defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, cacheSec: 300, tipSelector: '.tip-wrapper.normal-tip' },
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [
@@ -4955,7 +4889,7 @@ MP.itemDeco = itemDeco;
   }
   defineAddon({
     id: 'taxi', name: 'Fake Taxi', icon: 'taxi', color: ['#ffe14d', '#f0b400'],
-    desc: 'Gdy ktoś z drużyny przyzywa grupę do siebie, dodatek od razu przyjmuje przywołanie — bez wyskakującego okienka.',
+    desc: 'Sam przyjmuje przywołanie, gdy ktoś z drużyny przyzywa grupę do siebie. Okno z pytaniem się nie pojawia, a Ty od razu trafiasz na miejsce. W ustawieniach wybierasz, od kogo przyjmować przywołania.',
     defaults: {},
     init(c) {
       cfg = c;
@@ -4975,7 +4909,7 @@ MP.itemDeco = itemDeco;
   let cfg, doneFor = 0;
   defineAddon({
     id: 'autof', name: 'Szybka walka', icon: 'autof', color: ['#ffd447', '#ff8a00'],
-    desc: 'Każda walka od razu przechodzi w szybką walkę. Przydatne np. przy kolosie, gdy odchodzisz od komputera, a reszta nie chce czekać na Twoją turę.',
+    desc: 'Każdą walkę od razu przełącza w tryb szybkiej walki. Przydaje się np. przy kolosach, gdy reszta drużyny nie chce czekać na Twoją turę.',
     defaults: { enabled: false, delayMin: 250, delayMax: 600 },
     settings: [
       { adv: true, key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000 },
@@ -5244,7 +5178,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
-    desc: 'Zaplanuj coś na koniec walki: użycie przedmiotu (teleport, mikstura, przywołanie), rozwiązanie grupy albo zmianę zestawu. Wybierasz to prawym klikiem, a dodatek zrobi to od razu po walce.',
+    desc: 'Pozwala zaplanować akcje na koniec walki: użycie przedmiotu (teleportu, mikstury, przywołania), zmianę zestawu albo rozwiązanie grupy. Wybierasz je prawym przyciskiem myszy, a dodatek wykona je zaraz po zakończeniu walki.',
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
       { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
@@ -5252,9 +5186,17 @@ MP.itemDeco = itemDeco;
     render(box, c, rerender) {
       const tb = el('tbody', null, c.queue.map((q, i) => el('tr', null, el('td', null, q.name, q.tp ? el('span', { class: 'mp-dim' }, ' (teleport)') : null),
         el('td', null, el('button', { class: 'mp-mini', onclick: () => { c.queue.splice(i, 1); config.save(); bus.emit('deco'); rerender(); } }, '×')))));
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Czeka na koniec walki'),
-        c.queue.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Nic — prawy klik na przedmiocie → „Użyj po walce".'),
-        S.disbandArmed ? el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, 'Po walce: rozwiązanie grupy') : null));
+      const extra = [S.set ? `Zmiana zestawu na „${S.set.name}”` : null, S.disbandArmed ? 'Rozwiązanie grupy' : null].filter(Boolean);
+      const empty = !c.queue.length && !extra.length;
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Po walce'),
+        empty ? el('div', { class: 'mp-dim' }, 'Na razie nic nie jest zaplanowane.') : null,
+        c.queue.length ? el('table', { class: 'mp-table' }, tb) : null,
+        ...extra.map((t) => el('div', { style: { marginTop: '4px' } }, t))));
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Jak zaplanować'),
+        el('div', { class: 'mp-dim' }, el('b', null, 'Przedmiot'), ' – kliknij go prawym przyciskiem i wybierz „Użyj po walce”.'),
+        el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, el('b', null, 'Zestaw'), ' – kliknij prawym przyciskiem numer zestawu przy ekwipunku i wybierz „Zmień po walce…”.'),
+        el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, el('b', null, 'Grupa'), ' – kliknij prawym przyciskiem ikonę grupy i wybierz „Rozwiąż grupę po walce”.'),
+        el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, 'Żeby odwołać, wybierz tę samą opcję jeszcze raz.')));
     },
     init(c) {
       cfg = c;
@@ -6108,7 +6050,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
-    desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
+    desc: 'Ulepsza przedmioty wieloma składnikami naraz. Wskazujesz, co chcesz ulepszać i jakimi przedmiotami (według rzadkości i typu, nigdy legendami), a całość uruchamiasz jednym kliknięciem albo klawiszem. Pokazuje też dzienny limit ulepszeń i postęp przedmiotu do +5.',
     defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: true, notifyUsed: false, warnBoundUnique: false, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
@@ -6135,7 +6077,7 @@ MP.itemDeco = itemDeco;
             el('div', { class: 'mp-updrop', title: 'Przeciągnij tu przedmiot albo kliknij i wskaż go w ekwipunku', onclick: startPick }, icon('plus', 18)),
             el('div', { style: { flex: 1 } },
               el('b', null, slots().length ? 'Dodaj kolejny przedmiot' : 'Wybierz przedmiot do ulepszania'),
-              el('div', { class: 'mp-dim' }, 'Przeciągnij go tutaj albo kliknij okienko, a potem przedmiot. Możesz też: prawy klik na przedmiocie → „Ulepszaj w Ulepszarce".'))),
+              el('div', { class: 'mp-dim' }, 'Przeciągnij go tutaj albo kliknij to okienko i wskaż przedmiot w ekwipunku. Możesz też kliknąć przedmiot prawym przyciskiem i wybrać „Ulepszaj w Ulepszarce”.'))),
           slots().length ? el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, 'Wolne typy do ulepszania: ' + TYPES.filter((t) => free.includes(t[0])).map((t) => t[1]).join(', ')) : null));
       } else {
         box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));
@@ -6184,98 +6126,6 @@ MP.itemDeco = itemDeco;
       });
       bus.on('cmd:learned', () => rr());
     },
-  });
-})();
-
-// ═══ src/addons/wrogowie.js ═══
-/* ───────── Wrogowie na mapie ─────────
- * Na czerwonych mapach (pełne PvP) pokazuje komunikat gry „Wróg na mapie: Nick", gdy pojawi się wróg:
- * gracz oznaczony jako wróg, członek wrogiego klanu, a opcjonalnie także gracze neutralni (bez relacji).
- * Nigdy: znajomi, klan, sojusznicy, członkowie grupy i gracze chronieni w Bratanie.
- * Ten sam gracz znowu dopiero, gdy zniknie z mapy i wróci (najwcześniej po minucie).
- */
-(() => {
-  let cfg, timer = null, mapId = 0;
-  const seen = new Map();      // id → ostatnio widziany (ms)
-  const told = new Map();      // id → kiedy powiadomiono (ms)
-
-  /** Czerwona mapa = pełne PvP. Gra opisuje typ mapy liczbą (pole pvp). */
-  function isRed() {
-    const m = game.mapInfo();
-    return (cfg.pvpCodes || [2]).map(Number).includes(Number(m.pvp));
-  }
-  function protectedByBratan(p) {
-    try { const b = addons.cfg('bratan'); return !!(b && b.enabled && (b.nicks || []).some((n) => String(n).toLowerCase() === p.nick.toLowerCase())); } catch { return false; }
-  }
-  function isEnemy(p, party) {
-    if (p.isFriend || p.isClan || p.isAlly || party.has(p.id) || protectedByBratan(p)) return false;
-    const rel = String(p.relation || '');
-    if (rel === '3') return !!cfg.personal;                  // osobisty wróg
-    if (rel === '6' || rel === '8') return !!cfg.enemyClans;  // wrogi klan / frakcja
-    if (p.isEnemyTagged) return true;
-    return !!cfg.neutral;                                     // brak relacji — „random"
-  }
-  /** Komunikat gry w wybranym kolorze (tylko ten komunikat, inne zostają bez zmian). */
-  function notify(text) {
-    toast(text, 'warn', 5000);
-    const paint = () => {
-      const n = $$('.big-messages .message, .message, .mp-toast').reverse().find((x) => (x.textContent || '').trim() === text && !x.__mpWr);
-      if (!n) return false;
-      n.__mpWr = true;
-      n.style.setProperty('color', cfg.color || '#ff4b3e', 'important');
-      $$('*', n).forEach((c) => c.style.setProperty('color', cfg.color || '#ff4b3e', 'important'));
-      return true;
-    };
-    if (!paint()) { requestAnimationFrame(() => { if (!paint()) setTimeout(paint, 60); }); }
-  }
-  function tick() {
-    if (!cfg.enabled || !game.ready()) return;
-    const m = game.mapInfo();
-    if (m.id !== mapId) { mapId = m.id; seen.clear(); told.clear(); }
-    if (!isRed()) return;
-    const t = now();
-    const party = new Set(game.partyMembers().map(Number));
-    const fresh = [];
-    for (const p of game.others()) {
-      if (!isEnemy(p, party)) continue;
-      const wasHere = seen.has(p.id) && t - seen.get(p.id) < 5000;
-      seen.set(p.id, t);
-      if (wasHere) continue;
-      if (told.has(p.id) && t - told.get(p.id) < 60000) continue;
-      told.set(p.id, t);
-      fresh.push(p);
-    }
-    fresh.slice(0, 5).forEach((p) => {
-      notify(`Wróg na mapie: ${p.nick}${cfg.showLvl ? ` (${p.lvl}${p.prof || ''})` : ''}${p.clanName ? ` [${p.clanName}]` : ''}`);
-      // opcjonalnie: wiadomość na czat klanu (treść do edycji)
-      if (cfg.clanChat && MP.betaSound) MP.betaSound.chat('CLAN', MP.betaSound.fill(cfg.text, { 'Nick Gracza': p.nick, 'Nazwa Klanu': p.clanName || 'brak klanu', 'Mapa': m.name, 'Poziom': p.lvl, 'Profesja': p.prof || '' }));
-    });
-    if (fresh.length && MP.betaSound) MP.betaSound.playSound('wrog', 'alarm', cfg.volume ?? 0.7, cfg.sound || 'default');
-    if (fresh.length > 5) notify(`Wrogów na mapie: jeszcze ${fresh.length - 5}`);
-  }
-
-  defineAddon({
-    id: 'wrogowie', name: 'Wrogowie na mapie', icon: 'wrogowie', color: ['#ff6a5c', '#c0392b'],
-    desc: 'Na czerwonych mapach daje znać, gdy pojawi się wróg — z nickiem i klanem. Może też od razu napisać o tym na czacie klanowym i zagrać dźwięk. Znajomi, klan, sojusznicy i Twoja grupa nigdy nie są zgłaszani.',
-    defaults: { personal: true, enemyClans: true, neutral: false, showLvl: false, pvpCodes: [2], color: '#ff4b3e', clanChat: false, text: 'Wróg! {Nick Gracza} z klanu {Nazwa Klanu} w lokalizacji {Mapa}', sound: 'default', volume: 0.7 },
-    settings: [
-      { key: 'enemyClans', type: 'bool', label: 'Wrogie klany' },
-      { key: 'personal', type: 'bool', label: 'Gracze oznaczeni jako wrogowie' },
-      { key: 'neutral', type: 'bool', label: 'Gracze neutralni (bez relacji) też jako wrogowie' },
-      { key: 'showLvl', type: 'bool', label: 'Pokazuj poziom i profesję przy nicku' },
-      { key: 'color', type: 'color', label: 'Kolor czcionki powiadomienia' },
-      { key: 'clanChat', type: 'bool', label: 'Wysyłaj wiadomość na czat klanu' },
-      { key: 'text', type: 'text', label: 'Treść wiadomości na klan', hint: 'Zmienne: {Nick Gracza} {Nazwa Klanu} {Mapa} {Poziom} {Profesja}' },
-      { key: 'volume', type: 'range', label: 'Głośność dźwięku', min: 0, max: 1, step: 0.05 },
-      { key: '_snd', type: 'custom', render: (o, s) => (MP.betaSound ? MP.betaSound.soundField('wrog', 'alarm').render(o, s) : el('span')) },
-    ],
-    init(c) {
-      cfg = c;
-      timer = setInterval(tick, 1000);
-      MP.wrogowie = { debug: () => ({ mapa: game.mapInfo(), czerwona: isRed() }) };
-    },
-    onChange(k) { if (k === 'color') notify('Wróg na mapie: Przykład [Wrogi Klan]'); },
-    onToggle(on) { if (on) { seen.clear(); told.clear(); mapId = 0; } },
   });
 })();
 
@@ -6921,7 +6771,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
   defineAddon({
     id: 'motywnik', name: 'Motywy', icon: 'motywnik', color: ['#2ef2c4', '#8a5cff'], renderFirst: true,
-    desc: 'Nowy wygląd całego interfejsu gry — ramek, okien, pasków, przycisków i czatu. „Domyślny” przywraca klasyczny wygląd. Możesz też wczytać własny styl CSS.',
+    desc: 'Zmienia wygląd całego interfejsu gry: ramek, okien, pasków, przycisków i czatu. Motyw „Domyślny” przywraca klasyczny wygląd. Możesz też wczytać własny styl CSS.',
     defaults: { theme: 'domyslny', custom: [], customOn: null },
     settings: [],
     render(box, c, rerender) {
@@ -7751,7 +7601,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     (run.pops || []).forEach((b) => b.remove());
     $$('.item[data-mp-lg] > *').forEach((x) => { if (x.style.opacity === '0') x.style.opacity = ''; });
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
-    if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
+    if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; g.style.pointerEvents = ''; });
     try { run.stopSnd && run.stopSnd(); } catch {}
     run = null;
   }
@@ -7958,7 +7808,17 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     const dur = durOf();
     STRIKES = strikesFor(dur);
     let win = lootWindow(), fake = null;
-    if (!win && opts.test) { fake = fakeLoot(); win = fake; }
+    if (!win && opts.test) {
+      fake = fakeLoot(); win = fake;
+      // w teście okno łupu zamyka się jak w grze: „Potwierdź”, ✓ / ✕ albo krzyżyk
+      fake.addEventListener('click', (e) => {
+        const b = e.target.closest && e.target.closest('.button, button, .close-button');
+        if (!b || !fake.contains(b)) return;
+        e.preventDefault(); e.stopPropagation();
+        if (/potwierd|akcept/i.test(b.textContent || '') || b.classList.contains('close-button')) stopFx();
+        else if (b.classList.contains('green') || b.classList.contains('red')) b.closest('.item, [class*="loot"]')?.classList.toggle('mp-lg-picked');
+      }, true);
+    }
     const rect = win ? win.getBoundingClientRect() : { left: innerWidth / 2 - 130, top: innerHeight / 2 - 80, width: 260, height: 160, right: innerWidth / 2 + 130, bottom: innerHeight / 2 + 80 };
     // tylna warstwa tuż pod oknem łupu (w tym samym kontekście warstw), żeby dym i światła były ZA oknem
     let zb = 2147480000;
@@ -7986,7 +7846,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     me.dur = dur; showCaption(win, me, E.style);
     if (win && fieldSpec().item === 'pop') FOUNTAINS(dur).forEach((ft) => setTimeout(() => { if (run === me) popItems(win, me); }, ft * 1000 + 250));
     // przy teście panel przygasa, żeby było widać cały efekt
-    if (me.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .3s'; g.style.opacity = '0.12'; });
+    // przygaszony panel nie przechwytuje kliknięć — w teście da się kliknąć „Potwierdź” w oknie łupu
+    if (me.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .3s'; g.style.opacity = '0.12'; if (me.fake) g.style.pointerEvents = 'none'; });
     run = me;
     try { await document.fonts.load('900 40px Cinzel'); await Promise.all(['40px Bungee', '40px Monoton'].map((f) => document.fonts.load(f))); } catch {}
     if (run !== me) return;
@@ -8249,7 +8110,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
   defineAddon({
     id: 'legenda', name: 'Legendarny Łup', icon: 'legenda', color: ['#ff9a1f', '#ff3d6e'], renderFirst: true,
-    desc: 'Kiedy wypadnie legenda, robi się widowisko: efekt na cały ekran z dźwiękiem — Thor, Smoke, Kasyno, Disco albo Twój własny styl. Legenda w oknie łupów dostaje wyróżnienie, a przyciskiem „Test” sprawdzisz efekt od razu.',
+    desc: 'Zamienia zdobycie legendy w małe widowisko: efekt na cały ekran z dźwiękiem w stylu Thor, Smoke, Kasyno, Disco albo w Twoim własnym. Legenda w oknie łupu jest dodatkowo wyróżniona, a przyciskiem „Test” sprawdzisz efekt w każdej chwili.',
     defaults: { enabled: false, style: 'thor', extras: [], extraOn: null, volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
     notes: () => [{ type: 'info', text: 'Działa samodzielnie — <b>nie wymaga</b> opcji gry „Podświetlenie okna łupów”. Najlepiej ją <b>wyłączyć</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy), żeby efekty gry i dodatku nie nakładały się na siebie. Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],

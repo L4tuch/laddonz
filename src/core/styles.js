@@ -198,6 +198,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 @keyframes mpLgWin{0%,100%{filter:drop-shadow(0 0 6px var(--lgc))}50%{filter:drop-shadow(0 0 18px var(--lgc))}}
 @keyframes mpLgWinThor{0%,100%{filter:drop-shadow(0 0 7px #4f9dff)}31%{filter:drop-shadow(0 0 22px #cfe8ff)}34%{filter:drop-shadow(0 0 5px #4f9dff)}37%{filter:drop-shadow(0 0 16px #9fd0ff)}}
 .mp-lg-fake{position:fixed!important;left:50%!important;top:46%!important;transform:translate(-50%,-50%);z-index:900!important;pointer-events:none!important}
+.mp-lg-fake .button,.mp-lg-fake button,.mp-lg-fake .close-button{pointer-events:auto!important;cursor:pointer}
 .mp-lg-fake:not(.mp-lg-fake-tpl){box-sizing:border-box;min-width:300px;border-style:solid;border-width:32px 20px;display:block!important}
 .c-window.mp-lg-fake:not(.mp-lg-fake-tpl) > .content{position:relative!important;inset:auto!important;padding:4px 0 8px;background-color:rgb(24,16,12)}
 .mp-lg-fake:not(.mp-lg-fake-tpl) .header-label-positioner{position:absolute;left:0;right:0;top:-28px;display:flex;justify-content:center}

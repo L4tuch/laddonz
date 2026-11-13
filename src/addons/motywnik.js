@@ -639,7 +639,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
   defineAddon({
     id: 'motywnik', name: 'Motywy', icon: 'motywnik', color: ['#2ef2c4', '#8a5cff'], renderFirst: true,
-    desc: 'Nowy wygląd całego interfejsu gry — ramek, okien, pasków, przycisków i czatu. „Domyślny” przywraca klasyczny wygląd. Możesz też wczytać własny styl CSS.',
+    desc: 'Zmienia wygląd całego interfejsu gry: ramek, okien, pasków, przycisków i czatu. Motyw „Domyślny” przywraca klasyczny wygląd. Możesz też wczytać własny styl CSS.',
     defaults: { theme: 'domyslny', custom: [], customOn: null },
     settings: [],
     render(box, c, rerender) {

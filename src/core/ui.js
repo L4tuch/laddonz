@@ -7,6 +7,12 @@
 const CHANGELOG = [
   { v: '1.0.2', d: '13.11.2026', items: [
     'Pasek skrótów nie zjeżdża już w dół po walce.',
+    'Usunięty dodatek Wrogowie na mapie.',
+    'Lepsza Grupa: lista graczy odświeża się od razu po zmianie ustawień. Zniknęły techniczne dopiski przy graczach.',
+    'Legendarny Łup: w teście okno łupu zamyka się przyciskiem „Potwierdź” albo krzyżykiem.',
+    'MiniChat: bez technicznych informacji o oknie czatu.',
+    'Szybka Rączka: czytelny opis, co jest zaplanowane i jak to ustawić.',
+    'Nowe, dopracowane opisy wszystkich dodatków.',
   ] },
   { v: '1.0.1', d: '13.11.2026', items: [
     'Dobijarka zmieniła nazwę na Slayer.',
@@ -450,7 +456,6 @@ function copyReport() {
       ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,
       pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
       szybka: MP.szybka ? MP.szybka.debug() : null,
-      wrogowie: MP.wrogowie ? MP.wrogowie.debug() : null,
       oknoLupow: MP.legenda && MP.legenda.debug ? MP.legenda.debug() : null,
       klasyUI: (() => { const c = new Map(); document.querySelectorAll('body *').forEach((n) => { if (typeof n.className !== 'string' || n.closest('.mp-glass')) return; n.className.split(/\s+/).forEach((k) => k && !/^mp-|^mt-/.test(k) && c.set(k, (c.get(k) || 0) + 1)); }); return [...c].sort((a, b) => b[1] - a[1]).slice(0, 300).map(([k]) => k); })(),
     };

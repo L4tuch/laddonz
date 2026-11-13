@@ -79,7 +79,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'jakibon', name: 'Jaki To Bon', icon: 'jakibon', color: ['#ff9a3c', '#d4561c'],
-    desc: 'Na przedmiotach legendarnych wyświetla skrót bonusu (np. OR, CBK, FO), więc od razu widzisz, co to za legenda — w swoim ekwipunku i u innych graczy.',
+    desc: 'Wyświetla na przedmiotach legendarnych skrót ich bonusu (np. OR, CBK, FO). Od razu widzisz, z jaką legendą masz do czynienia, we własnym ekwipunku i u innych graczy.',
     defaults: { enabled: false, allItems: false, abbr: {} },
     settings: [{ key: 'allItems', type: 'bool', label: 'Pokazuj też na przedmiotach w torbach', hint: 'Domyślnie tylko założone.' }],
     render(box) {
@@ -166,7 +166,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
-    desc: 'Własne podpisy na przedmiotach — np. dokąd prowadzi kamień teleportacyjny. Prawy klik na przedmiocie → „Podpisz…”. Podpis pojawia się od razu na wszystkich takich samych przedmiotach.',
+    desc: 'Pozwala dodawać własne podpisy do przedmiotów, np. dokąd prowadzi dany kamień teleportacyjny. Podpis nadajesz z menu przedmiotu („Podpisz…”) i od razu widzisz go na wszystkich takich samych przedmiotach.',
     defaults: { enabled: false, byId: {}, byKey: {}, rules: [], autoTeleport: true },
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu (jeśli gra ją podaje)' }],
     render(box, c, rerender) {
@@ -186,7 +186,7 @@ MP.itemDeco = itemDeco;
             el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.byKey[k]; config.save(); bus.emit('deco'); rerender(); } }, '×')))),
           ids.map(([id, lb]) => el('tr', null, el('td', null, game.itemById(id)?.name || el('span', { class: 'mp-dim' }, '#' + id + ' (nie w EQ)')), el('td', null, lb),
             el('td', null, el('button', { class: 'mp-mini', onclick: () => { delete c.byId[id]; config.save(); bus.emit('deco'); rerender(); } }, '×'))))))
-          : el('div', { class: 'mp-dim' }, 'Brak — prawy klik na przedmiocie → „Podpisz…".')));
+          : el('div', { class: 'mp-dim' }, 'Nie masz jeszcze podpisów. Kliknij przedmiot prawym przyciskiem i wybierz „Podpisz…”.')));
     },
     init(c) {
       cfg = c;
@@ -742,7 +742,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
-    desc: 'Po najechaniu na gracza pokazuje jego postać, cały ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych — bez otwierania żadnych okien.',
+    desc: 'Po najechaniu kursorem na gracza pokazuje jego postać, pełny ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych. Nie musisz otwierać żadnych okien.',
     defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, cacheSec: 300, tipSelector: '.tip-wrapper.normal-tip' },
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [

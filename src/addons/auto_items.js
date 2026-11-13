@@ -119,7 +119,7 @@
   }
   defineAddon({
     id: 'taxi', name: 'Fake Taxi', icon: 'taxi', color: ['#ffe14d', '#f0b400'],
-    desc: 'Gdy ktoś z drużyny przyzywa grupę do siebie, dodatek od razu przyjmuje przywołanie — bez wyskakującego okienka.',
+    desc: 'Sam przyjmuje przywołanie, gdy ktoś z drużyny przyzywa grupę do siebie. Okno z pytaniem się nie pojawia, a Ty od razu trafiasz na miejsce. W ustawieniach wybierasz, od kogo przyjmować przywołania.',
     defaults: {},
     init(c) {
       cfg = c;
@@ -139,7 +139,7 @@
   let cfg, doneFor = 0;
   defineAddon({
     id: 'autof', name: 'Szybka walka', icon: 'autof', color: ['#ffd447', '#ff8a00'],
-    desc: 'Każda walka od razu przechodzi w szybką walkę. Przydatne np. przy kolosie, gdy odchodzisz od komputera, a reszta nie chce czekać na Twoją turę.',
+    desc: 'Każdą walkę od razu przełącza w tryb szybkiej walki. Przydaje się np. przy kolosach, gdy reszta drużyny nie chce czekać na Twoją turę.',
     defaults: { enabled: false, delayMin: 250, delayMax: 600 },
     settings: [
       { adv: true, key: 'delayMin', type: 'number', label: 'Opóźnienie od (ms)', min: 100, max: 3000 },
@@ -408,7 +408,7 @@
 
   defineAddon({
     id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
-    desc: 'Zaplanuj coś na koniec walki: użycie przedmiotu (teleport, mikstura, przywołanie), rozwiązanie grupy albo zmianę zestawu. Wybierasz to prawym klikiem, a dodatek zrobi to od razu po walce.',
+    desc: 'Pozwala zaplanować akcje na koniec walki: użycie przedmiotu (teleportu, mikstury, przywołania), zmianę zestawu albo rozwiązanie grupy. Wybierasz je prawym przyciskiem myszy, a dodatek wykona je zaraz po zakończeniu walki.',
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
       { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
@@ -416,9 +416,17 @@
     render(box, c, rerender) {
       const tb = el('tbody', null, c.queue.map((q, i) => el('tr', null, el('td', null, q.name, q.tp ? el('span', { class: 'mp-dim' }, ' (teleport)') : null),
         el('td', null, el('button', { class: 'mp-mini', onclick: () => { c.queue.splice(i, 1); config.save(); bus.emit('deco'); rerender(); } }, '×')))));
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Czeka na koniec walki'),
-        c.queue.length ? el('table', { class: 'mp-table' }, tb) : el('div', { class: 'mp-dim' }, 'Nic — prawy klik na przedmiocie → „Użyj po walce".'),
-        S.disbandArmed ? el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, 'Po walce: rozwiązanie grupy') : null));
+      const extra = [S.set ? `Zmiana zestawu na „${S.set.name}”` : null, S.disbandArmed ? 'Rozwiązanie grupy' : null].filter(Boolean);
+      const empty = !c.queue.length && !extra.length;
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Po walce'),
+        empty ? el('div', { class: 'mp-dim' }, 'Na razie nic nie jest zaplanowane.') : null,
+        c.queue.length ? el('table', { class: 'mp-table' }, tb) : null,
+        ...extra.map((t) => el('div', { style: { marginTop: '4px' } }, t))));
+      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Jak zaplanować'),
+        el('div', { class: 'mp-dim' }, el('b', null, 'Przedmiot'), ' – kliknij go prawym przyciskiem i wybierz „Użyj po walce”.'),
+        el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, el('b', null, 'Zestaw'), ' – kliknij prawym przyciskiem numer zestawu przy ekwipunku i wybierz „Zmień po walce…”.'),
+        el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, el('b', null, 'Grupa'), ' – kliknij prawym przyciskiem ikonę grupy i wybierz „Rozwiąż grupę po walce”.'),
+        el('div', { class: 'mp-dim', style: { marginTop: '4px' } }, 'Żeby odwołać, wybierz tę samą opcję jeszcze raz.')));
     },
     init(c) {
       cfg = c;
@@ -1272,7 +1280,7 @@
 
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
-    desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
+    desc: 'Ulepsza przedmioty wieloma składnikami naraz. Wskazujesz, co chcesz ulepszać i jakimi przedmiotami (według rzadkości i typu, nigdy legendami), a całość uruchamiasz jednym kliknięciem albo klawiszem. Pokazuje też dzienny limit ulepszeń i postęp przedmiotu do +5.',
     defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: true, notifyUsed: false, warnBoundUnique: false, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
@@ -1299,7 +1307,7 @@
             el('div', { class: 'mp-updrop', title: 'Przeciągnij tu przedmiot albo kliknij i wskaż go w ekwipunku', onclick: startPick }, icon('plus', 18)),
             el('div', { style: { flex: 1 } },
               el('b', null, slots().length ? 'Dodaj kolejny przedmiot' : 'Wybierz przedmiot do ulepszania'),
-              el('div', { class: 'mp-dim' }, 'Przeciągnij go tutaj albo kliknij okienko, a potem przedmiot. Możesz też: prawy klik na przedmiocie → „Ulepszaj w Ulepszarce".'))),
+              el('div', { class: 'mp-dim' }, 'Przeciągnij go tutaj albo kliknij to okienko i wskaż przedmiot w ekwipunku. Możesz też kliknąć przedmiot prawym przyciskiem i wybrać „Ulepszaj w Ulepszarce”.'))),
           slots().length ? el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, 'Wolne typy do ulepszania: ' + TYPES.filter((t) => free.includes(t[0])).map((t) => t[1]).join(', ')) : null));
       } else {
         box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));

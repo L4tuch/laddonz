@@ -57,7 +57,7 @@
 
   defineAddon({
     id: 'wakeup', name: 'Hey WakeUP!', icon: 'wakeup', color: ['#ffb547', '#ff7a45'], renderFirst: true,
-    desc: 'Odświeża wygląd dużych komunikatów gry, które wyskakują na środku ekranu. Wybierz jeden z gotowych stylów albo ułóż własny — kolor, czcionkę, tło i ramkę.',
+    desc: 'Zmienia wygląd dużych komunikatów, które gra wyświetla na środku ekranu. Wybierasz jeden z gotowych stylów albo tworzysz własny: kolor, czcionkę, tło i ramkę.',
     defaults: { enabled: false, style: 'mini', fg: '#ffe500', glow: '#ffb547', bg: '#10111c', bgAlpha: 0, frame: false, radius: 10, font: 'Arial,"Segoe UI",sans-serif', size: 24, bold: true, outline: true, shadow: false, gameSelectors: '.big-messages .message' },
     settings: [
       { group: 'Własny styl', show: (c) => c.style === 'wlasny', key: 'fg', type: 'color', label: 'Kolor tekstu', live: () => apply() },
@@ -98,7 +98,7 @@
   let cfg;
   defineAddon({
     id: 'bratan', name: 'Bratan', icon: 'bratan', color: ['#3ddc97', '#1c9b6c'],
-    desc: 'Chroni swoich. Nie pozwoli zaatakować klanowicza, znajomego ani sojusznika — nawet jeśli klikniesz go przez pomyłkę.',
+    desc: 'Chroni Twoich ludzi przed przypadkowym atakiem. Blokuje atak na klanowiczów, znajomych, sojuszników klanu i graczy z Twojej listy, nawet jeśli klikniesz ich przez pomyłkę.',
     defaults: { enabled: false, clan: true, friends: true, allies: true, nicks: [] },
     settings: [
       { key: 'clan', type: 'bool', label: 'Chroń klanowiczów' },
@@ -148,17 +148,12 @@
   }
   defineAddon({
     id: 'minichat', name: 'MiniChat', icon: 'minichat', color: ['#5b8cff', '#3a5bd9'],
-    desc: 'Pozwala ustawić wysokość okna czatu tak, jak Ci wygodnie.',
+    desc: 'Pozwala ustawić wysokość okna czatu według własnych potrzeb.',
     defaults: { height: 160, selector: '.new-chat-window' },
     settings: [
       { key: 'height', type: 'range', label: 'Wysokość czatu (px)', min: 60, max: 700, step: 10, live: () => apply() },
       { adv: true, key: 'selector', type: 'text', label: 'Selektor okna czatu', hint: 'Domyślnie .new-chat-window — zmień tylko, jeśli gra zmieni wygląd czatu.' },
     ],
-    render(box) {
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Okno czatu'),
-        el('div', { class: found ? 'mp-mono mp-okc' : 'mp-warnc' }, found || 'Nie znaleziono — otwórz czat w grze i kliknij „Wykryj ponownie".'),
-        el('div', { class: 'mp-btns' }, el('button', { class: 'mp-btn', onclick: () => { apply(); ui.renderMain(); } }, 'Wykryj ponownie'))));
-    },
     init(c) {
       cfg = c;
       if (cfg.selector === '.chat-tpl\n.chat-window\n#chat' || cfg.selector === '') cfg.selector = '.new-chat-window';

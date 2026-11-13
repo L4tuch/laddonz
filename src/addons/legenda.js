@@ -781,7 +781,7 @@
     (run.pops || []).forEach((b) => b.remove());
     $$('.item[data-mp-lg] > *').forEach((x) => { if (x.style.opacity === '0') x.style.opacity = ''; });
     if (run.test) $$('.mp-lg-hl.test').forEach((h) => h.remove());
-    if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; });
+    if (run.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .4s'; g.style.opacity = ''; g.style.pointerEvents = ''; });
     try { run.stopSnd && run.stopSnd(); } catch {}
     run = null;
   }
@@ -988,7 +988,17 @@
     const dur = durOf();
     STRIKES = strikesFor(dur);
     let win = lootWindow(), fake = null;
-    if (!win && opts.test) { fake = fakeLoot(); win = fake; }
+    if (!win && opts.test) {
+      fake = fakeLoot(); win = fake;
+      // w teście okno łupu zamyka się jak w grze: „Potwierdź”, ✓ / ✕ albo krzyżyk
+      fake.addEventListener('click', (e) => {
+        const b = e.target.closest && e.target.closest('.button, button, .close-button');
+        if (!b || !fake.contains(b)) return;
+        e.preventDefault(); e.stopPropagation();
+        if (/potwierd|akcept/i.test(b.textContent || '') || b.classList.contains('close-button')) stopFx();
+        else if (b.classList.contains('green') || b.classList.contains('red')) b.closest('.item, [class*="loot"]')?.classList.toggle('mp-lg-picked');
+      }, true);
+    }
     const rect = win ? win.getBoundingClientRect() : { left: innerWidth / 2 - 130, top: innerHeight / 2 - 80, width: 260, height: 160, right: innerWidth / 2 + 130, bottom: innerHeight / 2 + 80 };
     // tylna warstwa tuż pod oknem łupu (w tym samym kontekście warstw), żeby dym i światła były ZA oknem
     let zb = 2147480000;
@@ -1016,7 +1026,8 @@
     me.dur = dur; showCaption(win, me, E.style);
     if (win && fieldSpec().item === 'pop') FOUNTAINS(dur).forEach((ft) => setTimeout(() => { if (run === me) popItems(win, me); }, ft * 1000 + 250));
     // przy teście panel przygasa, żeby było widać cały efekt
-    if (me.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .3s'; g.style.opacity = '0.12'; });
+    // przygaszony panel nie przechwytuje kliknięć — w teście da się kliknąć „Potwierdź” w oknie łupu
+    if (me.dim) $$('.mp-glass').forEach((g) => { g.style.transition = 'opacity .3s'; g.style.opacity = '0.12'; if (me.fake) g.style.pointerEvents = 'none'; });
     run = me;
     try { await document.fonts.load('900 40px Cinzel'); await Promise.all(['40px Bungee', '40px Monoton'].map((f) => document.fonts.load(f))); } catch {}
     if (run !== me) return;
@@ -1279,7 +1290,7 @@
 
   defineAddon({
     id: 'legenda', name: 'Legendarny Łup', icon: 'legenda', color: ['#ff9a1f', '#ff3d6e'], renderFirst: true,
-    desc: 'Kiedy wypadnie legenda, robi się widowisko: efekt na cały ekran z dźwiękiem — Thor, Smoke, Kasyno, Disco albo Twój własny styl. Legenda w oknie łupów dostaje wyróżnienie, a przyciskiem „Test” sprawdzisz efekt od razu.',
+    desc: 'Zamienia zdobycie legendy w małe widowisko: efekt na cały ekran z dźwiękiem w stylu Thor, Smoke, Kasyno, Disco albo w Twoim własnym. Legenda w oknie łupu jest dodatkowo wyróżniona, a przyciskiem „Test” sprawdzisz efekt w każdej chwili.',
     defaults: { enabled: false, style: 'thor', extras: [], extraOn: null, volume: 0.7, dur: 15, hlMode: 'ring', sounds: {}, custom: { layers: ['flash', 'glow', 'neon', 'banner'], color: '#ff9a1f', dur: 6.5, sound: 'kasyno' } },
     settings: [],
     notes: () => [{ type: 'info', text: 'Działa samodzielnie — <b>nie wymaga</b> opcji gry „Podświetlenie okna łupów”. Najlepiej ją <b>wyłączyć</b> (Konfiguracja → Ustawienia gry → Wygląd → Łupy), żeby efekty gry i dodatku nie nakładały się na siebie. Efekt działa tylko dla przedmiotów <b>legendarnych</b>.' }],

@@ -114,7 +114,7 @@
 
   defineAddon({
     id: 'ktotu', name: 'Gracze na mapie+', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
-    desc: 'Wygodna lista wszystkich graczy na mapie. Filtrujesz po nicku, klanie, poziomie, profesji i relacji, a ulubione filtry zapisujesz. Kliknięcie gracza pokazuje jego kartę: EQ, dobijanie, zaproszenie do grupy i znajomych.',
+    desc: 'Przejrzysta lista wszystkich graczy na mapie. Możesz ją filtrować po nicku, klanie, poziomie, profesji i relacji oraz zapisywać ulubione filtry. Po kliknięciu gracza zobaczysz jego kartę z ekwipunkiem i szybkimi akcjami: dobijaniem, zaproszeniem do grupy i do znajomych.',
     defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
     settings: [
@@ -280,7 +280,7 @@
 
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
-    desc: 'Przy łupie pokazuje, jaką masz szansę na zdobycie każdego przedmiotu. Bierze pod uwagę osoby z drużyny, które brały udział w walce, i pierwszeństwo profesji.',
+    desc: 'Przy oknie łupu pokazuje, jaką masz szansę na zdobycie każdego przedmiotu. Uwzględnia członków drużyny, którzy brali udział w walce, oraz pierwszeństwo profesji.',
     defaults: { enabled: false },
     init(c) {
       cfg = c;
@@ -300,7 +300,7 @@
  * Bez automatów — każde zaproszenie wysyłasz sam (klawisz albo przycisk).
  */
 (() => {
-  let cfg, invited = {};
+  let cfg, invited = {}, drawList = () => {};
 
   /** Nicki znajomych z listy znajomych gry (Engine.society) — dodatkowe źródło obok relacji gracza. */
   let frCache = { t: 0, set: new Set() };
@@ -396,7 +396,7 @@
 
   defineAddon({
     id: 'cook', name: 'Lepsza Grupa', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
-    desc: 'Szybkie zbieranie drużyny. Jednym klawiszem zapraszasz znajomych, klanowiczów, sojuszników albo wszystkich z mapy, a drugim rozwiązujesz grupę.',
+    desc: 'Ułatwia zbieranie drużyny. Jednym klawiszem zapraszasz wybrane osoby: znajomych, klanowiczów, sojuszników albo wszystkich graczy na mapie, a drugim rozwiązujesz grupę. Lista w ustawieniach od razu pokazuje, kogo dodatek zaprosi.',
     defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10 },
     keys: [
       { key: 'keyInvite', label: 'zaproś', fn: () => inviteAll() },
@@ -418,14 +418,22 @@
       box.appendChild(el('div', { class: 'mp-btns' },
         el('button', { class: 'mp-btn pri', onclick: () => inviteAll() }, 'Zaproś teraz'),
         el('button', { class: 'mp-btn', onclick: () => disband() }, 'Rozwiąż grupę')));
-      // podgląd: kogo by zaprosił i dlaczego — pomaga sprawdzić ustawienia
-      const ok = new Set(eligible().map((p) => p.id));
-      const party = new Set(game.partyMembers());
-      const rows = game.others().map((p) => el('tr', null, el('td', null, p.nick, el('span', { class: 'mp-dim' }, ` (${p.lvl}${p.prof})`)),
-        el('td', { class: 'mp-dim' }, [isFriendP(p) && 'znajomy', p.isClan && 'klan', p.isAlly && 'sojusz'].filter(Boolean).join(', ') || '—', el('span', { class: 'mp-mono' }, ` [rel ${p.relation || '?'}]`)),
-        el('td', null, party.has(p.id) ? el('span', { class: 'mp-dim' }, 'w grupie') : ok.has(p.id) ? el('span', { class: 'mp-okc' }, 'zaprosi') : el('span', { class: 'mp-dim' }, 'pominie'))));
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Gracze na mapie'), rows.length ? el('table', { class: 'mp-table' }, el('tbody', null, rows)) : el('div', { class: 'mp-dim' }, 'Brak graczy.')));
+      // podgląd: kogo zaprosi — odświeża się od razu po zmianie ustawień
+      const card = el('div', { class: 'mp-card' });
+      box.appendChild(card);
+      drawList = () => {
+        if (!card.isConnected) { drawList = () => {}; return; }
+        const ok = new Set(eligible().map((p) => p.id));
+        const party = new Set(game.partyMembers());
+        const rows = game.others().map((p) => el('tr', null, el('td', null, p.nick, el('span', { class: 'mp-dim' }, ` (${p.lvl}${p.prof})`)),
+          el('td', { class: 'mp-dim' }, [isFriendP(p) && 'znajomy', p.isClan && 'klan', p.isAlly && 'sojusz'].filter(Boolean).join(', ') || '—'),
+          el('td', null, party.has(p.id) ? el('span', { class: 'mp-dim' }, 'w grupie') : ok.has(p.id) ? el('span', { class: 'mp-okc' }, 'zaprosi') : el('span', { class: 'mp-dim' }, 'pominie'))));
+        card.innerHTML = '';
+        card.append(el('h3', null, 'Gracze na mapie'), rows.length ? el('table', { class: 'mp-table' }, el('tbody', null, rows)) : el('div', { class: 'mp-dim' }, 'Brak graczy.'));
+      };
+      drawList();
     },
+    onChange() { drawList(); },
     init(c) {
       cfg = c;
       if ('auto' in c) { delete c.auto; config.save(); }   // usunięty automat z wcześniejszych wersji

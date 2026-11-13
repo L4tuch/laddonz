@@ -407,7 +407,7 @@
 
   defineAddon({
     id: 'napad', name: 'Slayer', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
-    desc: 'Pomaga dopaść przeciwnika. Klawiszem namierzasz najbliższego gracza, a dodatek zaatakuje go, gdy tylko znajdzie się w zasięgu — drugie naciśnięcie anuluje atak. Osobno możesz włączyć atak na każdego w pobliżu w wybranym przedziale poziomów (małe okienko „od – do”). Działa tylko przy włączonym dodatku. Kogo oszczędzić, ustawiasz w Bratanie.',
+    desc: 'Pomaga dopaść wybranego przeciwnika. Namierzasz go klawiszem albo opcją „Dobij” w menu gracza, a Slayer zaatakuje go, gdy tylko znajdzie się w zasięgu. Czerwona strzałka przy postaci pokazuje, w którą stronę iść. Osobno możesz włączyć atak na każdego gracza w pobliżu z wybranego przedziału poziomów. Gracze chronieni przez Bratana są zawsze pomijani.',
     defaults: { enabled: false, keyAttack: '', keyAll: '', allMode: false, lvlMin: 0, lvlMax: 500, target: null, remember: true },
     notes: () => [{ type: 'warn', text: '„Atakuj każdego w pobliżu” atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
     settings: [
