@@ -644,11 +644,11 @@ MP.itemDeco = itemDeco;
     items.forEach((i) => { if (!i.legbon) return; const k = MP.legKey(i.legbon); sum[k] = sum[k] || { n: 0, code: i.legbon, raw: i.raw }; sum[k].n++; });
     const leg = items.filter((i) => i.rarity === 'legendary').length, her = items.filter((i) => i.rarity === 'heroic').length;
     const known = items.every((i) => i.name);
+    void her; void leg;
     return el('div', { class: 'mp-eqsum' },
-      el('div', null, 'Legendy: ', el('b', null, String(leg)), ' · Heroiki: ', el('b', null, String(her))),
       Object.keys(sum).length
         ? el('div', { class: 'mp-eqbons' }, Object.values(sum).map((x) => el('span', { class: 'mp-chip', title: MP.legName(x.code) }, `${MP.legAbbr(x.code, x.raw)} ×${x.n}`)))
-        : el('div', { class: 'mp-dim' }, known ? 'Brak bonusów legendarnych' : 'Bonusy: brak danych z gry'));
+        : el('div', { class: 'mp-dim' }, known ? 'Brak legend' : 'Bonusy: brak danych z gry'));
   }
 
   let eqBox = null, sumBox = null;
@@ -708,6 +708,7 @@ MP.itemDeco = itemDeco;
         const it = game.normItem(r0); it.id = iid; return it;
       });
       if (have) have.remove();
+      if (!els.length) return;
       const box = el('div', { class: 'mp-tipsum' }, summaryEl(items));
       box.dataset.sig = sig;
       t.appendChild(box);
@@ -774,7 +775,8 @@ MP.itemDeco = itemDeco;
         }
       }
       // dymek gry sam pokazuje EQ gracza → nie zasłaniamy go, tylko dopisujemy nasze informacje (bonusy na przedmiotach i podsumowanie)
-      if (p && tipNode && tipNode.querySelector('[class*="item-id-"]')) {
+      if (p && tipNode) {
+        // na mapie: zostaje dymek gry (z jego EQ) — dopisujemy tylko bonusy; bez własnego okienka i bez pytania serwera
         if (src === 'map') { src = null; hide(); }
         augmentTip(tipNode);
         return;
@@ -901,7 +903,7 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
     desc: 'Po najechaniu kursorem na gracza pokazuje jego postać, pełny ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych. Nie musisz otwierać żadnych okien.',
-    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, compact: false, cacheSec: 300, tipSelector: '.tip-wrapper.normal-tip' },
+    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, compact: false, cacheSec: 300, tipSelector: '.tip-wrapper' },
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
@@ -916,6 +918,7 @@ MP.itemDeco = itemDeco;
       if (!c._v12) { c._v12 = true; c.needShift = false; c.tipSelector = '.tip-wrapper.normal-tip'; }
       if (!c._v16) { c._v16 = true; c.cacheSec = 300; }
       if (!c._v102d) { c._v102d = true; c.compact = false; }   // jak okno „Ekwipunek Postaci” z gry: postać + EQ
+      if (!c._v102e) { c._v102e = true; c.tipSelector = '.tip-wrapper'; }   // każdy dymek gracza w grze (także nowy z EQ)
       config.save();
       hookItemFlow();
       watchHover();
