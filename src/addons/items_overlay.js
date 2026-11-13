@@ -858,7 +858,13 @@ MP.itemDeco = itemDeco;
         augmentTip(tipNode, p);
         return;
       }
-      // dymek BEZ EQ (np. obcy / wróg) — pokazujemy nasz podgląd jak dawniej
+      // dymek BEZ EQ — gra/dodatek często dokłada EQ do dymka po chwili. Czekamy krótko, zanim pokażemy nasz podgląd,
+      // żeby nie było przeskoku „nasz podgląd → dymek z EQ”.
+      if (p && tipNode && src !== 'map') {
+        const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
+        if (now() - first < 700) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 720 - (now() - first)); return; }
+      }
+      // dymek bez EQ (np. obcy / wróg) — pokazujemy nasz podgląd jak dawniej
       // gra potrafi na ułamek sekundy przerysować/odświeżyć swój dymek — chowamy dopiero, gdy dymka nie ma przez 250 ms
       if (p) { lastMapSeen = now(); clearTimeout(graceT); want(p.id, 'map', tipNode); }
       else if (src === 'map') {
@@ -870,6 +876,7 @@ MP.itemDeco = itemDeco;
     /** Okienko gracza z innego dodatku przy kursorze: element z tekstem „Nick (poziom…” gracza z mapy. */
     let foreign = null, lastForeignScan = 0;
     const tipMemo = new WeakMap();
+    const tipFirst = new WeakMap();   // kiedy pierwszy raz zobaczyliśmy dany dymek
     // nowe elementy na stronie (do szukania okienek innych dodatków) — zamiast przeszukiwać cały DOM
     const added = [];
     new MutationObserver((muts) => {

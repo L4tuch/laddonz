@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.6', d: '14.11.2026', items: [
+    'Pokaż EQ: bez przeskoku przy najechaniu na gracza (najpierw stary podgląd, a po chwili właściwy).',
+  ] },
   { v: '1.0.5', d: '14.11.2026', items: [
     'Pokaż EQ: podgląd ze skrótami bonusów działa też dla obcych graczy i wrogów.',
   ] },
