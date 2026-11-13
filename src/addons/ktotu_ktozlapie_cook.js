@@ -218,8 +218,14 @@
   }
   /** „Wymagana profesja: Wojownik, Paladyn" z dymka gry nad przedmiotem. */
   const tipBusy = new Set();
+  const tipTries = new Map();
   function readFromTip(node, id) {
     if (!id || tipBusy.has(id)) return;
+    // najwyżej 2 próby odczytu dymka na przedmiot — potem liczymy bez wymagań (wcześniej „…” wisiało,
+    // a ciągłe wywoływanie dymka zjadało klatki, zwłaszcza przy efektach Legendarnego Łupu)
+    const n = (tipTries.get(id) || 0) + 1;
+    tipTries.set(id, n);
+    if (n > 2) { reqCache.set(id, null); return; }
     tipBusy.add(id);
     const r = node.getBoundingClientRect();
     const opt = { bubbles: true, cancelable: true, view: W, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
@@ -234,7 +240,7 @@
       if (tip) reqCache.set(id, v && v.length ? [...new Set(v)] : null);
       ['mouseout', 'mouseleave'].forEach((t) => node.dispatchEvent(new MouseEvent(t, opt)));
       tipBusy.delete(id);
-      if (tip) decorate();
+      decorate();
     }, 120);
   }
 
@@ -286,7 +292,13 @@
       cfg = c;
       if ('onlyOnMap' in c || 'lootSelector' in c) { delete c.onlyOnMap; delete c.lootSelector; config.save(); }
       const run = debounce(() => { if (cfg.enabled) decorate(); }, 120);
-      new MutationObserver(run).observe(document.body, { childList: true, subtree: true });
+      // tylko zmiany poza dymkami gry i poza naszymi znaczkami — inaczej odczyt dymka wywoływał kolejne przeliczenia w kółko
+      const skip = (n) => n && n.nodeType === 1 && (n.closest('.tip-wrapper, .mp-ibadge, .mp-lg-cv, .mp-lg-cap, #mp-eqtip') || n.classList.contains('mp-ibadge'));
+      new MutationObserver((muts) => {
+        if (!cfg.enabled || !document.querySelector(LOOT_SEL)) return;
+        if (muts.every((m) => skip(m.target) || [...m.addedNodes, ...m.removedNodes].every((x) => x.nodeType !== 1 || skip(x)))) return;
+        run();
+      }).observe(document.body, { childList: true, subtree: true });
       bus.on('battle:start', () => { last = { ids: [], prof: {}, t: 0 }; });
       setInterval(() => { if (cfg.enabled && game.ready() && E().battle && (game.inBattle() || (typeof E().battle.isBattleShow === 'function' && E().battle.isBattleShow()))) snapshot(); }, 500);
       bus.on('battle:end', () => { if (cfg.enabled) snapshot(); });
