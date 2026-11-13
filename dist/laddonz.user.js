@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.17
+// @version      1.0.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2180,83 +2180,27 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
-  { v: '1.0.17', d: '13.11.2026', items: [
-    'Slayer: kliknięcie strzałki prowadzi postać w stronę celu — tak samo jak strzałka zadania (gra sama wyznacza drogę do miejsca, w którym cel stoi w chwili kliknięcia).',
-  ] },
-  { v: '1.0.16', d: '13.11.2026', items: [
-    'Slayer: strzałka gry wskazuje teraz namierzonego przeciwnika (nie zadanie), jest czerwona tylko ona — strzałka zadania zostaje niebieska.',
-    'Slayer: strzałka jest bliżej postaci niż strzałka zadania (nie nachodzą na siebie), a po najechaniu pokazuje „Slayer: Nick celu”.',
-  ] },
-  { v: '1.0.15', d: '13.11.2026', items: [
-    'Slayer: strzałka do celu to teraz ta sama strzałka, której gra używa przy śledzeniu zadań (identyczny rozmiar, wygląd i płynność) — tylko czerwona. Gdyby gra jej nie udostępniła, zostaje strzałka Slayera.',
-    'Szybka Rączka: „Zmień po walce” pokazuje tylko kupione zestawy (lista prosto z gry) — niekupionego nie da się już wybrać.',
-  ] },
-  { v: '1.0.14', d: '13.11.2026', items: [
-    'Slayer: strzałka do celu działa jak strzałka zadań z gry — płynnie krąży wokół postaci i płynnie się obraca (dowolny kąt, nie skokami), a światło zostaje z lewej-góry jak w grze.',
-  ] },
-  { v: '1.0.13', d: '13.11.2026', items: [
-    'Dobijarka nazywa się teraz Slayer — w panelu, skrótach i komunikatach („Slayer: dobijam Nick”, „Slayer: przerwano dobijanie Nick”). W menu gracza zostają „Dobij” i „Przerwij dobijanie”. Ustawienia zostają bez zmian.',
-    'Slayer: okienko zakresu nazywa się „Slayer - Zakres poziomów”.',
-  ] },
-  { v: '1.0.12', d: '13.11.2026', items: [
-    'Dobijarka: strzałka do celu wierniej odwzorowuje strzałki przejść z gry (kremowa obwódka, bez czarnego konturu, rysowana na skos).',
-    'Ulepszarka — domyślne komunikaty: włączone „Komunikat o dziennym limicie” i „Lista przedmiotów przed ulepszeniem”; wyłączone „Ile przedmiotów zużyto” (nowa opcja) i „Ostrzegaj przed związanymi unikatami”.',
-  ] },
-  { v: '1.0.11', d: '13.11.2026', items: [
-    'Dobijarka: nowa strzałka do celu w stylu strzałek przejść z gry (pikselowa, czerwona, 8 kierunków).',
-    'Ulepszarka: nigdy nie używa na składnik przedmiotów, które same mają już ulepszenie.',
-    'Ulepszarka: składniki rzemieślnicze / bezużyteczne nie są liczone ani używane („Pasujące w torbie” pokazuje tylko to, co naprawdę pójdzie).',
-    'Ulepszarka: przed zużyciem związanych heroików zawsze ostrzeżenie; dla związanych unikatów — opcja w ustawieniach.',
-  ] },
-  { v: '1.0.10', d: '13.11.2026', items: [
-    'Dobijarka: „Zapamiętany cel” w panelu odświeża się od razu (namierzenie, przerwanie, cel na mapie / poza mapą).',
-    'Dobijarka: wróciły komunikaty „Dobijarka: dobijam Nick” i „Dobijarka: przerwano dobijanie Nick”.',
-    'Ulepszarka: ukrywanie komunikatów gry w trakcie ulepszania nie może już przypadkiem wyciszyć komunikatów innych dodatków.',
-  ] },
-  { v: '1.0.9', d: '13.11.2026', items: [
-    'Dobijarka: czerwona strzałka przy postaci wskazuje kierunek do namierzonego celu (znika, gdy cel jest w zasięgu ataku).',
-    'Dobijarka: po odmowie walki („nie zgadza się”) kolejna próba już po 2,5 s, a gracz, który właśnie pojawił się na mapie (np. po teleporcie), jest atakowany od razu, bez czekania.',
-    'Ulepszarka: procent do +5 liczony dokładniej — zapamiętuje prawdziwe punkty potrzebne na każdy poziom danego przedmiotu, przelicznik tylko dla poziomów jeszcze nieznanych.',
-    'Ulepszarka: komunikat „Przedmiot … został ulepszony na najwyższy poziom (+5)!” (bonus wybierasz sam w Rzemiośle) — także przy ulepszaniu ręcznym.',
-  ] },
-  { v: '1.0.8', d: '13.11.2026', items: [
-    'Dobijarka: nie dubluje komunikatów gry (np. „Przeciwnik nie zgadza się na walkę!” pokazuje tylko gra).',
-    'Dobijarka: „Atakuj każdego w pobliżu” atakuje pewniej — także gdy namierzony cel jest daleko, częściej ponawia atak i nie pomija graczy, których poziomu gra nie podała.',
-    'Ulepszarka: składniki „bezużyteczne” są wykrywane i pomijane (zapamiętane na przyszłość), bez komunikatów na ekranie.',
-    'Ulepszarka: procent całego ulepszenia do +5 widać zawsze przy przedmiocie, a w trakcie ulepszania także pod znaczkiem młota i kowadła.',
-  ] },
-  { v: '1.0.7', d: '13.11.2026', items: [
-    'Ulepszarka: naprawione „nie udało się otworzyć Rzemiosło → Ulepszanie” (błąd z 1.0.6 przy ukrywaniu okna w tle).',
-    'Dobijarka: działa tylko przy włączonym dodatku. Klawisz namierza najbliższego gracza, a drugie naciśnięcie anuluje atak (nie zmienia celu) — żeby wybrać bliższy cel, anuluj i naciśnij ponownie.',
-    'Dobijarka: „Atakuj każdego w pobliżu” to osobny przełącznik (też pod klawisz). Gdy włączony, na ekranie jest małe okienko z zakresem poziomów od – do (można je przesuwać i zamknąć ×).',
-  ] },
-  { v: '1.0.6', d: '13.11.2026', items: [
-    'Ulepszarka: okno Rzemiosła działa w tle — zamiast niego na środku ekranu młot z kowadłem i obwód, który zapełnia się wraz z ulepszaniem; po 100% znika.',
-    'Ulepszarka: komunikat o dziennym limicie jest opcjonalny (domyślnie wyłączony) i pokazuje się tylko raz po ulepszeniu, a nie kilka razy.',
-  ] },
-  { v: '1.0.5', d: '13.11.2026', items: [
-    'Panel ma jeden kolor — zieleń gry (usunięty wybór koloru akcentu).',
-    'Ulepszarka: po każdym ulepszeniu komunikat na ekranie — ile ulepszeń dziś już zużyto (np. 125 / 2000) i postęp przedmiotu do +5 w %. Działa też przy ulepszaniu ręcznym w oknie Rzemiosła. Można wyłączyć w ustawieniach Ulepszarki.',
-    'Ulepszarka: przy każdym ulepszanym przedmiocie postęp całego ulepszenia do +5 w % i pasek.',
-  ] },
-  { v: '1.0.4', d: '12.11.2026', items: [
-    'Skróty dodatków: kafelki zawsze czarne — ikonka włączonego dodatku świeci na zielono, wyłączonego jest szara.',
-  ] },
-  { v: '1.0.3', d: '11.11.2026', items: [
-    'Ulepszarka: dzienny licznik ulepszeń wczytuje się sam zaraz po wejściu do gry (Rzemiosło otwiera się na moment w tle, niewidocznie) — bez ręcznego otwierania okna.',
-  ] },
-  { v: '1.0.2', d: '11.11.2026', items: [
-    'Ulepszarka: dzienny limit odczytywany także z odpowiedzi okna Rzemiosła, gdy ulepszasz ręcznie; w raporcie widać, skąd przyszedł ostatni odczyt.',
-  ] },
-  { v: '1.0.1', d: '11.11.2026', items: [
-    'Ulepszarka: licznik dzisiejszych ulepszeń aktualizuje się na bieżąco — także gdy ulepszasz ręcznie w oknie Rzemiosła (odczyt także z odpowiedzi okna Rzemiosła).',
-    'Skróty: gdy nie wybrano żadnego dodatku do skrótów, pasek pokazuje wszystkie włączone dodatki (wcześniej po włączeniu skrótów pasek był pusty).',
+  { v: '1.0.1', d: '13.11.2026', items: [
+    'Dobijarka zmieniła nazwę na Slayer.',
+    'Slayer: klawisz namierza najbliższego gracza, drugie kliknięcie odwołuje atak.',
+    'Slayer: atak na wszystkich w pobliżu jest teraz osobną opcją, z małym okienkiem do ustawienia poziomów od–do.',
+    'Slayer: czerwona strzałka do celu, taka jak przy zadaniach. Po kliknięciu idziesz w stronę celu.',
+    'Slayer: nie dubluje już komunikatów z gry i szybciej ponawia atak po odmowie albo teleporcie.',
+    'Ulepszarka: Rzemiosło otwiera się w tle, a w trakcie ulepszania widać na środku młot z kowadłem i pasek postępu.',
+    'Ulepszarka: przy przedmiocie widać, ile procent zostało do +5, a po dojściu do +5 wyskakuje komunikat.',
+    'Ulepszarka: dzienny licznik ulepszeń wczytuje się sam po wejściu do gry.',
+    'Ulepszarka: pomija bezużyteczne składniki i nie rusza przedmiotów, które same są ulepszone.',
+    'Ulepszarka: ostrzega, zanim zużyje związane heroiki (unikaty opcjonalnie).',
+    'Ulepszarka: w ustawieniach sam wybierasz, które komunikaty chcesz widzieć.',
+    'Szybka Rączka: przy zmianie zestawu po walce pokazuje tylko kupione zestawy.',
+    'Skróty: czarne kafelki, włączony dodatek świeci na zielono. Bez przypiętych dodatków pokazują wszystkie włączone.',
+    'Panel ma już tylko jeden, zielony kolor.',
   ] },
   { v: '1.0.0', d: '11.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
-    'Kafelek L4 w rzędzie przycisków gry i pasek skrótów dodatków z wyborem ułożenia.',
-    'Dodatki: Slayer (dawniej Dobijarka), Hey WakeUP!, Bratan, Wrogowie na mapie, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup oraz Motywy.',
+    'Kafelek L4 przy przyciskach gry i pasek skrótów do dodatków.',
+    'Dodatki: Dobijarka, Hey WakeUP!, Bratan, Wrogowie na mapie, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup i Motywy.',
   ] },
 ];
 
@@ -8484,5 +8428,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.17";
+MP.version = "1.0.1";
 })();
