@@ -852,12 +852,13 @@ MP.itemDeco = itemDeco;
         }
       }
       // dymek gry sam pokazuje EQ gracza → nie zasłaniamy go, tylko dopisujemy nasze informacje (bonusy na przedmiotach i podsumowanie)
-      if (p && tipNode) {
-        // na mapie: zostaje dymek gry (z jego EQ) — dopisujemy tylko bonusy; bez własnego okienka i bez pytania serwera
+      if (p && tipNode && tipNode.querySelector('.dad-eq-grid, [class*="item-id-"]')) {
+        // dymek sam pokazuje EQ gracza — zostaje, dopisujemy tylko bonusy (bez własnego okienka)
         if (src === 'map') { src = null; hide(); }
         augmentTip(tipNode, p);
         return;
       }
+      // dymek BEZ EQ (np. obcy / wróg) — pokazujemy nasz podgląd jak dawniej
       // gra potrafi na ułamek sekundy przerysować/odświeżyć swój dymek — chowamy dopiero, gdy dymka nie ma przez 250 ms
       if (p) { lastMapSeen = now(); clearTimeout(graceT); want(p.id, 'map', tipNode); }
       else if (src === 'map') {

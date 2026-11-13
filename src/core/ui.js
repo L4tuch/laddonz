@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.5', d: '14.11.2026', items: [
+    'Pokaż EQ: podgląd ze skrótami bonusów działa też dla obcych graczy i wrogów.',
+  ] },
   { v: '1.0.4', d: '14.11.2026', items: [
     'Pokaż EQ: skróty bonusów na legendach i podsumowanie legend działają też w nowym dymku gracza z EQ.',
   ] },
