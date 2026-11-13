@@ -567,6 +567,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .mp-ulov-ring .bg{stroke:rgba(255,255,255,.12)}
 .mp-ulov-ring .fg{stroke:#4fd46a;stroke-linecap:round;transition:stroke-dashoffset .45s ease;filter:drop-shadow(0 0 4px rgba(79,212,106,.8))}
 .mp-ulov-ic{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);line-height:0}
+.mp-ulov-tx{position:absolute;top:118px;left:50%;transform:translateX(-50%);white-space:nowrap;font:700 12px/1.2 Arial,sans-serif;color:#e8f5ea;text-shadow:0 1px 2px #000,0 0 4px #000}
 .mp-ulov-pc{position:absolute;left:0;right:0;bottom:22px;text-align:center;font:700 11px/1 Arial,sans-serif;color:#cfe9d4;text-shadow:0 1px 2px #000}
 `;
 

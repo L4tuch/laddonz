@@ -637,6 +637,8 @@
     const done = base * LVL_MULT.slice(0, lvl).reduce((a, b) => a + b, 0) + Math.min(p.cur, p.max);
     return Math.max(0, Math.min(100, Math.round((done / total) * 1000) / 10));
   }
+  /** Gdy nie znamy punktów — sam poziom (+2 = ukończone poziomy +1 i +2). */
+  const pctLvlOnly = (lvl) => { lvl = Number(lvl) || 0; if (lvl >= 5) return 100; const all = LVL_MULT.reduce((a, b) => a + b, 0); return Math.round((LVL_MULT.slice(0, lvl).reduce((a, b) => a + b, 0) / all) * 1000) / 10; };
   /** Postęp ulepszanego przedmiotu z każdej odpowiedzi gry (także ręczne ulepszanie w oknie Rzemiosła). */
   let lastItem = null;
   function onProgress(d) {
@@ -648,7 +650,14 @@
       const it = game.itemById(e.itemId);
       lastItem = { name: (sl && sl.name) || (it && it.name) || 'przedmiot', prog };
       if (sl) { sl.prog = prog; config.save(); }
+      ovItem();
     } catch {}
+  }
+  function ovItem() {
+    const t = ovEl && ovEl.querySelector('.mp-ulov-tx');
+    if (!t || !lastItem || !lastItem.prog) return;
+    const p = pctTo5(lastItem.prog);
+    if (p != null) t.textContent = `${lastItem.name} · +${lastItem.prog.lvl} · ${String(p).replace('.', ',')}% do +5`;
   }
   bus.on('data', onProgress);
   bus.on('enhresp', onProgress);
@@ -673,6 +682,7 @@
       const pr = e && (e.progressing || e.progress_preview);
       const sl = slots().find((s) => Number(s.id) === o.target.id);
       if (pr && sl) { sl.prog = { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 }; config.save(); }
+      if (pr && Number(pr.max) > 0) { lastItem = { name: (sl && sl.name) || o.target.name || 'przedmiot', prog: { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 } }; ovItem(); }
       onUsages(data, 'Ulepszarka');
     } catch {}
     let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
@@ -685,15 +695,28 @@
    * Komunikaty gry o odrzuconych składnikach („Poziom przedmiotu jest zbyt niski!") — w trakcie pracy Ulepszarki
    * chowamy je; Ulepszarka sama pomija takie składniki.
    */
-  const NOISE = /poziom przedmiotu jest zbyt niski|nie mo[żz]e by[ćc] u[żz]yty|nie nadaje si[ęe]/i;
-  let hushUntil = 0;
+  const NOISE = /poziom przedmiotu jest zbyt niski|nie mo[żz]e by[ćc] u[żz]yty|nie nadaje si[ęe]|bezu[żz]yteczn/i;
+  const USELESS = /bezu[żz]yteczn/i;
+  let hushUntil = 0, uselessSeen = false;
   new MutationObserver((muts) => {
     if (now() > hushUntil) return;
     for (const m of muts) for (const n of m.addedNodes) {
       if (n.nodeType !== 1 || n.closest('.mp-glass')) continue;
-      if (NOISE.test(n.textContent || '') && (n.textContent || '').length < 120) n.style.setProperty('display', 'none', 'important');
+      const tx = n.textContent || '';
+      if (NOISE.test(tx) && tx.length < 120) { n.style.setProperty('display', 'none', 'important'); if (USELESS.test(tx)) uselessSeen = true; }
     }
   }).observe(document.body, { childList: true, subtree: true });
+  /** W trakcie pracy Ulepszarki komunikaty gry o odrzuconych/bezużytecznych składnikach nie trafiają na ekran. */
+  function hushMessages() {
+    const orig = W.message;
+    if (typeof orig !== 'function') return () => {};
+    W.message = function (m, ...a) {
+      const t = String(m == null ? '' : m).replace(/<[^>]+>/g, '');
+      if (NOISE.test(t)) { if (USELESS.test(t)) uselessSeen = true; return; }
+      return orig.call(this, m, ...a);
+    };
+    return () => { W.message = orig; };
+  }
 
   /*
    * W trakcie pracy Ulepszarki okno Rzemiosła działa w tle (niewidoczne), a na środku ekranu jest młot z kowadłem
@@ -709,10 +732,11 @@
     clearTimeout(ovHide);
     if (!ovEl || !ovEl.isConnected) {
       ovEl = el('div', { class: 'mp-ulov' });
-      ovEl.innerHTML = `<svg class="mp-ulov-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="${R_OV}" class="bg"/><circle cx="50" cy="50" r="${R_OV}" class="fg" stroke-dasharray="${C_OV}" stroke-dashoffset="${C_OV}"/></svg><div class="mp-ulov-ic">${ANVIL}</div><div class="mp-ulov-pc">0%</div>`;
+      ovEl.innerHTML = `<svg class="mp-ulov-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="${R_OV}" class="bg"/><circle cx="50" cy="50" r="${R_OV}" class="fg" stroke-dasharray="${C_OV}" stroke-dashoffset="${C_OV}"/></svg><div class="mp-ulov-ic">${ANVIL}</div><div class="mp-ulov-pc">0%</div><div class="mp-ulov-tx"></div>`;
       document.body.appendChild(ovEl);
     }
     ovSet(0);
+    ovItem();
     requestAnimationFrame(() => ovEl && ovEl.classList.add('on'));
   }
   function ovSet(f) {
@@ -741,6 +765,7 @@
     hushUntil = now() + 120000;
     document.documentElement.classList.add('mp-ul-silent');   // okno rzemiosła w tle
     let ovOn = false, full = false;
+    const unhush = hushMessages();
     try {
       // serwer przyjmuje ulepszanie tylko przy otwartym Rzemiośle (bez tego wyrzuca) — otwieramy jak gra, a jak się nie da, nic nie wysyłamy
       if (!(await ensureCraft())) { toast('Ulepszarka: nie udało się otworzyć Rzemiosło → Ulepszanie', 'warn'); return 'nocraft'; }
@@ -762,6 +787,7 @@
     } finally {
       progressCb = null;
       if (ovOn) ovEnd(full);
+      setTimeout(unhush, 1500);
       running = false;
       await sleep(400);
       setTimeout(() => { hushUntil = 0; }, 1500);
@@ -847,6 +873,7 @@
           if (left === 0) { limitHit = true; break outer; }
           let part = rest.slice(0, Math.min(16, left == null ? 16 : left));
           // dokładnie tak jak gra: najpierw podgląd, potem ulepszenie; na pytanie gry „Tak" klika Ulepszarka
+          uselessSeen = false;
           const rp = await preview(o.target, part);
           if (isMaxedResp(rp.data)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }   // przedmiot już na maksimum — sam znika z listy
           if (!rp.ok || badResp(rp.data)) { failed = true; break outer; }
@@ -856,6 +883,25 @@
             const acc = new Set(pv.ingredients.map(Number));
             const rej = part.filter((i) => !acc.has(i.id)).map((i) => i.id);
             if (rej.length) { markRejected(o.target.id, rej); rest = rest.filter((i) => !rej.includes(i.id)); part = part.filter((i) => acc.has(i.id)); }
+          }
+          // gra zgłosiła „Ten składnik jest bezużyteczny!" — sprawdzamy składniki pojedynczo (podgląd nic nie zużywa) i pomijamy te, które nic nie dają
+          await sleep(150);
+          if (uselessSeen && part.length) {
+            const bad = [];
+            for (const i of part) {
+              uselessSeen = false;
+              const one = pvOf(await preview(o.target, [i]));
+              await sleep(120);
+              const acc = one && Array.isArray(one.ingredients) ? one.ingredients.map(Number).includes(i.id) : true;
+              if (uselessSeen || !acc || (one && one.gained != null && Number(one.gained) <= 0)) bad.push(i.id);
+            }
+            uselessSeen = false;
+            if (bad.length) {
+              markRejected(o.target.id, bad);
+              rest = rest.filter((i) => !bad.includes(i.id)); part = part.filter((i) => !bad.includes(i.id));
+              steps.push({ a: 'useless', n: bad.length }); saveSteps();
+              if (part.length) pv = pvOf(await preview(o.target, part));
+            }
           }
           if (!part.length) continue;
           // nie przepalamy: jeśli te składniki dają więcej, niż brakuje do następnego poziomu — bierzemy najmniej,
@@ -1144,8 +1190,15 @@
       })),
       !s.types.length ? el('div', { class: 'mp-warnc', style: { marginTop: '6px' } }, 'Wybierz przynajmniej jeden typ — inaczej ten przedmiot nie będzie ulepszany.') : null,
       el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, `Pasujące w torbie teraz: ${cnt}` + (s.prog && s.prog.max ? ` · poziom +${enhLevel(it) != null ? enhLevel(it) : s.prog.lvl} · postęp poziomu ${s.prog.cur} / ${s.prog.max}` : (enhLevel(it) != null ? ` · poziom +${enhLevel(it)}` : ''))),
-      s.prog && s.prog.max ? el('div', { class: 'mp-dim', style: { marginTop: '3px', color: '#cfe8b8' } }, `Całe ulepszenie do +5: ${String(pctTo5(s.prog)).replace('.', ',')}%`) : null,
-      s.prog && s.prog.max ? el('div', { class: 'mp-upbar', title: 'Postęp całego ulepszenia do +5' }, el('i', { style: { width: pctTo5(s.prog) + '%' } })) : null);
+      (() => {
+        const lv = enhLevel(it);
+        const has = s.prog && s.prog.max && (lv == null || lv === s.prog.lvl);
+        const pc = has ? pctTo5(s.prog) : (lv != null ? pctLvlOnly(lv) : null);
+        if (pc == null) return el('div', { class: 'mp-dim', style: { marginTop: '3px' } }, 'Całe ulepszenie do +5: pojawi się po pierwszym ulepszeniu');
+        return el('div', null,
+          el('div', { class: 'mp-dim', style: { marginTop: '3px', color: '#cfe8b8', fontWeight: 'bold' } }, `Całe ulepszenie do +5: ${String(pc).replace('.', ',')}%`),
+          el('div', { class: 'mp-upbar', title: 'Postęp całego ulepszenia do +5' }, el('i', { style: { width: pc + '%' } })));
+      })());
   }
 
   defineAddon({

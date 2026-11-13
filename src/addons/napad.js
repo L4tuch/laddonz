@@ -32,7 +32,7 @@
   const task = (id) => net.build('attackPlayer', { id }).task;
   /** Czy atak na tego gracza przeszedłby przez bezpieczniki (Bratan) — sprawdzamy po cichu. */
   const allowed = (p) => { const t = task(p.id); return !!t && !net.checkGuards(t); };
-  const inLvl = (p) => p.lvl >= (Number(cfg.lvlMin) || 0) && p.lvl <= (Number(cfg.lvlMax) || 999);
+  const inLvl = (p) => { const l = Number(p.lvl); if (!Number.isFinite(l) || l <= 0) return true; const lo = Number(cfg.lvlMin) || 0, hi = Number(cfg.lvlMax) || 999; return l >= Math.min(lo, hi) && l <= Math.max(lo, hi); };
 
   async function attack(p) {
     const t = now();
@@ -45,21 +45,11 @@
       src: 'Dobijarka',
       onResponse: (data) => {
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
+        // komunikat pokazuje już sama gra — Dobijarka nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
-        const said = respText(data);
-        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) {
-          S.refused[p.id] = now() + 30000;
-          say('ref' + p.id, `Dobijarka: ${p.nick} — ${said || 'nie zgadza się na walkę'}`, 30000);
-          return;   // cel zostaje zapamiętany — spróbujemy znowu za 30 s
-        }
+        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + 30000; return; }
         const sec = parseProtection(data);
-        if (sec) {
-          S.protectedUntil[p.id] = now() + sec * 1000;
-          say('prot' + p.id, `Dobijarka: ${p.nick} ma ochronę jeszcze ${sec} s — zaatakuję, gdy minie`, sec * 1000);
-          return;
-        }
-        // każdy inny komunikat gry przy ataku (np. „Nie możesz atakować na tej mapie") — pokazujemy
-        if (said && !game.inBattle()) say('msg' + p.id + said, `Dobijarka: ${p.nick} — ${said}`, 20000);
+        if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
       },
     });
     return r.ok;
@@ -155,16 +145,15 @@
       if (!p && !cfg.remember) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
       if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Dobijarka: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
-      if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now())) { attack(p); return; }
-      if (p) return;              // cel jest na mapie, ale daleko — czekamy
-      // celu nie ma na mapie — w międzyczasie (gdy włączona) atakuje innych w zasięgu
+      if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
+      // cel daleko albo poza mapą — w międzyczasie (gdy włączone „każdy w pobliżu") atakuje innych w zasięgu
     }
     // 2) „Atakuj każdego w pobliżu" włączone → każdy w zasięgu z zakresu poziomów
     if (!cfg.allMode) return;
     const t = now();
     for (const p of game.others()) if (dist(h, p) <= RANGE && inLvl(p) && !allowed(p)) say('br' + p.id, `Dobijarka: pomijam ${p.nick} — chroniony przez Bratana`, 120000, 'info');
     const c = game.others()
-      .filter((p) => dist(h, p) <= RANGE && inLvl(p) && allowed(p) && !(S.tried[p.id] > t - 2500) && !(S.refused[p.id] > t))
+      .filter((p) => dist(h, p) <= RANGE && inLvl(p) && allowed(p) && !(S.tried[p.id] > t - 1500) && !(S.refused[p.id] > t) && !(S.protectedUntil[p.id] > t))
       .sort((a, b) => dist(h, a) - dist(h, b));
     if (c.length) attack(c[0]);
   }

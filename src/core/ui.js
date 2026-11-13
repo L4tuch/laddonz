@@ -5,6 +5,12 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.8', d: '13.11.2026', items: [
+    'Dobijarka: nie dubluje komunikatów gry (np. „Przeciwnik nie zgadza się na walkę!” pokazuje tylko gra).',
+    'Dobijarka: „Atakuj każdego w pobliżu” atakuje pewniej — także gdy namierzony cel jest daleko, częściej ponawia atak i nie pomija graczy, których poziomu gra nie podała.',
+    'Ulepszarka: składniki „bezużyteczne” są wykrywane i pomijane (zapamiętane na przyszłość), bez komunikatów na ekranie.',
+    'Ulepszarka: procent całego ulepszenia do +5 widać zawsze przy przedmiocie, a w trakcie ulepszania także pod znaczkiem młota i kowadła.',
+  ] },
   { v: '1.0.7', d: '13.11.2026', items: [
     'Ulepszarka: naprawione „nie udało się otworzyć Rzemiosło → Ulepszanie” (błąd z 1.0.6 przy ukrywaniu okna w tle).',
     'Dobijarka: działa tylko przy włączonym dodatku. Klawisz namierza najbliższego gracza, a drugie naciśnięcie anuluje atak (nie zmienia celu) — żeby wybrać bliższy cel, anuluj i naciśnij ponownie.',

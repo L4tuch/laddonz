@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.7
+// @version      1.0.8
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -1643,6 +1643,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .mp-ulov-ring .bg{stroke:rgba(255,255,255,.12)}
 .mp-ulov-ring .fg{stroke:#4fd46a;stroke-linecap:round;transition:stroke-dashoffset .45s ease;filter:drop-shadow(0 0 4px rgba(79,212,106,.8))}
 .mp-ulov-ic{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);line-height:0}
+.mp-ulov-tx{position:absolute;top:118px;left:50%;transform:translateX(-50%);white-space:nowrap;font:700 12px/1.2 Arial,sans-serif;color:#e8f5ea;text-shadow:0 1px 2px #000,0 0 4px #000}
 .mp-ulov-pc{position:absolute;left:0;right:0;bottom:22px;text-align:center;font:700 11px/1 Arial,sans-serif;color:#cfe9d4;text-shadow:0 1px 2px #000}
 `;
 
@@ -2178,6 +2179,12 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.8', d: '13.11.2026', items: [
+    'Dobijarka: nie dubluje komunikatów gry (np. „Przeciwnik nie zgadza się na walkę!” pokazuje tylko gra).',
+    'Dobijarka: „Atakuj każdego w pobliżu” atakuje pewniej — także gdy namierzony cel jest daleko, częściej ponawia atak i nie pomija graczy, których poziomu gra nie podała.',
+    'Ulepszarka: składniki „bezużyteczne” są wykrywane i pomijane (zapamiętane na przyszłość), bez komunikatów na ekranie.',
+    'Ulepszarka: procent całego ulepszenia do +5 widać zawsze przy przedmiocie, a w trakcie ulepszania także pod znaczkiem młota i kowadła.',
+  ] },
   { v: '1.0.7', d: '13.11.2026', items: [
     'Ulepszarka: naprawione „nie udało się otworzyć Rzemiosło → Ulepszanie” (błąd z 1.0.6 przy ukrywaniu okna w tle).',
     'Dobijarka: działa tylko przy włączonym dodatku. Klawisz namierza najbliższego gracza, a drugie naciśnięcie anuluje atak (nie zmienia celu) — żeby wybrać bliższy cel, anuluj i naciśnij ponownie.',
@@ -3022,7 +3029,7 @@ function parseProtection(data) {
   const task = (id) => net.build('attackPlayer', { id }).task;
   /** Czy atak na tego gracza przeszedłby przez bezpieczniki (Bratan) — sprawdzamy po cichu. */
   const allowed = (p) => { const t = task(p.id); return !!t && !net.checkGuards(t); };
-  const inLvl = (p) => p.lvl >= (Number(cfg.lvlMin) || 0) && p.lvl <= (Number(cfg.lvlMax) || 999);
+  const inLvl = (p) => { const l = Number(p.lvl); if (!Number.isFinite(l) || l <= 0) return true; const lo = Number(cfg.lvlMin) || 0, hi = Number(cfg.lvlMax) || 999; return l >= Math.min(lo, hi) && l <= Math.max(lo, hi); };
 
   async function attack(p) {
     const t = now();
@@ -3035,21 +3042,11 @@ function parseProtection(data) {
       src: 'Dobijarka',
       onResponse: (data) => {
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
+        // komunikat pokazuje już sama gra — Dobijarka nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
-        const said = respText(data);
-        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) {
-          S.refused[p.id] = now() + 30000;
-          say('ref' + p.id, `Dobijarka: ${p.nick} — ${said || 'nie zgadza się na walkę'}`, 30000);
-          return;   // cel zostaje zapamiętany — spróbujemy znowu za 30 s
-        }
+        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + 30000; return; }
         const sec = parseProtection(data);
-        if (sec) {
-          S.protectedUntil[p.id] = now() + sec * 1000;
-          say('prot' + p.id, `Dobijarka: ${p.nick} ma ochronę jeszcze ${sec} s — zaatakuję, gdy minie`, sec * 1000);
-          return;
-        }
-        // każdy inny komunikat gry przy ataku (np. „Nie możesz atakować na tej mapie") — pokazujemy
-        if (said && !game.inBattle()) say('msg' + p.id + said, `Dobijarka: ${p.nick} — ${said}`, 20000);
+        if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
       },
     });
     return r.ok;
@@ -3145,16 +3142,15 @@ function parseProtection(data) {
       if (!p && !cfg.remember) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
       if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Dobijarka: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
-      if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now())) { attack(p); return; }
-      if (p) return;              // cel jest na mapie, ale daleko — czekamy
-      // celu nie ma na mapie — w międzyczasie (gdy włączona) atakuje innych w zasięgu
+      if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
+      // cel daleko albo poza mapą — w międzyczasie (gdy włączone „każdy w pobliżu") atakuje innych w zasięgu
     }
     // 2) „Atakuj każdego w pobliżu" włączone → każdy w zasięgu z zakresu poziomów
     if (!cfg.allMode) return;
     const t = now();
     for (const p of game.others()) if (dist(h, p) <= RANGE && inLvl(p) && !allowed(p)) say('br' + p.id, `Dobijarka: pomijam ${p.nick} — chroniony przez Bratana`, 120000, 'info');
     const c = game.others()
-      .filter((p) => dist(h, p) <= RANGE && inLvl(p) && allowed(p) && !(S.tried[p.id] > t - 2500) && !(S.refused[p.id] > t))
+      .filter((p) => dist(h, p) <= RANGE && inLvl(p) && allowed(p) && !(S.tried[p.id] > t - 1500) && !(S.refused[p.id] > t) && !(S.protectedUntil[p.id] > t))
       .sort((a, b) => dist(h, a) - dist(h, b));
     if (c.length) attack(c[0]);
   }
@@ -5255,6 +5251,8 @@ MP.itemDeco = itemDeco;
     const done = base * LVL_MULT.slice(0, lvl).reduce((a, b) => a + b, 0) + Math.min(p.cur, p.max);
     return Math.max(0, Math.min(100, Math.round((done / total) * 1000) / 10));
   }
+  /** Gdy nie znamy punktów — sam poziom (+2 = ukończone poziomy +1 i +2). */
+  const pctLvlOnly = (lvl) => { lvl = Number(lvl) || 0; if (lvl >= 5) return 100; const all = LVL_MULT.reduce((a, b) => a + b, 0); return Math.round((LVL_MULT.slice(0, lvl).reduce((a, b) => a + b, 0) / all) * 1000) / 10; };
   /** Postęp ulepszanego przedmiotu z każdej odpowiedzi gry (także ręczne ulepszanie w oknie Rzemiosła). */
   let lastItem = null;
   function onProgress(d) {
@@ -5266,7 +5264,14 @@ MP.itemDeco = itemDeco;
       const it = game.itemById(e.itemId);
       lastItem = { name: (sl && sl.name) || (it && it.name) || 'przedmiot', prog };
       if (sl) { sl.prog = prog; config.save(); }
+      ovItem();
     } catch {}
+  }
+  function ovItem() {
+    const t = ovEl && ovEl.querySelector('.mp-ulov-tx');
+    if (!t || !lastItem || !lastItem.prog) return;
+    const p = pctTo5(lastItem.prog);
+    if (p != null) t.textContent = `${lastItem.name} · +${lastItem.prog.lvl} · ${String(p).replace('.', ',')}% do +5`;
   }
   bus.on('data', onProgress);
   bus.on('enhresp', onProgress);
@@ -5291,6 +5296,7 @@ MP.itemDeco = itemDeco;
       const pr = e && (e.progressing || e.progress_preview);
       const sl = slots().find((s) => Number(s.id) === o.target.id);
       if (pr && sl) { sl.prog = { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 }; config.save(); }
+      if (pr && Number(pr.max) > 0) { lastItem = { name: (sl && sl.name) || o.target.name || 'przedmiot', prog: { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 } }; ovItem(); }
       onUsages(data, 'Ulepszarka');
     } catch {}
     let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
@@ -5303,15 +5309,28 @@ MP.itemDeco = itemDeco;
    * Komunikaty gry o odrzuconych składnikach („Poziom przedmiotu jest zbyt niski!") — w trakcie pracy Ulepszarki
    * chowamy je; Ulepszarka sama pomija takie składniki.
    */
-  const NOISE = /poziom przedmiotu jest zbyt niski|nie mo[żz]e by[ćc] u[żz]yty|nie nadaje si[ęe]/i;
-  let hushUntil = 0;
+  const NOISE = /poziom przedmiotu jest zbyt niski|nie mo[żz]e by[ćc] u[żz]yty|nie nadaje si[ęe]|bezu[żz]yteczn/i;
+  const USELESS = /bezu[żz]yteczn/i;
+  let hushUntil = 0, uselessSeen = false;
   new MutationObserver((muts) => {
     if (now() > hushUntil) return;
     for (const m of muts) for (const n of m.addedNodes) {
       if (n.nodeType !== 1 || n.closest('.mp-glass')) continue;
-      if (NOISE.test(n.textContent || '') && (n.textContent || '').length < 120) n.style.setProperty('display', 'none', 'important');
+      const tx = n.textContent || '';
+      if (NOISE.test(tx) && tx.length < 120) { n.style.setProperty('display', 'none', 'important'); if (USELESS.test(tx)) uselessSeen = true; }
     }
   }).observe(document.body, { childList: true, subtree: true });
+  /** W trakcie pracy Ulepszarki komunikaty gry o odrzuconych/bezużytecznych składnikach nie trafiają na ekran. */
+  function hushMessages() {
+    const orig = W.message;
+    if (typeof orig !== 'function') return () => {};
+    W.message = function (m, ...a) {
+      const t = String(m == null ? '' : m).replace(/<[^>]+>/g, '');
+      if (NOISE.test(t)) { if (USELESS.test(t)) uselessSeen = true; return; }
+      return orig.call(this, m, ...a);
+    };
+    return () => { W.message = orig; };
+  }
 
   /*
    * W trakcie pracy Ulepszarki okno Rzemiosła działa w tle (niewidoczne), a na środku ekranu jest młot z kowadłem
@@ -5327,10 +5346,11 @@ MP.itemDeco = itemDeco;
     clearTimeout(ovHide);
     if (!ovEl || !ovEl.isConnected) {
       ovEl = el('div', { class: 'mp-ulov' });
-      ovEl.innerHTML = `<svg class="mp-ulov-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="${R_OV}" class="bg"/><circle cx="50" cy="50" r="${R_OV}" class="fg" stroke-dasharray="${C_OV}" stroke-dashoffset="${C_OV}"/></svg><div class="mp-ulov-ic">${ANVIL}</div><div class="mp-ulov-pc">0%</div>`;
+      ovEl.innerHTML = `<svg class="mp-ulov-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="${R_OV}" class="bg"/><circle cx="50" cy="50" r="${R_OV}" class="fg" stroke-dasharray="${C_OV}" stroke-dashoffset="${C_OV}"/></svg><div class="mp-ulov-ic">${ANVIL}</div><div class="mp-ulov-pc">0%</div><div class="mp-ulov-tx"></div>`;
       document.body.appendChild(ovEl);
     }
     ovSet(0);
+    ovItem();
     requestAnimationFrame(() => ovEl && ovEl.classList.add('on'));
   }
   function ovSet(f) {
@@ -5359,6 +5379,7 @@ MP.itemDeco = itemDeco;
     hushUntil = now() + 120000;
     document.documentElement.classList.add('mp-ul-silent');   // okno rzemiosła w tle
     let ovOn = false, full = false;
+    const unhush = hushMessages();
     try {
       // serwer przyjmuje ulepszanie tylko przy otwartym Rzemiośle (bez tego wyrzuca) — otwieramy jak gra, a jak się nie da, nic nie wysyłamy
       if (!(await ensureCraft())) { toast('Ulepszarka: nie udało się otworzyć Rzemiosło → Ulepszanie', 'warn'); return 'nocraft'; }
@@ -5380,6 +5401,7 @@ MP.itemDeco = itemDeco;
     } finally {
       progressCb = null;
       if (ovOn) ovEnd(full);
+      setTimeout(unhush, 1500);
       running = false;
       await sleep(400);
       setTimeout(() => { hushUntil = 0; }, 1500);
@@ -5465,6 +5487,7 @@ MP.itemDeco = itemDeco;
           if (left === 0) { limitHit = true; break outer; }
           let part = rest.slice(0, Math.min(16, left == null ? 16 : left));
           // dokładnie tak jak gra: najpierw podgląd, potem ulepszenie; na pytanie gry „Tak" klika Ulepszarka
+          uselessSeen = false;
           const rp = await preview(o.target, part);
           if (isMaxedResp(rp.data)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }   // przedmiot już na maksimum — sam znika z listy
           if (!rp.ok || badResp(rp.data)) { failed = true; break outer; }
@@ -5474,6 +5497,25 @@ MP.itemDeco = itemDeco;
             const acc = new Set(pv.ingredients.map(Number));
             const rej = part.filter((i) => !acc.has(i.id)).map((i) => i.id);
             if (rej.length) { markRejected(o.target.id, rej); rest = rest.filter((i) => !rej.includes(i.id)); part = part.filter((i) => acc.has(i.id)); }
+          }
+          // gra zgłosiła „Ten składnik jest bezużyteczny!" — sprawdzamy składniki pojedynczo (podgląd nic nie zużywa) i pomijamy te, które nic nie dają
+          await sleep(150);
+          if (uselessSeen && part.length) {
+            const bad = [];
+            for (const i of part) {
+              uselessSeen = false;
+              const one = pvOf(await preview(o.target, [i]));
+              await sleep(120);
+              const acc = one && Array.isArray(one.ingredients) ? one.ingredients.map(Number).includes(i.id) : true;
+              if (uselessSeen || !acc || (one && one.gained != null && Number(one.gained) <= 0)) bad.push(i.id);
+            }
+            uselessSeen = false;
+            if (bad.length) {
+              markRejected(o.target.id, bad);
+              rest = rest.filter((i) => !bad.includes(i.id)); part = part.filter((i) => !bad.includes(i.id));
+              steps.push({ a: 'useless', n: bad.length }); saveSteps();
+              if (part.length) pv = pvOf(await preview(o.target, part));
+            }
           }
           if (!part.length) continue;
           // nie przepalamy: jeśli te składniki dają więcej, niż brakuje do następnego poziomu — bierzemy najmniej,
@@ -5762,8 +5804,15 @@ MP.itemDeco = itemDeco;
       })),
       !s.types.length ? el('div', { class: 'mp-warnc', style: { marginTop: '6px' } }, 'Wybierz przynajmniej jeden typ — inaczej ten przedmiot nie będzie ulepszany.') : null,
       el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, `Pasujące w torbie teraz: ${cnt}` + (s.prog && s.prog.max ? ` · poziom +${enhLevel(it) != null ? enhLevel(it) : s.prog.lvl} · postęp poziomu ${s.prog.cur} / ${s.prog.max}` : (enhLevel(it) != null ? ` · poziom +${enhLevel(it)}` : ''))),
-      s.prog && s.prog.max ? el('div', { class: 'mp-dim', style: { marginTop: '3px', color: '#cfe8b8' } }, `Całe ulepszenie do +5: ${String(pctTo5(s.prog)).replace('.', ',')}%`) : null,
-      s.prog && s.prog.max ? el('div', { class: 'mp-upbar', title: 'Postęp całego ulepszenia do +5' }, el('i', { style: { width: pctTo5(s.prog) + '%' } })) : null);
+      (() => {
+        const lv = enhLevel(it);
+        const has = s.prog && s.prog.max && (lv == null || lv === s.prog.lvl);
+        const pc = has ? pctTo5(s.prog) : (lv != null ? pctLvlOnly(lv) : null);
+        if (pc == null) return el('div', { class: 'mp-dim', style: { marginTop: '3px' } }, 'Całe ulepszenie do +5: pojawi się po pierwszym ulepszeniu');
+        return el('div', null,
+          el('div', { class: 'mp-dim', style: { marginTop: '3px', color: '#cfe8b8', fontWeight: 'bold' } }, `Całe ulepszenie do +5: ${String(pc).replace('.', ',')}%`),
+          el('div', { class: 'mp-upbar', title: 'Postęp całego ulepszenia do +5' }, el('i', { style: { width: pc + '%' } })));
+      })());
   }
 
   defineAddon({
@@ -8109,5 +8158,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.7";
+MP.version = "1.0.8";
 })();
