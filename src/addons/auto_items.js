@@ -462,6 +462,9 @@
  */
 (() => {
   let cfg, running = false, pickSlot = null, dragId = null;
+  // ten sam komunikat Ulepszarki najwyżej raz na 4 s (bez dublowania)
+  const _seenToast = {};
+  const toast = (m, t, ms) => { const k = String(m); const n0 = Date.now(); if (_seenToast[k] > n0) return; _seenToast[k] = n0 + 4000; MP.toast(m, t, ms); };
   const RAR = [['common', 'Zwykłe'], ['unique', 'Unikaty'], ['heroic', 'Heroiki']];
   const TYPES = [
     ['helm', 'Hełm', [9]], ['neck', 'Naszyjnik', [13]], ['ring', 'Pierścień', [12]], ['gloves', 'Rękawice', [11]],
@@ -686,7 +689,7 @@
   function sayMaxed(id, name) {
     if (maxSaid.has(Number(id))) return;
     maxSaid.add(Number(id));
-    toast(`Ulepszarka: przedmiot „${name}” został ulepszony na najwyższy poziom (+5)! Bonus wybierz sam w Rzemiośle.`, 'ok', 7000);
+    toast(`Ulepszarka: „${name}” ma pełny postęp na +4. Wybierz bonus w Rzemiośle, żeby wbić +5.`, 'ok', 7000);
   }
   /** % do +5 dla przedmiotu: z punktów z gry, ale nigdy poniżej tego, co wynika z jego aktualnego poziomu. */
   function pctItem(li) {
@@ -709,7 +712,8 @@
       const prev = (sl && sl.prog) || (lastItem && lastItem.id === Number(e.itemId) ? lastItem.prog : null);
       const prog = mkProg(prev, pr);
       const it = game.itemById(e.itemId);
-      if (prog.lvl >= 5 && (!prev || prev.lvl < 5)) sayMaxed(e.itemId, (sl && sl.name) || (it && it.name) || 'przedmiot');
+      const full = (x) => x && (x.lvl >= 5 || (x.lvl >= 4 && x.max > 0 && x.cur >= x.max));
+      if (full(prog) && !full(prev)) sayMaxed(e.itemId, (sl && sl.name) || (it && it.name) || 'przedmiot');
       lastItem = { id: Number(e.itemId), name: (sl && sl.name) || (it && it.name) || 'przedmiot', prog };
       if (sl) { sl.prog = prog; config.save(); }
       ovItem();
@@ -1071,7 +1075,7 @@
           const sl = slots().find((y) => Number(y.id) === x.id);
           const it = game.itemById(x.id), lv = enhLevel(it);
           const maxed = maxedNow.has(x.id) || (lv != null && lv >= MAX_LVL);
-          return { name: x.name, used: x.used, from: x.from, maxed, to: maxed ? { lvl: 5, pct: 100 } : sl && sl.prog ? { lvl: sl.prog.lvl, pct: pctTo5(sl.prog) } : null };
+          return { name: x.name, used: x.used, from: x.from, maxed, to: maxed ? { lvl: lv != null && lv >= MAX_LVL ? 5 : 4, pct: 100 } : sl && sl.prog ? { lvl: sl.prog.lvl, pct: pctTo5(sl.prog) } : null };
         }),
       };
       config.save();
@@ -1093,6 +1097,9 @@
     try {
       const e = d.enhancement, pr = e && (e.progress_preview || e.progressing);
       if (pr && Number(pr.upgradeLevel) >= MAX_LVL) return true;
+      // gotowy do +5: pełny postęp na +4 (tylko rzeczywisty postęp, nie podgląd — w podglądzie to stan „po”)
+      const real = e && e.progressing;
+      if (real && Number(real.upgradeLevel) >= MAX_LVL - 1 && Number(real.max) > 0 && Number(real.current) >= Number(real.max)) return true;
       if (pr && pr.max != null && Number(pr.max) === 0) return true;
       const msg = [d.e, d.w, d.alert, d.m].filter((x) => typeof x === 'string').join(' ');
       return /maks|maximum|najwy[żz]sz|osi[aą]gn[ąa][łl]\w* (ju[żz] )?(maks|najwy)|nie (mo[żz]na|da si[ęe]) (ju[żz] )?(bardziej )?ulepsz/i.test(msg);
@@ -1385,7 +1392,7 @@
           el('div', { class: 'mp-dim' }, `${d.toLocaleDateString('pl-PL')} ${d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })} · zużyto ${L.used} ${L.used === 1 ? 'przedmiot' : L.used % 10 >= 2 && L.used % 10 <= 4 && (L.used % 100 < 12 || L.used % 100 > 14) ? 'przedmioty' : 'przedmiotów'}`),
           ...L.items.map((x) => el('div', { style: { marginTop: '5px' } },
             el('b', null, x.name), el('span', { class: 'mp-dim' }, ` · zużyto ${x.used} · ${lvl(x.from)} → ${lvl(x.to)}`),
-            x.maxed ? el('div', { class: 'mp-okc', style: { fontSize: '12px' } }, 'Osiągnął +5. Po tym nie zużyto już żadnego przedmiotu.') : null)),
+            x.maxed ? el('div', { class: 'mp-okc', style: { fontSize: '12px' } }, 'Pełny postęp na +4 — wybierz bonus w Rzemiośle, żeby wbić +5. Po tym nie zużyto już żadnego przedmiotu.') : null)),
           stopTxt ? el('div', { class: 'mp-warnc', style: { marginTop: '5px' } }, stopTxt) : null));
       }
       if (cfg.freeAuto) {
