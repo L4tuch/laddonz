@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.3', d: '13.11.2026', items: [
+    'Ulepszarka działa szybciej: krótsze przerwy między kolejnymi porcjami przedmiotów.',
+  ] },
   { v: '1.0.2', d: '13.11.2026', items: [
     'Pasek skrótów nie zjeżdża już w dół po walce.',
     'Usunięty dodatek Wrogowie na mapie.',

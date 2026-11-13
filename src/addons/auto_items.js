@@ -905,10 +905,10 @@
         try { const pv = r.data && r.data.enhancement && r.data.enhancement.progress_preview; if (pv && Array.isArray(pv.ingredients) && !pv.ingredients.map(Number).includes(probe.id)) markRejected(it.id, [probe.id]); } catch {}
         if (isMaxedResp(r.data)) { learnMax(it); maxSaid.add(Number(it.id)); removeMaxed(it.id, it.name, 'ma już najwyższy poziom'); }
         else maxResp({ target: it })(r.data || {});   // zapis postępu
-        await sleep(250);
+        await sleep(100);
       }
     } finally {
-      await sleep(300);
+      await sleep(150);
       if (!restored) { onlyOwnN = Math.max(0, onlyOwnN - 1); restored = true; }
     }
   }
@@ -990,14 +990,13 @@
               const mid = (lo + hi) >> 1;
               const t = pvOf(await preview(o.target, part.slice(0, mid)));
               if (reach(t)) hi = mid; else lo = mid + 1;
-              await sleep(150);
             }
             part = part.slice(0, lo);
             steps.push({ a: 'trim', n: lo }); saveSteps();
           }
           const useIds = part.map((i) => i.id);
           const okIds = useIds.join(',');
-          await sleep(300);
+          await sleep(100);
           ask.arm();
           const r = await net.send('enhance', { item: o.target.id, ingredients: okIds }, { src: 'Ulepszarka', onResponse: maxResp(o) });
           steps.push({ a: 'progress', item: o.target.id, n: part.length, ok: r.ok, resp: short(r.data) }); saveSteps();
@@ -1019,7 +1018,7 @@
           const sl = slots().find((x) => Number(x.id) === o.target.id);
           if (!sl) continue outer;
           if (sl.prog && sl.prog.lvl >= maxFor(o.target)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }   // osiągnął maksimum
-          await sleep(500);
+          await sleep(150);
         }
       }
     } finally {
@@ -1067,8 +1066,8 @@
     while (now() - t0 < ms) {
       const bag = new Set(game.heroItems().map((i) => i.id));
       const g = ids.filter((id) => !bag.has(id)).length;
-      if (g) { await sleep(200); const bag2 = new Set(game.heroItems().map((i) => i.id)); return ids.filter((id) => !bag2.has(id)).length; }
-      await sleep(150);
+      if (g) { await sleep(120); const bag2 = new Set(game.heroItems().map((i) => i.id)); return ids.filter((id) => !bag2.has(id)).length; }
+      await sleep(80);
     }
     return 0;
   }
