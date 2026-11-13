@@ -749,7 +749,7 @@
     const orig = cur;
     const f = function (m, ...a) {
       const t = String(m == null ? '' : m).replace(/<[^>]+>/g, '');
-      const own = /^(Ulepszarka|Bratan|Dobijarka|Fake Taxi|L4)/.test(t);
+      const own = /^(Ulepszarka|Bratan|Slayer|Dobijarka|Fake Taxi|L4)/.test(t);
       if (!own && onlyOwnN > 0) return;
       if (!own && hushN > 0 && NOISE.test(t)) { if (USELESS.test(t)) uselessSeen = true; return; }
       return orig.call(this, m, ...a);
@@ -1003,7 +1003,7 @@
       net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Zużyto ${n} przedmiotów na ulepszanie${failed ? ' (przerwano)' : ''}${limitHit ? ' (dzienny limit)' : ''}` });
       if (limitHit) limitMsg();
       else if (failed) toast(n ? `Ulepszarka: zużyto ${n}, potem gra przestała przyjmować ulepszenie — przerwałam` : 'Ulepszarka: gra nie przyjęła ulepszenia — przerwałam', 'bad');
-      else if (n) toast(`Ulepszarka: ulepszono — zużyto ${n} przedmiotów`, 'ok');
+      else if (n && cfg.notifyUsed) toast(`Ulepszarka: ulepszono — zużyto ${n} przedmiotów`, 'ok');
       rr();
     }
     return { n, failed: failed || limitHit };
@@ -1257,14 +1257,15 @@
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
     desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
-    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: false, warnBoundUnique: false, freeAuto: false, freeAt: 0 },
+    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: true, notifyUsed: false, warnBoundUnique: false, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
       !net.cmd('enhance').verified ? { type: 'info', text: 'Ulepsz raz ręcznie w oknie rzemiosła — Ulepszarka sama się nauczy.' } : null,
     ],
     settings: [
       { group: 'Ustawienia', key: 'key', type: 'key', label: 'Klawisz: ulepsz teraz' },
-      { group: 'Ustawienia', key: 'notifyUse', type: 'bool', label: 'Komunikat o dziennym limicie', hint: 'Po ulepszeniu jeden komunikat na ekranie: ile ulepszeń dziś już zużyto (np. 125 / 2000) i jak idzie całe ulepszenie przedmiotu do +5 w %. Domyślnie wyłączony.' },
+      { group: 'Ustawienia', key: 'notifyUse', type: 'bool', label: 'Komunikat o dziennym limicie', hint: 'Po ulepszeniu jeden komunikat na ekranie: ile ulepszeń dziś już zużyto (np. 125 / 2000) i jak idzie całe ulepszenie przedmiotu do +5 w %.' },
+      { group: 'Ustawienia', key: 'notifyUsed', type: 'bool', label: 'Komunikat, ile przedmiotów zużyto', hint: 'Po ulepszeniu: „Ulepszarka: ulepszono — zużyto N przedmiotów”.' },
       { group: 'Ustawienia', key: 'warnBoundUnique', type: 'bool', label: 'Ostrzegaj także przed związanymi unikatami', hint: 'Przed zużyciem związanych heroików ostrzeżenie jest zawsze. Tu możesz je włączyć również dla związanych unikatów.' },
       { group: 'Ustawienia', key: 'confirm', type: 'bool', label: 'Pokazuj listę przedmiotów przed ulepszeniem', hint: 'Lista zużywanych przedmiotów z ich rzadkością (zwykły, unikat, heroiczny…).' },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAuto', type: 'bool', label: 'Włączone', rerender: true },
@@ -1306,6 +1307,7 @@
         config.save();
       }
       if (!Array.isArray(c.protect)) c.protect = [];
+      if (!c._v112) { c._v112 = true; c.notifyUse = true; c.notifyUsed = false; c.confirm = true; c.warnBoundUnique = false; config.save(); }   // nowe domyślne komunikaty
       { const u = new Set(); slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => !u.has(t)); sl.types.forEach((t) => u.add(t)); }); }   // typ składników tylko u jednego przedmiotu
       watchPointer();
       // wyrzuciło z gry w trakcie ulepszania? — automatyczne ulepszanie wstrzymane, dopóki go nie wznowisz

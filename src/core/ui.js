@@ -5,6 +5,14 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.13', d: '13.11.2026', items: [
+    'Dobijarka nazywa się teraz Slayer — w panelu, skrótach i komunikatach („Slayer: dobijam Nick”, „Slayer: przerwano dobijanie Nick”). W menu gracza zostają „Dobij” i „Przerwij dobijanie”. Ustawienia zostają bez zmian.',
+    'Slayer: okienko zakresu nazywa się „Slayer - Zakres poziomów”.',
+  ] },
+  { v: '1.0.12', d: '13.11.2026', items: [
+    'Dobijarka: strzałka do celu wierniej odwzorowuje strzałki przejść z gry (kremowa obwódka, bez czarnego konturu, rysowana na skos).',
+    'Ulepszarka — domyślne komunikaty: włączone „Komunikat o dziennym limicie” i „Lista przedmiotów przed ulepszeniem”; wyłączone „Ile przedmiotów zużyto” (nowa opcja) i „Ostrzegaj przed związanymi unikatami”.',
+  ] },
   { v: '1.0.11', d: '13.11.2026', items: [
     'Dobijarka: nowa strzałka do celu w stylu strzałek przejść z gry (pikselowa, czerwona, 8 kierunków).',
     'Ulepszarka: nigdy nie używa na składnik przedmiotów, które same mają już ulepszenie.',
@@ -59,7 +67,7 @@ const CHANGELOG = [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
     'Kafelek L4 w rzędzie przycisków gry i pasek skrótów dodatków z wyborem ułożenia.',
-    'Dodatki: Dobijarka, Hey WakeUP!, Bratan, Wrogowie na mapie, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup oraz Motywy.',
+    'Dodatki: Slayer (dawniej Dobijarka), Hey WakeUP!, Bratan, Wrogowie na mapie, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup oraz Motywy.',
   ] },
 ];
 

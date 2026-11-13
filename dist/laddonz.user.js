@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.11
-// @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
+// @version      1.0.13
+// @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
 // @icon64       data:image/png;base64,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
@@ -1630,7 +1630,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 
 /* Ulepszarka: ciche pobranie licznika — okno Rzemiosła niewidoczne przez chwilę */
 .mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){clip-path:inset(50%)!important;pointer-events:none!important}
-.mp-dbarrow{position:fixed;width:30px;height:30px;z-index:2147481000;pointer-events:none;image-rendering:pixelated;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.35))}
+.mp-dbarrow{position:fixed;width:26px;height:26px;z-index:2147481000;pointer-events:none}
 .mp-dbw{position:fixed;left:calc(50% - 120px);top:90px;width:240px;z-index:2147482000;background:rgba(16,20,16,.94);border:1px solid #3c5a3f;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.55);font:12px/1.3 Arial,sans-serif;color:#e4eee5;user-select:none}
 .mp-dbw-h{display:flex;align-items:center;justify-content:space-between;padding:5px 6px 5px 9px;cursor:move;border-bottom:1px solid #2b3d2d;font-weight:700;color:#ff8a9c}
 .mp-dbw-h button{background:none;border:0;color:#cfd8d0;font-size:16px;line-height:1;cursor:pointer;padding:0 4px}
@@ -2180,6 +2180,14 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.13', d: '13.11.2026', items: [
+    'Dobijarka nazywa się teraz Slayer — w panelu, skrótach i komunikatach („Slayer: dobijam Nick”, „Slayer: przerwano dobijanie Nick”). W menu gracza zostają „Dobij” i „Przerwij dobijanie”. Ustawienia zostają bez zmian.',
+    'Slayer: okienko zakresu nazywa się „Slayer - Zakres poziomów”.',
+  ] },
+  { v: '1.0.12', d: '13.11.2026', items: [
+    'Dobijarka: strzałka do celu wierniej odwzorowuje strzałki przejść z gry (kremowa obwódka, bez czarnego konturu, rysowana na skos).',
+    'Ulepszarka — domyślne komunikaty: włączone „Komunikat o dziennym limicie” i „Lista przedmiotów przed ulepszeniem”; wyłączone „Ile przedmiotów zużyto” (nowa opcja) i „Ostrzegaj przed związanymi unikatami”.',
+  ] },
   { v: '1.0.11', d: '13.11.2026', items: [
     'Dobijarka: nowa strzałka do celu w stylu strzałek przejść z gry (pikselowa, czerwona, 8 kierunków).',
     'Ulepszarka: nigdy nie używa na składnik przedmiotów, które same mają już ulepszenie.',
@@ -2234,7 +2242,7 @@ const CHANGELOG = [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
     'Kafelek L4 w rzędzie przycisków gry i pasek skrótów dodatków z wyborem ułożenia.',
-    'Dodatki: Dobijarka, Hey WakeUP!, Bratan, Wrogowie na mapie, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup oraz Motywy.',
+    'Dodatki: Slayer (dawniej Dobijarka), Hey WakeUP!, Bratan, Wrogowie na mapie, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup oraz Motywy.',
   ] },
 ];
 
@@ -3013,14 +3021,14 @@ function parseProtection(data) {
 })();
 
 // ═══ src/addons/napad.js ═══
-/* ───────── Dobijarka (id: napad — zostawione dla zgodności ustawień) ─────────
+/* ───────── Slayer (id: napad — zostawione dla zgodności ustawień) ─────────
  * Wszystko działa tylko przy WŁĄCZONYM dodatku.
  * Klawisz   → namierza najbliższego gracza i atakuje go w chwili, gdy będzie w zasięgu. Ponowne
  *             naciśnięcie przy namierzonym celu = anulowanie (bez zmiany celu). Postać nie podchodzi sama.
  * „Atakuj każdego w pobliżu" → osobny przełącznik (też pod klawisz); gdy włączony, na ekranie jest małe
  *             okienko z zakresem poziomów „od – do" i atakowany jest każdy w zasięgu z tego zakresu.
  * Menu gracza (prawy klik) → „Dobij": namierza tego gracza, atak gdy będzie w zasięgu.
- * Kogo NIE atakować (klan, znajomi…) — decyduje Bratan; Dobijarka takich graczy po prostu pomija.
+ * Kogo NIE atakować (klan, znajomi…) — decyduje Bratan; Slayer takich graczy po prostu pomija.
  */
 (() => {
   const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
@@ -3060,10 +3068,10 @@ function parseProtection(data) {
     S.last = t;
     S.tried[p.id] = t;
     const r = await net.send('attackPlayer', { id: p.id }, {
-      src: 'Dobijarka',
+      src: 'Slayer',
       onResponse: (data) => {
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
-        // komunikat pokazuje już sama gra — Dobijarka nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
+        // komunikat pokazuje już sama gra — Slayer nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
         if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + REFUSE_MS; return; }
         const sec = parseProtection(data);
@@ -3076,12 +3084,12 @@ function parseProtection(data) {
   /* ── namierzanie (klawisz / menu / lista) ── */
   function lockOn(p) {
     if (!p) return;
-    if (!allowed(p)) { toast(`Dobijarka: ${p.nick} jest chroniony przez Bratana`); return; }
+    if (!allowed(p)) { toast(`Slayer: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
     cfg.target = { id: p.id, nick: p.nick };          // zapamiętany na stałe (także po odświeżeniu gry)
     config.save();
     mark.set(p.id);
-    toast(`Dobijarka: dobijam ${p.nick}`);
+    toast(`Slayer: dobijam ${p.nick}`);
     rr();
     ensureLoop();
     tick();
@@ -3099,10 +3107,10 @@ function parseProtection(data) {
   function keyNearest() {
     if (!cfg.enabled) return;
     // ponowne naciśnięcie przy namierzonym celu = anulowanie (żeby zmienić cel: anuluj i naciśnij jeszcze raz)
-    if (S.lock) { unlock(`Dobijarka: przerwano dobijanie ${S.lock.nick}`); return; }
+    if (S.lock) { unlock(`Slayer: przerwano dobijanie ${S.lock.nick}`); return; }
     const h = game.hero(); if (!h) return;
     const list = game.others().filter(allowed).sort((a, b) => dist(h, a) - dist(h, b));
-    if (!list.length) { toast('Dobijarka: brak graczy na mapie'); return; }
+    if (!list.length) { toast('Slayer: brak graczy na mapie'); return; }
     lockOn(list[0]);
   }
 
@@ -3111,7 +3119,7 @@ function parseProtection(data) {
     cfg.allMode = !!on; config.save();
     allWin();
     ensureLoop();
-    if (!quiet) toast(on ? `Dobijarka: atak na każdego w pobliżu (poz. ${Number(cfg.lvlMin) || 0}–${Number(cfg.lvlMax) || 500})` : 'Dobijarka: atak na każdego w pobliżu wyłączony', on ? 'ok' : 'info');
+    if (!quiet) toast(on ? `Slayer: atak na każdego w pobliżu (poz. ${Number(cfg.lvlMin) || 0}–${Number(cfg.lvlMax) || 500})` : 'Slayer: atak na każdego w pobliżu wyłączony', on ? 'ok' : 'info');
     rr();
   }
   function allWin() {
@@ -3122,7 +3130,7 @@ function parseProtection(data) {
     const num = (key, def) => el('input', { type: 'number', min: 0, max: 500, value: cfg[key] ?? def,
       onkeydown: (e) => e.stopPropagation(), onkeyup: (e) => e.stopPropagation(),
       oninput: (e) => { const v = Math.max(0, Math.min(500, parseInt(e.target.value, 10) || 0)); cfg[key] = v; config.save(); } });
-    const head = el('div', { class: 'mp-dbw-h' }, el('span', null, 'Dobijarka — każdy w pobliżu'),
+    const head = el('div', { class: 'mp-dbw-h' }, el('span', null, 'Slayer - Zakres poziomów'),
       el('button', { title: 'Wyłącz', onclick: () => setAll(false) }, '×'));
     w = el('div', { id: 'mp-dbw', class: 'mp-dbw' }, head,
       el('div', { class: 'mp-dbw-b' }, el('span', null, 'Poziom od'), num('lvlMin', 0), el('span', null, 'do'), num('lvlMax', 500)));
@@ -3144,11 +3152,9 @@ function parseProtection(data) {
    * Czerwona strzałka przy postaci, wskazująca kierunek do namierzonego celu (jak strzałki przejść w grze).
    * Pozycja postaci na ekranie: kamera gry trzyma postać na środku planszy, a przy brzegach mapy się zatrzymuje.
    */
-  // strzałka w stylu strzałek przejść z gry (pikselowa: czarny kontur, jasna obwódka, czerwone wnętrze z połyskiem)
-  const ARROW = '<svg viewBox="0 0 16 16" width="30" height="30" shape-rendering="crispEdges"><defs><linearGradient id="mpDbA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a5c"/><stop offset=".5" stop-color="#e3201b"/><stop offset="1" stop-color="#9c0c0a"/></linearGradient></defs>'
-    + '<path d="M1.5 5.5h6v-4l7 6.5-7 6.5v-4h-6z" fill="#000" stroke="#1a0606" stroke-width="1.1" stroke-linejoin="miter"/>'
-    + '<path d="M2.4 6.4h6v-2.8l5.1 4.4-5.1 4.4v-2.8h-6z" fill="url(#mpDbA)" stroke="#f4efe2" stroke-width=".75" stroke-linejoin="miter"/>'
-    + '<path d="M3.2 7.2h5.6V5.4l1.6 1.4" fill="none" stroke="#ffc7bd" stroke-width=".7"/></svg>';
+  // strzałka jak strzałki przejść z gry: rysowana „na skos" (w prawo-w dół), jasna kremowa obwódka, wnętrze z połyskiem — tylko czerwone
+  const ARROW = '<svg viewBox="0 0 20 20" width="26" height="26"><defs><linearGradient id="mpDbA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a7c"/><stop offset=".45" stop-color="#d9261e"/><stop offset="1" stop-color="#7a0b0b"/></linearGradient><linearGradient id="mpDbB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f1e4c6"/><stop offset="1" stop-color="#f0b98f"/></linearGradient></defs>'
+    + '<path d="M17 4.5V17H4.5l4.2-4.2L2.8 6.9l4.1-4.1 5.9 5.9z" fill="url(#mpDbA)" stroke="url(#mpDbB)" stroke-width="1.5" stroke-linejoin="round"/></svg>';
   function gameCanvas() {
     const c = document.getElementById('GAME_CANVAS');
     if (c && c.getBoundingClientRect().width) return c;
@@ -3179,9 +3185,9 @@ function parseProtection(data) {
     const ang = Math.round(Math.atan2(p.y - h.y, p.x - h.x) / (Math.PI / 4)) * (Math.PI / 4);
     const R0 = 40;
     a.style.display = '';
-    a.style.left = Math.round(pos.x + Math.cos(ang) * R0 - 15) + 'px';
-    a.style.top = Math.round(pos.y + Math.sin(ang) * R0 - 15) + 'px';
-    a.style.transform = `rotate(${ang}rad)`;
+    a.style.left = Math.round(pos.x + Math.cos(ang) * R0 - 13) + 'px';
+    a.style.top = Math.round(pos.y + Math.sin(ang) * R0 - 13) + 'px';
+    a.style.transform = `rotate(${ang - Math.PI / 4}rad)`;   // grafika wskazuje w prawo-w dół (45°)
     a.title = `Cel: ${p.nick} (${dist(h, p)} kratek)`;
   }
   function ensureArrow() {
@@ -3221,17 +3227,17 @@ function parseProtection(data) {
     // 1) namierzony cel — pamiętany, dopóki sam go nie zmienisz/przerwiesz; atak, gdy będzie w zasięgu
     if (S.lock) {
       const p = lockedPlayer();
-      if (!p && !cfg.remember) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
+      if (!p && !cfg.remember) { unlock(`Slayer: ${S.lock.nick} zniknął z mapy`); return; }
       if (!!p !== S.wasOn) { S.wasOn = !!p; rr(); }   // „na mapie" / „poza mapą" w panelu
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
-      if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Dobijarka: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
+      if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Slayer: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
       if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
       // cel daleko albo poza mapą — w międzyczasie (gdy włączone „każdy w pobliżu") atakuje innych w zasięgu
     }
     // 2) „Atakuj każdego w pobliżu" włączone → każdy w zasięgu z zakresu poziomów
     if (!cfg.allMode) return;
     const t = now();
-    for (const p of game.others()) if (dist(h, p) <= RANGE && inLvl(p) && !allowed(p)) say('br' + p.id, `Dobijarka: pomijam ${p.nick} — chroniony przez Bratana`, 120000, 'info');
+    for (const p of game.others()) if (dist(h, p) <= RANGE && inLvl(p) && !allowed(p)) say('br' + p.id, `Slayer: pomijam ${p.nick} — chroniony przez Bratana`, 120000, 'info');
     const c = game.others()
       .filter((p) => dist(h, p) <= RANGE && inLvl(p) && allowed(p) && !(S.tried[p.id] > t - 1500) && !(S.refused[p.id] > t) && !(S.protectedUntil[p.id] > t))
       .sort((a, b) => dist(h, a) - dist(h, b));
@@ -3273,7 +3279,7 @@ function parseProtection(data) {
   };
 
   defineAddon({
-    id: 'napad', name: 'Dobijarka', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
+    id: 'napad', name: 'Slayer', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
     desc: 'Pomaga dopaść przeciwnika. Klawiszem namierzasz najbliższego gracza, a dodatek zaatakuje go, gdy tylko znajdzie się w zasięgu — drugie naciśnięcie anuluje atak. Osobno możesz włączyć atak na każdego w pobliżu w wybranym przedziale poziomów (małe okienko „od – do”). Działa tylko przy włączonym dodatku. Kogo oszczędzić, ustawiasz w Bratanie.',
     defaults: { enabled: false, keyAttack: '', keyAll: '', allMode: false, lvlMin: 0, lvlMax: 500, target: null, remember: true },
     notes: () => [{ type: 'warn', text: '„Atakuj każdego w pobliżu” atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
@@ -3288,20 +3294,20 @@ function parseProtection(data) {
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Zapamiętany cel'),
         S.lock ? el('div', { style: { display: 'flex', alignItems: 'center', gap: '10px' } },
           el('b', null, S.lock.nick), el('span', { class: 'mp-dim' }, game.otherById(S.lock.id) || game.otherByNick(S.lock.nick) ? 'na mapie' : 'poza mapą — czekam'),
-          el('button', { class: 'mp-btn bad', style: { marginLeft: 'auto' }, onclick: () => { unlock(`Dobijarka: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`); rerender(); } }, 'Przerwij dobijanie'))
+          el('button', { class: 'mp-btn bad', style: { marginLeft: 'auto' }, onclick: () => { unlock(`Slayer: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`); rerender(); } }, 'Przerwij dobijanie'))
           : el('div', { class: 'mp-dim' }, 'Brak. Ustaw klawiszem albo „Dobij" w menu gracza.')));
     },
     init(c) {
       cfg = c;
       if (!c._v15) { c._v15 = true; c.lvlMin = 0; c.lvlMax = 500; config.save(); }
       if (!c._v106) { c._v106 = true; c.allMode = false; config.save(); }   // dawniej: włączony dodatek = atak na każdego; teraz to osobny przełącznik
-      keys.bind({ label: 'Dobijarka: namierz / anuluj', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
-      keys.bind({ label: 'Dobijarka: każdy w pobliżu', get: () => cfg.keyAll || '', fn: () => { if (cfg.enabled) setAll(!cfg.allMode); } });
+      keys.bind({ label: 'Slayer: namierz / anuluj', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
+      keys.bind({ label: 'Slayer: każdy w pobliżu', get: () => cfg.keyAll || '', fn: () => { if (cfg.enabled) setAll(!cfg.allMode); } });
       menus.add('player', (id) => {
         if (!cfg.enabled) return [];
         // namierzony gracz → zamiast „Dobij" jest „Przerwij dobijanie" (cofa polecenie ataku)
         const pp = game.otherById(id);
-        if (S.lock && (S.lock.id === Number(id) || (pp && pp.nick === S.lock.nick))) return [{ label: 'Przerwij dobijanie', fn: () => unlock(`Dobijarka: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`) }];
+        if (S.lock && (S.lock.id === Number(id) || (pp && pp.nick === S.lock.nick))) return [{ label: 'Przerwij dobijanie', fn: () => unlock(`Slayer: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`) }];
         const p = game.otherById(id);
         if (!p || !allowed(p)) return [];
         return [{ label: 'Dobij', fn: () => lockOn(game.otherById(id) || p) }];
@@ -5447,7 +5453,7 @@ MP.itemDeco = itemDeco;
     const orig = cur;
     const f = function (m, ...a) {
       const t = String(m == null ? '' : m).replace(/<[^>]+>/g, '');
-      const own = /^(Ulepszarka|Bratan|Dobijarka|Fake Taxi|L4)/.test(t);
+      const own = /^(Ulepszarka|Bratan|Slayer|Dobijarka|Fake Taxi|L4)/.test(t);
       if (!own && onlyOwnN > 0) return;
       if (!own && hushN > 0 && NOISE.test(t)) { if (USELESS.test(t)) uselessSeen = true; return; }
       return orig.call(this, m, ...a);
@@ -5701,7 +5707,7 @@ MP.itemDeco = itemDeco;
       net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `Zużyto ${n} przedmiotów na ulepszanie${failed ? ' (przerwano)' : ''}${limitHit ? ' (dzienny limit)' : ''}` });
       if (limitHit) limitMsg();
       else if (failed) toast(n ? `Ulepszarka: zużyto ${n}, potem gra przestała przyjmować ulepszenie — przerwałam` : 'Ulepszarka: gra nie przyjęła ulepszenia — przerwałam', 'bad');
-      else if (n) toast(`Ulepszarka: ulepszono — zużyto ${n} przedmiotów`, 'ok');
+      else if (n && cfg.notifyUsed) toast(`Ulepszarka: ulepszono — zużyto ${n} przedmiotów`, 'ok');
       rr();
     }
     return { n, failed: failed || limitHit };
@@ -5955,14 +5961,15 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
     desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
-    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: false, warnBoundUnique: false, freeAuto: false, freeAt: 0 },
+    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: true, notifyUsed: false, warnBoundUnique: false, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
       !net.cmd('enhance').verified ? { type: 'info', text: 'Ulepsz raz ręcznie w oknie rzemiosła — Ulepszarka sama się nauczy.' } : null,
     ],
     settings: [
       { group: 'Ustawienia', key: 'key', type: 'key', label: 'Klawisz: ulepsz teraz' },
-      { group: 'Ustawienia', key: 'notifyUse', type: 'bool', label: 'Komunikat o dziennym limicie', hint: 'Po ulepszeniu jeden komunikat na ekranie: ile ulepszeń dziś już zużyto (np. 125 / 2000) i jak idzie całe ulepszenie przedmiotu do +5 w %. Domyślnie wyłączony.' },
+      { group: 'Ustawienia', key: 'notifyUse', type: 'bool', label: 'Komunikat o dziennym limicie', hint: 'Po ulepszeniu jeden komunikat na ekranie: ile ulepszeń dziś już zużyto (np. 125 / 2000) i jak idzie całe ulepszenie przedmiotu do +5 w %.' },
+      { group: 'Ustawienia', key: 'notifyUsed', type: 'bool', label: 'Komunikat, ile przedmiotów zużyto', hint: 'Po ulepszeniu: „Ulepszarka: ulepszono — zużyto N przedmiotów”.' },
       { group: 'Ustawienia', key: 'warnBoundUnique', type: 'bool', label: 'Ostrzegaj także przed związanymi unikatami', hint: 'Przed zużyciem związanych heroików ostrzeżenie jest zawsze. Tu możesz je włączyć również dla związanych unikatów.' },
       { group: 'Ustawienia', key: 'confirm', type: 'bool', label: 'Pokazuj listę przedmiotów przed ulepszeniem', hint: 'Lista zużywanych przedmiotów z ich rzadkością (zwykły, unikat, heroiczny…).' },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAuto', type: 'bool', label: 'Włączone', rerender: true },
@@ -6004,6 +6011,7 @@ MP.itemDeco = itemDeco;
         config.save();
       }
       if (!Array.isArray(c.protect)) c.protect = [];
+      if (!c._v112) { c._v112 = true; c.notifyUse = true; c.notifyUsed = false; c.confirm = true; c.warnBoundUnique = false; config.save(); }   // nowe domyślne komunikaty
       { const u = new Set(); slots().forEach((sl) => { sl.types = (sl.types || []).filter((t) => !u.has(t)); sl.types.forEach((t) => u.add(t)); }); }   // typ składników tylko u jednego przedmiotu
       watchPointer();
       // wyrzuciło z gry w trakcie ulepszania? — automatyczne ulepszanie wstrzymane, dopóki go nie wznowisz
@@ -8296,5 +8304,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.11";
+MP.version = "1.0.13";
 })();

@@ -1,11 +1,11 @@
-/* ───────── Dobijarka (id: napad — zostawione dla zgodności ustawień) ─────────
+/* ───────── Slayer (id: napad — zostawione dla zgodności ustawień) ─────────
  * Wszystko działa tylko przy WŁĄCZONYM dodatku.
  * Klawisz   → namierza najbliższego gracza i atakuje go w chwili, gdy będzie w zasięgu. Ponowne
  *             naciśnięcie przy namierzonym celu = anulowanie (bez zmiany celu). Postać nie podchodzi sama.
  * „Atakuj każdego w pobliżu" → osobny przełącznik (też pod klawisz); gdy włączony, na ekranie jest małe
  *             okienko z zakresem poziomów „od – do" i atakowany jest każdy w zasięgu z tego zakresu.
  * Menu gracza (prawy klik) → „Dobij": namierza tego gracza, atak gdy będzie w zasięgu.
- * Kogo NIE atakować (klan, znajomi…) — decyduje Bratan; Dobijarka takich graczy po prostu pomija.
+ * Kogo NIE atakować (klan, znajomi…) — decyduje Bratan; Slayer takich graczy po prostu pomija.
  */
 (() => {
   const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
@@ -45,10 +45,10 @@
     S.last = t;
     S.tried[p.id] = t;
     const r = await net.send('attackPlayer', { id: p.id }, {
-      src: 'Dobijarka',
+      src: 'Slayer',
       onResponse: (data) => {
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
-        // komunikat pokazuje już sama gra — Dobijarka nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
+        // komunikat pokazuje już sama gra — Slayer nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
         if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + REFUSE_MS; return; }
         const sec = parseProtection(data);
@@ -61,12 +61,12 @@
   /* ── namierzanie (klawisz / menu / lista) ── */
   function lockOn(p) {
     if (!p) return;
-    if (!allowed(p)) { toast(`Dobijarka: ${p.nick} jest chroniony przez Bratana`); return; }
+    if (!allowed(p)) { toast(`Slayer: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
     cfg.target = { id: p.id, nick: p.nick };          // zapamiętany na stałe (także po odświeżeniu gry)
     config.save();
     mark.set(p.id);
-    toast(`Dobijarka: dobijam ${p.nick}`);
+    toast(`Slayer: dobijam ${p.nick}`);
     rr();
     ensureLoop();
     tick();
@@ -84,10 +84,10 @@
   function keyNearest() {
     if (!cfg.enabled) return;
     // ponowne naciśnięcie przy namierzonym celu = anulowanie (żeby zmienić cel: anuluj i naciśnij jeszcze raz)
-    if (S.lock) { unlock(`Dobijarka: przerwano dobijanie ${S.lock.nick}`); return; }
+    if (S.lock) { unlock(`Slayer: przerwano dobijanie ${S.lock.nick}`); return; }
     const h = game.hero(); if (!h) return;
     const list = game.others().filter(allowed).sort((a, b) => dist(h, a) - dist(h, b));
-    if (!list.length) { toast('Dobijarka: brak graczy na mapie'); return; }
+    if (!list.length) { toast('Slayer: brak graczy na mapie'); return; }
     lockOn(list[0]);
   }
 
@@ -96,7 +96,7 @@
     cfg.allMode = !!on; config.save();
     allWin();
     ensureLoop();
-    if (!quiet) toast(on ? `Dobijarka: atak na każdego w pobliżu (poz. ${Number(cfg.lvlMin) || 0}–${Number(cfg.lvlMax) || 500})` : 'Dobijarka: atak na każdego w pobliżu wyłączony', on ? 'ok' : 'info');
+    if (!quiet) toast(on ? `Slayer: atak na każdego w pobliżu (poz. ${Number(cfg.lvlMin) || 0}–${Number(cfg.lvlMax) || 500})` : 'Slayer: atak na każdego w pobliżu wyłączony', on ? 'ok' : 'info');
     rr();
   }
   function allWin() {
@@ -107,7 +107,7 @@
     const num = (key, def) => el('input', { type: 'number', min: 0, max: 500, value: cfg[key] ?? def,
       onkeydown: (e) => e.stopPropagation(), onkeyup: (e) => e.stopPropagation(),
       oninput: (e) => { const v = Math.max(0, Math.min(500, parseInt(e.target.value, 10) || 0)); cfg[key] = v; config.save(); } });
-    const head = el('div', { class: 'mp-dbw-h' }, el('span', null, 'Dobijarka — każdy w pobliżu'),
+    const head = el('div', { class: 'mp-dbw-h' }, el('span', null, 'Slayer - Zakres poziomów'),
       el('button', { title: 'Wyłącz', onclick: () => setAll(false) }, '×'));
     w = el('div', { id: 'mp-dbw', class: 'mp-dbw' }, head,
       el('div', { class: 'mp-dbw-b' }, el('span', null, 'Poziom od'), num('lvlMin', 0), el('span', null, 'do'), num('lvlMax', 500)));
@@ -129,11 +129,9 @@
    * Czerwona strzałka przy postaci, wskazująca kierunek do namierzonego celu (jak strzałki przejść w grze).
    * Pozycja postaci na ekranie: kamera gry trzyma postać na środku planszy, a przy brzegach mapy się zatrzymuje.
    */
-  // strzałka w stylu strzałek przejść z gry (pikselowa: czarny kontur, jasna obwódka, czerwone wnętrze z połyskiem)
-  const ARROW = '<svg viewBox="0 0 16 16" width="30" height="30" shape-rendering="crispEdges"><defs><linearGradient id="mpDbA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a5c"/><stop offset=".5" stop-color="#e3201b"/><stop offset="1" stop-color="#9c0c0a"/></linearGradient></defs>'
-    + '<path d="M1.5 5.5h6v-4l7 6.5-7 6.5v-4h-6z" fill="#000" stroke="#1a0606" stroke-width="1.1" stroke-linejoin="miter"/>'
-    + '<path d="M2.4 6.4h6v-2.8l5.1 4.4-5.1 4.4v-2.8h-6z" fill="url(#mpDbA)" stroke="#f4efe2" stroke-width=".75" stroke-linejoin="miter"/>'
-    + '<path d="M3.2 7.2h5.6V5.4l1.6 1.4" fill="none" stroke="#ffc7bd" stroke-width=".7"/></svg>';
+  // strzałka jak strzałki przejść z gry: rysowana „na skos" (w prawo-w dół), jasna kremowa obwódka, wnętrze z połyskiem — tylko czerwone
+  const ARROW = '<svg viewBox="0 0 20 20" width="26" height="26"><defs><linearGradient id="mpDbA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a7c"/><stop offset=".45" stop-color="#d9261e"/><stop offset="1" stop-color="#7a0b0b"/></linearGradient><linearGradient id="mpDbB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f1e4c6"/><stop offset="1" stop-color="#f0b98f"/></linearGradient></defs>'
+    + '<path d="M17 4.5V17H4.5l4.2-4.2L2.8 6.9l4.1-4.1 5.9 5.9z" fill="url(#mpDbA)" stroke="url(#mpDbB)" stroke-width="1.5" stroke-linejoin="round"/></svg>';
   function gameCanvas() {
     const c = document.getElementById('GAME_CANVAS');
     if (c && c.getBoundingClientRect().width) return c;
@@ -164,9 +162,9 @@
     const ang = Math.round(Math.atan2(p.y - h.y, p.x - h.x) / (Math.PI / 4)) * (Math.PI / 4);
     const R0 = 40;
     a.style.display = '';
-    a.style.left = Math.round(pos.x + Math.cos(ang) * R0 - 15) + 'px';
-    a.style.top = Math.round(pos.y + Math.sin(ang) * R0 - 15) + 'px';
-    a.style.transform = `rotate(${ang}rad)`;
+    a.style.left = Math.round(pos.x + Math.cos(ang) * R0 - 13) + 'px';
+    a.style.top = Math.round(pos.y + Math.sin(ang) * R0 - 13) + 'px';
+    a.style.transform = `rotate(${ang - Math.PI / 4}rad)`;   // grafika wskazuje w prawo-w dół (45°)
     a.title = `Cel: ${p.nick} (${dist(h, p)} kratek)`;
   }
   function ensureArrow() {
@@ -206,17 +204,17 @@
     // 1) namierzony cel — pamiętany, dopóki sam go nie zmienisz/przerwiesz; atak, gdy będzie w zasięgu
     if (S.lock) {
       const p = lockedPlayer();
-      if (!p && !cfg.remember) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
+      if (!p && !cfg.remember) { unlock(`Slayer: ${S.lock.nick} zniknął z mapy`); return; }
       if (!!p !== S.wasOn) { S.wasOn = !!p; rr(); }   // „na mapie" / „poza mapą" w panelu
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
-      if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Dobijarka: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
+      if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Slayer: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
       if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
       // cel daleko albo poza mapą — w międzyczasie (gdy włączone „każdy w pobliżu") atakuje innych w zasięgu
     }
     // 2) „Atakuj każdego w pobliżu" włączone → każdy w zasięgu z zakresu poziomów
     if (!cfg.allMode) return;
     const t = now();
-    for (const p of game.others()) if (dist(h, p) <= RANGE && inLvl(p) && !allowed(p)) say('br' + p.id, `Dobijarka: pomijam ${p.nick} — chroniony przez Bratana`, 120000, 'info');
+    for (const p of game.others()) if (dist(h, p) <= RANGE && inLvl(p) && !allowed(p)) say('br' + p.id, `Slayer: pomijam ${p.nick} — chroniony przez Bratana`, 120000, 'info');
     const c = game.others()
       .filter((p) => dist(h, p) <= RANGE && inLvl(p) && allowed(p) && !(S.tried[p.id] > t - 1500) && !(S.refused[p.id] > t) && !(S.protectedUntil[p.id] > t))
       .sort((a, b) => dist(h, a) - dist(h, b));
@@ -258,7 +256,7 @@
   };
 
   defineAddon({
-    id: 'napad', name: 'Dobijarka', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
+    id: 'napad', name: 'Slayer', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
     desc: 'Pomaga dopaść przeciwnika. Klawiszem namierzasz najbliższego gracza, a dodatek zaatakuje go, gdy tylko znajdzie się w zasięgu — drugie naciśnięcie anuluje atak. Osobno możesz włączyć atak na każdego w pobliżu w wybranym przedziale poziomów (małe okienko „od – do”). Działa tylko przy włączonym dodatku. Kogo oszczędzić, ustawiasz w Bratanie.',
     defaults: { enabled: false, keyAttack: '', keyAll: '', allMode: false, lvlMin: 0, lvlMax: 500, target: null, remember: true },
     notes: () => [{ type: 'warn', text: '„Atakuj każdego w pobliżu” atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
@@ -273,20 +271,20 @@
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Zapamiętany cel'),
         S.lock ? el('div', { style: { display: 'flex', alignItems: 'center', gap: '10px' } },
           el('b', null, S.lock.nick), el('span', { class: 'mp-dim' }, game.otherById(S.lock.id) || game.otherByNick(S.lock.nick) ? 'na mapie' : 'poza mapą — czekam'),
-          el('button', { class: 'mp-btn bad', style: { marginLeft: 'auto' }, onclick: () => { unlock(`Dobijarka: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`); rerender(); } }, 'Przerwij dobijanie'))
+          el('button', { class: 'mp-btn bad', style: { marginLeft: 'auto' }, onclick: () => { unlock(`Slayer: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`); rerender(); } }, 'Przerwij dobijanie'))
           : el('div', { class: 'mp-dim' }, 'Brak. Ustaw klawiszem albo „Dobij" w menu gracza.')));
     },
     init(c) {
       cfg = c;
       if (!c._v15) { c._v15 = true; c.lvlMin = 0; c.lvlMax = 500; config.save(); }
       if (!c._v106) { c._v106 = true; c.allMode = false; config.save(); }   // dawniej: włączony dodatek = atak na każdego; teraz to osobny przełącznik
-      keys.bind({ label: 'Dobijarka: namierz / anuluj', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
-      keys.bind({ label: 'Dobijarka: każdy w pobliżu', get: () => cfg.keyAll || '', fn: () => { if (cfg.enabled) setAll(!cfg.allMode); } });
+      keys.bind({ label: 'Slayer: namierz / anuluj', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
+      keys.bind({ label: 'Slayer: każdy w pobliżu', get: () => cfg.keyAll || '', fn: () => { if (cfg.enabled) setAll(!cfg.allMode); } });
       menus.add('player', (id) => {
         if (!cfg.enabled) return [];
         // namierzony gracz → zamiast „Dobij" jest „Przerwij dobijanie" (cofa polecenie ataku)
         const pp = game.otherById(id);
-        if (S.lock && (S.lock.id === Number(id) || (pp && pp.nick === S.lock.nick))) return [{ label: 'Przerwij dobijanie', fn: () => unlock(`Dobijarka: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`) }];
+        if (S.lock && (S.lock.id === Number(id) || (pp && pp.nick === S.lock.nick))) return [{ label: 'Przerwij dobijanie', fn: () => unlock(`Slayer: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`) }];
         const p = game.otherById(id);
         if (!p || !allowed(p)) return [];
         return [{ label: 'Dobij', fn: () => lockOn(game.otherById(id) || p) }];
