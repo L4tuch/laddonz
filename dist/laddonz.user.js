@@ -5743,7 +5743,6 @@ MP.itemDeco = itemDeco;
           if (!rp.ok || badResp(rp.data)) { failed = true; break outer; }
           // podgląd zwraca składniki, które gra PRZYJMUJE — odrzucone (np. za niski poziom) zapamiętujemy i pomijamy
           let pv = pvOf(rp);
-          if (!lastProg && pv && Number(pv.max) > 0) lastProg = { lvl: Number(pv.upgradeLevel) || 0, cur: Number(pv.current) || 0, max: Number(pv.max) || 0 };
           if (pv && Array.isArray(pv.ingredients)) {
             const acc = new Set(pv.ingredients.map(Number));
             const rej = part.filter((i) => !acc.has(i.id)).map((i) => i.id);
@@ -5771,7 +5770,8 @@ MP.itemDeco = itemDeco;
           if (!part.length) continue;
           // nie przepalamy: jeśli te składniki dają więcej, niż brakuje do następnego poziomu — bierzemy najmniej,
           // ile trzeba, żeby go osiągnąć (szukanie połówkowe na podglądach, nic nie zużywają)
-          const reach = (x) => x && Number(x.current) + Number(x.gained) >= Number(x.max);
+          // w podglądzie „current” to już stan PO dodaniu składników (gra przycina go do „max”)
+          const reach = (x) => x && Number(x.max) > 0 && Number(x.current) >= Number(x.max);
           if (pv && Number(pv.max) > 0 && reach(pv) && part.length > 1) {
             let lo = 1, hi = part.length;
             while (lo < hi) {
@@ -5807,7 +5807,12 @@ MP.itemDeco = itemDeco;
           rest = rest.filter((i) => !useIds.includes(i.id));
           const sl = slots().find((x) => Number(x.id) === o.target.id);
           if (!sl) continue outer;
-          if (finalHit) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }
+          // +5 tylko wtedy, gdy potwierdza to odpowiedź gry (postęp pełny albo brak dalszego postępu)
+          if (finalHit) {
+            const pr = r.data && r.data.enhancement && r.data.enhancement.progressing;
+            const done = !pr || Number(pr.upgradeLevel) >= MAX_LVL || (Number(pr.max) > 0 && Number(pr.current) >= Number(pr.max));
+            if (done) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }
+          }
           // bezpiecznik: gra podała postęp „wstecz” (niższy poziom albo mniej punktów na tym samym poziomie) — przerywamy, żeby nic nie przepalić
           if (sl.prog && lastProg && (sl.prog.lvl < lastProg.lvl || (sl.prog.lvl === lastProg.lvl && sl.prog.cur < lastProg.cur))) {
             steps.push({ a: 'guard', before: lastProg, after: sl.prog }); saveSteps();
