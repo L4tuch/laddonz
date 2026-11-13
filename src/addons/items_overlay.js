@@ -693,7 +693,8 @@ MP.itemDeco = itemDeco;
     if (!n || !n.isConnected) return false;
     const r = n.getBoundingClientRect();
     if (r.width === 0 && r.height === 0) return false;
-    for (let p = n; p && p !== document.body; p = p.parentElement) { const cs = getComputedStyle(p); if (cs.display === 'none' || cs.opacity === '0') return false; }
+    let i = 0;
+    for (let p = n; p && p !== document.body && i < 4; p = p.parentElement, i++) { const cs = getComputedStyle(p); if (cs.display === 'none' || cs.opacity === '0') return false; }
     return true;
   }
   function watchHover() {
@@ -723,8 +724,11 @@ MP.itemDeco = itemDeco;
           // tylko dymek GRACZA: „Nick (poziom…)" — nie dymek przedmiotu z „Właściciel: Nick"
           // (dymek gracza w grze może już sam zawierać jego EQ — więc przedmioty w środku nie wykluczają dymka)
           if (/t_item/.test(n.getAttribute('data-tip-type') || '')) continue;
+          // ten sam dymek z tym samym tekstem — gracz już rozpoznany (bez przeliczania przy każdym ruchu myszy)
           const txt = (n.textContent || '').toLowerCase();
-          p = game.others().filter((o) => o.nick && new RegExp(o.nick.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(\\d').test(txt)).sort((a, b) => b.nick.length - a.nick.length)[0] || null;
+          const memo = tipMemo.get(n);
+          if (memo && memo.txt === txt && memo.p && game.otherById(memo.p.id)) p = memo.p;
+          else { p = nickOf(txt); tipMemo.set(n, { txt, p }); }
           if (p) { tipNode = n; break; }
         }
       }
@@ -740,7 +744,15 @@ MP.itemDeco = itemDeco;
 
     /** Okienko gracza z innego dodatku przy kursorze: element z tekstem „Nick (poziom…” gracza z mapy. */
     let foreign = null, lastForeignScan = 0;
-    const nickOf = (txt) => game.others().filter((o) => o.nick && new RegExp(o.nick.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(\\d').test(txt)).sort((a, b) => b.nick.length - a.nick.length)[0] || null;
+    const tipMemo = new WeakMap();
+    // nowe elementy na stronie (do szukania okienek innych dodatków) — zamiast przeszukiwać cały DOM
+    const added = [];
+    new MutationObserver((muts) => {
+      for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1 && !n.closest('#mp-eqtip, .mp-glass, .tip-wrapper')) { added.push(n); if (added.length > 40) added.shift(); }
+    }).observe(document.body, { childList: true, subtree: true });
+    const reCache = new Map();
+    const nickRe = (nick) => { let r = reCache.get(nick); if (!r) { r = new RegExp(nick.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(\\d'); reCache.set(nick, r); if (reCache.size > 500) reCache.clear(); } return r; };
+    const nickOf = (txt) => { if (!txt || !txt.includes('(')) return null; let best = null; for (const o of game.others()) if (o.nick && (!best || o.nick.length > best.nick.length) && txt.includes(o.nick.toLowerCase()) && nickRe(o.nick).test(txt)) best = o; return best; };
     const ours = (n) => !n || n === document.body || n === document.documentElement || n.tagName === 'CANVAS' || n.closest('#mp-eqtip, .mp-glass, #mp-qbar, #mp-launcher, .tip-wrapper');
     function findForeign() {
       if (foreign && foreign.n.isConnected && foreign.n.getBoundingClientRect().width > 0) {
@@ -757,9 +769,10 @@ MP.itemDeco = itemDeco;
       if (!at || !(at.tagName === 'CANVAS' || (at.closest && at.closest('.map, .map-overlay')))) return null;
       // okienka innych dodatków: dymki/podglądy (role/data-side z bibliotek UI, klasy tooltip/popover, pływające elementy „ll:”).
       // Szukamy po DOM, bo takie okienka zwykle nie łapią myszki (pointer-events:none) i nie da się ich znaleźć „pod kursorem”.
-      const SEL = '[role="tooltip"], [role="dialog"], [data-side], [class*="tooltip"], [class*="popover"], [class*="preview"], [class*="ll:fixed"], [class*="ll:absolute"], [class*="ll:z-"]';
       let best = null, bestD = 1e9;
-      for (const c of document.querySelectorAll(SEL)) {
+      for (let k = added.length - 1; k >= 0; k--) {
+        const c = added[k];
+        if (!c.isConnected) { added.splice(k, 1); continue; }
         if (ours(c)) continue;
         const r = c.getBoundingClientRect();
         // prawdziwe okienko podglądu (nie podpis nad głową gracza ani okno grupy): co najmniej 120×80
