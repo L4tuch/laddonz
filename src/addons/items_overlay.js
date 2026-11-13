@@ -693,10 +693,88 @@ MP.itemDeco = itemDeco;
     for (let p = n; p && p !== document.body && i < 4; p = p.parentElement, i++) { const cs = getComputedStyle(p); if (cs.display === 'none' || cs.opacity === '0') return false; }
     return true;
   }
-  /** Podsumowanie bonusów dopisane na dole dymka gry (gdy gra sama pokazuje EQ gracza). */
-  function augmentTip(t) {
+  /*
+   * Dymek gracza z EQ (gra albo inny dodatek — siatka „dad-eq-grid”): przedmioty nie mają tam numerów, tylko slot
+   * (data-st), ramkę rzadkości (t-leg = legenda) i obrazek. Dopisujemy skróty bonusów na legendach i podsumowanie legend.
+   * Dane bonusów: z tego, co dodatek już zna (wcześniejszy podgląd tego gracza / przedmioty widziane w grze),
+   * a gdy czegoś brakuje — RAZ pobieramy EQ tego gracza w tle (wynik pamiętany przez 5 minut).
+   */
+  const iconKey = (src) => String(src || '').split('?')[0].replace(/^.*?\/(obrazki|itemy|items?)\//i, '').toLowerCase().split('/').slice(-2).join('/');
+  const bgBusy = new Set();
+  function knownItems(pid) {
+    const c = cache[pid];
+    return c && Array.isArray(c.items) && now() - c.t < (cfg.cacheSec || 300) * 1000 ? c.items : null;
+  }
+  function itemForSlot(pid, st, src) {
+    const list = knownItems(pid);
+    const k = iconKey(src);
+    if (list) {
+      const bySt = list.find((it) => Number(it.st || (it.raw && it.raw.st)) === st && it.name);
+      if (bySt) return bySt;
+      const byIcon = list.find((it) => it.icon && iconKey(game.iconUrl(it.icon)) === k);
+      if (byIcon) return byIcon;
+    }
+    // przedmioty widziane wcześniej w grze — po obrazku
+    for (const v of seenItems.values()) {
+      if (v && v.icon && iconKey(game.iconUrl(v.icon)) === k && String(v.stat || '').includes('legbon')) { try { return game.normItem(v); } catch {} }
+    }
+    return null;
+  }
+  async function bgFetch(pid) {
+    if (bgBusy.has(pid) || busy) return;
+    bgBusy.add(pid);
+    try {
+      busy = true;
+      const items = await fetchRaw(pid);
+      if (Array.isArray(items) && items.length) cache[pid] = { t: now(), items };
+    } catch {} finally { busy = false; bgBusy.delete(pid); }
+  }
+  function augmentTip(t, p) {
+    try {
+      const grid = t.querySelector('.dad-eq-grid');
+      if (!grid) return augmentTipIds(t);
+      const slots = $$('.dad-eq-slot', grid).filter((sl) => sl.querySelector('.item'));
+      const legs = slots.filter((sl) => sl.querySelector('.highlight.t-leg, [class*="t-leg"]'));
+      const pid = p && p.id;
+      // szybkie wyjście (wywołujemy to przy każdym ruchu myszy): dopisek już jest i nic nowego się nie dowiemy
+      const base = pid + '|' + legs.map((sl) => sl.dataset.st).join(',');
+      const cur = t.querySelector(':scope .mp-tipsum');
+      if (cur && cur.dataset.base === base && (cur.dataset.full === '1' || bgBusy.has(pid) || now() - Number(cur.dataset.t || 0) < 800)) return;
+      const found = legs.map((sl) => ({ sl, it: pid ? itemForSlot(pid, Number(sl.dataset.st), (sl.querySelector('img.icon, img') || {}).src) : null }));
+      const missing = found.filter((f) => !f.it || !f.it.legbon).length;
+      const sig = pid + '|' + legs.map((sl) => sl.dataset.st).join(',') + '|' + (legs.length - missing);
+      const have = t.querySelector(':scope .mp-tipsum');
+      if (have && have.dataset.sig === sig) return;
+      if (have) have.remove();
+      // znaczki na legendach
+      for (const f of found) {
+        const node = f.sl.querySelector('.item');
+        if (!node) continue;
+        node.querySelectorAll(':scope > .mp-ibadge.bon').forEach((b) => b.remove());
+        if (f.it && f.it.legbon) {
+          if (getComputedStyle(node).position === 'static') node.style.position = 'relative';
+          node.appendChild(el('div', { class: 'mp-ibadge bon', title: MP.legName(f.it.legbon) }, MP.legAbbr(f.it.legbon, f.it.raw)));
+        }
+      }
+      // podsumowanie: same legendy
+      const sum = {};
+      found.forEach((f) => { if (!f.it || !f.it.legbon) return; const k = MP.legKey(f.it.legbon); sum[k] = sum[k] || { n: 0, code: f.it.legbon, raw: f.it.raw }; sum[k].n++; });
+      let body;
+      if (!legs.length) body = el('div', { class: 'mp-dim' }, 'Brak legend');
+      else if (Object.keys(sum).length) body = el('div', { class: 'mp-eqbons' }, Object.values(sum).map((x) => el('span', { class: 'mp-chip', title: MP.legName(x.code) }, `${MP.legAbbr(x.code, x.raw)} ×${x.n}`)), missing ? el('span', { class: 'mp-dim' }, ' …') : null);
+      else body = el('div', { class: 'mp-dim' }, 'Wczytuję bonusy…');
+      const box = el('div', { class: 'mp-tipsum' }, body);
+      box.dataset.sig = sig; box.dataset.base = base; box.dataset.full = missing ? '0' : '1'; box.dataset.t = String(now());
+      t.querySelector('.content') ? t.querySelector('.content').appendChild(box) : t.appendChild(box);
+      // czegoś nie znamy — raz pobieramy EQ gracza w tle, potem dopisujemy od nowa
+      if (missing && pid && !bgBusy.has(pid) && !knownItems(pid)) bgFetch(pid).then(() => { if (t.isConnected) augmentTip(t, p); });
+    } catch (e) { console.warn('[L4Tools] Pokaż EQ', e); }
+  }
+  /** Stary rodzaj dymka z przedmiotami z numerami (item-id). */
+  function augmentTipIds(t) {
     try {
       const els = $$('[class*="item-id-"]', t).filter((n) => /item-id-\d+/.test(String(n.className)));
+      if (!els.length) return;
       const sig = els.map((n) => String(n.className).match(/item-id-(\d+)/)[1]).join(',');
       const have = t.querySelector(':scope .mp-tipsum');
       if (have && have.dataset.sig === sig) return;
@@ -708,11 +786,10 @@ MP.itemDeco = itemDeco;
         const it = game.normItem(r0); it.id = iid; return it;
       });
       if (have) have.remove();
-      if (!els.length) return;
       const box = el('div', { class: 'mp-tipsum' }, summaryEl(items));
       box.dataset.sig = sig;
       t.appendChild(box);
-      bus.emit('deco');   // znaczki bonusów na przedmiotach w dymku
+      bus.emit('deco');
     } catch {}
   }
   /** Podsumowanie bonusów także w oknie „Ekwipunek Postaci” z gry (gdy sam je otworzysz). */
@@ -778,7 +855,7 @@ MP.itemDeco = itemDeco;
       if (p && tipNode) {
         // na mapie: zostaje dymek gry (z jego EQ) — dopisujemy tylko bonusy; bez własnego okienka i bez pytania serwera
         if (src === 'map') { src = null; hide(); }
-        augmentTip(tipNode);
+        augmentTip(tipNode, p);
         return;
       }
       // gra potrafi na ułamek sekundy przerysować/odświeżyć swój dymek — chowamy dopiero, gdy dymka nie ma przez 250 ms
