@@ -129,9 +129,16 @@
    * Czerwona strzałka przy postaci, wskazująca kierunek do namierzonego celu (jak strzałki przejść w grze).
    * Pozycja postaci na ekranie: kamera gry trzyma postać na środku planszy, a przy brzegach mapy się zatrzymuje.
    */
-  // strzałka jak strzałki przejść z gry: rysowana „na skos" (w prawo-w dół), jasna kremowa obwódka, wnętrze z połyskiem — tylko czerwone
-  const ARROW = '<svg viewBox="0 0 20 20" width="26" height="26"><defs><linearGradient id="mpDbA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a7c"/><stop offset=".45" stop-color="#d9261e"/><stop offset="1" stop-color="#7a0b0b"/></linearGradient><linearGradient id="mpDbB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f1e4c6"/><stop offset="1" stop-color="#f0b98f"/></linearGradient></defs>'
-    + '<path d="M17 4.5V17H4.5l4.2-4.2L2.8 6.9l4.1-4.1 5.9 5.9z" fill="url(#mpDbA)" stroke="url(#mpDbB)" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+  /*
+   * Strzałka jak strzałka kierunku z gry (np. zadania Zakonu Równowagi): krępa strzałka z kremową obwódką,
+   * światło zawsze z lewej-góry (obraca się sam kształt, nie cieniowanie), płynny obrót i płynne krążenie wokół postaci.
+   */
+  const AR_SIZE = 24, AR_R = 58;
+  const AR_PATH = 'M-7 -7L7 -7L7 7L3.2 3.2L-2.6 9L-9 2.6L-3.2 -3.2Z';   // grot w prawo-w górę… obracany w kodzie
+  const ARROW = `<svg viewBox="-12 -12 24 24" width="${AR_SIZE}" height="${AR_SIZE}" overflow="visible"><defs>`
+    + '<linearGradient id="mpDbA" gradientUnits="userSpaceOnUse" x1="-8" y1="-8" x2="8" y2="8"><stop offset="0" stop-color="#ff9a8c"/><stop offset=".42" stop-color="#e1281f"/><stop offset="1" stop-color="#7c0909"/></linearGradient>'
+    + '<linearGradient id="mpDbB" gradientUnits="userSpaceOnUse" x1="-8" y1="-8" x2="8" y2="8"><stop offset="0" stop-color="#fffdf6"/><stop offset=".55" stop-color="#f3e7cb"/><stop offset="1" stop-color="#f2b78a"/></linearGradient>'
+    + `</defs><path class="sh" d="${AR_PATH}" fill="rgba(0,0,0,.28)" stroke="rgba(0,0,0,.28)" stroke-width="2.2" stroke-linejoin="round"/><path class="ar" d="${AR_PATH}" fill="url(#mpDbA)" stroke="url(#mpDbB)" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
   function gameCanvas() {
     const c = document.getElementById('GAME_CANVAS');
     if (c && c.getBoundingClientRect().width) return c;
@@ -148,30 +155,51 @@
     const md = (E.map && E.map.d) || {};
     const T = 32 * (cv && cv.width ? r.width / cv.width : 1);
     const ax = (mw, vw, p) => { if (!(mw > 0)) return vw / 2; const full = mw * T; if (full <= vw) return (vw - full) / 2 + p; return p - Math.max(0, Math.min(full - vw, p - vw / 2)); };
-    return { x: r.left + ax(Number(md.x), r.width, (hx + 0.5) * T), y: r.top + ax(Number(md.y), r.height, (hy + 0.5) * T) - T * 0.4, r };
+    return { x: r.left + ax(Number(md.x), r.width, (hx + 0.5) * T), y: r.top + ax(Number(md.y), r.height, (hy + 0.5) * T) - T * 0.4, r, hx, hy };
   }
-  let arrowTimer = null;
+  let arrowTimer = null, arrowRaf = 0, arTarget = null;
+  const AR = { x: 0, y: 0, a: 0, on: false };
+  /** Co ~100 ms: gdzie jest cel (logika gry). */
   function arrowTick() {
-    let a = document.getElementById('mp-dbarrow');
     const p = cfg && cfg.enabled && S.lock && lockedPlayer();
     const h = p && game.hero();
-    const pos = h && heroScreen();
-    if (!p || !h || !pos || game.inBattle() || dist(h, p) <= RANGE) { if (a) a.style.display = 'none'; return; }
+    if (!p || !h || game.inBattle() || dist(h, p) <= RANGE) { arTarget = null; return; }
+    const raw = p.raw || {};
+    const tx = Number(raw.rx != null ? raw.rx : raw.d && raw.d.rx != null ? raw.d.rx : p.x), ty = Number(raw.ry != null ? raw.ry : raw.d && raw.d.ry != null ? raw.d.ry : p.y);
+    arTarget = { x: Number.isFinite(tx) ? tx : p.x, y: Number.isFinite(ty) ? ty : p.y, nick: p.nick, d: dist(h, p) };
+    if (!arrowRaf) arrowRaf = requestAnimationFrame(arrowFrame);
+  }
+  /** Każda klatka: płynny obrót i płynne krążenie wokół postaci. */
+  function arrowFrame() {
+    arrowRaf = 0;
+    let a = document.getElementById('mp-dbarrow');
+    const pos = arTarget && heroScreen();
+    if (!arTarget || !pos) {
+      if (a) a.style.opacity = '0';
+      AR.on = false;
+      return;
+    }
     if (!a) { a = el('div', { id: 'mp-dbarrow', class: 'mp-dbarrow' }); a.innerHTML = ARROW; document.body.appendChild(a); }
-    // 8 kierunków, jak strzałki w grze
-    const ang = Math.round(Math.atan2(p.y - h.y, p.x - h.x) / (Math.PI / 4)) * (Math.PI / 4);
-    const R0 = 40;
-    a.style.display = '';
-    a.style.left = Math.round(pos.x + Math.cos(ang) * R0 - 13) + 'px';
-    a.style.top = Math.round(pos.y + Math.sin(ang) * R0 - 13) + 'px';
-    a.style.transform = `rotate(${ang - Math.PI / 4}rad)`;   // grafika wskazuje w prawo-w dół (45°)
-    a.title = `Cel: ${p.nick} (${dist(h, p)} kratek)`;
+    const want = Math.atan2(arTarget.y - pos.hy, arTarget.x - pos.hx);
+    if (!AR.on) { AR.a = want; AR.x = pos.x; AR.y = pos.y; AR.on = true; }
+    let d = want - AR.a; d = Math.atan2(Math.sin(d), Math.cos(d));   // najkrótsza droga obrotu
+    AR.a += d * 0.18;
+    AR.x += (pos.x - AR.x) * 0.35; AR.y += (pos.y - AR.y) * 0.35;
+    const cx = AR.x + Math.cos(AR.a) * AR_R, cy = AR.y + Math.sin(AR.a) * AR_R;
+    a.style.opacity = '1';
+    a.style.transform = `translate3d(${(cx - AR_SIZE / 2).toFixed(2)}px, ${(cy - AR_SIZE / 2).toFixed(2)}px, 0)`;
+    // obracamy sam kształt (grot rysowany w prawo-w górę = -45°), cieniowanie zostaje z lewej-góry jak w grze
+    const deg = ((AR.a + Math.PI / 4) * 180 / Math.PI).toFixed(2);
+    a.querySelectorAll('path').forEach((pth, i) => pth.setAttribute('transform', i === 0 ? `translate(.8 1.2) rotate(${deg})` : `rotate(${deg})`));
+    a.title = `Cel: ${arTarget.nick} (${arTarget.d} kratek)`;
+    arrowRaf = requestAnimationFrame(arrowFrame);
   }
   function ensureArrow() {
     const need = !!(cfg && cfg.enabled && S.lock);
-    if (need && !arrowTimer) arrowTimer = setInterval(arrowTick, 120);
+    if (need && !arrowTimer) arrowTimer = setInterval(arrowTick, 100);
     if (!need && arrowTimer) { clearInterval(arrowTimer); arrowTimer = null; }
     arrowTick();
+    if (!need) { arTarget = null; if (!arrowRaf) arrowRaf = requestAnimationFrame(arrowFrame); }
   }
 
   /* ── pętla: namierzony cel + tryb włączony ── */

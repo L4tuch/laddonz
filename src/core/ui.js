@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.14', d: '13.11.2026', items: [
+    'Slayer: strzałka do celu działa jak strzałka zadań z gry — płynnie krąży wokół postaci i płynnie się obraca (dowolny kąt, nie skokami), a światło zostaje z lewej-góry jak w grze.',
+  ] },
   { v: '1.0.13', d: '13.11.2026', items: [
     'Dobijarka nazywa się teraz Slayer — w panelu, skrótach i komunikatach („Slayer: dobijam Nick”, „Slayer: przerwano dobijanie Nick”). W menu gracza zostają „Dobij” i „Przerwij dobijanie”. Ustawienia zostają bez zmian.',
     'Slayer: okienko zakresu nazywa się „Slayer - Zakres poziomów”.',

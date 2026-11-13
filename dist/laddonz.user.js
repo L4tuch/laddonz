@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.13
+// @version      1.0.14
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -1630,7 +1630,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 
 /* Ulepszarka: ciche pobranie licznika — okno Rzemiosła niewidoczne przez chwilę */
 .mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){clip-path:inset(50%)!important;pointer-events:none!important}
-.mp-dbarrow{position:fixed;width:26px;height:26px;z-index:2147481000;pointer-events:none}
+.mp-dbarrow{position:fixed;left:0;top:0;width:24px;height:24px;z-index:2147481000;pointer-events:none;opacity:0;transition:opacity .25s;will-change:transform}
 .mp-dbw{position:fixed;left:calc(50% - 120px);top:90px;width:240px;z-index:2147482000;background:rgba(16,20,16,.94);border:1px solid #3c5a3f;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.55);font:12px/1.3 Arial,sans-serif;color:#e4eee5;user-select:none}
 .mp-dbw-h{display:flex;align-items:center;justify-content:space-between;padding:5px 6px 5px 9px;cursor:move;border-bottom:1px solid #2b3d2d;font-weight:700;color:#ff8a9c}
 .mp-dbw-h button{background:none;border:0;color:#cfd8d0;font-size:16px;line-height:1;cursor:pointer;padding:0 4px}
@@ -2180,6 +2180,9 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.14', d: '13.11.2026', items: [
+    'Slayer: strzałka do celu działa jak strzałka zadań z gry — płynnie krąży wokół postaci i płynnie się obraca (dowolny kąt, nie skokami), a światło zostaje z lewej-góry jak w grze.',
+  ] },
   { v: '1.0.13', d: '13.11.2026', items: [
     'Dobijarka nazywa się teraz Slayer — w panelu, skrótach i komunikatach („Slayer: dobijam Nick”, „Slayer: przerwano dobijanie Nick”). W menu gracza zostają „Dobij” i „Przerwij dobijanie”. Ustawienia zostają bez zmian.',
     'Slayer: okienko zakresu nazywa się „Slayer - Zakres poziomów”.',
@@ -3152,9 +3155,16 @@ function parseProtection(data) {
    * Czerwona strzałka przy postaci, wskazująca kierunek do namierzonego celu (jak strzałki przejść w grze).
    * Pozycja postaci na ekranie: kamera gry trzyma postać na środku planszy, a przy brzegach mapy się zatrzymuje.
    */
-  // strzałka jak strzałki przejść z gry: rysowana „na skos" (w prawo-w dół), jasna kremowa obwódka, wnętrze z połyskiem — tylko czerwone
-  const ARROW = '<svg viewBox="0 0 20 20" width="26" height="26"><defs><linearGradient id="mpDbA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a7c"/><stop offset=".45" stop-color="#d9261e"/><stop offset="1" stop-color="#7a0b0b"/></linearGradient><linearGradient id="mpDbB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset=".6" stop-color="#f1e4c6"/><stop offset="1" stop-color="#f0b98f"/></linearGradient></defs>'
-    + '<path d="M17 4.5V17H4.5l4.2-4.2L2.8 6.9l4.1-4.1 5.9 5.9z" fill="url(#mpDbA)" stroke="url(#mpDbB)" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+  /*
+   * Strzałka jak strzałka kierunku z gry (np. zadania Zakonu Równowagi): krępa strzałka z kremową obwódką,
+   * światło zawsze z lewej-góry (obraca się sam kształt, nie cieniowanie), płynny obrót i płynne krążenie wokół postaci.
+   */
+  const AR_SIZE = 24, AR_R = 58;
+  const AR_PATH = 'M-7 -7L7 -7L7 7L3.2 3.2L-2.6 9L-9 2.6L-3.2 -3.2Z';   // grot w prawo-w górę… obracany w kodzie
+  const ARROW = `<svg viewBox="-12 -12 24 24" width="${AR_SIZE}" height="${AR_SIZE}" overflow="visible"><defs>`
+    + '<linearGradient id="mpDbA" gradientUnits="userSpaceOnUse" x1="-8" y1="-8" x2="8" y2="8"><stop offset="0" stop-color="#ff9a8c"/><stop offset=".42" stop-color="#e1281f"/><stop offset="1" stop-color="#7c0909"/></linearGradient>'
+    + '<linearGradient id="mpDbB" gradientUnits="userSpaceOnUse" x1="-8" y1="-8" x2="8" y2="8"><stop offset="0" stop-color="#fffdf6"/><stop offset=".55" stop-color="#f3e7cb"/><stop offset="1" stop-color="#f2b78a"/></linearGradient>'
+    + `</defs><path class="sh" d="${AR_PATH}" fill="rgba(0,0,0,.28)" stroke="rgba(0,0,0,.28)" stroke-width="2.2" stroke-linejoin="round"/><path class="ar" d="${AR_PATH}" fill="url(#mpDbA)" stroke="url(#mpDbB)" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
   function gameCanvas() {
     const c = document.getElementById('GAME_CANVAS');
     if (c && c.getBoundingClientRect().width) return c;
@@ -3171,30 +3181,51 @@ function parseProtection(data) {
     const md = (E.map && E.map.d) || {};
     const T = 32 * (cv && cv.width ? r.width / cv.width : 1);
     const ax = (mw, vw, p) => { if (!(mw > 0)) return vw / 2; const full = mw * T; if (full <= vw) return (vw - full) / 2 + p; return p - Math.max(0, Math.min(full - vw, p - vw / 2)); };
-    return { x: r.left + ax(Number(md.x), r.width, (hx + 0.5) * T), y: r.top + ax(Number(md.y), r.height, (hy + 0.5) * T) - T * 0.4, r };
+    return { x: r.left + ax(Number(md.x), r.width, (hx + 0.5) * T), y: r.top + ax(Number(md.y), r.height, (hy + 0.5) * T) - T * 0.4, r, hx, hy };
   }
-  let arrowTimer = null;
+  let arrowTimer = null, arrowRaf = 0, arTarget = null;
+  const AR = { x: 0, y: 0, a: 0, on: false };
+  /** Co ~100 ms: gdzie jest cel (logika gry). */
   function arrowTick() {
-    let a = document.getElementById('mp-dbarrow');
     const p = cfg && cfg.enabled && S.lock && lockedPlayer();
     const h = p && game.hero();
-    const pos = h && heroScreen();
-    if (!p || !h || !pos || game.inBattle() || dist(h, p) <= RANGE) { if (a) a.style.display = 'none'; return; }
+    if (!p || !h || game.inBattle() || dist(h, p) <= RANGE) { arTarget = null; return; }
+    const raw = p.raw || {};
+    const tx = Number(raw.rx != null ? raw.rx : raw.d && raw.d.rx != null ? raw.d.rx : p.x), ty = Number(raw.ry != null ? raw.ry : raw.d && raw.d.ry != null ? raw.d.ry : p.y);
+    arTarget = { x: Number.isFinite(tx) ? tx : p.x, y: Number.isFinite(ty) ? ty : p.y, nick: p.nick, d: dist(h, p) };
+    if (!arrowRaf) arrowRaf = requestAnimationFrame(arrowFrame);
+  }
+  /** Każda klatka: płynny obrót i płynne krążenie wokół postaci. */
+  function arrowFrame() {
+    arrowRaf = 0;
+    let a = document.getElementById('mp-dbarrow');
+    const pos = arTarget && heroScreen();
+    if (!arTarget || !pos) {
+      if (a) a.style.opacity = '0';
+      AR.on = false;
+      return;
+    }
     if (!a) { a = el('div', { id: 'mp-dbarrow', class: 'mp-dbarrow' }); a.innerHTML = ARROW; document.body.appendChild(a); }
-    // 8 kierunków, jak strzałki w grze
-    const ang = Math.round(Math.atan2(p.y - h.y, p.x - h.x) / (Math.PI / 4)) * (Math.PI / 4);
-    const R0 = 40;
-    a.style.display = '';
-    a.style.left = Math.round(pos.x + Math.cos(ang) * R0 - 13) + 'px';
-    a.style.top = Math.round(pos.y + Math.sin(ang) * R0 - 13) + 'px';
-    a.style.transform = `rotate(${ang - Math.PI / 4}rad)`;   // grafika wskazuje w prawo-w dół (45°)
-    a.title = `Cel: ${p.nick} (${dist(h, p)} kratek)`;
+    const want = Math.atan2(arTarget.y - pos.hy, arTarget.x - pos.hx);
+    if (!AR.on) { AR.a = want; AR.x = pos.x; AR.y = pos.y; AR.on = true; }
+    let d = want - AR.a; d = Math.atan2(Math.sin(d), Math.cos(d));   // najkrótsza droga obrotu
+    AR.a += d * 0.18;
+    AR.x += (pos.x - AR.x) * 0.35; AR.y += (pos.y - AR.y) * 0.35;
+    const cx = AR.x + Math.cos(AR.a) * AR_R, cy = AR.y + Math.sin(AR.a) * AR_R;
+    a.style.opacity = '1';
+    a.style.transform = `translate3d(${(cx - AR_SIZE / 2).toFixed(2)}px, ${(cy - AR_SIZE / 2).toFixed(2)}px, 0)`;
+    // obracamy sam kształt (grot rysowany w prawo-w górę = -45°), cieniowanie zostaje z lewej-góry jak w grze
+    const deg = ((AR.a + Math.PI / 4) * 180 / Math.PI).toFixed(2);
+    a.querySelectorAll('path').forEach((pth, i) => pth.setAttribute('transform', i === 0 ? `translate(.8 1.2) rotate(${deg})` : `rotate(${deg})`));
+    a.title = `Cel: ${arTarget.nick} (${arTarget.d} kratek)`;
+    arrowRaf = requestAnimationFrame(arrowFrame);
   }
   function ensureArrow() {
     const need = !!(cfg && cfg.enabled && S.lock);
-    if (need && !arrowTimer) arrowTimer = setInterval(arrowTick, 120);
+    if (need && !arrowTimer) arrowTimer = setInterval(arrowTick, 100);
     if (!need && arrowTimer) { clearInterval(arrowTimer); arrowTimer = null; }
     arrowTick();
+    if (!need) { arTarget = null; if (!arrowRaf) arrowRaf = requestAnimationFrame(arrowFrame); }
   }
 
   /* ── pętla: namierzony cel + tryb włączony ── */
@@ -8304,5 +8335,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.13";
+MP.version = "1.0.14";
 })();
