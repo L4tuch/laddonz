@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.4
+// @version      1.0.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2164,6 +2164,11 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.5', d: '13.11.2026', items: [
+    'Panel ma jeden kolor — zieleń gry (usunięty wybór koloru akcentu).',
+    'Ulepszarka: po każdym ulepszeniu komunikat na ekranie — ile ulepszeń dziś już zużyto (np. 125 / 2000) i postęp przedmiotu do +5 w %. Działa też przy ulepszaniu ręcznym w oknie Rzemiosła. Można wyłączyć w ustawieniach Ulepszarki.',
+    'Ulepszarka: przy każdym ulepszanym przedmiocie postęp całego ulepszenia do +5 w % i pasek.',
+  ] },
   { v: '1.0.4', d: '12.11.2026', items: [
     'Skróty dodatków: kafelki zawsze czarne — ikonka włączonego dodatku świeci na zielono, wyłączonego jest szara.',
   ] },
@@ -2244,7 +2249,7 @@ const ui = {
 
   applyTheme() {
     const g = config.data.global;
-    if (!this.THEMES[g.theme]) g.theme = 'margo';
+    g.theme = 'margo';   // jeden kolor panelu — zieleń gry
     if (!(g.glass >= 0.6)) g.glass = 0.9;   // nowy wygląd: prawie kryjące tło jak okna gry
     const t = this.THEMES[g.theme];
     g.accent = t.accent;
@@ -2537,8 +2542,6 @@ const ui = {
     // panel
     const pc = el('div', { class: 'mp-card' }, el('h3', null, 'Panel'));
     pc.appendChild(field({ key: 'panelKey', type: 'key', label: 'Skrót otwierający panel' }, g, () => config.save()));
-    pc.appendChild(el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } }, el('div', { class: 'lb' }, 'Kolor akcentu'),
-      el('div', { class: 'l4-acc' }, Object.entries(this.THEMES).map(([k, t]) => el('button', { class: 'l4-accb' + (g.theme === k ? ' on' : ''), title: t.name, style: { '--c': t.accent }, onclick: () => { g.theme = k; config.save(); this.applyTheme(); this.renderMain(); } }, el('i'), t.name)))));
     pc.appendChild(field({ key: 'glass', type: 'range', label: 'Krycie tła okien', min: 0.6, max: 1, step: 0.02, live: () => this.applyTheme() }, g, () => { config.save(); this.applyTheme(); }));
     M.appendChild(pc);
 
@@ -5159,6 +5162,7 @@ MP.itemDeco = itemDeco;
     const c = W.Engine && W.Engine.crafting;
     if (!c || typeof c.triggerOpen !== 'function') return;
     document.documentElement.classList.add('mp-ul-silent');
+    silentRun = true;
     let got = false;
     const off = () => { got = true; };
     bus.on('enhusage', off);
@@ -5168,11 +5172,51 @@ MP.itemDeco = itemDeco;
     } catch {}
     try { if (net.craftOpen() && !openedByUs) closeCraft(); } catch {}
     for (let i = 0; i < 10 && net.craftOpen(); i++) { await sleep(100); try { closeCraft(); } catch {} }
-    setTimeout(() => document.documentElement.classList.remove('mp-ul-silent'), 250);
+    setTimeout(() => { document.documentElement.classList.remove('mp-ul-silent'); silentRun = false; prevCount = cfg.usages ? Number(cfg.usages.count) : prevCount; }, 250);
     limitSeen.unshift({ t: new Date().toISOString().slice(11, 19), src: 'start gry (w tle)', count: got ? (cfg.usages || {}).count : '—', limit: got ? (cfg.usages || {}).limit : '—' });
     void before;
   }
   bus.on('enhresp', (d) => onUsages(d, 'okno rzemiosła'));
+  /*
+   * Postęp całego ulepszania do +5. Gra podaje punkty tylko dla bieżącego poziomu; kolejne poziomy wymagają
+   * (z obserwacji odpowiedzi gry) ×1 · ×1,1 · ×1,3 · ×1,6 · ×2,0 punktów poziomu +0 — z tego liczymy całość.
+   */
+  const LVL_MULT = [1, 1.1, 1.3, 1.6, 2.0];
+  function pctTo5(p) {
+    if (!p || !p.max) return null;
+    const lvl = Number(p.lvl) || 0;
+    if (lvl >= 5) return 100;
+    const base = p.max / LVL_MULT[lvl];
+    const total = base * LVL_MULT.reduce((a, b) => a + b, 0);
+    const done = base * LVL_MULT.slice(0, lvl).reduce((a, b) => a + b, 0) + Math.min(p.cur, p.max);
+    return Math.max(0, Math.min(100, Math.round((done / total) * 1000) / 10));
+  }
+  /** Postęp ulepszanego przedmiotu z każdej odpowiedzi gry (także ręczne ulepszanie w oknie Rzemiosła). */
+  let lastItem = null;
+  function onProgress(d) {
+    try {
+      const e = d && d.enhancement; if (!e || !cfg) return;
+      const pr = e.progressing; if (!pr || !e.itemId) return;
+      const sl = slots().find((s) => Number(s.id) === Number(e.itemId));
+      const prog = { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 };
+      const it = game.itemById(e.itemId);
+      lastItem = { name: (sl && sl.name) || (it && it.name) || 'przedmiot', prog };
+      if (sl) { sl.prog = prog; config.save(); }
+    } catch {}
+  }
+  bus.on('data', onProgress);
+  bus.on('enhresp', onProgress);
+  /** Komunikat na ekranie po ulepszeniu: dzienny limit + postęp przedmiotu do +5. */
+  const announce = debounce(() => {
+    if (!cfg || !cfg.enabled || cfg.notify === false || !cfg.usages) return;
+    const u = cfg.usages;
+    let msg = `Ulepszarka: dziś ${u.count} / ${u.limit} ulepszeń`;
+    if (u.limit && u.count >= u.limit) msg += ' — limit wyczerpany';
+    if (lastItem && lastItem.prog) { const p = pctTo5(lastItem.prog); msg += ` · ${lastItem.name}: +${lastItem.prog.lvl}${p != null ? ` (${String(p).replace('.', ',')}% do +5)` : ''}`; }
+    toast(msg, u.limit && u.count >= u.limit ? 'warn' : 'ok', 4500);
+  }, 900);
+  bus.on('enhusage', (u) => { if (silentRun) return; if (prevCount != null && Number(u.count) > prevCount) announce(); prevCount = Number(u.count); });
+  let prevCount = null, silentRun = false;
   /** Odpowiedź gry „maksymalny poziom" → przedmiot znika z listy. */
   const maxResp = (o) => (data) => {
     // postęp ulepszania i dzienny limit — z odpowiedzi gry (enhancement.progressing / usages_preview)
@@ -5605,20 +5649,22 @@ MP.itemDeco = itemDeco;
         return chip(l, s.types.includes(k), () => { s.types = s.types.includes(k) ? s.types.filter((x) => x !== k) : s.types.concat(k); config.save(); rr(); }, owner && owner.name);
       })),
       !s.types.length ? el('div', { class: 'mp-warnc', style: { marginTop: '6px' } }, 'Wybierz przynajmniej jeden typ — inaczej ten przedmiot nie będzie ulepszany.') : null,
-      el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, `Pasujące w torbie teraz: ${cnt}` + (s.prog && s.prog.max ? ` · poziom +${enhLevel(it) != null ? enhLevel(it) : s.prog.lvl} · postęp ${s.prog.cur} / ${s.prog.max}` : (enhLevel(it) != null ? ` · poziom +${enhLevel(it)}` : ''))),
-      s.prog && s.prog.max ? el('div', { class: 'mp-upbar' }, el('i', { style: { width: Math.min(100, Math.round(100 * s.prog.cur / s.prog.max)) + '%' } })) : null);
+      el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, `Pasujące w torbie teraz: ${cnt}` + (s.prog && s.prog.max ? ` · poziom +${enhLevel(it) != null ? enhLevel(it) : s.prog.lvl} · postęp poziomu ${s.prog.cur} / ${s.prog.max}` : (enhLevel(it) != null ? ` · poziom +${enhLevel(it)}` : ''))),
+      s.prog && s.prog.max ? el('div', { class: 'mp-dim', style: { marginTop: '3px', color: '#cfe8b8' } }, `Całe ulepszenie do +5: ${String(pctTo5(s.prog)).replace('.', ',')}%`) : null,
+      s.prog && s.prog.max ? el('div', { class: 'mp-upbar', title: 'Postęp całego ulepszenia do +5' }, el('i', { style: { width: pctTo5(s.prog) + '%' } })) : null);
   }
 
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
     desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
-    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, freeAuto: false, freeAt: 0 },
+    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notify: true, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
       !net.cmd('enhance').verified ? { type: 'info', text: 'Ulepsz raz ręcznie w oknie rzemiosła — Ulepszarka sama się nauczy.' } : null,
     ],
     settings: [
       { group: 'Ustawienia', key: 'key', type: 'key', label: 'Klawisz: ulepsz teraz' },
+      { group: 'Ustawienia', key: 'notify', type: 'bool', label: 'Komunikat po ulepszeniu', hint: 'Na ekranie: ile ulepszeń dziś już zużyto (np. 125 / 2000) i jak idzie całe ulepszenie przedmiotu do +5 w %.' },
       { group: 'Ustawienia', key: 'confirm', type: 'bool', label: 'Pokazuj listę przedmiotów przed ulepszeniem', hint: 'Lista zużywanych przedmiotów z ich rzadkością (zwykły, unikat, heroiczny…).' },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAuto', type: 'bool', label: 'Włączone', rerender: true },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAt', type: 'number', show: (c) => c.freeAuto, label: 'Ulepsz, gdy w torbie zostanie tyle wolnych miejsc (0 = torba pełna)', min: 0, max: 100, hint: 'Gdy zostanie tyle wolnych miejsc (lub mniej), Ulepszarka sama ulepszy wszystkie wybrane przedmioty. 0 = dopiero gdy torba jest pełna. Nie działa w trakcie walki.' },
@@ -7951,5 +7997,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.4";
+MP.version = "1.0.5";
 })();

@@ -5,6 +5,11 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.5', d: '13.11.2026', items: [
+    'Panel ma jeden kolor — zieleń gry (usunięty wybór koloru akcentu).',
+    'Ulepszarka: po każdym ulepszeniu komunikat na ekranie — ile ulepszeń dziś już zużyto (np. 125 / 2000) i postęp przedmiotu do +5 w %. Działa też przy ulepszaniu ręcznym w oknie Rzemiosła. Można wyłączyć w ustawieniach Ulepszarki.',
+    'Ulepszarka: przy każdym ulepszanym przedmiocie postęp całego ulepszenia do +5 w % i pasek.',
+  ] },
   { v: '1.0.4', d: '12.11.2026', items: [
     'Skróty dodatków: kafelki zawsze czarne — ikonka włączonego dodatku świeci na zielono, wyłączonego jest szara.',
   ] },
@@ -85,7 +90,7 @@ const ui = {
 
   applyTheme() {
     const g = config.data.global;
-    if (!this.THEMES[g.theme]) g.theme = 'margo';
+    g.theme = 'margo';   // jeden kolor panelu — zieleń gry
     if (!(g.glass >= 0.6)) g.glass = 0.9;   // nowy wygląd: prawie kryjące tło jak okna gry
     const t = this.THEMES[g.theme];
     g.accent = t.accent;
@@ -378,8 +383,6 @@ const ui = {
     // panel
     const pc = el('div', { class: 'mp-card' }, el('h3', null, 'Panel'));
     pc.appendChild(field({ key: 'panelKey', type: 'key', label: 'Skrót otwierający panel' }, g, () => config.save()));
-    pc.appendChild(el('div', { class: 'mp-field', style: { flexDirection: 'column', alignItems: 'stretch' } }, el('div', { class: 'lb' }, 'Kolor akcentu'),
-      el('div', { class: 'l4-acc' }, Object.entries(this.THEMES).map(([k, t]) => el('button', { class: 'l4-accb' + (g.theme === k ? ' on' : ''), title: t.name, style: { '--c': t.accent }, onclick: () => { g.theme = k; config.save(); this.applyTheme(); this.renderMain(); } }, el('i'), t.name)))));
     pc.appendChild(field({ key: 'glass', type: 'range', label: 'Krycie tła okien', min: 0.6, max: 1, step: 0.02, live: () => this.applyTheme() }, g, () => { config.save(); this.applyTheme(); }));
     M.appendChild(pc);
 

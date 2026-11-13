@@ -608,6 +608,7 @@
     const c = W.Engine && W.Engine.crafting;
     if (!c || typeof c.triggerOpen !== 'function') return;
     document.documentElement.classList.add('mp-ul-silent');
+    silentRun = true;
     let got = false;
     const off = () => { got = true; };
     bus.on('enhusage', off);
@@ -617,11 +618,51 @@
     } catch {}
     try { if (net.craftOpen() && !openedByUs) closeCraft(); } catch {}
     for (let i = 0; i < 10 && net.craftOpen(); i++) { await sleep(100); try { closeCraft(); } catch {} }
-    setTimeout(() => document.documentElement.classList.remove('mp-ul-silent'), 250);
+    setTimeout(() => { document.documentElement.classList.remove('mp-ul-silent'); silentRun = false; prevCount = cfg.usages ? Number(cfg.usages.count) : prevCount; }, 250);
     limitSeen.unshift({ t: new Date().toISOString().slice(11, 19), src: 'start gry (w tle)', count: got ? (cfg.usages || {}).count : '—', limit: got ? (cfg.usages || {}).limit : '—' });
     void before;
   }
   bus.on('enhresp', (d) => onUsages(d, 'okno rzemiosła'));
+  /*
+   * Postęp całego ulepszania do +5. Gra podaje punkty tylko dla bieżącego poziomu; kolejne poziomy wymagają
+   * (z obserwacji odpowiedzi gry) ×1 · ×1,1 · ×1,3 · ×1,6 · ×2,0 punktów poziomu +0 — z tego liczymy całość.
+   */
+  const LVL_MULT = [1, 1.1, 1.3, 1.6, 2.0];
+  function pctTo5(p) {
+    if (!p || !p.max) return null;
+    const lvl = Number(p.lvl) || 0;
+    if (lvl >= 5) return 100;
+    const base = p.max / LVL_MULT[lvl];
+    const total = base * LVL_MULT.reduce((a, b) => a + b, 0);
+    const done = base * LVL_MULT.slice(0, lvl).reduce((a, b) => a + b, 0) + Math.min(p.cur, p.max);
+    return Math.max(0, Math.min(100, Math.round((done / total) * 1000) / 10));
+  }
+  /** Postęp ulepszanego przedmiotu z każdej odpowiedzi gry (także ręczne ulepszanie w oknie Rzemiosła). */
+  let lastItem = null;
+  function onProgress(d) {
+    try {
+      const e = d && d.enhancement; if (!e || !cfg) return;
+      const pr = e.progressing; if (!pr || !e.itemId) return;
+      const sl = slots().find((s) => Number(s.id) === Number(e.itemId));
+      const prog = { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 };
+      const it = game.itemById(e.itemId);
+      lastItem = { name: (sl && sl.name) || (it && it.name) || 'przedmiot', prog };
+      if (sl) { sl.prog = prog; config.save(); }
+    } catch {}
+  }
+  bus.on('data', onProgress);
+  bus.on('enhresp', onProgress);
+  /** Komunikat na ekranie po ulepszeniu: dzienny limit + postęp przedmiotu do +5. */
+  const announce = debounce(() => {
+    if (!cfg || !cfg.enabled || cfg.notify === false || !cfg.usages) return;
+    const u = cfg.usages;
+    let msg = `Ulepszarka: dziś ${u.count} / ${u.limit} ulepszeń`;
+    if (u.limit && u.count >= u.limit) msg += ' — limit wyczerpany';
+    if (lastItem && lastItem.prog) { const p = pctTo5(lastItem.prog); msg += ` · ${lastItem.name}: +${lastItem.prog.lvl}${p != null ? ` (${String(p).replace('.', ',')}% do +5)` : ''}`; }
+    toast(msg, u.limit && u.count >= u.limit ? 'warn' : 'ok', 4500);
+  }, 900);
+  bus.on('enhusage', (u) => { if (silentRun) return; if (prevCount != null && Number(u.count) > prevCount) announce(); prevCount = Number(u.count); });
+  let prevCount = null, silentRun = false;
   /** Odpowiedź gry „maksymalny poziom" → przedmiot znika z listy. */
   const maxResp = (o) => (data) => {
     // postęp ulepszania i dzienny limit — z odpowiedzi gry (enhancement.progressing / usages_preview)
@@ -1054,20 +1095,22 @@
         return chip(l, s.types.includes(k), () => { s.types = s.types.includes(k) ? s.types.filter((x) => x !== k) : s.types.concat(k); config.save(); rr(); }, owner && owner.name);
       })),
       !s.types.length ? el('div', { class: 'mp-warnc', style: { marginTop: '6px' } }, 'Wybierz przynajmniej jeden typ — inaczej ten przedmiot nie będzie ulepszany.') : null,
-      el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, `Pasujące w torbie teraz: ${cnt}` + (s.prog && s.prog.max ? ` · poziom +${enhLevel(it) != null ? enhLevel(it) : s.prog.lvl} · postęp ${s.prog.cur} / ${s.prog.max}` : (enhLevel(it) != null ? ` · poziom +${enhLevel(it)}` : ''))),
-      s.prog && s.prog.max ? el('div', { class: 'mp-upbar' }, el('i', { style: { width: Math.min(100, Math.round(100 * s.prog.cur / s.prog.max)) + '%' } })) : null);
+      el('div', { class: 'mp-dim', style: { marginTop: '6px' } }, `Pasujące w torbie teraz: ${cnt}` + (s.prog && s.prog.max ? ` · poziom +${enhLevel(it) != null ? enhLevel(it) : s.prog.lvl} · postęp poziomu ${s.prog.cur} / ${s.prog.max}` : (enhLevel(it) != null ? ` · poziom +${enhLevel(it)}` : ''))),
+      s.prog && s.prog.max ? el('div', { class: 'mp-dim', style: { marginTop: '3px', color: '#cfe8b8' } }, `Całe ulepszenie do +5: ${String(pctTo5(s.prog)).replace('.', ',')}%`) : null,
+      s.prog && s.prog.max ? el('div', { class: 'mp-upbar', title: 'Postęp całego ulepszenia do +5' }, el('i', { style: { width: pctTo5(s.prog) + '%' } })) : null);
   }
 
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
     desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
-    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, freeAuto: false, freeAt: 0 },
+    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notify: true, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
       !net.cmd('enhance').verified ? { type: 'info', text: 'Ulepsz raz ręcznie w oknie rzemiosła — Ulepszarka sama się nauczy.' } : null,
     ],
     settings: [
       { group: 'Ustawienia', key: 'key', type: 'key', label: 'Klawisz: ulepsz teraz' },
+      { group: 'Ustawienia', key: 'notify', type: 'bool', label: 'Komunikat po ulepszeniu', hint: 'Na ekranie: ile ulepszeń dziś już zużyto (np. 125 / 2000) i jak idzie całe ulepszenie przedmiotu do +5 w %.' },
       { group: 'Ustawienia', key: 'confirm', type: 'bool', label: 'Pokazuj listę przedmiotów przed ulepszeniem', hint: 'Lista zużywanych przedmiotów z ich rzadkością (zwykły, unikat, heroiczny…).' },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAuto', type: 'bool', label: 'Włączone', rerender: true },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAt', type: 'number', show: (c) => c.freeAuto, label: 'Ulepsz, gdy w torbie zostanie tyle wolnych miejsc (0 = torba pełna)', min: 0, max: 100, hint: 'Gdy zostanie tyle wolnych miejsc (lub mniej), Ulepszarka sama ulepszy wszystkie wybrane przedmioty. 0 = dopiero gdy torba jest pełna. Nie działa w trakcie walki.' },
