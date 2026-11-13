@@ -129,7 +129,11 @@
    * Czerwona strzałka przy postaci, wskazująca kierunek do namierzonego celu (jak strzałki przejść w grze).
    * Pozycja postaci na ekranie: kamera gry trzyma postać na środku planszy, a przy brzegach mapy się zatrzymuje.
    */
-  const ARROW = '<svg viewBox="0 0 40 40" width="40" height="40"><path d="M5 14h16V5l15 15-15 15v-9H5z" fill="#e0262b" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><path d="M5 14h16V5l15 15-15 15v-9H5z" fill="none" stroke="#5a0b0d" stroke-width="1" stroke-linejoin="round"/><path d="M8 17h16V12l8 8" fill="none" stroke="#ff8a8a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/></svg>';
+  // strzałka w stylu strzałek przejść z gry (pikselowa: czarny kontur, jasna obwódka, czerwone wnętrze z połyskiem)
+  const ARROW = '<svg viewBox="0 0 16 16" width="30" height="30" shape-rendering="crispEdges"><defs><linearGradient id="mpDbA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a5c"/><stop offset=".5" stop-color="#e3201b"/><stop offset="1" stop-color="#9c0c0a"/></linearGradient></defs>'
+    + '<path d="M1.5 5.5h6v-4l7 6.5-7 6.5v-4h-6z" fill="#000" stroke="#1a0606" stroke-width="1.1" stroke-linejoin="miter"/>'
+    + '<path d="M2.4 6.4h6v-2.8l5.1 4.4-5.1 4.4v-2.8h-6z" fill="url(#mpDbA)" stroke="#f4efe2" stroke-width=".75" stroke-linejoin="miter"/>'
+    + '<path d="M3.2 7.2h5.6V5.4l1.6 1.4" fill="none" stroke="#ffc7bd" stroke-width=".7"/></svg>';
   function gameCanvas() {
     const c = document.getElementById('GAME_CANVAS');
     if (c && c.getBoundingClientRect().width) return c;
@@ -156,11 +160,12 @@
     const pos = h && heroScreen();
     if (!p || !h || !pos || game.inBattle() || dist(h, p) <= RANGE) { if (a) a.style.display = 'none'; return; }
     if (!a) { a = el('div', { id: 'mp-dbarrow', class: 'mp-dbarrow' }); a.innerHTML = ARROW; document.body.appendChild(a); }
-    const ang = Math.atan2(p.y - h.y, p.x - h.x);
-    const R0 = 46;
+    // 8 kierunków, jak strzałki w grze
+    const ang = Math.round(Math.atan2(p.y - h.y, p.x - h.x) / (Math.PI / 4)) * (Math.PI / 4);
+    const R0 = 40;
     a.style.display = '';
-    a.style.left = (pos.x + Math.cos(ang) * R0 - 20) + 'px';
-    a.style.top = (pos.y + Math.sin(ang) * R0 - 20) + 'px';
+    a.style.left = Math.round(pos.x + Math.cos(ang) * R0 - 15) + 'px';
+    a.style.top = Math.round(pos.y + Math.sin(ang) * R0 - 15) + 'px';
     a.style.transform = `rotate(${ang}rad)`;
     a.title = `Cel: ${p.nick} (${dist(h, p)} kratek)`;
   }

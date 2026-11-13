@@ -5,6 +5,12 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.11', d: '13.11.2026', items: [
+    'Dobijarka: nowa strzałka do celu w stylu strzałek przejść z gry (pikselowa, czerwona, 8 kierunków).',
+    'Ulepszarka: nigdy nie używa na składnik przedmiotów, które same mają już ulepszenie.',
+    'Ulepszarka: składniki rzemieślnicze / bezużyteczne nie są liczone ani używane („Pasujące w torbie” pokazuje tylko to, co naprawdę pójdzie).',
+    'Ulepszarka: przed zużyciem związanych heroików zawsze ostrzeżenie; dla związanych unikatów — opcja w ustawieniach.',
+  ] },
   { v: '1.0.10', d: '13.11.2026', items: [
     'Dobijarka: „Zapamiętany cel” w panelu odświeża się od razu (namierzenie, przerwanie, cel na mapie / poza mapą).',
     'Dobijarka: wróciły komunikaty „Dobijarka: dobijam Nick” i „Dobijarka: przerwano dobijanie Nick”.',

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.10
+// @version      1.0.11
 // @description  Panel dodatków do Margonem (nowy interfejs): Dobijarka, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAHSUlEQVR4XrWXbYwdVRnHf2fm3Lkve3e3dNtl2ba0zW5bqBiShpiiRvlgrUKMxUiQKH4RTAlGG6LBNxqsxUSikX6xSqNfQKhEtIrRijVBFAsxpKA2jd3FbYFut+5ub/flvsydmXPMc2Z2771ra4LWJ7l3bubOOc///J//8zKK1DRw31C5uL1YzHcba+Weyv67XGY9pajXw7nX5uuHge8AsWLz5uCqf4z8aPcd2z76zretI4wTlLrcvlOz1hJon6PHT7Hn4JGnzq4fvlN58LkDd3/okS3rB+KH9v/cU0lyuU58UbPa5ys7P2yOjU3ouw48s0uv6y7ueMe1a82D337Se+/AKu/awSsJo5iUBPly4Vhib5Uhi0Q1n9OcOHOOvd/9GQ/e9zEjvnWxkO+uNyNPWcymwQFKhQJBkLwFFxmYRawXA5weQ3s+m1YN8PzEGcSn+NbWWicOOfJMpYLVHonAbdPBAhtWtmnf34m1nY3OdYvm1lh8pZiNjdOY+BTfov5UIHFMfWqSXD6HU0GKqR1HJqS2q/xOMyZb0FrX7tw9YcBXUA8jTJvOFgGIiePE8zBYRJ3Ou7umP50vIcGkv62RrxYDskZOZ1WLCVG+OE8TW6WHWwSd5v+iJVgSaxwAoSsXgM75KC/b0IAxlqhpiGJ5CgRDtrejVZ71tSKnBTFEkSXGunXGqjS8bdYBIDYCwGI9i6cVU80m1dkGQV5AKJLYkESW7mKBku+nm2YEeL7C+hYdyBXOzM5jEktPqUDgK/esSvgPAFT6Z2wNOV8x3Qj5wYUa190wxIVKFRMbil0B+UAz+ufX2Dm4DC3hsjYNj29RgYdXgPtfPMWazVejy5r5k+N8fsOVhCI+ZH9hs0VBS4QZ/fKA0B9jqCSWDdet5gt3vZugv4djfxjh8UPHePmlUYzkrVCrLJ4Pxlf0Lcux7+XXKW4c5Mjz9zM+NsWt275J4hmsJ1KQNaYjBCKxTNZkITA0koQrygGfWhmwb+/TjJw8iWWax378HH989Dd8ZqgXnfNInLTFOZTLPn+pzHN4qsFPHrkFWztHrTKOFg++aDXV1lINtABIZzCGRHTgroYtV5W5Zs0ylJ1FRZMUCwlbh/rY1FdwoTKeUG/wcqALsPeFN3j4yzcyOnqa2bExCv68O7FoKlEiRuN8tFsGQKKDc+6EmH1mmzGNKIa4AtEkNqky37RUJQOUpKp1IFYs0zx6bILNW1dy0/VdfPZrz9HdUyUJp1zeSqamGSOZ0Fm7OrIgTBL38RKwCRSMq1bYaA7CAOLQRTBRhsRzdZFy0edvlRqHz81z4sAWPvmll2iEMZ6ZwzSreB7u5KFJiBPrrv+WhqJiQTbdjAm1QqMoaIORHBZWGhHUQpI4oY5h1iTM2QTtQy6neOh34+zZNcSTv3yTP71ygU1Xl0jmGkT1JhMzTc42mjRjQz0yzERxmjkZig4NiEDk46gSTSxcw6bUUEycuBQS2v1AUVPwjRcnuObtZT59Sz/nKw3uvW2QO7avpF5t0F9WLF8d8OpEg0B7xFLIlvSqNAQZIt9TLgWl6HgKStoj7yuiMFoE0FPU9PdoVnRpnnhlmtUbC+zftR7fxjx87xq3h8RmshLSvzJg2w09jP62mu4rlX1Jh+/QgNRx16mcThR/nw4Zmwxp1pouBLVaxJHROabqCY3I8PtTc3z/gbV87+mzvPDXefJaEUaW/j7ND7+4jpGRBk/8epIP9Ha7kiwtImsKizJoAZCGkwlUS2uuJxw6f4HbP9jD6l6ozta5dWsXK7pxTUfy+yPLB3jf9QX2HZzgXV3dDPfnOTMT8dPT5/FtxGy1STFSbOwpMF9LUFaO5Si/CIC2Vu46HdCjPc5Nxuz81psufqW8RymfwbSWV23IwWdnqJw3rB/MU8JjVSmHFylu333asVFSHja2mHhhlshyMrPOEDjipelAOfDY3ttL+E/LcN7Dl2rWBBNmLTkbMqUD3rRWEdcN0zWp9/Dx1cuZa6Q9uDigqDWMS+vFdn6pbujOJkoVpceW7pzH8pJynU7yWcClfT2d8VyflwYWQSNsVTjpxH05380N0rZjYUDS37ilHVNVykA2fi1KQ0AAoZW+L1mRTUdtbcwVKEdnCsY1uWw+iVy1E3RZIZP7aQa3dsh8LglBtkm2oRw3EdSZQFP4rRMszIhu6rnEGLtAu9PYAvVt82ZbFrQGQEe0FHChTegWnxd7WcmmmxRWW2QXf7bfS1XuXnrabmullEpPAIHvo92k09mxlu7fsku8H1zsdjYJiw/ixLEmYHStFlYLgTY6yDFeqbJqWZnY8d7RM/53s9YdbnxmntzyLpmsjPjWp6v1Xxw9fvo9X71nR/z1/Yc40Qwv8WpxGczE+Fd08cA9O8zR46fE9zOK4eH8wBuvP7bnE++/7cbN62jEcVoNLvVW9t9YNtKLmgo57V5Odz/+7FMTQ8N3LhDtA3dv6CndnM8HA//P1/MwbE6MzNZ+BRyQ0eJfMC7ErJhfZ3kAAAAASUVORK5CYII=
@@ -1630,8 +1630,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 
 /* Ulepszarka: ciche pobranie licznika — okno Rzemiosła niewidoczne przez chwilę */
 .mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){clip-path:inset(50%)!important;pointer-events:none!important}
-.mp-dbarrow{position:fixed;width:40px;height:40px;z-index:2147481000;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7));animation:mpDbPulse 1s ease-in-out infinite;transition:left .12s linear,top .12s linear}
-@keyframes mpDbPulse{0%,100%{opacity:1}50%{opacity:.65}}
+.mp-dbarrow{position:fixed;width:30px;height:30px;z-index:2147481000;pointer-events:none;image-rendering:pixelated;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.35))}
 .mp-dbw{position:fixed;left:calc(50% - 120px);top:90px;width:240px;z-index:2147482000;background:rgba(16,20,16,.94);border:1px solid #3c5a3f;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.55);font:12px/1.3 Arial,sans-serif;color:#e4eee5;user-select:none}
 .mp-dbw-h{display:flex;align-items:center;justify-content:space-between;padding:5px 6px 5px 9px;cursor:move;border-bottom:1px solid #2b3d2d;font-weight:700;color:#ff8a9c}
 .mp-dbw-h button{background:none;border:0;color:#cfd8d0;font-size:16px;line-height:1;cursor:pointer;padding:0 4px}
@@ -2181,6 +2180,12 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.11', d: '13.11.2026', items: [
+    'Dobijarka: nowa strzałka do celu w stylu strzałek przejść z gry (pikselowa, czerwona, 8 kierunków).',
+    'Ulepszarka: nigdy nie używa na składnik przedmiotów, które same mają już ulepszenie.',
+    'Ulepszarka: składniki rzemieślnicze / bezużyteczne nie są liczone ani używane („Pasujące w torbie” pokazuje tylko to, co naprawdę pójdzie).',
+    'Ulepszarka: przed zużyciem związanych heroików zawsze ostrzeżenie; dla związanych unikatów — opcja w ustawieniach.',
+  ] },
   { v: '1.0.10', d: '13.11.2026', items: [
     'Dobijarka: „Zapamiętany cel” w panelu odświeża się od razu (namierzenie, przerwanie, cel na mapie / poza mapą).',
     'Dobijarka: wróciły komunikaty „Dobijarka: dobijam Nick” i „Dobijarka: przerwano dobijanie Nick”.',
@@ -3139,7 +3144,11 @@ function parseProtection(data) {
    * Czerwona strzałka przy postaci, wskazująca kierunek do namierzonego celu (jak strzałki przejść w grze).
    * Pozycja postaci na ekranie: kamera gry trzyma postać na środku planszy, a przy brzegach mapy się zatrzymuje.
    */
-  const ARROW = '<svg viewBox="0 0 40 40" width="40" height="40"><path d="M5 14h16V5l15 15-15 15v-9H5z" fill="#e0262b" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><path d="M5 14h16V5l15 15-15 15v-9H5z" fill="none" stroke="#5a0b0d" stroke-width="1" stroke-linejoin="round"/><path d="M8 17h16V12l8 8" fill="none" stroke="#ff8a8a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/></svg>';
+  // strzałka w stylu strzałek przejść z gry (pikselowa: czarny kontur, jasna obwódka, czerwone wnętrze z połyskiem)
+  const ARROW = '<svg viewBox="0 0 16 16" width="30" height="30" shape-rendering="crispEdges"><defs><linearGradient id="mpDbA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a5c"/><stop offset=".5" stop-color="#e3201b"/><stop offset="1" stop-color="#9c0c0a"/></linearGradient></defs>'
+    + '<path d="M1.5 5.5h6v-4l7 6.5-7 6.5v-4h-6z" fill="#000" stroke="#1a0606" stroke-width="1.1" stroke-linejoin="miter"/>'
+    + '<path d="M2.4 6.4h6v-2.8l5.1 4.4-5.1 4.4v-2.8h-6z" fill="url(#mpDbA)" stroke="#f4efe2" stroke-width=".75" stroke-linejoin="miter"/>'
+    + '<path d="M3.2 7.2h5.6V5.4l1.6 1.4" fill="none" stroke="#ffc7bd" stroke-width=".7"/></svg>';
   function gameCanvas() {
     const c = document.getElementById('GAME_CANVAS');
     if (c && c.getBoundingClientRect().width) return c;
@@ -3166,11 +3175,12 @@ function parseProtection(data) {
     const pos = h && heroScreen();
     if (!p || !h || !pos || game.inBattle() || dist(h, p) <= RANGE) { if (a) a.style.display = 'none'; return; }
     if (!a) { a = el('div', { id: 'mp-dbarrow', class: 'mp-dbarrow' }); a.innerHTML = ARROW; document.body.appendChild(a); }
-    const ang = Math.atan2(p.y - h.y, p.x - h.x);
-    const R0 = 46;
+    // 8 kierunków, jak strzałki w grze
+    const ang = Math.round(Math.atan2(p.y - h.y, p.x - h.x) / (Math.PI / 4)) * (Math.PI / 4);
+    const R0 = 40;
     a.style.display = '';
-    a.style.left = (pos.x + Math.cos(ang) * R0 - 20) + 'px';
-    a.style.top = (pos.y + Math.sin(ang) * R0 - 20) + 'px';
+    a.style.left = Math.round(pos.x + Math.cos(ang) * R0 - 15) + 'px';
+    a.style.top = Math.round(pos.y + Math.sin(ang) * R0 - 15) + 'px';
     a.style.transform = `rotate(${ang}rad)`;
     a.title = `Cel: ${p.nick} (${dist(h, p)} kratek)`;
   }
@@ -5229,16 +5239,26 @@ MP.itemDeco = itemDeco;
     if (!i || !typeOf(i.cl)) return false;
     if (typeOf(i.cl) === 'arrows') return isArrow(i);
     if (NOT_EQ_STATS.some((k) => i.stats && i.stats[k] != null)) return false;
+    if (Object.keys(i.stats || {}).some((k) => /artisan|craft|rzemie/i.test(k))) return false;   // składniki rzemieślnicze
+    if (/bezu[żz]yteczn|sk[łl]adnik rzemie/i.test(tipText(i))) return false;
     const m = tipText(i).match(/Typ:\s*([^\s]+)/i);
-    if (m && /lecz|konsump|neutral|strza|klucz|zw[óo]j|torb|talizman|b[łl]ogos|quest|zadan|ulepsz|przepis|walut|mikst/i.test(m[1])) return false;
+    if (m && /lecz|konsump|neutral|strza|klucz|zw[óo]j|torb|talizman|b[łl]ogos|quest|zadan|ulepsz|przepis|walut|mikst|rzemie|sk[łl]adn/i.test(m[1])) return false;
     return true;
   }
+  /** Przedmiot, na którym jest już jakiekolwiek ulepszenie (poziom albo punkty) — nigdy nie idzie na składnik. */
+  function hasEnh(i) {
+    const lv = enhLevel(i); if (lv != null && lv > 0) return true;
+    return Object.entries(i.stats || {}).some(([k, v]) => /enhanc|upgrade|upg_?lvl/i.test(k) && v != null && String(v) !== '0' && v !== false);
+  }
+  /** Związany z postacią (na stałe albo „związany z właścicielem"). */
+  const isBound = (i) => !!i && ((i.stats && (i.stats.soulbound != null || i.stats.permbound != null)) || /zwi[ąa]zan[yi]/i.test(tipText(i)));
   function candidates() {
     const queue = new Set((addons.cfg('szybka')?.queue || []).map((q) => Number(q.id)));
     const tg = targetIds();
     return game.bag().filter((i) => {
       if (i.st !== 0 || tg.has(i.id) || NEVER.includes(i.rarity)) return false;
       if (!isEquipment(i)) return false;
+      if (hasEnh(i)) return false;
       if (MP.podpis && MP.podpis.isSigned(i.id)) return false;
       if (queue.has(i.id) || cfg.protect.includes(i.id) || nickIn(cfg.protectNames, i.name)) return false;
       return true;
@@ -5501,6 +5521,15 @@ MP.itemDeco = itemDeco;
         const items = []; p.forEach((o) => o.list.forEach((i) => items.push(el('span', null, i.name, ' ', el('span', { class: 'mp-rar ' + i.rarity }, RAR_PL[i.rarity] || i.rarity), el('span', { class: 'mp-dim' }, ' → ' + o.target.name)))));
         const ok = await confirmBox({ title: 'Ulepszyć teraz?', okText: 'Ulepsz', html: `Zużyję <b>${items.length}</b> przedmiotów:`, items });
         if (!ok) return;
+      }
+      // związane heroiki — zawsze ostrzeżenie; związane unikaty — gdy włączone w ustawieniach
+      {
+        const warn = [];
+        p.forEach((o) => o.list.forEach((i) => { if (isBound(i) && (i.rarity === 'heroic' || (i.rarity === 'unique' && cfg.warnBoundUnique))) warn.push(el('span', null, i.name, ' ', el('span', { class: 'mp-rar ' + i.rarity }, RAR_PL[i.rarity] || i.rarity), el('span', { class: 'mp-dim' }, ' · związany → ' + o.target.name))); }));
+        if (warn.length) {
+          const ok = await confirmBox({ title: 'Uwaga — związane przedmioty', okText: 'Tak, ulepsz', danger: true, html: `Na składnik pójdą <b>związane</b> przedmioty (${warn.length}). Na pewno chcesz je zużyć?`, items: warn });
+          if (!ok) return;
+        }
       }
       const total = p.reduce((a, o) => a + o.list.length, 0) || 1;
       ovShow(); ovOn = true;
@@ -5895,7 +5924,7 @@ MP.itemDeco = itemDeco;
   function chip(label, on, fn, taken) { return el('button', { class: 'mp-upchip' + (on ? ' on' : '') + (taken ? ' taken' : ''), title: taken ? 'Ten typ karmi już: ' + taken : '', onclick: taken ? () => toast(`Ulepszarka: ten typ jest już używany do ulepszania „${taken}"`, 'warn') : fn }, label); }
   function slotEl(s, idx) {
     const it = game.itemById(s.id);
-    const cnt = candidates().filter((i) => fits(i, s)).length;
+    const cnt = candidates().filter((i) => fits(i, s) && !isRejected(s.id, i.id)).length;
     return el('div', { class: 'mp-card mp-upslot' },
       el('div', { class: 'mp-uphead' },
         el('div', { class: 'mp-updrop has', title: 'Przeciągnij tu inny przedmiot tego typu, żeby go podmienić', onclick: startPick },
@@ -5926,7 +5955,7 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
     desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
-    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: false, freeAuto: false, freeAt: 0 },
+    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: false, warnBoundUnique: false, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
       !net.cmd('enhance').verified ? { type: 'info', text: 'Ulepsz raz ręcznie w oknie rzemiosła — Ulepszarka sama się nauczy.' } : null,
@@ -5934,6 +5963,7 @@ MP.itemDeco = itemDeco;
     settings: [
       { group: 'Ustawienia', key: 'key', type: 'key', label: 'Klawisz: ulepsz teraz' },
       { group: 'Ustawienia', key: 'notifyUse', type: 'bool', label: 'Komunikat o dziennym limicie', hint: 'Po ulepszeniu jeden komunikat na ekranie: ile ulepszeń dziś już zużyto (np. 125 / 2000) i jak idzie całe ulepszenie przedmiotu do +5 w %. Domyślnie wyłączony.' },
+      { group: 'Ustawienia', key: 'warnBoundUnique', type: 'bool', label: 'Ostrzegaj także przed związanymi unikatami', hint: 'Przed zużyciem związanych heroików ostrzeżenie jest zawsze. Tu możesz je włączyć również dla związanych unikatów.' },
       { group: 'Ustawienia', key: 'confirm', type: 'bool', label: 'Pokazuj listę przedmiotów przed ulepszeniem', hint: 'Lista zużywanych przedmiotów z ich rzadkością (zwykły, unikat, heroiczny…).' },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAuto', type: 'bool', label: 'Włączone', rerender: true },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAt', type: 'number', show: (c) => c.freeAuto, label: 'Ulepsz, gdy w torbie zostanie tyle wolnych miejsc (0 = torba pełna)', min: 0, max: 100, hint: 'Gdy zostanie tyle wolnych miejsc (lub mniej), Ulepszarka sama ulepszy wszystkie wybrane przedmioty. 0 = dopiero gdy torba jest pełna. Nie działa w trakcie walki.' },
@@ -8266,5 +8296,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.10";
+MP.version = "1.0.11";
 })();

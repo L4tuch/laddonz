@@ -541,16 +541,26 @@
     if (!i || !typeOf(i.cl)) return false;
     if (typeOf(i.cl) === 'arrows') return isArrow(i);
     if (NOT_EQ_STATS.some((k) => i.stats && i.stats[k] != null)) return false;
+    if (Object.keys(i.stats || {}).some((k) => /artisan|craft|rzemie/i.test(k))) return false;   // składniki rzemieślnicze
+    if (/bezu[żz]yteczn|sk[łl]adnik rzemie/i.test(tipText(i))) return false;
     const m = tipText(i).match(/Typ:\s*([^\s]+)/i);
-    if (m && /lecz|konsump|neutral|strza|klucz|zw[óo]j|torb|talizman|b[łl]ogos|quest|zadan|ulepsz|przepis|walut|mikst/i.test(m[1])) return false;
+    if (m && /lecz|konsump|neutral|strza|klucz|zw[óo]j|torb|talizman|b[łl]ogos|quest|zadan|ulepsz|przepis|walut|mikst|rzemie|sk[łl]adn/i.test(m[1])) return false;
     return true;
   }
+  /** Przedmiot, na którym jest już jakiekolwiek ulepszenie (poziom albo punkty) — nigdy nie idzie na składnik. */
+  function hasEnh(i) {
+    const lv = enhLevel(i); if (lv != null && lv > 0) return true;
+    return Object.entries(i.stats || {}).some(([k, v]) => /enhanc|upgrade|upg_?lvl/i.test(k) && v != null && String(v) !== '0' && v !== false);
+  }
+  /** Związany z postacią (na stałe albo „związany z właścicielem"). */
+  const isBound = (i) => !!i && ((i.stats && (i.stats.soulbound != null || i.stats.permbound != null)) || /zwi[ąa]zan[yi]/i.test(tipText(i)));
   function candidates() {
     const queue = new Set((addons.cfg('szybka')?.queue || []).map((q) => Number(q.id)));
     const tg = targetIds();
     return game.bag().filter((i) => {
       if (i.st !== 0 || tg.has(i.id) || NEVER.includes(i.rarity)) return false;
       if (!isEquipment(i)) return false;
+      if (hasEnh(i)) return false;
       if (MP.podpis && MP.podpis.isSigned(i.id)) return false;
       if (queue.has(i.id) || cfg.protect.includes(i.id) || nickIn(cfg.protectNames, i.name)) return false;
       return true;
@@ -813,6 +823,15 @@
         const items = []; p.forEach((o) => o.list.forEach((i) => items.push(el('span', null, i.name, ' ', el('span', { class: 'mp-rar ' + i.rarity }, RAR_PL[i.rarity] || i.rarity), el('span', { class: 'mp-dim' }, ' → ' + o.target.name)))));
         const ok = await confirmBox({ title: 'Ulepszyć teraz?', okText: 'Ulepsz', html: `Zużyję <b>${items.length}</b> przedmiotów:`, items });
         if (!ok) return;
+      }
+      // związane heroiki — zawsze ostrzeżenie; związane unikaty — gdy włączone w ustawieniach
+      {
+        const warn = [];
+        p.forEach((o) => o.list.forEach((i) => { if (isBound(i) && (i.rarity === 'heroic' || (i.rarity === 'unique' && cfg.warnBoundUnique))) warn.push(el('span', null, i.name, ' ', el('span', { class: 'mp-rar ' + i.rarity }, RAR_PL[i.rarity] || i.rarity), el('span', { class: 'mp-dim' }, ' · związany → ' + o.target.name))); }));
+        if (warn.length) {
+          const ok = await confirmBox({ title: 'Uwaga — związane przedmioty', okText: 'Tak, ulepsz', danger: true, html: `Na składnik pójdą <b>związane</b> przedmioty (${warn.length}). Na pewno chcesz je zużyć?`, items: warn });
+          if (!ok) return;
+        }
       }
       const total = p.reduce((a, o) => a + o.list.length, 0) || 1;
       ovShow(); ovOn = true;
@@ -1207,7 +1226,7 @@
   function chip(label, on, fn, taken) { return el('button', { class: 'mp-upchip' + (on ? ' on' : '') + (taken ? ' taken' : ''), title: taken ? 'Ten typ karmi już: ' + taken : '', onclick: taken ? () => toast(`Ulepszarka: ten typ jest już używany do ulepszania „${taken}"`, 'warn') : fn }, label); }
   function slotEl(s, idx) {
     const it = game.itemById(s.id);
-    const cnt = candidates().filter((i) => fits(i, s)).length;
+    const cnt = candidates().filter((i) => fits(i, s) && !isRejected(s.id, i.id)).length;
     return el('div', { class: 'mp-card mp-upslot' },
       el('div', { class: 'mp-uphead' },
         el('div', { class: 'mp-updrop has', title: 'Przeciągnij tu inny przedmiot tego typu, żeby go podmienić', onclick: startPick },
@@ -1238,7 +1257,7 @@
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
     desc: 'Ulepszanie kilkoma przedmiotami naraz. Wskazujesz, co ulepszasz i czym — według rzadkości i typu (nigdy legendami) — a potem ulepszasz jednym przyciskiem albo klawiszem.',
-    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: false, freeAuto: false, freeAt: 0 },
+    defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: false, warnBoundUnique: false, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
       !net.cmd('enhance').verified ? { type: 'info', text: 'Ulepsz raz ręcznie w oknie rzemiosła — Ulepszarka sama się nauczy.' } : null,
@@ -1246,6 +1265,7 @@
     settings: [
       { group: 'Ustawienia', key: 'key', type: 'key', label: 'Klawisz: ulepsz teraz' },
       { group: 'Ustawienia', key: 'notifyUse', type: 'bool', label: 'Komunikat o dziennym limicie', hint: 'Po ulepszeniu jeden komunikat na ekranie: ile ulepszeń dziś już zużyto (np. 125 / 2000) i jak idzie całe ulepszenie przedmiotu do +5 w %. Domyślnie wyłączony.' },
+      { group: 'Ustawienia', key: 'warnBoundUnique', type: 'bool', label: 'Ostrzegaj także przed związanymi unikatami', hint: 'Przed zużyciem związanych heroików ostrzeżenie jest zawsze. Tu możesz je włączyć również dla związanych unikatów.' },
       { group: 'Ustawienia', key: 'confirm', type: 'bool', label: 'Pokazuj listę przedmiotów przed ulepszeniem', hint: 'Lista zużywanych przedmiotów z ich rzadkością (zwykły, unikat, heroiczny…).' },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAuto', type: 'bool', label: 'Włączone', rerender: true },
       { group: 'Ulepszaj sama, gdy kończy się miejsce', key: 'freeAt', type: 'number', show: (c) => c.freeAuto, label: 'Ulepsz, gdy w torbie zostanie tyle wolnych miejsc (0 = torba pełna)', min: 0, max: 100, hint: 'Gdy zostanie tyle wolnych miejsc (lub mniej), Ulepszarka sama ulepszy wszystkie wybrane przedmioty. 0 = dopiero gdy torba jest pełna. Nie działa w trakcie walki.' },
