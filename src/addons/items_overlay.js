@@ -213,6 +213,7 @@ MP.itemDeco = itemDeco;
 
   function hide() {
     hoverId = null; wanted = null; anchor = null;
+    document.querySelectorAll('.mp-foreign-tip').forEach((n) => n.classList.remove('mp-foreign-tip'));
     document.body.classList.remove('mp-eq-on');
     if (tip) tip.style.display = 'none';
   }
@@ -738,16 +739,22 @@ MP.itemDeco = itemDeco;
     };
 
     /** Okienko gracza z innego dodatku przy kursorze: element z tekstem „Nick (poziom…” gracza z mapy. */
-    let foreign = null;
+    let foreign = null, lastForeignScan = 0;
     const nickOf = (txt) => game.others().filter((o) => o.nick && new RegExp(o.nick.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(\\d').test(txt)).sort((a, b) => b.nick.length - a.nick.length)[0] || null;
     const ours = (n) => !n || n === document.body || n === document.documentElement || n.tagName === 'CANVAS' || n.closest('#mp-eqtip, .mp-glass, #mp-qbar, #mp-launcher, .tip-wrapper');
     function findForeign() {
       if (foreign && foreign.n.isConnected && foreign.n.getBoundingClientRect().width > 0) {
         const r = foreign.n.getBoundingClientRect();
         const dx = Math.max(r.left - mx, 0, mx - r.right), dy = Math.max(r.top - my, 0, my - r.bottom);
-        if (Math.hypot(dx, dy) < 140 && nickOf((foreign.n.textContent || '').toLowerCase())) return foreign;
+        if (Math.hypot(dx, dy) < 140 && r.width >= 120 && r.height >= 80 && nickOf((foreign.n.textContent || '').toLowerCase())) return foreign;
       }
       foreign = null;
+      // oszczędnie: najwyżej co 250 ms i tylko nad mapą
+      const t = now();
+      if (t - lastForeignScan < 250) return null;
+      lastForeignScan = t;
+      const at = document.elementFromPoint(mx, my);
+      if (!at || !(at.tagName === 'CANVAS' || (at.closest && at.closest('.map, .map-overlay')))) return null;
       // okienka innych dodatków: dymki/podglądy (role/data-side z bibliotek UI, klasy tooltip/popover, pływające elementy „ll:”).
       // Szukamy po DOM, bo takie okienka zwykle nie łapią myszki (pointer-events:none) i nie da się ich znaleźć „pod kursorem”.
       const SEL = '[role="tooltip"], [role="dialog"], [data-side], [class*="tooltip"], [class*="popover"], [class*="preview"], [class*="ll:fixed"], [class*="ll:absolute"], [class*="ll:z-"]';
@@ -755,7 +762,9 @@ MP.itemDeco = itemDeco;
       for (const c of document.querySelectorAll(SEL)) {
         if (ours(c)) continue;
         const r = c.getBoundingClientRect();
-        if (r.width < 60 || r.width > 520 || r.height < 20 || r.height > 700) continue;
+        // prawdziwe okienko podglądu (nie podpis nad głową gracza ani okno grupy): co najmniej 120×80
+        if (r.width < 120 || r.width > 520 || r.height < 80 || r.height > 700) continue;
+        if (c.closest('.party-full-view, .party__list, [class*="party"], .new-chat-window')) continue;
         const d = Math.hypot(Math.max(r.left - mx, 0, mx - r.right), Math.max(r.top - my, 0, my - r.bottom));
         if (d > 220 || d >= bestD) continue;
         const txt = (c.textContent || '').toLowerCase();
@@ -772,26 +781,6 @@ MP.itemDeco = itemDeco;
         best = { n, p }; bestD = d;
       }
       if (best) { foreign = best; return best; }
-      // zapas: elementy wokół kursora
-      const pts = [[20, 20], [40, 40], [60, 30], [-60, 40], [20, -40], [0, 60], [80, 0]];
-      const seen = new Set();
-      for (const [ox, oy] of pts) {
-        for (const e0 of document.elementsFromPoint(mx + ox, my + oy).slice(0, 6)) {
-          if (seen.has(e0) || ours(e0)) continue;
-          seen.add(e0);
-          let n = e0;
-          while (n.parentElement && n.parentElement !== document.body) {
-            const r = n.parentElement.getBoundingClientRect();
-            if (r.width > 520 || r.height > 700) break;
-            n = n.parentElement;
-          }
-          if (ours(n)) continue;
-          const r = n.getBoundingClientRect();
-          if (r.width < 60 || r.width > 520 || r.height > 700) continue;
-          const p = nickOf((n.textContent || '').toLowerCase());
-          if (p) { foreign = { n, p }; return foreign; }
-        }
-      }
       return null;
     }
 
@@ -820,7 +809,8 @@ MP.itemDeco = itemDeco;
       if (!raf) raf = requestAnimationFrame(() => { raf = 0; mapCheck(); });
     }, true);
     document.addEventListener('mouseleave', () => { stop('map'); stop('list'); });
-    new MutationObserver(debounce(mapCheck, 30)).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+    // bez obserwowania „style” — gra przesuwa nim podpisy graczy w każdej klatce, co niepotrzebnie obciążało grę
+    new MutationObserver(debounce(mapCheck, 40)).observe(document.body, { childList: true, subtree: true });
 
     /* strażnik: podgląd nie może „zawisnąć" — gdy kursor nie jest już nad graczem, chowamy */
     let lostSince = 0;
