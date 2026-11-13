@@ -1015,6 +1015,7 @@
               const mid = (lo + hi) >> 1;
               const t = pvOf(await preview(o.target, part.slice(0, mid)));
               if (reach(t)) hi = mid; else lo = mid + 1;
+              await sleep(100);   // 0,1 s przerwy po każdym podglądzie
             }
             part = part.slice(0, lo);
             steps.push({ a: 'trim', n: lo }); saveSteps();
