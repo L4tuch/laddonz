@@ -5,6 +5,15 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.5', d: '13.11.2026', items: [
+    'Ulepszarka: przedmiot po ekstrakcji można znowu ulepszać.',
+    'Ulepszarka: nie przeszkadza, gdy sam korzystasz z Rzemiosła (np. ekstrakcja). Nie ulepsza wtedy automatycznie i nie zamyka Twojego okna.',
+  ] },
+  { v: '1.0.4', d: '13.11.2026', items: [
+    'Ulepszarka: kończy dokładnie na +5 i nie zużywa już żadnych przedmiotów po dojściu do najwyższego poziomu.',
+    'Ulepszarka: gdy gra poda dziwny postęp ulepszenia (np. spadek procentów), ulepszanie od razu się zatrzymuje, żeby nic nie przepalić.',
+    'Ulepszarka: procent do +5 nie „skacze” w dół.',
+  ] },
   { v: '1.0.3', d: '13.11.2026', items: [
     'Ulepszarka działa szybciej: krótsze przerwy między kolejnymi porcjami przedmiotów.',
   ] },

@@ -688,6 +688,15 @@
     maxSaid.add(Number(id));
     toast(`Ulepszarka: przedmiot „${name}” został ulepszony na najwyższy poziom (+5)! Bonus wybierz sam w Rzemiośle.`, 'ok', 7000);
   }
+  /** % do +5 dla przedmiotu: z punktów z gry, ale nigdy poniżej tego, co wynika z jego aktualnego poziomu. */
+  function pctItem(li) {
+    if (!li || !li.prog) return null;
+    const lv = li.id ? enhLevel(game.itemById(li.id)) : null;
+    if (lv != null && lv >= 5) return 100;
+    const p = pctTo5(li.prog);
+    if (lv != null && lv > (Number(li.prog.lvl) || 0)) return pctLvlOnly(lv);
+    return p;
+  }
   /** Gdy nie znamy punktów — sam poziom (+2 = ukończone poziomy +1 i +2). */
   const pctLvlOnly = (lvl) => { lvl = Number(lvl) || 0; if (lvl >= 5) return 100; const all = LVL_MULT.reduce((a, b) => a + b, 0); return Math.round((LVL_MULT.slice(0, lvl).reduce((a, b) => a + b, 0) / all) * 1000) / 10; };
   /** Postęp ulepszanego przedmiotu z każdej odpowiedzi gry (także ręczne ulepszanie w oknie Rzemiosła). */
@@ -709,7 +718,7 @@
   function ovItem() {
     const t = ovEl && ovEl.querySelector('.mp-ulov-tx');
     if (!t || !lastItem || !lastItem.prog) return;
-    const p = pctTo5(lastItem.prog);
+    const p = pctItem(lastItem);
     if (p != null) t.textContent = `${lastItem.name} · +${lastItem.prog.lvl} · ${String(p).replace('.', ',')}% do +5`;
   }
   bus.on('data', onProgress);
@@ -720,7 +729,7 @@
     const u = cfg.usages;
     let msg = `Ulepszarka: dziś ${u.count} / ${u.limit} ulepszeń`;
     if (u.limit && u.count >= u.limit) msg += ' — limit wyczerpany';
-    if (lastItem && lastItem.prog) { const p = pctTo5(lastItem.prog); msg += ` · ${lastItem.name}: +${lastItem.prog.lvl}${p != null ? ` (${String(p).replace('.', ',')}% do +5)` : ''}`; }
+    if (lastItem && lastItem.prog) { const p = pctItem(lastItem); msg += ` · ${lastItem.name}: +${lastItem.prog.lvl}${p != null ? ` (${String(p).replace('.', ',')}% do +5)` : ''}`; }
     toast(msg, u.limit && u.count >= u.limit ? 'warn' : 'ok', 4500);
   };
   const announce = debounce(announceNow, 1500);
@@ -832,7 +841,8 @@
     if (usagesLeft() === 0) { limitMsg(); return; }
     running = true;
     hushUntil = now() + 120000;
-    document.documentElement.classList.add('mp-ul-silent');   // okno rzemiosła w tle
+    const userCraft = !!net.craftOpen();   // otwarte przez Ciebie — zostawiamy je po ulepszaniu
+    if (!userCraft) document.documentElement.classList.add('mp-ul-silent');   // okno rzemiosła w tle
     let ovOn = false, full = false;
     const unhush = hushMessages();
     try {
@@ -869,7 +879,7 @@
       running = false;
       await sleep(400);
       setTimeout(() => { hushUntil = 0; }, 1500);
-      closeCraft();                   // okno rzemiosła zawsze zamykamy po ulepszaniu
+      if (!userCraft) closeCraft();   // zamykamy tylko okno, które otworzyła Ulepszarka
       setTimeout(() => { if (!running && !silentRun) document.documentElement.classList.remove('mp-ul-silent'); }, 300);
       if (ovOn) setTimeout(announceNow, 200);   // jeden komunikat o limicie po całym ulepszaniu (jeśli włączony)
       dropMaxed();
@@ -945,9 +955,12 @@
       outer: for (const o of p) {
         // każdy składnik sprawdzony jeszcze raz tuż przed wysłaniem
         let rest = o.list.filter((i) => { const f = game.itemById(i.id); return f && f.st === 0 && !NEVER.includes(f.rarity) && !targetIds().has(f.id); });
+        let lastProg = null;
         while (rest.length) {
           const left = usagesLeft();
           if (left === 0) { limitHit = true; break outer; }
+          // poziom przedmiotu prosto z gry — na +5 koniec, nic więcej nie zużywamy
+          { const lvNow = enhLevel(game.itemById(o.target.id)); if (lvNow != null && lvNow >= MAX_LVL) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; } }
           let part = rest.slice(0, Math.min(16, left == null ? 16 : left));
           // dokładnie tak jak gra: najpierw podgląd, potem ulepszenie; na pytanie gry „Tak" klika Ulepszarka
           uselessSeen = false;
@@ -956,6 +969,7 @@
           if (!rp.ok || badResp(rp.data)) { failed = true; break outer; }
           // podgląd zwraca składniki, które gra PRZYJMUJE — odrzucone (np. za niski poziom) zapamiętujemy i pomijamy
           let pv = pvOf(rp);
+          if (!lastProg && pv && Number(pv.max) > 0) lastProg = { lvl: Number(pv.upgradeLevel) || 0, cur: Number(pv.current) || 0, max: Number(pv.max) || 0 };
           if (pv && Array.isArray(pv.ingredients)) {
             const acc = new Set(pv.ingredients.map(Number));
             const rej = part.filter((i) => !acc.has(i.id)).map((i) => i.id);
@@ -994,6 +1008,8 @@
             part = part.slice(0, lo);
             steps.push({ a: 'trim', n: lo }); saveSteps();
           }
+          // ta porcja dobija do +5 → po niej koniec z tym przedmiotem (bez czekania na kolejne odpowiedzi gry)
+          const finalHit = !!(pv && Number(pv.upgradeLevel) >= MAX_LVL - 1 && reach(pv));
           const useIds = part.map((i) => i.id);
           const okIds = useIds.join(',');
           await sleep(100);
@@ -1017,6 +1033,14 @@
           rest = rest.filter((i) => !useIds.includes(i.id));
           const sl = slots().find((x) => Number(x.id) === o.target.id);
           if (!sl) continue outer;
+          if (finalHit) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }
+          // bezpiecznik: gra podała postęp „wstecz” (niższy poziom albo mniej punktów na tym samym poziomie) — przerywamy, żeby nic nie przepalić
+          if (sl.prog && lastProg && (sl.prog.lvl < lastProg.lvl || (sl.prog.lvl === lastProg.lvl && sl.prog.cur < lastProg.cur))) {
+            steps.push({ a: 'guard', before: lastProg, after: sl.prog }); saveSteps();
+            toast(`Ulepszarka: „${o.target.name}” — gra podała nietypowy postęp ulepszenia (z +${lastProg.lvl} ${lastProg.cur}/${lastProg.max} na +${sl.prog.lvl} ${sl.prog.cur}/${sl.prog.max}). Przerwałam, żeby nic nie przepalić — sprawdź przedmiot.`, 'warn', 8000);
+            failed = true; break outer;
+          }
+          if (sl.prog) lastProg = { lvl: sl.prog.lvl, cur: sl.prog.cur, max: sl.prog.max };
           if (sl.prog && sl.prog.lvl >= maxFor(o.target)) { learnMax(o.target); removeMaxed(o.target.id, o.target.name); continue outer; }   // osiągnął maksimum
           await sleep(150);
         }
@@ -1132,6 +1156,18 @@
   }
   function isMaxed(it) {
     if (!it) return false;
+    // aktualny poziom z gry ma pierwszeństwo — po ekstrakcji przedmiot znów jest niżej i można go ulepszać od nowa
+    const lv0 = enhLevel(it);
+    if (lv0 != null && lv0 < maxFor(it)) {
+      if (cfg && cfg.maxed && cfg.maxed.includes(Number(it.id))) { cfg.maxed = cfg.maxed.filter((x) => x !== Number(it.id)); config.save(); }
+      maxSaid.delete(Number(it.id));
+      return false;
+    }
+    if (cfg && cfg.maxed && cfg.maxed.includes(Number(it.id)) && lv0 == null && !(it.stats && Object.keys(it.stats).some((k) => /enhanc|upgrade/i.test(k)))) {
+      // brak jakiegokolwiek ulepszenia na przedmiocie (np. po ekstrakcji) — zapominamy stare „maksimum”
+      cfg.maxed = cfg.maxed.filter((x) => x !== Number(it.id)); config.save(); maxSaid.delete(Number(it.id));
+      return false;
+    }
     if (cfg && cfg.maxed && cfg.maxed.includes(Number(it.id))) return true;
     if (/maksymaln\w* (poziom\w* )?ulepsz|ulepszon\w* maksymalnie|max(imum)? (enhancement|upgrade)|nie mo[żz]na (ju[żz] )?(bardziej )?ulepsz/i.test(tipText(it))) return true;
     const lvl = enhLevel(it);
@@ -1163,6 +1199,7 @@
     if (!cfg || !cfg.enabled || running || !cfg.freeAuto || !slots().length) return;
     if (usagesLeft() === 0) return;
     if (game.inBattle() || document.querySelector('.mp-modal-bg')) return;
+    if (net.craftOpen()) return;   // masz otwarte Rzemiosło (np. ekstrakcja) — nie wchodzimy Ci w drogę
     const free = game.freeBagSlots();
     if (free == null || free > Number(cfg.freeAt)) { freeBlockSig = ''; return; }
     const sig = bagSig();
@@ -1340,6 +1377,8 @@
       try { if ((config.data.commands || {}).enhance) net.resetCmd('enhance'); } catch {}   // komenda jest wbudowana — żadnych nauczonych zamienników
       setInterval(() => { if (cfg.enabled && !running) dropMaxed(); }, 5000);
       setInterval(freeWatch, 1500);
+      // okno Rzemiosła nigdy nie zostaje ukryte, gdy Ulepszarka nic nie robi
+      setInterval(() => { if (!running && !silentRun) document.documentElement.classList.remove('mp-ul-silent'); }, 2000);
       // licznik dziennych ulepszeń w tle po wejściu do gry (i po północy, gdy zacznie się nowy dzień)
       setTimeout(silentUsages, 6000);
       setInterval(() => { if (cfg.usages && cfg.usages.day !== new Date().toDateString()) { silentDone = false; silentUsages(); } }, 60000);
