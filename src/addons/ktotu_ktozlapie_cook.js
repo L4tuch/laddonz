@@ -81,7 +81,7 @@
       el('div', { class: 'mp-btns', style: { marginTop: '6px', gap: '5px' } },
         btn('EQ', 'pokazeq', (e) => MP.pokazEq.showForce(p.id, e.clientX + 14, e.clientY - 20)),
         !isFriendly(p) ? btn('Dobij', 'napad', () => MP.napad.attack(game.otherById(p.id) || p, 'key')) : null,
-        btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Gracze na mapie+' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
+        btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Gracze na mapie+' })),
         !p.isFriend ? btn('Znajomy', 'ktotu', async () => {
           // jak gracz: opcja „Dodaj do znajomych" z menu gracza w grze
           const ok = await menus.choosePlayerOption(p.id, /znajom/i);
@@ -394,7 +394,7 @@
         await sleep(250);
       }
     })();
-    toast(`Lepsza Grupa: zapraszam ${pick.map((p) => p.nick).join(', ')}`, 'ok', 1800);
+    // bez własnego komunikatu — gra sama pokazuje, że zaproszenie poszło
   }
 
   async function disband() {

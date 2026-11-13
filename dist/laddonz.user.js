@@ -16,7 +16,7 @@
 // @grant        none
 // @noframes
 // @updateURL    https://raw.githubusercontent.com/L4tuch/laddonz/refs/heads/main/dist/laddonz.user.js
-// @downloadURL  https://raw.githubusercontent.com/L4tuch/laddonz/refs/heads/main/dist/laddonz.user.js
+// @downloadURL  f
 // @supportURL   https://github.com/L4tuch/laddonz/issues
 // ==/UserScript==
 
@@ -3649,7 +3649,7 @@ function parseProtection(data) {
       el('div', { class: 'mp-btns', style: { marginTop: '6px', gap: '5px' } },
         btn('EQ', 'pokazeq', (e) => MP.pokazEq.showForce(p.id, e.clientX + 14, e.clientY - 20)),
         !isFriendly(p) ? btn('Dobij', 'napad', () => MP.napad.attack(game.otherById(p.id) || p, 'key')) : null,
-        btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Gracze na mapie+' }).then((r) => r.ok && toast(`Zaproszono ${p.nick}`, 'ok', 1500))),
+        btn('Zaproś', 'cook', () => net.send('partyInvite', { id: p.id }, { src: 'Gracze na mapie+' })),
         !p.isFriend ? btn('Znajomy', 'ktotu', async () => {
           // jak gracz: opcja „Dodaj do znajomych" z menu gracza w grze
           const ok = await menus.choosePlayerOption(p.id, /znajom/i);
@@ -3962,7 +3962,7 @@ function parseProtection(data) {
         await sleep(250);
       }
     })();
-    toast(`Lepsza Grupa: zapraszam ${pick.map((p) => p.nick).join(', ')}`, 'ok', 1800);
+    // bez własnego komunikatu — gra sama pokazuje, że zaproszenie poszło
   }
 
   async function disband() {
@@ -4521,8 +4521,14 @@ MP.itemDeco = itemDeco;
   async function fetchEq(id) {
     const c = cache[id];
     if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
-    const quick = itemsFromTip(id);
-    if (quick && quick.length) { cache[id] = { t: now(), items: quick }; return quick; }
+    // dymek gry potrafi dociągnąć EQ po chwili — czekamy na niego do ~0,7 s, zanim zapytamy serwer
+    for (let i = 0; i < 14; i++) {
+      const quick = itemsFromTip(id);
+      if (quick && quick.length) { cache[id] = { t: now(), items: quick }; return quick; }
+      if (!anchor || !anchor.isConnected || hoverId !== id) break;
+      await sleep(50);
+    }
+    if (hoverId !== id) return 'stale';
     if (busy) { wanted = id; return 'wait'; }
     const gap = 350 - (now() - lastReq);
     if (gap > 0) await sleep(gap);
@@ -4703,6 +4709,17 @@ MP.itemDeco = itemDeco;
     place(x, y);
   }
 
+  /**
+   * Czy gra nadal pokazuje swój dymek. NIE patrzymy na „visibility” — to my go ukrywamy, gdy pokazujemy nasz podgląd
+   * (inaczej po ukryciu uznawaliśmy, że dymek zniknął, i podglądy przeskakiwały w kółko).
+   */
+  function tipShown(n) {
+    if (!n || !n.isConnected) return false;
+    const r = n.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) return false;
+    for (let p = n; p && p !== document.body; p = p.parentElement) { const cs = getComputedStyle(p); if (cs.display === 'none' || cs.opacity === '0') return false; }
+    return true;
+  }
   function watchHover() {
     let mx = 0, my = 0, rmx = 0, rmy = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
     const want = (id, from, anc) => {
@@ -4723,7 +4740,7 @@ MP.itemDeco = itemDeco;
       tipNode = null;
       if (tipSel) {
         for (const n of $$(tipSel)) {
-          if (n.closest('#mp-eqtip, .mp-glass') || !isVisible(n)) continue;
+          if (n.closest('#mp-eqtip, .mp-glass') || !tipShown(n)) continue;
           const r = n.getBoundingClientRect();
           const dx = Math.max(r.left - mx, 0, mx - r.right), dy = Math.max(r.top - my, 0, my - r.bottom);
           if (Math.hypot(dx, dy) > 90) continue;
@@ -4836,7 +4853,7 @@ MP.itemDeco = itemDeco;
       if (!tip || tip.style.display === 'none' || forced) { lostSince = 0; return; }
       let ok = false;
       if (src === 'list') { const at = document.elementFromPoint(rmx, rmy); ok = !!(at && (listRow(at) || at.closest('#mp-eqtip'))); }
-      else if (src === 'map') ok = !!(tipNode && tipNode.isConnected && isVisible(tipNode));
+      else if (src === 'map') ok = !!(tipNode && tipShown(tipNode));
       if (ok) { lostSince = 0; return; }
       if (!lostSince) lostSince = now();
       else if (now() - lostSince > 500) { lostSince = 0; src = null; hide(); }
