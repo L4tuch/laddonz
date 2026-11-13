@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.8
+// @version      1.0.9
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -1494,6 +1494,16 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-eqtip .mp-eqcell.mp-eqslot{background:rgba(255,255,255,.025)!important;border:1px dashed rgba(255,255,255,.07)!important;box-shadow:none!important}
 #mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
 #mp-eqtip.gamey.compact{min-width:0;padding:4px 6px;font-size:11.5px}
+#mp-eqtip .mp-gamegrid{position:relative!important;width:102px;height:136px;margin:4px auto 2px}
+#mp-eqtip .mp-gamegrid .dad-eq-slot{position:absolute!important;width:32px;height:32px}
+#mp-eqtip .mp-gamegrid .item{position:relative!important;width:32px;height:32px}
+#mp-eqtip .mp-gamegrid .item img.icon{width:32px;height:32px;display:block}
+#mp-eqtip .mp-gamegrid .highlight{position:absolute!important;inset:0;pointer-events:none}
+#mp-eqtip .mp-gamegrid .highlight.t-leg{box-shadow:inset 0 0 0 2px #e8314b}
+#mp-eqtip .mp-gamegrid .highlight.t-her{box-shadow:inset 0 0 0 2px #2fb7c9}
+#mp-eqtip .mp-gamegrid .highlight.t-uni{box-shadow:inset 0 0 0 2px #e0c341}
+#mp-eqtip .mp-gamegrid .highlight.t-upg{box-shadow:inset 0 0 0 2px #7fb7ff}
+#mp-eqtip .mp-gamegrid .highlight.t-art{box-shadow:inset 0 0 0 2px #e872ff}
 #mp-eqtip.compact .mp-eqbody{padding-top:4px;gap:0}
 #mp-eqtip.compact .mp-eqmain{min-width:0}
 #mp-eqtip.compact .mp-eqlayout{margin:2px auto 4px}
@@ -2197,6 +2207,10 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.9', d: '14.11.2026', items: [
+    'Pokaż EQ: podgląd z listy graczy wygląda jak dymek gracza w grze (sam ekwipunek, ramki jak w grze) i dalej ma skróty bonusów oraz podsumowanie legend.',
+    'Pokaż EQ: przy pierwszym najechaniu podgląd wczytuje się sam, nie trzeba już zjeżdżać kursorem i najeżdżać ponownie. Wczytuje się też szybciej.',
+  ] },
   { v: '1.0.8', d: '14.11.2026', items: [
     'Pokaż EQ: bonusy w dymku gracza pojawiają się dużo szybciej. Dodatek pobiera EQ od razu po najechaniu i dopisuje bonusy, gdy tylko je dostanie.',
   ] },
@@ -4557,8 +4571,10 @@ MP.itemDeco = itemDeco;
     if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
     const quick = itemsFromTip(id);
     if (quick && quick.length) { cache[id] = { t: now(), items: quick }; return quick; }
+    // trwa inne pobieranie (np. w tle) — czekamy na nie zamiast zostawiać „Wczytuję…” do ponownego najechania
+    for (let i = 0; i < 60 && busy; i++) { await sleep(50); if (hoverId !== id) return 'stale'; const c2 = cache[id]; if (c2 && now() - c2.t < cfg.cacheSec * 1000) return c2.items; }
     if (busy) { wanted = id; return 'wait'; }
-    const gap = 350 - (now() - lastReq);
+    const gap = 150 - (now() - lastReq);
     if (gap > 0) await sleep(gap);
     if (hoverId !== id) return 'stale';
     busy = true; lastReq = now();
@@ -4632,7 +4648,35 @@ MP.itemDeco = itemDeco;
   }
 
   /** Siatka w układzie okna gry: pozycje przedmiotów przeliczone na komórki. */
+  /** Siatka jak w dymku gracza w grze (3 kolumny, krok 34 px, ramki rzadkości z gry). */
+  const ST_POS = { 1: [1, 0], 2: [0, 1], 3: [1, 1], 4: [2, 1], 5: [0, 2], 6: [1, 2], 7: [2, 2], 8: [1, 3], 9: [0, 3] };
+  const CL_ST = { 9: 1, 12: 2, 13: 3, 11: 4, 1: 5, 2: 5, 3: 5, 4: 5, 6: 5, 8: 6, 5: 7, 7: 7, 14: 7, 10: 8, 21: 9, 29: 9, 25: 9, 22: 9 };
+  const RAR_T = { unique: 't-uni', heroic: 't-her', legendary: 't-leg', upgraded: 't-upg', artefact: 't-art' };
+  function gameGrid(items) {
+    const box = el('div', { class: 'dad-eq-grid mp-gamegrid' });
+    const taken = new Set();
+    const place = (it, st) => {
+      const [c, r] = ST_POS[st];
+      taken.add(st);
+      const t = RAR_T[it.rarity];
+      box.appendChild(el('div', { class: 'dad-eq-slot', style: { left: c * 34 + 'px', top: r * 34 + 'px' }, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
+        el('div', { class: 'item' },
+          el('div', { class: 'highlight' + (t ? ' ' + t + ' h-exist' : '') }),
+          it.icon ? el('img', { class: 'icon', src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
+          it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null)));
+    };
+    const loose = [];
+    for (const it of items) {
+      let st = Number(it.st) || 0;
+      if (!ST_POS[st] || taken.has(st)) st = CL_ST[it.cl] || 0;
+      if (!ST_POS[st] || taken.has(st)) { loose.push(it); continue; }
+      place(it, st);
+    }
+    for (const it of loose) { const st = Object.keys(ST_POS).map(Number).find((x) => !taken.has(x)); if (st) place(it, st); }
+    return box;
+  }
   function layoutGrid(items) {
+    if (cfg.compact) return gameGrid(items);
     const cell = (it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
       it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
       it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null);
@@ -5073,13 +5117,13 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
     desc: 'Po najechaniu kursorem na gracza pokazuje jego postać, pełny ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych. Nie musisz otwierać żadnych okien.',
-    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, compact: false, cacheSec: 300, tipSelector: '.tip-wrapper' },
+    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, compact: true, cacheSec: 300, tipSelector: '.tip-wrapper' },
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
       { key: 'listHover', type: 'bool', label: 'Najechanie na gracza na liście graczy (w grze i w L4Tools)' },
       { key: 'needShift', type: 'bool', label: 'Na mapie tylko z wciśniętym Shift' },
-      { key: 'compact', type: 'bool', label: 'Mały podgląd', hint: 'Sam ekwipunek, bez postaci — mniejsze okienko.' },
+      { key: 'compact', type: 'bool', label: 'Podgląd jak w dymku gry', hint: 'Sam ekwipunek w układzie z dymka gracza. Wyłączone: większe okienko z postacią.' },
       { adv: true, key: 'cacheSec', type: 'number', label: 'Pamiętaj wynik przez (s)', min: 10, max: 1800 },
       { adv: true, key: 'tipSelector', type: 'text', label: 'Selektor dymka gracza w grze', hint: 'Domyślnie .tip-wrapper.normal-tip' },
     ],
@@ -5088,6 +5132,7 @@ MP.itemDeco = itemDeco;
       if (!c._v12) { c._v12 = true; c.needShift = false; c.tipSelector = '.tip-wrapper.normal-tip'; }
       if (!c._v16) { c._v16 = true; c.cacheSec = 300; }
       if (!c._v102d) { c._v102d = true; c.compact = false; }   // jak okno „Ekwipunek Postaci” z gry: postać + EQ
+      if (!c._v108) { c._v108 = true; c.compact = true; }   // podgląd jak dymek gracza w grze
       if (!c._v102e) { c._v102e = true; c.tipSelector = '.tip-wrapper'; }   // każdy dymek gracza w grze (także nowy z EQ)
       config.save();
       hookItemFlow();
@@ -8752,5 +8797,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.8";
+MP.version = "1.0.9";
 })();

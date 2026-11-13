@@ -501,8 +501,10 @@ MP.itemDeco = itemDeco;
     if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
     const quick = itemsFromTip(id);
     if (quick && quick.length) { cache[id] = { t: now(), items: quick }; return quick; }
+    // trwa inne pobieranie (np. w tle) — czekamy na nie zamiast zostawiać „Wczytuję…” do ponownego najechania
+    for (let i = 0; i < 60 && busy; i++) { await sleep(50); if (hoverId !== id) return 'stale'; const c2 = cache[id]; if (c2 && now() - c2.t < cfg.cacheSec * 1000) return c2.items; }
     if (busy) { wanted = id; return 'wait'; }
-    const gap = 350 - (now() - lastReq);
+    const gap = 150 - (now() - lastReq);
     if (gap > 0) await sleep(gap);
     if (hoverId !== id) return 'stale';
     busy = true; lastReq = now();
@@ -576,7 +578,35 @@ MP.itemDeco = itemDeco;
   }
 
   /** Siatka w układzie okna gry: pozycje przedmiotów przeliczone na komórki. */
+  /** Siatka jak w dymku gracza w grze (3 kolumny, krok 34 px, ramki rzadkości z gry). */
+  const ST_POS = { 1: [1, 0], 2: [0, 1], 3: [1, 1], 4: [2, 1], 5: [0, 2], 6: [1, 2], 7: [2, 2], 8: [1, 3], 9: [0, 3] };
+  const CL_ST = { 9: 1, 12: 2, 13: 3, 11: 4, 1: 5, 2: 5, 3: 5, 4: 5, 6: 5, 8: 6, 5: 7, 7: 7, 14: 7, 10: 8, 21: 9, 29: 9, 25: 9, 22: 9 };
+  const RAR_T = { unique: 't-uni', heroic: 't-her', legendary: 't-leg', upgraded: 't-upg', artefact: 't-art' };
+  function gameGrid(items) {
+    const box = el('div', { class: 'dad-eq-grid mp-gamegrid' });
+    const taken = new Set();
+    const place = (it, st) => {
+      const [c, r] = ST_POS[st];
+      taken.add(st);
+      const t = RAR_T[it.rarity];
+      box.appendChild(el('div', { class: 'dad-eq-slot', style: { left: c * 34 + 'px', top: r * 34 + 'px' }, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
+        el('div', { class: 'item' },
+          el('div', { class: 'highlight' + (t ? ' ' + t + ' h-exist' : '') }),
+          it.icon ? el('img', { class: 'icon', src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
+          it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null)));
+    };
+    const loose = [];
+    for (const it of items) {
+      let st = Number(it.st) || 0;
+      if (!ST_POS[st] || taken.has(st)) st = CL_ST[it.cl] || 0;
+      if (!ST_POS[st] || taken.has(st)) { loose.push(it); continue; }
+      place(it, st);
+    }
+    for (const it of loose) { const st = Object.keys(ST_POS).map(Number).find((x) => !taken.has(x)); if (st) place(it, st); }
+    return box;
+  }
   function layoutGrid(items) {
+    if (cfg.compact) return gameGrid(items);
     const cell = (it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
       it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
       it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null);
@@ -1017,13 +1047,13 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
     desc: 'Po najechaniu kursorem na gracza pokazuje jego postać, pełny ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych. Nie musisz otwierać żadnych okien.',
-    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, compact: false, cacheSec: 300, tipSelector: '.tip-wrapper' },
+    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, compact: true, cacheSec: 300, tipSelector: '.tip-wrapper' },
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
       { key: 'listHover', type: 'bool', label: 'Najechanie na gracza na liście graczy (w grze i w L4Tools)' },
       { key: 'needShift', type: 'bool', label: 'Na mapie tylko z wciśniętym Shift' },
-      { key: 'compact', type: 'bool', label: 'Mały podgląd', hint: 'Sam ekwipunek, bez postaci — mniejsze okienko.' },
+      { key: 'compact', type: 'bool', label: 'Podgląd jak w dymku gry', hint: 'Sam ekwipunek w układzie z dymka gracza. Wyłączone: większe okienko z postacią.' },
       { adv: true, key: 'cacheSec', type: 'number', label: 'Pamiętaj wynik przez (s)', min: 10, max: 1800 },
       { adv: true, key: 'tipSelector', type: 'text', label: 'Selektor dymka gracza w grze', hint: 'Domyślnie .tip-wrapper.normal-tip' },
     ],
@@ -1032,6 +1062,7 @@ MP.itemDeco = itemDeco;
       if (!c._v12) { c._v12 = true; c.needShift = false; c.tipSelector = '.tip-wrapper.normal-tip'; }
       if (!c._v16) { c._v16 = true; c.cacheSec = 300; }
       if (!c._v102d) { c._v102d = true; c.compact = false; }   // jak okno „Ekwipunek Postaci” z gry: postać + EQ
+      if (!c._v108) { c._v108 = true; c.compact = true; }   // podgląd jak dymek gracza w grze
       if (!c._v102e) { c._v102e = true; c.tipSelector = '.tip-wrapper'; }   // każdy dymek gracza w grze (także nowy z EQ)
       config.save();
       hookItemFlow();

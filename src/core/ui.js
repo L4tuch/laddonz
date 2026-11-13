@@ -5,6 +5,10 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.9', d: '14.11.2026', items: [
+    'Pokaż EQ: podgląd z listy graczy wygląda jak dymek gracza w grze (sam ekwipunek, ramki jak w grze) i dalej ma skróty bonusów oraz podsumowanie legend.',
+    'Pokaż EQ: przy pierwszym najechaniu podgląd wczytuje się sam, nie trzeba już zjeżdżać kursorem i najeżdżać ponownie. Wczytuje się też szybciej.',
+  ] },
   { v: '1.0.8', d: '14.11.2026', items: [
     'Pokaż EQ: bonusy w dymku gracza pojawiają się dużo szybciej. Dodatek pobiera EQ od razu po najechaniu i dopisuje bonusy, gdy tylko je dostanie.',
   ] },

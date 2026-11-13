@@ -418,6 +418,16 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-eqtip .mp-eqcell.mp-eqslot{background:rgba(255,255,255,.025)!important;border:1px dashed rgba(255,255,255,.07)!important;box-shadow:none!important}
 #mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
 #mp-eqtip.gamey.compact{min-width:0;padding:4px 6px;font-size:11.5px}
+#mp-eqtip .mp-gamegrid{position:relative!important;width:102px;height:136px;margin:4px auto 2px}
+#mp-eqtip .mp-gamegrid .dad-eq-slot{position:absolute!important;width:32px;height:32px}
+#mp-eqtip .mp-gamegrid .item{position:relative!important;width:32px;height:32px}
+#mp-eqtip .mp-gamegrid .item img.icon{width:32px;height:32px;display:block}
+#mp-eqtip .mp-gamegrid .highlight{position:absolute!important;inset:0;pointer-events:none}
+#mp-eqtip .mp-gamegrid .highlight.t-leg{box-shadow:inset 0 0 0 2px #e8314b}
+#mp-eqtip .mp-gamegrid .highlight.t-her{box-shadow:inset 0 0 0 2px #2fb7c9}
+#mp-eqtip .mp-gamegrid .highlight.t-uni{box-shadow:inset 0 0 0 2px #e0c341}
+#mp-eqtip .mp-gamegrid .highlight.t-upg{box-shadow:inset 0 0 0 2px #7fb7ff}
+#mp-eqtip .mp-gamegrid .highlight.t-art{box-shadow:inset 0 0 0 2px #e872ff}
 #mp-eqtip.compact .mp-eqbody{padding-top:4px;gap:0}
 #mp-eqtip.compact .mp-eqmain{min-width:0}
 #mp-eqtip.compact .mp-eqlayout{margin:2px auto 4px}
