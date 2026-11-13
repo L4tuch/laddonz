@@ -554,6 +554,8 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 
 /* Ulepszarka: ciche pobranie licznika — okno Rzemiosła niewidoczne przez chwilę */
 .mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){clip-path:inset(50%)!important;pointer-events:none!important}
+.mp-dbarrow{position:fixed;width:40px;height:40px;z-index:2147481000;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7));animation:mpDbPulse 1s ease-in-out infinite;transition:left .12s linear,top .12s linear}
+@keyframes mpDbPulse{0%,100%{opacity:1}50%{opacity:.65}}
 .mp-dbw{position:fixed;left:calc(50% - 120px);top:90px;width:240px;z-index:2147482000;background:rgba(16,20,16,.94);border:1px solid #3c5a3f;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.55);font:12px/1.3 Arial,sans-serif;color:#e4eee5;user-select:none}
 .mp-dbw-h{display:flex;align-items:center;justify-content:space-between;padding:5px 6px 5px 9px;cursor:move;border-bottom:1px solid #2b3d2d;font-weight:700;color:#ff8a9c}
 .mp-dbw-h button{background:none;border:0;color:#cfd8d0;font-size:16px;line-height:1;cursor:pointer;padding:0 4px}

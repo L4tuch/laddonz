@@ -10,6 +10,7 @@
 (() => {
   const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
   const RETRY_MS = 600;       // jak często ponawiać atak na namierzony cel w zasięgu
+  const REFUSE_MS = 2500;     // po odmowie („nie zgadza się na walkę") — krótka przerwa i próbujemy znowu
   const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, lock: null, timer: null, said: {} };
   /** Komunikat o danym graczu najwyżej raz na `ms` (żeby nie zasypać ekranu przy ponawianiu). */
   const say = (key, msg, ms = 15000, type = 'warn') => { const t = now(); if (S.said[key] > t) return; S.said[key] = t + ms; toast(msg, type); };
@@ -27,6 +28,8 @@
     return out.join(' ').replace(/<[^>]+>/g, '').trim();
   }
   let cfg;
+  /** Odświeżenie widoku dodatku w panelu (gdy jest otwarty). */
+  let rr = () => {};
 
   const dist = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
   const task = (id) => net.build('attackPlayer', { id }).task;
@@ -47,7 +50,7 @@
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
         // komunikat pokazuje już sama gra — Dobijarka nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
-        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + 30000; return; }
+        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + REFUSE_MS; return; }
         const sec = parseProtection(data);
         if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
       },
@@ -63,7 +66,8 @@
     cfg.target = { id: p.id, nick: p.nick };          // zapamiętany na stałe (także po odświeżeniu gry)
     config.save();
     mark.set(p.id);
-    toast(`Dobijarka: cel ${p.nick}`);
+    toast(`Dobijarka: dobijam ${p.nick}`);
+    rr();
     ensureLoop();
     tick();
   }
@@ -75,12 +79,12 @@
     config.save();
     mark.clear();
     ensureLoop();
-    if (ui.panel && ui.sel === 'napad') ui.renderMain();
+    rr();
   }
   function keyNearest() {
     if (!cfg.enabled) return;
     // ponowne naciśnięcie przy namierzonym celu = anulowanie (żeby zmienić cel: anuluj i naciśnij jeszcze raz)
-    if (S.lock) { unlock(`Dobijarka: anulowano atak na ${S.lock.nick}`); return; }
+    if (S.lock) { unlock(`Dobijarka: przerwano dobijanie ${S.lock.nick}`); return; }
     const h = game.hero(); if (!h) return;
     const list = game.others().filter(allowed).sort((a, b) => dist(h, a) - dist(h, b));
     if (!list.length) { toast('Dobijarka: brak graczy na mapie'); return; }
@@ -93,7 +97,7 @@
     allWin();
     ensureLoop();
     if (!quiet) toast(on ? `Dobijarka: atak na każdego w pobliżu (poz. ${Number(cfg.lvlMin) || 0}–${Number(cfg.lvlMax) || 500})` : 'Dobijarka: atak na każdego w pobliżu wyłączony', on ? 'ok' : 'info');
-    if (ui.panel && ui.sel === 'napad') ui.renderMain();
+    rr();
   }
   function allWin() {
     let w = document.getElementById('mp-dbw');
@@ -121,9 +125,56 @@
     });
   }
 
+  /*
+   * Czerwona strzałka przy postaci, wskazująca kierunek do namierzonego celu (jak strzałki przejść w grze).
+   * Pozycja postaci na ekranie: kamera gry trzyma postać na środku planszy, a przy brzegach mapy się zatrzymuje.
+   */
+  const ARROW = '<svg viewBox="0 0 40 40" width="40" height="40"><path d="M5 14h16V5l15 15-15 15v-9H5z" fill="#e0262b" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><path d="M5 14h16V5l15 15-15 15v-9H5z" fill="none" stroke="#5a0b0d" stroke-width="1" stroke-linejoin="round"/><path d="M8 17h16V12l8 8" fill="none" stroke="#ff8a8a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/></svg>';
+  function gameCanvas() {
+    const c = document.getElementById('GAME_CANVAS');
+    if (c && c.getBoundingClientRect().width) return c;
+    let best = null, area = 0;
+    for (const x of document.querySelectorAll('canvas')) { if (x.closest('.mp-glass')) continue; const r = x.getBoundingClientRect(); if (r.width * r.height > area) { area = r.width * r.height; best = x; } }
+    return area > 200 * 200 ? best : null;
+  }
+  function heroScreen() {
+    const cv = gameCanvas();
+    const r = cv ? cv.getBoundingClientRect() : { left: 0, top: 0, width: innerWidth, height: innerHeight };
+    const E = W.Engine; const hd = E && E.hero;
+    const hx = Number(hd && hd.rx != null ? hd.rx : hd && hd.d && hd.d.x), hy = Number(hd && hd.ry != null ? hd.ry : hd && hd.d && hd.d.y);
+    if (!Number.isFinite(hx) || !Number.isFinite(hy)) return null;
+    const md = (E.map && E.map.d) || {};
+    const T = 32 * (cv && cv.width ? r.width / cv.width : 1);
+    const ax = (mw, vw, p) => { if (!(mw > 0)) return vw / 2; const full = mw * T; if (full <= vw) return (vw - full) / 2 + p; return p - Math.max(0, Math.min(full - vw, p - vw / 2)); };
+    return { x: r.left + ax(Number(md.x), r.width, (hx + 0.5) * T), y: r.top + ax(Number(md.y), r.height, (hy + 0.5) * T) - T * 0.4, r };
+  }
+  let arrowTimer = null;
+  function arrowTick() {
+    let a = document.getElementById('mp-dbarrow');
+    const p = cfg && cfg.enabled && S.lock && lockedPlayer();
+    const h = p && game.hero();
+    const pos = h && heroScreen();
+    if (!p || !h || !pos || game.inBattle() || dist(h, p) <= RANGE) { if (a) a.style.display = 'none'; return; }
+    if (!a) { a = el('div', { id: 'mp-dbarrow', class: 'mp-dbarrow' }); a.innerHTML = ARROW; document.body.appendChild(a); }
+    const ang = Math.atan2(p.y - h.y, p.x - h.x);
+    const R0 = 46;
+    a.style.display = '';
+    a.style.left = (pos.x + Math.cos(ang) * R0 - 20) + 'px';
+    a.style.top = (pos.y + Math.sin(ang) * R0 - 20) + 'px';
+    a.style.transform = `rotate(${ang}rad)`;
+    a.title = `Cel: ${p.nick} (${dist(h, p)} kratek)`;
+  }
+  function ensureArrow() {
+    const need = !!(cfg && cfg.enabled && S.lock);
+    if (need && !arrowTimer) arrowTimer = setInterval(arrowTick, 120);
+    if (!need && arrowTimer) { clearInterval(arrowTimer); arrowTimer = null; }
+    arrowTick();
+  }
+
   /* ── pętla: namierzony cel + tryb włączony ── */
   function ensureLoop() {
     const need = !!(cfg && cfg.enabled) && (!!S.lock || !!cfg.allMode);
+    ensureArrow();
     if (need && !S.timer) S.timer = setInterval(tick, 150);
     if (!need && S.timer) { clearInterval(S.timer); S.timer = null; }
   }
@@ -134,15 +185,24 @@
     if (!p) { p = game.otherByNick(S.lock.nick); if (p) { S.lock.id = p.id; cfg.target = { id: p.id, nick: p.nick }; config.save(); } }
     return p;
   }
+  /** Gracz, który dopiero pojawił się na mapie (np. po teleporcie) — od razu bez przerw po wcześniejszej odmowie. */
+  let seen = new Set();
+  function freshArrivals() {
+    const cur = new Set(game.others().map((p) => p.id));
+    for (const id of cur) if (!seen.has(id)) { delete S.refused[id]; delete S.tried[id]; }
+    seen = cur;
+  }
   function tick() {
     if (!cfg || !cfg.enabled) return;
     if (!game.ready()) return;
+    freshArrivals();
     const h = game.hero(); if (!h) return;
     if (game.inBattle()) return;
     // 1) namierzony cel — pamiętany, dopóki sam go nie zmienisz/przerwiesz; atak, gdy będzie w zasięgu
     if (S.lock) {
       const p = lockedPlayer();
       if (!p && !cfg.remember) { unlock(`Dobijarka: ${S.lock.nick} zniknął z mapy`); return; }
+      if (!!p !== S.wasOn) { S.wasOn = !!p; rr(); }   // „na mapie" / „poza mapą" w panelu
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
       if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Dobijarka: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
       if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
@@ -204,10 +264,11 @@
       { group: 'Atakuj każdego w pobliżu', key: 'keyAll', type: 'key', label: 'Klawisz: włącz / wyłącz' },
     ],
     render(box, c, rerender) {
+      rr = () => { if (box.isConnected) rerender(); };
       box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Zapamiętany cel'),
         S.lock ? el('div', { style: { display: 'flex', alignItems: 'center', gap: '10px' } },
           el('b', null, S.lock.nick), el('span', { class: 'mp-dim' }, game.otherById(S.lock.id) || game.otherByNick(S.lock.nick) ? 'na mapie' : 'poza mapą — czekam'),
-          el('button', { class: 'mp-btn bad', style: { marginLeft: 'auto' }, onclick: () => { unlock('Dobijarka: przerwano'); rerender(); } }, 'Przerwij dobijanie'))
+          el('button', { class: 'mp-btn bad', style: { marginLeft: 'auto' }, onclick: () => { unlock(`Dobijarka: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`); rerender(); } }, 'Przerwij dobijanie'))
           : el('div', { class: 'mp-dim' }, 'Brak. Ustaw klawiszem albo „Dobij" w menu gracza.')));
     },
     init(c) {
@@ -220,7 +281,7 @@
         if (!cfg.enabled) return [];
         // namierzony gracz → zamiast „Dobij" jest „Przerwij dobijanie" (cofa polecenie ataku)
         const pp = game.otherById(id);
-        if (S.lock && (S.lock.id === Number(id) || (pp && pp.nick === S.lock.nick))) return [{ label: 'Przerwij dobijanie', fn: () => unlock(`Dobijarka: przerwano atak na ${S.lock ? S.lock.nick : 'cel'}`) }];
+        if (S.lock && (S.lock.id === Number(id) || (pp && pp.nick === S.lock.nick))) return [{ label: 'Przerwij dobijanie', fn: () => unlock(`Dobijarka: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`) }];
         const p = game.otherById(id);
         if (!p || !allowed(p)) return [];
         return [{ label: 'Dobij', fn: () => lockOn(game.otherById(id) || p) }];

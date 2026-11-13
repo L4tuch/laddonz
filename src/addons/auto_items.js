@@ -629,13 +629,30 @@
    */
   const LVL_MULT = [1, 1.1, 1.3, 1.6, 2.0];
   function pctTo5(p) {
+    if (p && Number(p.lvl) >= 5) return 100;
     if (!p || !p.max) return null;
     const lvl = Number(p.lvl) || 0;
-    if (lvl >= 5) return 100;
+    // punkty na każdy poziom: prawdziwe (zapamiętane z odpowiedzi gry dla tego przedmiotu), a brakujące — z przelicznika
+    const known = Object.assign({}, p.maxes || {}, { [lvl]: p.max });
     const base = p.max / LVL_MULT[lvl];
-    const total = base * LVL_MULT.reduce((a, b) => a + b, 0);
-    const done = base * LVL_MULT.slice(0, lvl).reduce((a, b) => a + b, 0) + Math.min(p.cur, p.max);
+    const need = LVL_MULT.map((m, i) => (Number(known[i]) > 0 ? Number(known[i]) : base * m));
+    const total = need.reduce((a, b) => a + b, 0);
+    const done = need.slice(0, lvl).reduce((a, b) => a + b, 0) + Math.min(p.cur, p.max);
     return Math.max(0, Math.min(100, Math.round((done / total) * 1000) / 10));
+  }
+  /** Postęp z odpowiedzi gry + zapamiętane punkty potrzebne na każdy poziom (do dokładnego %). */
+  function mkProg(old, pr) {
+    const prog = { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 };
+    prog.maxes = Object.assign({}, (old && old.maxes) || {});
+    if (prog.max > 0 && prog.lvl < 5) prog.maxes[prog.lvl] = prog.max;
+    return prog;
+  }
+  /** Komunikat: przedmiot doszedł do +5 (bonus gracz wybiera sam). Raz na przedmiot. */
+  const maxSaid = new Set();
+  function sayMaxed(id, name) {
+    if (maxSaid.has(Number(id))) return;
+    maxSaid.add(Number(id));
+    toast(`Ulepszarka: przedmiot „${name}” został ulepszony na najwyższy poziom (+5)! Bonus wybierz sam w Rzemiośle.`, 'ok', 7000);
   }
   /** Gdy nie znamy punktów — sam poziom (+2 = ukończone poziomy +1 i +2). */
   const pctLvlOnly = (lvl) => { lvl = Number(lvl) || 0; if (lvl >= 5) return 100; const all = LVL_MULT.reduce((a, b) => a + b, 0); return Math.round((LVL_MULT.slice(0, lvl).reduce((a, b) => a + b, 0) / all) * 1000) / 10; };
@@ -646,9 +663,11 @@
       const e = d && d.enhancement; if (!e || !cfg) return;
       const pr = e.progressing; if (!pr || !e.itemId) return;
       const sl = slots().find((s) => Number(s.id) === Number(e.itemId));
-      const prog = { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 };
+      const prev = (sl && sl.prog) || (lastItem && lastItem.id === Number(e.itemId) ? lastItem.prog : null);
+      const prog = mkProg(prev, pr);
       const it = game.itemById(e.itemId);
-      lastItem = { name: (sl && sl.name) || (it && it.name) || 'przedmiot', prog };
+      if (prog.lvl >= 5 && (!prev || prev.lvl < 5)) sayMaxed(e.itemId, (sl && sl.name) || (it && it.name) || 'przedmiot');
+      lastItem = { id: Number(e.itemId), name: (sl && sl.name) || (it && it.name) || 'przedmiot', prog };
       if (sl) { sl.prog = prog; config.save(); }
       ovItem();
     } catch {}
@@ -681,14 +700,14 @@
       const e = data && data.enhancement;
       const pr = e && (e.progressing || e.progress_preview);
       const sl = slots().find((s) => Number(s.id) === o.target.id);
-      if (pr && sl) { sl.prog = { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 }; config.save(); }
-      if (pr && Number(pr.max) > 0) { lastItem = { name: (sl && sl.name) || o.target.name || 'przedmiot', prog: { cur: Number(pr.current) || 0, max: Number(pr.max) || 0, lvl: Number(pr.upgradeLevel) || 0 } }; ovItem(); }
+      if (pr && sl) { sl.prog = mkProg(sl.prog, pr); config.save(); }
+      if (pr && Number(pr.max) > 0) { lastItem = { id: o.target.id, name: (sl && sl.name) || o.target.name || 'przedmiot', prog: sl ? sl.prog : mkProg(null, pr) }; ovItem(); }
       onUsages(data, 'Ulepszarka');
     } catch {}
     let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
     if (/maksymaln|max(imum)? ?(lvl|level|poziom)/i.test(txt)) {
       const i = slots().findIndex((s) => Number(s.id) === o.target.id);
-      if (i >= 0) { slots().splice(i, 1); config.save(); toast(`Ulepszarka: „${o.target.name}" osiągnął maksymalny poziom — usunięty z listy`, 'ok'); rr(); }
+      if (i >= 0) { slots().splice(i, 1); config.save(); sayMaxed(o.target.id, o.target.name); rr(); }
     }
   };
   /*
@@ -707,15 +726,31 @@
     }
   }).observe(document.body, { childList: true, subtree: true });
   /** W trakcie pracy Ulepszarki komunikaty gry o odrzuconych/bezużytecznych składnikach nie trafiają na ekran. */
-  function hushMessages() {
-    const orig = W.message;
-    if (typeof orig !== 'function') return () => {};
-    W.message = function (m, ...a) {
+  /*
+   * Jeden stały filtr komunikatów gry (zakładany raz) — bez podmieniania i przywracania W.message w trakcie pracy,
+   * żeby nic nie mogło na stałe „zjeść" komunikatów innych dodatków.
+   *   hushN > 0     → chowamy komunikaty o odrzuconych/bezużytecznych składnikach
+   *   onlyOwnN > 0  → (sprawdzanie przed ulepszeniem) przepuszczamy tylko komunikaty dodatków
+   */
+  let hushN = 0, onlyOwnN = 0;
+  function msgFilter() {
+    const cur = W.message;
+    if (typeof cur !== 'function' || cur.__l4filter) return;
+    const orig = cur;
+    const f = function (m, ...a) {
       const t = String(m == null ? '' : m).replace(/<[^>]+>/g, '');
-      if (NOISE.test(t)) { if (USELESS.test(t)) uselessSeen = true; return; }
+      const own = /^(Ulepszarka|Bratan|Dobijarka|Fake Taxi|L4)/.test(t);
+      if (!own && onlyOwnN > 0) return;
+      if (!own && hushN > 0 && NOISE.test(t)) { if (USELESS.test(t)) uselessSeen = true; return; }
       return orig.call(this, m, ...a);
     };
-    return () => { W.message = orig; };
+    f.__l4filter = true;
+    W.message = f;
+  }
+  function hushMessages() {
+    msgFilter(); hushN++;
+    let done = false;
+    return () => { if (!done) { done = true; hushN = Math.max(0, hushN - 1); } };
   }
 
   /*
@@ -807,9 +842,8 @@
   async function precheck() {
     const lvlOf = (i) => Number(i && i.stats && i.stats.lvl) || 0;
     // ciche komunikaty gry w trakcie sprawdzania (np. „Poziom przedmiotu jest zbyt niski!" z podglądu)
-    const origMsg = W.message;
+    msgFilter(); onlyOwnN++;
     let restored = false;
-    if (typeof origMsg === 'function') W.message = function (m, ...a) { if (/^(Ulepszarka|Bratan|Dobijarka|Fake Taxi)/.test(String(m))) return origMsg.call(this, m, ...a); };
     try {
       for (const sl of slots().slice()) {
         const it = game.itemById(sl.id);
@@ -826,13 +860,13 @@
         steps.push({ a: 'check', item: it.id, lvl: enhLevel(it), probeLvl: lvlOf(probe), resp: short(r.data) }); store.set('up:last', { t: new Date().toISOString(), steps: steps.slice(-20) });
         if (r.data && (r.data.t === 'stop' || r.data.t === 'reload')) return;
         try { const pv = r.data && r.data.enhancement && r.data.enhancement.progress_preview; if (pv && Array.isArray(pv.ingredients) && !pv.ingredients.map(Number).includes(probe.id)) markRejected(it.id, [probe.id]); } catch {}
-        if (isMaxedResp(r.data)) { learnMax(it); removeMaxed(it.id, it.name); }
+        if (isMaxedResp(r.data)) { learnMax(it); maxSaid.add(Number(it.id)); removeMaxed(it.id, it.name, 'ma już najwyższy poziom'); }
         else maxResp({ target: it })(r.data || {});   // zapis postępu
         await sleep(250);
       }
     } finally {
       await sleep(300);
-      if (!restored && typeof origMsg === 'function') { W.message = origMsg; restored = true; }
+      if (!restored) { onlyOwnN = Math.max(0, onlyOwnN - 1); restored = true; }
     }
   }
   /** Zapamiętany maksymalny poziom dla rzadkości (np. zwykłe kończą się wcześniej niż heroiki). */
@@ -979,7 +1013,7 @@
     const i = slots().findIndex((s) => Number(s.id) === Number(id));
     if (i < 0) return;
     slots().splice(i, 1); config.save();
-    toast(why ? `Ulepszarka: „${name}" — ${why} — zdjęto z listy` : `Ulepszarka: Przedmiot osiągnął maksymalny poziom — zdjęto z listy „${name}"`, 'ok', 5000);
+    if (why) toast(`Ulepszarka: „${name}" — ${why} — zdjęto z listy`, 'ok', 5000); else sayMaxed(id, name);
     net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `„${name}" maksymalnie ulepszony — usunięty z listy` });
     rr();
   }
@@ -1069,7 +1103,7 @@
       const it = game.itemById(s.id);
       if (it && isMaxed(it)) {
         slots().splice(i, 1); changed = true;
-        toast(`Ulepszarka: Przedmiot osiągnął maksymalny poziom — zdjęto z listy „${s.name}"`, 'ok', 5000);
+        sayMaxed(s.id, s.name);
         net.pushLog({ kind: 'info', src: 'Ulepszarka', msg: `„${s.name}" maksymalnie ulepszony — usunięty z listy` });
       }
     }

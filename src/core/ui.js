@@ -5,6 +5,17 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.10', d: '13.11.2026', items: [
+    'Dobijarka: „Zapamiętany cel” w panelu odświeża się od razu (namierzenie, przerwanie, cel na mapie / poza mapą).',
+    'Dobijarka: wróciły komunikaty „Dobijarka: dobijam Nick” i „Dobijarka: przerwano dobijanie Nick”.',
+    'Ulepszarka: ukrywanie komunikatów gry w trakcie ulepszania nie może już przypadkiem wyciszyć komunikatów innych dodatków.',
+  ] },
+  { v: '1.0.9', d: '13.11.2026', items: [
+    'Dobijarka: czerwona strzałka przy postaci wskazuje kierunek do namierzonego celu (znika, gdy cel jest w zasięgu ataku).',
+    'Dobijarka: po odmowie walki („nie zgadza się”) kolejna próba już po 2,5 s, a gracz, który właśnie pojawił się na mapie (np. po teleporcie), jest atakowany od razu, bez czekania.',
+    'Ulepszarka: procent do +5 liczony dokładniej — zapamiętuje prawdziwe punkty potrzebne na każdy poziom danego przedmiotu, przelicznik tylko dla poziomów jeszcze nieznanych.',
+    'Ulepszarka: komunikat „Przedmiot … został ulepszony na najwyższy poziom (+5)!” (bonus wybierasz sam w Rzemiośle) — także przy ulepszaniu ręcznym.',
+  ] },
   { v: '1.0.8', d: '13.11.2026', items: [
     'Dobijarka: nie dubluje komunikatów gry (np. „Przeciwnik nie zgadza się na walkę!” pokazuje tylko gra).',
     'Dobijarka: „Atakuj każdego w pobliżu” atakuje pewniej — także gdy namierzony cel jest daleko, częściej ponawia atak i nie pomija graczy, których poziomu gra nie podała.',
