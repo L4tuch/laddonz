@@ -707,7 +707,11 @@
   function onProgress(d) {
     try {
       const e = d && d.enhancement; if (!e || !cfg) return;
-      const pr = e.progressing; if (!pr || !e.itemId) return;
+      // rzeczywisty postęp przedmiotu: „progressing” (po ulepszeniu) albo inne pole ze stanem (np. przy otwarciu przedmiotu w Rzemiośle);
+      // nigdy „progress_preview” — to stan „po” dodaniu składników
+      let pr = e.progressing;
+      if (!pr) for (const [k, v] of Object.entries(e)) if (k !== 'progress_preview' && v && typeof v === 'object' && v.current != null && v.max != null && v.upgradeLevel != null) { pr = v; break; }
+      if (!pr || !e.itemId) return;
       const sl = slots().find((s) => Number(s.id) === Number(e.itemId));
       const prev = (sl && sl.prog) || (lastItem && lastItem.id === Number(e.itemId) ? lastItem.prog : null);
       const prog = mkProg(prev, pr);
@@ -1341,7 +1345,8 @@
         const pc = has ? pctTo5(s.prog) : (lv != null ? pctLvlOnly(lv) : null);
         if (pc == null) return el('div', { class: 'mp-dim', style: { marginTop: '3px' } }, 'Całe ulepszenie do +5: pojawi się po pierwszym ulepszeniu');
         return el('div', null,
-          el('div', { class: 'mp-dim', style: { marginTop: '3px', color: '#cfe8b8', fontWeight: 'bold' } }, `Całe ulepszenie do +5: ${String(pc).replace('.', ',')}%`),
+          el('div', { class: 'mp-dim', style: { marginTop: '3px', color: '#cfe8b8', fontWeight: 'bold' } }, has ? `Całe ulepszenie do +5: ${String(pc).replace('.', ',')}%` : `Całe ulepszenie do +5: co najmniej ${String(pc).replace('.', ',')}%`),
+          has ? null : el('div', { class: 'mp-dim', style: { fontSize: '11px' } }, 'Dokładny procent pojawi się po pierwszym ulepszeniu tego przedmiotu.'),
           el('div', { class: 'mp-upbar', title: 'Postęp całego ulepszenia do +5' }, el('i', { style: { width: pc + '%' } })));
       })());
   }
@@ -1387,9 +1392,10 @@
         const pc = (x) => (x && x.pct != null ? ` (${String(x.pct).replace('.', ',')}%)` : '');
         const lvl = (x) => (x ? `+${x.lvl}${pc(x)}` : '?');
         const stopTxt = L.stop === 'limit' ? 'Zatrzymane: dzienny limit.' : L.stop === 'fail' ? 'Zatrzymane: gra przestała przyjmować ulepszenie albo podała nietypowy postęp.' : null;
+        void d;
         box.appendChild(el('div', { class: 'mp-card' },
           el('h3', null, 'Ostatnie ulepszanie'),
-          el('div', { class: 'mp-dim' }, `${d.toLocaleDateString('pl-PL')} ${d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })} · zużyto ${L.used} ${L.used === 1 ? 'przedmiot' : L.used % 10 >= 2 && L.used % 10 <= 4 && (L.used % 100 < 12 || L.used % 100 > 14) ? 'przedmioty' : 'przedmiotów'}`),
+          el('div', { class: 'mp-dim' }, `Zużyto ${L.used} ${L.used === 1 ? 'przedmiot' : L.used % 10 >= 2 && L.used % 10 <= 4 && (L.used % 100 < 12 || L.used % 100 > 14) ? 'przedmioty' : 'przedmiotów'}`),
           ...L.items.map((x) => el('div', { style: { marginTop: '5px' } },
             el('b', null, x.name), el('span', { class: 'mp-dim' }, ` · zużyto ${x.used} · ${lvl(x.from)} → ${lvl(x.to)}`),
             x.maxed ? el('div', { class: 'mp-okc', style: { fontSize: '12px' } }, 'Pełny postęp na +4 — wybierz bonus w Rzemiośle, żeby wbić +5. Po tym nie zużyto już żadnego przedmiotu.') : null)),
