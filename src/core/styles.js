@@ -382,6 +382,9 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .mp-eq-on .tip-wrapper:not(.mp-glass){clip-path:inset(0 0 100% 0)!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
 .mp-eq-on .tip-wrapper:not(.mp-glass) *{visibility:hidden!important}
 .mp-eq-on .mp-foreign-tip{clip-path:inset(50%)!important}
+.showeq-window .mp-tipsum{text-align:center;border-top:1px solid #3c3c3c;margin:6px 8px 4px;padding-top:4px;font:12px/1.35 Arial,sans-serif;color:#e8e8e8}
+.showeq-window .mp-tipsum .mp-eqbons{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
+.showeq-window .mp-tipsum .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px;padding:0 4px}
 .tip-wrapper .mp-tipsum{text-align:center;border-top:1px solid #3c3c3c;margin-top:4px;padding-top:3px;font:11.5px/1.35 Arial,sans-serif;color:#e8e8e8}
 .tip-wrapper .mp-tipsum .mp-eqbons{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
 .tip-wrapper .mp-tipsum .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px;padding:0 4px}

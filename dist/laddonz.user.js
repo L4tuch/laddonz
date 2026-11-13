@@ -1458,6 +1458,9 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .mp-eq-on .tip-wrapper:not(.mp-glass){clip-path:inset(0 0 100% 0)!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
 .mp-eq-on .tip-wrapper:not(.mp-glass) *{visibility:hidden!important}
 .mp-eq-on .mp-foreign-tip{clip-path:inset(50%)!important}
+.showeq-window .mp-tipsum{text-align:center;border-top:1px solid #3c3c3c;margin:6px 8px 4px;padding-top:4px;font:12px/1.35 Arial,sans-serif;color:#e8e8e8}
+.showeq-window .mp-tipsum .mp-eqbons{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
+.showeq-window .mp-tipsum .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px;padding:0 4px}
 .tip-wrapper .mp-tipsum{text-align:center;border-top:1px solid #3c3c3c;margin-top:4px;padding-top:3px;font:11.5px/1.35 Arial,sans-serif;color:#e8e8e8}
 .tip-wrapper .mp-tipsum .mp-eqbons{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
 .tip-wrapper .mp-tipsum .mp-chip{background:transparent;border:1px solid #444;border-radius:3px;font-size:11px;padding:0 4px}
@@ -4528,14 +4531,8 @@ MP.itemDeco = itemDeco;
   async function fetchEq(id) {
     const c = cache[id];
     if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
-    // dymek gry potrafi dociągnąć EQ po chwili — czekamy na niego do ~0,7 s, zanim zapytamy serwer
-    for (let i = 0; i < 14; i++) {
-      const quick = itemsFromTip(id);
-      if (quick && quick.length) { cache[id] = { t: now(), items: quick }; return quick; }
-      if (!anchor || !anchor.isConnected || hoverId !== id) break;
-      await sleep(50);
-    }
-    if (hoverId !== id) return 'stale';
+    const quick = itemsFromTip(id);
+    if (quick && quick.length) { cache[id] = { t: now(), items: quick }; return quick; }
     if (busy) { wanted = id; return 'wait'; }
     const gap = 350 - (now() - lastReq);
     if (gap > 0) await sleep(gap);
@@ -4749,6 +4746,30 @@ MP.itemDeco = itemDeco;
       bus.emit('deco');   // znaczki bonusów na przedmiotach w dymku
     } catch {}
   }
+  /** Podsumowanie bonusów także w oknie „Ekwipunek Postaci” z gry (gdy sam je otworzysz). */
+  function augmentEqWindows() {
+    if (!cfg.enabled || activeHide) return;   // okno otwarte w tle przez nasz podgląd — pomijamy
+    for (const w of $$('.showeq-window')) {
+      if (!shown(w) || getComputedStyle(w).visibility === 'hidden') continue;
+      const els = $$('[class*="item-id-"]', w).filter((n) => /item-id-\d+-showeq/.test(String(n.className)));
+      const sig = els.map((n) => String(n.className).match(/item-id-(\d+)/)[1]).join(',');
+      const have = w.querySelector('.mp-tipsum');
+      if (have && have.dataset.sig === sig) continue;
+      const items = els.map((n) => {
+        const iid = Number(String(n.className).match(/item-id-(\d+)/)[1]);
+        const tpl = Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0;
+        const r0 = lookupRaw(iid, tpl, n, null, null);
+        if (!r0) return { id: iid, name: '', rarity: rarityFromEl(n), legbon: null };
+        const it = game.normItem(r0); it.id = iid; return it;
+      });
+      if (have) have.remove();
+      if (!items.length) continue;
+      const box = el('div', { class: 'mp-tipsum mp-eqwin-sum' }, summaryEl(items));
+      box.dataset.sig = sig;
+      const host = w.querySelector('.content, [class*="content"]') || w;
+      host.appendChild(box);
+    }
+  }
   function watchHover() {
     let mx = 0, my = 0, rmx = 0, rmy = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
     const want = (id, from, anc) => {
@@ -4912,7 +4933,7 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'pokazeq', name: 'Pokaż EQ', icon: 'pokazeq', color: ['#b48cff', '#7c5cff'],
     desc: 'Po najechaniu kursorem na gracza pokazuje jego postać, pełny ekwipunek ułożony jak w grze i podsumowanie bonusów legendarnych. Nie musisz otwierać żadnych okien.',
-    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, compact: true, cacheSec: 300, tipSelector: '.tip-wrapper.normal-tip' },
+    defaults: { enabled: false, mapHover: true, listHover: true, needShift: false, compact: false, cacheSec: 300, tipSelector: '.tip-wrapper.normal-tip' },
     notes: () => [{ type: 'info', text: 'Pierwszy podgląd gracza trwa tyle, ile odpowiedź serwera (jak „Pokaż ekwipunek" w grze). Kolejne przez 5 minut są natychmiastowe.' }],
     settings: [
       { key: 'mapHover', type: 'bool', label: 'Najechanie na gracza na mapie' },
@@ -4926,10 +4947,11 @@ MP.itemDeco = itemDeco;
       cfg = c;
       if (!c._v12) { c._v12 = true; c.needShift = false; c.tipSelector = '.tip-wrapper.normal-tip'; }
       if (!c._v16) { c._v16 = true; c.cacheSec = 300; }
-      if (!c._v102c) { c._v102c = true; c.compact = true; }
+      if (!c._v102d) { c._v102d = true; c.compact = false; }   // jak okno „Ekwipunek Postaci” z gry: postać + EQ
       config.save();
       hookItemFlow();
       watchHover();
+      setInterval(augmentEqWindows, 500);
     },
     onToggle(on) { if (!on) hide(); },
   });
