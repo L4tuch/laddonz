@@ -5,27 +5,6 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
-  { v: '1.0.5', d: '13.11.2026', items: [
-    'Ulepszarka: przedmiot po ekstrakcji można znowu ulepszać.',
-    'Ulepszarka: nie przeszkadza, gdy sam korzystasz z Rzemiosła (np. ekstrakcja). Nie ulepsza wtedy automatycznie i nie zamyka Twojego okna.',
-  ] },
-  { v: '1.0.4', d: '13.11.2026', items: [
-    'Ulepszarka: kończy dokładnie na +5 i nie zużywa już żadnych przedmiotów po dojściu do najwyższego poziomu.',
-    'Ulepszarka: gdy gra poda dziwny postęp ulepszenia (np. spadek procentów), ulepszanie od razu się zatrzymuje, żeby nic nie przepalić.',
-    'Ulepszarka: procent do +5 nie „skacze” w dół.',
-  ] },
-  { v: '1.0.3', d: '13.11.2026', items: [
-    'Ulepszarka działa szybciej: krótsze przerwy między kolejnymi porcjami przedmiotów.',
-  ] },
-  { v: '1.0.2', d: '13.11.2026', items: [
-    'Pasek skrótów nie zjeżdża już w dół po walce.',
-    'Usunięty dodatek Wrogowie na mapie.',
-    'Lepsza Grupa: lista graczy odświeża się od razu po zmianie ustawień. Zniknęły techniczne dopiski przy graczach.',
-    'Legendarny Łup: w teście okno łupu zamyka się przyciskiem „Potwierdź” albo krzyżykiem.',
-    'MiniChat: bez technicznych informacji o oknie czatu.',
-    'Szybka Rączka: czytelny opis, co jest zaplanowane i jak to ustawić.',
-    'Nowe, dopracowane opisy wszystkich dodatków.',
-  ] },
   { v: '1.0.1', d: '13.11.2026', items: [
     'Dobijarka zmieniła nazwę na Slayer.',
     'Slayer: klawisz namierza najbliższego gracza, drugie kliknięcie odwołuje atak.',
@@ -40,6 +19,13 @@ const CHANGELOG = [
     'Ulepszarka: w ustawieniach sam wybierasz, które komunikaty chcesz widzieć.',
     'Szybka Rączka: przy zmianie zestawu po walce pokazuje tylko kupione zestawy.',
     'Skróty: czarne kafelki, włączony dodatek świeci na zielono. Bez przypiętych dodatków pokazują wszystkie włączone.',
+    'Ulepszarka: działa szybciej i kończy dokładnie na +5, nic nie przepala.',
+    'Ulepszarka: w panelu widać podsumowanie ostatniego ulepszania.',
+    'Ulepszarka: przedmiot po ekstrakcji można znowu ulepszać.',
+    'Lepsza Grupa: lista graczy odświeża się od razu po zmianie ustawień.',
+    'Legendarny Łup: w teście okno łupu zamykasz przyciskiem „Potwierdź”.',
+    'Usunięty dodatek Wrogowie na mapie.',
+    'Nowe opisy wszystkich dodatków.',
     'Panel ma już tylko jeden, zielony kolor.',
   ] },
   { v: '1.0.0', d: '11.11.2026', items: [
