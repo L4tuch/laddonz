@@ -4490,9 +4490,39 @@ MP.itemDeco = itemDeco;
     }, 120);
   }
 
+  /** Szybka droga: dymek gracza w grze sam pokazuje jego EQ — bierzemy przedmioty prosto z niego (bez pytania serwera). */
+  function itemsFromTip(id) {
+    try {
+      if (!anchor || !anchor.isConnected) return null;
+      const els = $$('[class*="item-id-"]', anchor).filter((n) => /item-id-\d+/.test(String(n.className)) && !n.closest('.mp-ibadge'));
+      if (els.length < 1) return null;
+      const ids = els.map((n) => Number(String(n.className).match(/item-id-(\d+)/)[1]));
+      const tpls = els.map((n) => Number((String(n.className).match(/item-tpl-(\d+)/) || [])[1]) || 0);
+      let box = els[0].parentElement;
+      while (box && box !== anchor && !els.every((x) => box.contains(x))) box = box.parentElement;
+      const br = box ? box.getBoundingClientRect() : null;
+      const grid = br ? { x: br.left, y: br.top, w: br.width, h: br.height } : null;
+      const dbg = { id, ids, tpls, src: {}, fromDom: 0, zDymka: true };
+      const items = ids.map((iid, i) => {
+        const r0 = lookupRaw(iid, tpls[i], els[i], null, dbg);
+        let it;
+        if (r0) { it = game.normItem(r0); it.id = iid; }
+        else { dbg.fromDom++; let img = ''; try { const c = els[i].querySelector('canvas'); if (c) img = c.toDataURL(); } catch {} it = { id: iid, name: '', icon: img, rarity: rarityFromEl(els[i]), legbon: null, stats: {} }; }
+        const r = els[i].getBoundingClientRect();
+        it.pos = { x: r.left, y: r.top, w: r.width || 32, grid };
+        return it;
+      });
+      if (dbg.fromDom > items.length / 2) return null;   // za mało danych — zwykła droga przez serwer
+      MP.pokazEq.lastDebug = dbg;
+      return items;
+    } catch { return null; }
+  }
+
   async function fetchEq(id) {
     const c = cache[id];
     if (c && now() - c.t < cfg.cacheSec * 1000) return c.items;
+    const quick = itemsFromTip(id);
+    if (quick && quick.length) { cache[id] = { t: now(), items: quick }; return quick; }
     if (busy) { wanted = id; return 'wait'; }
     const gap = 350 - (now() - lastReq);
     if (gap > 0) await sleep(gap);
@@ -4698,7 +4728,8 @@ MP.itemDeco = itemDeco;
           const dx = Math.max(r.left - mx, 0, mx - r.right), dy = Math.max(r.top - my, 0, my - r.bottom);
           if (Math.hypot(dx, dy) > 90) continue;
           // tylko dymek GRACZA: „Nick (poziom…)" — nie dymek przedmiotu z „Właściciel: Nick"
-          if (n.querySelector('[class*="item"]') || /t_item/.test(n.getAttribute('data-tip-type') || '')) continue;
+          // (dymek gracza w grze może już sam zawierać jego EQ — więc przedmioty w środku nie wykluczają dymka)
+          if (/t_item/.test(n.getAttribute('data-tip-type') || '')) continue;
           const txt = (n.textContent || '').toLowerCase();
           p = game.others().filter((o) => o.nick && new RegExp(o.nick.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(\\d').test(txt)).sort((a, b) => b.nick.length - a.nick.length)[0] || null;
           if (p) { tipNode = n; break; }
@@ -4725,16 +4756,37 @@ MP.itemDeco = itemDeco;
         if (Math.hypot(dx, dy) < 140 && nickOf((foreign.n.textContent || '').toLowerCase())) return foreign;
       }
       foreign = null;
-      // tylko gdy kursor jest nad mapą (oszczędnie — bez szukania przy każdym ruchu myszy nad panelami)
-      const at = document.elementFromPoint(mx, my);
-      if (!at || !(at.tagName === 'CANVAS' || (at.closest && at.closest('.map, .map-overlay, .game-window-positioner')))) return null;
+      // okienka innych dodatków: dymki/podglądy (role/data-side z bibliotek UI, klasy tooltip/popover, pływające elementy „ll:”).
+      // Szukamy po DOM, bo takie okienka zwykle nie łapią myszki (pointer-events:none) i nie da się ich znaleźć „pod kursorem”.
+      const SEL = '[role="tooltip"], [role="dialog"], [data-side], [class*="tooltip"], [class*="popover"], [class*="preview"], [class*="ll:fixed"], [class*="ll:absolute"], [class*="ll:z-"]';
+      let best = null, bestD = 1e9;
+      for (const c of document.querySelectorAll(SEL)) {
+        if (ours(c)) continue;
+        const r = c.getBoundingClientRect();
+        if (r.width < 60 || r.width > 520 || r.height < 20 || r.height > 700) continue;
+        const d = Math.hypot(Math.max(r.left - mx, 0, mx - r.right), Math.max(r.top - my, 0, my - r.bottom));
+        if (d > 220 || d >= bestD) continue;
+        const txt = (c.textContent || '').toLowerCase();
+        if (!txt.includes('(')) continue;
+        const p = nickOf(txt);
+        if (!p) continue;
+        // cały pojemnik okienka (najwyższy, który nadal jest „okienkiem”, a nie całą stroną)
+        let n = c;
+        while (n.parentElement && n.parentElement !== document.body) {
+          const pr = n.parentElement.getBoundingClientRect();
+          if (pr.width > 520 || pr.height > 700 || pr.width < 1) break;
+          n = n.parentElement;
+        }
+        best = { n, p }; bestD = d;
+      }
+      if (best) { foreign = best; return best; }
+      // zapas: elementy wokół kursora
       const pts = [[20, 20], [40, 40], [60, 30], [-60, 40], [20, -40], [0, 60], [80, 0]];
       const seen = new Set();
       for (const [ox, oy] of pts) {
         for (const e0 of document.elementsFromPoint(mx + ox, my + oy).slice(0, 6)) {
           if (seen.has(e0) || ours(e0)) continue;
           seen.add(e0);
-          // najwyższy „pływający” pojemnik okienka (nie cała strona)
           let n = e0;
           while (n.parentElement && n.parentElement !== document.body) {
             const r = n.parentElement.getBoundingClientRect();
