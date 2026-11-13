@@ -220,14 +220,39 @@
       }
     }
   }
+  /** Czerwony obrazek tylko dla NASZEJ strzałki (obrazek gry jest wspólny dla wszystkich strzałek — nie ruszamy go). */
   function naRecolor(inst) {
     redArrowUrl((url) => {
       if (!url || !inst) return;
-      try {
-        if (typeof inst.src === 'string') inst.src = url;
-        for (const k of Object.keys(inst)) { const v = inst[k]; if (v instanceof HTMLImageElement && !/^data:/.test(v.src)) v.src = url; }
-      } catch {}
+      const im = new Image();
+      im.onload = () => {
+        try { Object.defineProperty(inst, 'img', { configurable: true, get: () => im, set: () => {} }); } catch {}
+        inst.fw = 24; inst.fh = 24;
+      };
+      im.src = url;
     });
+  }
+  /** Bliżej postaci niż strzałka zadania (żeby na siebie nie nachodziły): gra liczy pozycję, my ją skracamy. */
+  const NA_K = 0.58;
+  function naCloser(inst) {
+    const orig = inst.update;
+    if (typeof orig !== 'function' || orig.__l4c) return;
+    const w = function (...a) {
+      let r;
+      try { r = orig.apply(this, a); } catch (e) { naFail(e); return undefined; }
+      try {
+        const E = W.Engine, h = E.hero, off = E.map && E.map.offset;
+        if (h && off && Number.isFinite(inst.posX)) {
+          const bx = (Number(h.rx) - off[0] / 32) * 32, by = (Number(h.ry) - off[1] / 32) * 32;
+          inst.posX = bx - (bx - inst.posX) * NA_K;
+          inst.posY = by - (by - inst.posY) * NA_K;
+          if (typeof inst.updateCollider === 'function') inst.updateCollider();
+        }
+      } catch {}
+      return r;
+    };
+    w.__l4 = true; w.__l4c = true;
+    inst.update = w;
   }
   function naAdd(p) {
     const T = naTargets(); if (!T) return false;
@@ -235,11 +260,22 @@
     if (!raw || !raw.d) return false;
     if (NA.parent === raw && naFind()) return true;
     naDel();
-    try { T.addArrow(NA_ID, p.nick, raw, false, 'L4_SLAYER', 'qt'); } catch (e) { naFail(e); return false; }
+    // „rodzic" strzałki: pozycja celu na żywo (płynna, z pozycji pośredniej gracza między kratkami)
+    const id = p.id;
+    const cur = () => game.otherRaw(id) || raw;
+    const par = {
+      d: raw.d,
+      get x() { const o = cur(); return Number(o.rx != null ? o.rx : o.d && o.d.x); },
+      get y() { const o = cur(); return Number(o.ry != null ? o.ry : o.d && o.d.y); },
+      get rx() { return this.x; }, get ry() { return this.y; },
+    };
+    // typ „SRAJ_TRACKING_ARROW" — gra bierze wtedy pozycję wprost z rodzica (x, y)
+    try { T.addArrow(NA_ID, 'Slayer: ' + p.nick, par, false, 'SRAJ_TRACKING_ARROW'); } catch (e) { naFail(e); return false; }
     const inst = naFind();
     if (!inst) { naFail('brak strzałki na liście'); return false; }
-    naGuard(inst); naRecolor(inst);
-    try { if (typeof inst.afterUpdate === 'function') inst.afterUpdate(); } catch (e) { naFail(e); return false; }
+    naCloser(inst);
+    naGuard(inst);
+    naRecolor(inst);
     NA.parent = raw;
     return true;
   }

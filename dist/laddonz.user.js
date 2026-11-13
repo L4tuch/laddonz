@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.15
+// @version      1.0.16
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2180,6 +2180,10 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.16', d: '13.11.2026', items: [
+    'Slayer: strzałka gry wskazuje teraz namierzonego przeciwnika (nie zadanie), jest czerwona tylko ona — strzałka zadania zostaje niebieska.',
+    'Slayer: strzałka jest bliżej postaci niż strzałka zadania (nie nachodzą na siebie), a po najechaniu pokazuje „Slayer: Nick celu”.',
+  ] },
   { v: '1.0.15', d: '13.11.2026', items: [
     'Slayer: strzałka do celu to teraz ta sama strzałka, której gra używa przy śledzeniu zadań (identyczny rozmiar, wygląd i płynność) — tylko czerwona. Gdyby gra jej nie udostępniła, zostaje strzałka Slayera.',
     'Szybka Rączka: „Zmień po walce” pokazuje tylko kupione zestawy (lista prosto z gry) — niekupionego nie da się już wybrać.',
@@ -3250,14 +3254,39 @@ function parseProtection(data) {
       }
     }
   }
+  /** Czerwony obrazek tylko dla NASZEJ strzałki (obrazek gry jest wspólny dla wszystkich strzałek — nie ruszamy go). */
   function naRecolor(inst) {
     redArrowUrl((url) => {
       if (!url || !inst) return;
-      try {
-        if (typeof inst.src === 'string') inst.src = url;
-        for (const k of Object.keys(inst)) { const v = inst[k]; if (v instanceof HTMLImageElement && !/^data:/.test(v.src)) v.src = url; }
-      } catch {}
+      const im = new Image();
+      im.onload = () => {
+        try { Object.defineProperty(inst, 'img', { configurable: true, get: () => im, set: () => {} }); } catch {}
+        inst.fw = 24; inst.fh = 24;
+      };
+      im.src = url;
     });
+  }
+  /** Bliżej postaci niż strzałka zadania (żeby na siebie nie nachodziły): gra liczy pozycję, my ją skracamy. */
+  const NA_K = 0.58;
+  function naCloser(inst) {
+    const orig = inst.update;
+    if (typeof orig !== 'function' || orig.__l4c) return;
+    const w = function (...a) {
+      let r;
+      try { r = orig.apply(this, a); } catch (e) { naFail(e); return undefined; }
+      try {
+        const E = W.Engine, h = E.hero, off = E.map && E.map.offset;
+        if (h && off && Number.isFinite(inst.posX)) {
+          const bx = (Number(h.rx) - off[0] / 32) * 32, by = (Number(h.ry) - off[1] / 32) * 32;
+          inst.posX = bx - (bx - inst.posX) * NA_K;
+          inst.posY = by - (by - inst.posY) * NA_K;
+          if (typeof inst.updateCollider === 'function') inst.updateCollider();
+        }
+      } catch {}
+      return r;
+    };
+    w.__l4 = true; w.__l4c = true;
+    inst.update = w;
   }
   function naAdd(p) {
     const T = naTargets(); if (!T) return false;
@@ -3265,11 +3294,22 @@ function parseProtection(data) {
     if (!raw || !raw.d) return false;
     if (NA.parent === raw && naFind()) return true;
     naDel();
-    try { T.addArrow(NA_ID, p.nick, raw, false, 'L4_SLAYER', 'qt'); } catch (e) { naFail(e); return false; }
+    // „rodzic" strzałki: pozycja celu na żywo (płynna, z pozycji pośredniej gracza między kratkami)
+    const id = p.id;
+    const cur = () => game.otherRaw(id) || raw;
+    const par = {
+      d: raw.d,
+      get x() { const o = cur(); return Number(o.rx != null ? o.rx : o.d && o.d.x); },
+      get y() { const o = cur(); return Number(o.ry != null ? o.ry : o.d && o.d.y); },
+      get rx() { return this.x; }, get ry() { return this.y; },
+    };
+    // typ „SRAJ_TRACKING_ARROW" — gra bierze wtedy pozycję wprost z rodzica (x, y)
+    try { T.addArrow(NA_ID, 'Slayer: ' + p.nick, par, false, 'SRAJ_TRACKING_ARROW'); } catch (e) { naFail(e); return false; }
     const inst = naFind();
     if (!inst) { naFail('brak strzałki na liście'); return false; }
-    naGuard(inst); naRecolor(inst);
-    try { if (typeof inst.afterUpdate === 'function') inst.afterUpdate(); } catch (e) { naFail(e); return false; }
+    naCloser(inst);
+    naGuard(inst);
+    naRecolor(inst);
     NA.parent = raw;
     return true;
   }
@@ -8441,5 +8481,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.15";
+MP.version = "1.0.16";
 })();
