@@ -7704,9 +7704,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     if (!win) return;
     for (const it of $$('.item', win)) if (it.dataset.mpLg) markItem(it);
   }
+  // efekty rysujemy w mniejszej rozdzielczości i przeglądarka je skaluje — wygląda prawie tak samo, a jest dużo lżej (FPS)
+  const FX_SCALE = 0.6;
   function canvas(z, before) {
     const c = el('canvas', { class: 'mp-lg-cv', style: { position: 'fixed', left: '0', top: '0', width: '100vw', height: '100vh', pointerEvents: 'none', zIndex: String(z) } });
-    c.width = innerWidth; c.height = innerHeight;
+    c.width = Math.round(innerWidth * FX_SCALE); c.height = Math.round(innerHeight * FX_SCALE);
     if (before && before.parentElement) before.parentElement.insertBefore(c, before); else document.body.appendChild(c);
     return c;
   }
@@ -7747,7 +7749,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   function fakeLoot() {
     usedNames = new Set();
     const tpl = store.get('legenda:lootTpl', null);
-    if (tpl && tpl.html) try { const f = fakeFromTpl(tpl); if (f) return f; } catch (e) { console.warn('[L4Tools] wzór okna łupów', e); }
+    if (tpl && tpl.html) try { const f = fakeFromTpl(tpl); if (f) { f.querySelectorAll('.mp-ibadge').forEach((n) => n.remove()); return f; } } catch (e) { console.warn('[L4Tools] wzór okna łupów', e); }
     return fakeBuilt();
   }
   /** Test: 2–5 przedmiotów, w tym losowo 1–3 legendy, reszta zwykłe / unikaty / heroiki. */
@@ -7974,7 +7976,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
       if (run !== me) return;
       const t = (n - t0) / 1000, dt = Math.min(0.05, (n - last) / 1000); last = n;
       if (t > dur) { stopFx(); return; }
-      bx.clearRect(0, 0, E.W, E.H); fx.clearRect(0, 0, E.W, E.H);
+      for (const cx of [bx, fx]) { cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, cx.canvas.width, cx.canvas.height); cx.setTransform(FX_SCALE, 0, 0, FX_SCALE, 0, 0); }
       for (const p of parts) { try { if (p.back) p.back(bx, t, dt); } catch (e) { console.warn('[L4Tools] legenda', e); } }
       for (const p of parts) { try { if (p.front) p.front(fx, t, dt); } catch (e) { console.warn('[L4Tools] legenda', e); } }
       me.raf = requestAnimationFrame(frame);
@@ -8039,7 +8041,10 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     try {
       const card = cardOf(items[0]);
       card.setAttribute('data-mp-card', '1');
-      const html = w.outerHTML;
+      // wzór okna bez naszych dodatków (znaczki Kto złapie, Jaki To Bon itp.)
+      const cl = w.cloneNode(true);
+      cl.querySelectorAll('.mp-ibadge, .mp-lg-hl, .mp-lg-cap').forEach((n) => n.remove());
+      const html = cl.outerHTML;
       card.removeAttribute('data-mp-card');
       const r = w.getBoundingClientRect(), cr = card.getBoundingClientRect();
       const mt = MP.motywnik && MP.motywnik.current && MP.motywnik.current();
