@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.3', d: '14.11.2026', items: [
+    'Pokaż EQ: postać gracza ma naturalny rozmiar i nie pojawia się już dwa razy w dymku na mapie.',
+  ] },
   { v: '1.0.2', d: '14.11.2026', items: [
     'Pokaż EQ: w dymku gracza, obok jego EQ, widać też jego postać, tak jak w oknie „Ekwipunek Postaci”.',
   ] },
