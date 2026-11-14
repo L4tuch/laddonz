@@ -2241,7 +2241,7 @@ MP.menus = menus;
 const CHANGELOG = [
   { v: '1.0.3', d: '14.11.2026', items: [
     'Dymek przedmiotu wyświetla się nad paskiem skrótów — skróty są pod dymkiem i go nie zasłaniają.',
-    'Podpisownik: w dymku legendy przy dacie zdobycia jest też godzina (np. „W dniu 11.11.2026 o 23:14 został(a) pokonany(a)…”).',
+    'Podpisownik: w dymku legendy przy dacie zdobycia jest też godzina (np. „W dniu 11.11.2026 o godzinie 23:14 został(a) pokonany(a)…”).',
   ] },
   { v: '1.0.2', d: '14.11.2026', items: [
     'Kto złapie: po łupie (np. z e2) nie wyskakują już po kolei okienka opisów zdobytych przedmiotów.',
@@ -2804,46 +2804,56 @@ const quickbar = {
   /**
    * Dymki przedmiotów z gry zawsze nad paskiem skrótów i kafelkiem L4Tools (wcześniej pasek zasłaniał dymek).
    * 1) podnosimy dymek (i jego warstwę, jeśli ma własny z-index),
-   * 2) sprawdzamy, co faktycznie jest na wierzchu w miejscu, gdzie dymek nachodzi na pasek — jeśli dalej pasek,
-   *    na czas pokazania dymka chowamy pasek pod warstwę dymka.
+   * 2) gdy mimo to pasek dalej jest na wierzchu (dymek siedzi w warstwie gry), „wycinamy" z paska dokładnie
+   *    miejsce pod dymkiem — wygląda to tak, jakby dymek zasłaniał pasek, a reszta paska zostaje widoczna.
    */
   liftTips() {
     const TOP = '2147483080';
     const OURS = ['#mp-qbar', '#mp-launcher', '#mp-qc'];
-    const restore = () => OURS.forEach((q) => { const n = document.querySelector(q); if (n && n.__mpLow) { n.__mpLow = false; n.style.removeProperty('z-index'); } });
-    const overlap = (a, b) => {
+    let needCut = false;
+    const ours = () => OURS.map((q) => document.querySelector(q)).filter(Boolean);
+    const uncut = (n) => { if (n.__mpCut) { n.__mpCut = false; n.style.removeProperty('clip-path'); } };
+    const inter = (a, b) => {
       const x1 = Math.max(a.left, b.left), x2 = Math.min(a.right, b.right), y1 = Math.max(a.top, b.top), y2 = Math.min(a.bottom, b.bottom);
-      return x2 > x1 && y2 > y1 ? { x: (x1 + x2) / 2, y: (y1 + y2) / 2 } : null;
+      return x2 > x1 && y2 > y1 ? { x1, x2, y1, y2 } : null;
+    };
+    const cut = (n, tr) => {
+      const r = n.getBoundingClientRect();
+      const i = inter(tr, r);
+      if (!i) { uncut(n); return; }
+      const W0 = -12, H0 = -12, W1 = r.width + 12, H1 = r.height + 12;
+      const a = i.x1 - r.left, b = i.y1 - r.top, c = i.x2 - r.left, d = i.y2 - r.top;
+      const P = (x, y) => `${x.toFixed(1)}px ${y.toFixed(1)}px`;
+      const v = `polygon(evenodd, ${P(W0, H0)}, ${P(W1, H0)}, ${P(W1, H1)}, ${P(W0, H1)}, ${P(W0, H0)}, ${P(a, b)}, ${P(c, b)}, ${P(c, d)}, ${P(a, d)}, ${P(a, b)})`;
+      n.__mpCut = true; n.style.setProperty('clip-path', v, 'important');
     };
     const lift = () => {
       const tips = Array.from(document.querySelectorAll('.tip-wrapper')).filter((t) => !t.closest('#mp-eqtip, .mp-host, .mp-glass') && isVisible(t));
-      if (!tips.length) { restore(); return; }
-      for (const t of tips) {
-        if (t.style.zIndex !== TOP) t.style.setProperty('z-index', TOP, 'important');
-        for (let a = t.parentElement; a && a !== document.body; a = a.parentElement) {
-          if (a.classList.contains('c-window')) break;
-          const cs = getComputedStyle(a);
-          if (cs.position !== 'static' && cs.zIndex !== 'auto') { if (!a.querySelector('canvas') && !a.__mpLift) { a.__mpLift = true; a.style.setProperty('z-index', TOP, 'important'); } break; }
+      if (!tips.length) { ours().forEach(uncut); return; }
+      const t = tips[tips.length - 1];
+      if (t.style.zIndex !== TOP) t.style.setProperty('z-index', TOP, 'important');
+      for (let a = t.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (a.classList.contains('c-window')) break;
+        const cs = getComputedStyle(a);
+        if (cs.position !== 'static' && cs.zIndex !== 'auto') { if (!a.querySelector('canvas') && !a.__mpLift) { a.__mpLift = true; a.style.setProperty('z-index', TOP, 'important'); } break; }
+      }
+      const tr = t.getBoundingClientRect();
+      for (const n of ours()) {
+        if (!needCut) {
+          const i = inter(tr, n.getBoundingClientRect());
+          if (!i) continue;
+          const top = document.elementFromPoint((i.x1 + i.x2) / 2, (i.y1 + i.y2) / 2);
+          if (top && n.contains(top)) needCut = true; else continue;
         }
-        // co jest na wierzchu tam, gdzie dymek zachodzi na nasze przyciski?
-        const tr = t.getBoundingClientRect();
-        for (const q of OURS) {
-          const n = document.querySelector(q); if (!n || n.__mpLow) continue;
-          const p = overlap(tr, n.getBoundingClientRect()); if (!p) continue;
-          const top = document.elementFromPoint(p.x, p.y);
-          if (top && n.contains(top)) {
-            // dymek siedzi w warstwie gry — pasek idzie tuż pod nią
-            let root = t; while (root.parentElement && root.parentElement !== document.body) root = root.parentElement;
-            const z = parseInt(getComputedStyle(root).zIndex, 10);
-            n.__mpLow = true; n.style.setProperty('z-index', String(isNaN(z) ? 0 : Math.max(0, z - 1)), 'important');
-          }
-        }
+        cut(n, tr);
       }
     };
     let q = false;
-    const kick = () => { if (q) return; q = true; requestAnimationFrame(() => { q = false; lift(); setTimeout(lift, 60); setTimeout(lift, 250); }); };
-    document.addEventListener('mouseover', kick, true);
-    document.addEventListener('mouseout', () => setTimeout(lift, 120), true);
+    const kick = () => { if (q) return; q = true; requestAnimationFrame(() => { q = false; lift(); }); };
+    const later = () => { kick(); setTimeout(kick, 60); setTimeout(kick, 250); };
+    document.addEventListener('mouseover', later, true);
+    document.addEventListener('mouseout', () => setTimeout(kick, 120), true);
+    document.addEventListener('mousemove', () => { if (document.querySelector('.tip-wrapper')) kick(); }, true);
   },
   start() {
     this.liftTips();
@@ -4252,7 +4262,7 @@ MP.itemDeco = itemDeco;
       const k = n.nodeValue.indexOf(date);
       if (k < 0 || !/W dniu/i.test((n.parentNode && n.parentNode.textContent) || '')) continue;
       const after = n.splitText(k + date.length);
-      n.parentNode.insertBefore(el('span', { class: 'mp-loot-at' }, ` o ${pad(d.getHours())}:${pad(d.getMinutes())}`), after);
+      n.parentNode.insertBefore(el('span', { class: 'mp-loot-at' }, ` o godzinie ${pad(d.getHours())}:${pad(d.getMinutes())}`), after);
       return;
     }
   }

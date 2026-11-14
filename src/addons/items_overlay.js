@@ -161,7 +161,7 @@ MP.itemDeco = itemDeco;
       const k = n.nodeValue.indexOf(date);
       if (k < 0 || !/W dniu/i.test((n.parentNode && n.parentNode.textContent) || '')) continue;
       const after = n.splitText(k + date.length);
-      n.parentNode.insertBefore(el('span', { class: 'mp-loot-at' }, ` o ${pad(d.getHours())}:${pad(d.getMinutes())}`), after);
+      n.parentNode.insertBefore(el('span', { class: 'mp-loot-at' }, ` o godzinie ${pad(d.getHours())}:${pad(d.getMinutes())}`), after);
       return;
     }
   }

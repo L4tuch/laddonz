@@ -7,7 +7,7 @@
 const CHANGELOG = [
   { v: '1.0.3', d: '14.11.2026', items: [
     'Dymek przedmiotu wyświetla się nad paskiem skrótów — skróty są pod dymkiem i go nie zasłaniają.',
-    'Podpisownik: w dymku legendy przy dacie zdobycia jest też godzina (np. „W dniu 11.11.2026 o 23:14 został(a) pokonany(a)…”).',
+    'Podpisownik: w dymku legendy przy dacie zdobycia jest też godzina (np. „W dniu 11.11.2026 o godzinie 23:14 został(a) pokonany(a)…”).',
   ] },
   { v: '1.0.2', d: '14.11.2026', items: [
     'Kto złapie: po łupie (np. z e2) nie wyskakują już po kolei okienka opisów zdobytych przedmiotów.',
