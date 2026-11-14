@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.4', d: '14.11.2026', items: [
+    'Pokaż EQ: na Podręcznej mapie postać gracza nie pojawia się już dwa razy.',
+  ] },
   { v: '1.0.3', d: '14.11.2026', items: [
     'Pokaż EQ: postać gracza ma naturalny rozmiar i nie pojawia się już dwa razy w dymku na mapie.',
   ] },
