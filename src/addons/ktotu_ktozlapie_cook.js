@@ -200,48 +200,33 @@
     return { ids, prof };
   }
 
-  /** Profesje przedmiotu (statystyka „reqp", np. „wp"); null = bez wymagań; undefined = jeszcze nie wiadomo. */
+  /**
+   * Profesje przedmiotu (statystyka „reqp”, np. „wp”); null = bez wymagań (albo nie da się ustalić).
+   * Tylko z danych gry — bez wywoływania dymków przedmiotów (wcześniej po łupie wyskakiwały po kolei okienka przedmiotów).
+   */
   const reqCache = new Map();
   function reqProfs(node) {
     const id = game.itemIdFromEl(node);
     if (id && reqCache.has(id)) return reqCache.get(id);
     let it = id ? game.itemById(id) : null;
     if (!it && MP.anyLookup) it = MP.anyLookup(node, id);
+    let v = null;
     if (it && it.stats) {
       const r = it.stats.reqp || it.stats.reqprof || '';
-      const v = r ? String(r).toLowerCase().replace(/[^a-z]/g, '').split('') : null;
-      if (id) reqCache.set(id, v);
-      return v;
+      v = r ? String(r).toLowerCase().replace(/[^a-z]/g, '').split('') : null;
     }
-    readFromTip(node, id);       // brak danych przedmiotu — odczyt z opisu przedmiotu (dymka gry)
-    return undefined;
-  }
-  /** „Wymagana profesja: Wojownik, Paladyn" z dymka gry nad przedmiotem. */
-  const tipBusy = new Set();
-  const tipTries = new Map();
-  function readFromTip(node, id) {
-    if (!id || tipBusy.has(id)) return;
-    // najwyżej 2 próby odczytu dymka na przedmiot — potem liczymy bez wymagań (wcześniej „…” wisiało,
-    // a ciągłe wywoływanie dymka zjadało klatki, zwłaszcza przy efektach Legendarnego Łupu)
-    const n = (tipTries.get(id) || 0) + 1;
-    tipTries.set(id, n);
-    if (n > 2) { reqCache.set(id, null); return; }
-    tipBusy.add(id);
-    const r = node.getBoundingClientRect();
-    const opt = { bubbles: true, cancelable: true, view: W, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
-    ['mouseover', 'mouseenter', 'mousemove'].forEach((t) => node.dispatchEvent(new MouseEvent(t, opt)));
-    setTimeout(() => {
-      let v = null;
-      const tip = $$('.tip-wrapper').find((n) => isVisible(n) && !n.closest('#mp-eqtip'));
-      const txt = tip ? (tip.textContent || '') : '';
-      const m = txt.match(/Wymagana profesja:\s*([^\n]+?)(?:Wymagany|Warto|$)/i);
-      if (m) v = Object.entries(PROF_BY_NAME).filter(([name]) => new RegExp(name, 'i').test(m[1])).map(([, l]) => l);
-      if (m && !v.length) v = null;
-      if (tip) reqCache.set(id, v && v.length ? [...new Set(v)] : null);
-      ['mouseout', 'mouseleave'].forEach((t) => node.dispatchEvent(new MouseEvent(t, opt)));
-      tipBusy.delete(id);
-      decorate();
-    }, 120);
+    // zapas: opis przedmiotu z danych gry (bez pokazywania dymka)
+    if (!v && it && it.raw) {
+      try {
+        const f = it.raw.getTipContent || it.raw.getTipData;
+        let t = typeof f === 'function' ? f.call(it.raw) : '';
+        if (t && typeof t === 'object') t = JSON.stringify(t);
+        const m = String(t || '').replace(/<[^>]+>/g, ' ').match(/Wymagana profesja:\s*([^\n]+?)(?:Wymagany|Warto|$)/i);
+        if (m) { const l = Object.entries(PROF_BY_NAME).filter(([name]) => new RegExp(name, 'i').test(m[1])).map(([, x]) => x); if (l.length) v = [...new Set(l)]; }
+      } catch {}
+    }
+    if (id) reqCache.set(id, v);
+    return v;
   }
 
   function decorate() {

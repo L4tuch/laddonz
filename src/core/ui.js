@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.2', d: '14.11.2026', items: [
+    'Kto złapie: po łupie (np. z e2) nie wyskakują już po kolei okienka opisów zdobytych przedmiotów.',
+  ] },
   { v: '1.0.1', d: '14.11.2026', items: [
     'Slayer: namierzony cel jest zapominany po każdej walce, z kimkolwiek była.',
     'Slayer: po odświeżeniu gry albo ponownym wejściu cel nie jest już pamiętany.',
