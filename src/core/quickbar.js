@@ -9,7 +9,52 @@ const quickbar = {
   pop: null,
   popId: null,
 
+  /**
+   * Dymki przedmiotów z gry zawsze nad paskiem skrótów i kafelkiem L4Tools (wcześniej pasek zasłaniał dymek).
+   * 1) podnosimy dymek (i jego warstwę, jeśli ma własny z-index),
+   * 2) sprawdzamy, co faktycznie jest na wierzchu w miejscu, gdzie dymek nachodzi na pasek — jeśli dalej pasek,
+   *    na czas pokazania dymka chowamy pasek pod warstwę dymka.
+   */
+  liftTips() {
+    const TOP = '2147483080';
+    const OURS = ['#mp-qbar', '#mp-launcher', '#mp-qc'];
+    const restore = () => OURS.forEach((q) => { const n = document.querySelector(q); if (n && n.__mpLow) { n.__mpLow = false; n.style.removeProperty('z-index'); } });
+    const overlap = (a, b) => {
+      const x1 = Math.max(a.left, b.left), x2 = Math.min(a.right, b.right), y1 = Math.max(a.top, b.top), y2 = Math.min(a.bottom, b.bottom);
+      return x2 > x1 && y2 > y1 ? { x: (x1 + x2) / 2, y: (y1 + y2) / 2 } : null;
+    };
+    const lift = () => {
+      const tips = Array.from(document.querySelectorAll('.tip-wrapper')).filter((t) => !t.closest('#mp-eqtip, .mp-host, .mp-glass') && isVisible(t));
+      if (!tips.length) { restore(); return; }
+      for (const t of tips) {
+        if (t.style.zIndex !== TOP) t.style.setProperty('z-index', TOP, 'important');
+        for (let a = t.parentElement; a && a !== document.body; a = a.parentElement) {
+          if (a.classList.contains('c-window')) break;
+          const cs = getComputedStyle(a);
+          if (cs.position !== 'static' && cs.zIndex !== 'auto') { if (!a.querySelector('canvas') && !a.__mpLift) { a.__mpLift = true; a.style.setProperty('z-index', TOP, 'important'); } break; }
+        }
+        // co jest na wierzchu tam, gdzie dymek zachodzi na nasze przyciski?
+        const tr = t.getBoundingClientRect();
+        for (const q of OURS) {
+          const n = document.querySelector(q); if (!n || n.__mpLow) continue;
+          const p = overlap(tr, n.getBoundingClientRect()); if (!p) continue;
+          const top = document.elementFromPoint(p.x, p.y);
+          if (top && n.contains(top)) {
+            // dymek siedzi w warstwie gry — pasek idzie tuż pod nią
+            let root = t; while (root.parentElement && root.parentElement !== document.body) root = root.parentElement;
+            const z = parseInt(getComputedStyle(root).zIndex, 10);
+            n.__mpLow = true; n.style.setProperty('z-index', String(isNaN(z) ? 0 : Math.max(0, z - 1)), 'important');
+          }
+        }
+      }
+    };
+    let q = false;
+    const kick = () => { if (q) return; q = true; requestAnimationFrame(() => { q = false; lift(); setTimeout(lift, 60); setTimeout(lift, 250); }); };
+    document.addEventListener('mouseover', kick, true);
+    document.addEventListener('mouseout', () => setTimeout(lift, 120), true);
+  },
   start() {
+    this.liftTips();
     bus.on('quickbar', () => this.draw());
     bus.on('addon:toggle', () => this.draw());
     this.draw();

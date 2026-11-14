@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.2
+// @version      1.0.3
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAHSUlEQVR4XrWXbYwdVRnHf2fm3Lkve3e3dNtl2ba0zW5bqBiShpiiRvlgrUKMxUiQKH4RTAlGG6LBNxqsxUSikX6xSqNfQKhEtIrRijVBFAsxpKA2jd3FbYFut+5ub/flvsydmXPMc2Z2771ra4LWJ7l3bubOOc///J//8zKK1DRw31C5uL1YzHcba+Weyv67XGY9pajXw7nX5uuHge8AsWLz5uCqf4z8aPcd2z76zretI4wTlLrcvlOz1hJon6PHT7Hn4JGnzq4fvlN58LkDd3/okS3rB+KH9v/cU0lyuU58UbPa5ys7P2yOjU3ouw48s0uv6y7ueMe1a82D337Se+/AKu/awSsJo5iUBPly4Vhib5Uhi0Q1n9OcOHOOvd/9GQ/e9zEjvnWxkO+uNyNPWcymwQFKhQJBkLwFFxmYRawXA5weQ3s+m1YN8PzEGcSn+NbWWicOOfJMpYLVHonAbdPBAhtWtmnf34m1nY3OdYvm1lh8pZiNjdOY+BTfov5UIHFMfWqSXD6HU0GKqR1HJqS2q/xOMyZb0FrX7tw9YcBXUA8jTJvOFgGIiePE8zBYRJ3Ou7umP50vIcGkv62RrxYDskZOZ1WLCVG+OE8TW6WHWwSd5v+iJVgSaxwAoSsXgM75KC/b0IAxlqhpiGJ5CgRDtrejVZ71tSKnBTFEkSXGunXGqjS8bdYBIDYCwGI9i6cVU80m1dkGQV5AKJLYkESW7mKBku+nm2YEeL7C+hYdyBXOzM5jEktPqUDgK/esSvgPAFT6Z2wNOV8x3Qj5wYUa190wxIVKFRMbil0B+UAz+ufX2Dm4DC3hsjYNj29RgYdXgPtfPMWazVejy5r5k+N8fsOVhCI+ZH9hs0VBS4QZ/fKA0B9jqCSWDdet5gt3vZugv4djfxjh8UPHePmlUYzkrVCrLJ4Pxlf0Lcux7+XXKW4c5Mjz9zM+NsWt275J4hmsJ1KQNaYjBCKxTNZkITA0koQrygGfWhmwb+/TjJw8iWWax378HH989Dd8ZqgXnfNInLTFOZTLPn+pzHN4qsFPHrkFWztHrTKOFg++aDXV1lINtABIZzCGRHTgroYtV5W5Zs0ylJ1FRZMUCwlbh/rY1FdwoTKeUG/wcqALsPeFN3j4yzcyOnqa2bExCv68O7FoKlEiRuN8tFsGQKKDc+6EmH1mmzGNKIa4AtEkNqky37RUJQOUpKp1IFYs0zx6bILNW1dy0/VdfPZrz9HdUyUJp1zeSqamGSOZ0Fm7OrIgTBL38RKwCRSMq1bYaA7CAOLQRTBRhsRzdZFy0edvlRqHz81z4sAWPvmll2iEMZ6ZwzSreB7u5KFJiBPrrv+WhqJiQTbdjAm1QqMoaIORHBZWGhHUQpI4oY5h1iTM2QTtQy6neOh34+zZNcSTv3yTP71ygU1Xl0jmGkT1JhMzTc42mjRjQz0yzERxmjkZig4NiEDk46gSTSxcw6bUUEycuBQS2v1AUVPwjRcnuObtZT59Sz/nKw3uvW2QO7avpF5t0F9WLF8d8OpEg0B7xFLIlvSqNAQZIt9TLgWl6HgKStoj7yuiMFoE0FPU9PdoVnRpnnhlmtUbC+zftR7fxjx87xq3h8RmshLSvzJg2w09jP62mu4rlX1Jh+/QgNRx16mcThR/nw4Zmwxp1pouBLVaxJHROabqCY3I8PtTc3z/gbV87+mzvPDXefJaEUaW/j7ND7+4jpGRBk/8epIP9Ha7kiwtImsKizJoAZCGkwlUS2uuJxw6f4HbP9jD6l6ozta5dWsXK7pxTUfy+yPLB3jf9QX2HZzgXV3dDPfnOTMT8dPT5/FtxGy1STFSbOwpMF9LUFaO5Si/CIC2Vu46HdCjPc5Nxuz81psufqW8RymfwbSWV23IwWdnqJw3rB/MU8JjVSmHFylu333asVFSHja2mHhhlshyMrPOEDjipelAOfDY3ttL+E/LcN7Dl2rWBBNmLTkbMqUD3rRWEdcN0zWp9/Dx1cuZa6Q9uDigqDWMS+vFdn6pbujOJkoVpceW7pzH8pJynU7yWcClfT2d8VyflwYWQSNsVTjpxH05380N0rZjYUDS37ilHVNVykA2fi1KQ0AAoZW+L1mRTUdtbcwVKEdnCsY1uWw+iVy1E3RZIZP7aQa3dsh8LglBtkm2oRw3EdSZQFP4rRMszIhu6rnEGLtAu9PYAvVt82ZbFrQGQEe0FHChTegWnxd7WcmmmxRWW2QXf7bfS1XuXnrabmullEpPAIHvo92k09mxlu7fsku8H1zsdjYJiw/ixLEmYHStFlYLgTY6yDFeqbJqWZnY8d7RM/53s9YdbnxmntzyLpmsjPjWp6v1Xxw9fvo9X71nR/z1/Yc40Qwv8WpxGczE+Fd08cA9O8zR46fE9zOK4eH8wBuvP7bnE++/7cbN62jEcVoNLvVW9t9YNtKLmgo57V5Odz/+7FMTQ8N3LhDtA3dv6CndnM8HA//P1/MwbE6MzNZ+BRyQ0eJfMC7ErJhfZ3kAAAAASUVORK5CYII=
@@ -2239,6 +2239,10 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.3', d: '14.11.2026', items: [
+    'Dymek przedmiotu wyświetla się nad paskiem skrótów — skróty są pod dymkiem i go nie zasłaniają.',
+    'Podpisownik: w dymku legendy przy dacie zdobycia jest też godzina (np. „W dniu 11.11.2026 o 23:14 został(a) pokonany(a)…”).',
+  ] },
   { v: '1.0.2', d: '14.11.2026', items: [
     'Kto złapie: po łupie (np. z e2) nie wyskakują już po kolei okienka opisów zdobytych przedmiotów.',
   ] },
@@ -2797,7 +2801,52 @@ const quickbar = {
   pop: null,
   popId: null,
 
+  /**
+   * Dymki przedmiotów z gry zawsze nad paskiem skrótów i kafelkiem L4Tools (wcześniej pasek zasłaniał dymek).
+   * 1) podnosimy dymek (i jego warstwę, jeśli ma własny z-index),
+   * 2) sprawdzamy, co faktycznie jest na wierzchu w miejscu, gdzie dymek nachodzi na pasek — jeśli dalej pasek,
+   *    na czas pokazania dymka chowamy pasek pod warstwę dymka.
+   */
+  liftTips() {
+    const TOP = '2147483080';
+    const OURS = ['#mp-qbar', '#mp-launcher', '#mp-qc'];
+    const restore = () => OURS.forEach((q) => { const n = document.querySelector(q); if (n && n.__mpLow) { n.__mpLow = false; n.style.removeProperty('z-index'); } });
+    const overlap = (a, b) => {
+      const x1 = Math.max(a.left, b.left), x2 = Math.min(a.right, b.right), y1 = Math.max(a.top, b.top), y2 = Math.min(a.bottom, b.bottom);
+      return x2 > x1 && y2 > y1 ? { x: (x1 + x2) / 2, y: (y1 + y2) / 2 } : null;
+    };
+    const lift = () => {
+      const tips = Array.from(document.querySelectorAll('.tip-wrapper')).filter((t) => !t.closest('#mp-eqtip, .mp-host, .mp-glass') && isVisible(t));
+      if (!tips.length) { restore(); return; }
+      for (const t of tips) {
+        if (t.style.zIndex !== TOP) t.style.setProperty('z-index', TOP, 'important');
+        for (let a = t.parentElement; a && a !== document.body; a = a.parentElement) {
+          if (a.classList.contains('c-window')) break;
+          const cs = getComputedStyle(a);
+          if (cs.position !== 'static' && cs.zIndex !== 'auto') { if (!a.querySelector('canvas') && !a.__mpLift) { a.__mpLift = true; a.style.setProperty('z-index', TOP, 'important'); } break; }
+        }
+        // co jest na wierzchu tam, gdzie dymek zachodzi na nasze przyciski?
+        const tr = t.getBoundingClientRect();
+        for (const q of OURS) {
+          const n = document.querySelector(q); if (!n || n.__mpLow) continue;
+          const p = overlap(tr, n.getBoundingClientRect()); if (!p) continue;
+          const top = document.elementFromPoint(p.x, p.y);
+          if (top && n.contains(top)) {
+            // dymek siedzi w warstwie gry — pasek idzie tuż pod nią
+            let root = t; while (root.parentElement && root.parentElement !== document.body) root = root.parentElement;
+            const z = parseInt(getComputedStyle(root).zIndex, 10);
+            n.__mpLow = true; n.style.setProperty('z-index', String(isNaN(z) ? 0 : Math.max(0, z - 1)), 'important');
+          }
+        }
+      }
+    };
+    let q = false;
+    const kick = () => { if (q) return; q = true; requestAnimationFrame(() => { q = false; lift(); setTimeout(lift, 60); setTimeout(lift, 250); }); };
+    document.addEventListener('mouseover', kick, true);
+    document.addEventListener('mouseout', () => setTimeout(lift, 120), true);
+  },
   start() {
+    this.liftTips();
     bus.on('quickbar', () => this.draw());
     bus.on('addon:toggle', () => this.draw());
     this.draw();
@@ -4182,6 +4231,43 @@ MP.itemDeco = itemDeco;
     }
     return null;
   }
+  /*
+   * Godzina zdobycia legendy. Gra pisze w dymku legendy „W dniu 11.11.2026 został(a) pokonany(a) …”, a w danych
+   * przedmiotu (statystyka „loot”) ma pełny czas — dopisujemy z niego godzinę: „W dniu 11.11.2026 o 23:14 …”.
+   * Tylko legendy, bez dodatkowych ustawień.
+   */
+  const pad = (n) => String(n).padStart(2, '0');
+  function lootTs(it) {
+    const st = (it && it.stats) || {};
+    const m = st.loot && String(st.loot).match(/\b(1[5-9]\d{8})\b/);
+    return m ? Number(m[1]) * 1000 : null;
+  }
+  function addLegTime(tip, it) {
+    if (!tip || tip.querySelector('.mp-loot-at')) return;
+    const ts = lootTs(it); if (!ts) return;
+    const d = new Date(ts);
+    const date = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+    const tw = document.createTreeWalker(tip, NodeFilter.SHOW_TEXT);
+    for (let n = tw.nextNode(); n; n = tw.nextNode()) {
+      const k = n.nodeValue.indexOf(date);
+      if (k < 0 || !/W dniu/i.test((n.parentNode && n.parentNode.textContent) || '')) continue;
+      const after = n.splitText(k + date.length);
+      n.parentNode.insertBefore(el('span', { class: 'mp-loot-at' }, ` o ${pad(d.getHours())}:${pad(d.getMinutes())}`), after);
+      return;
+    }
+  }
+  function onItemHover(e) {
+    if (!cfg || !cfg.enabled) return;
+    const node = e.target && e.target.closest && e.target.closest('.item');
+    if (!node || node.closest('.tip-wrapper, .mp-glass')) return;
+    const id = game.itemIdFromEl(node);
+    let it = id ? game.itemById(id) : null;
+    if (!it && MP.anyLookup) it = MP.anyLookup(node, id);
+    if (!it || String((it.stats || {}).rarity) !== 'legendary' || !lootTs(it)) return;
+    const put = () => { for (const t of $$('.tip-wrapper')) if (isVisible(t)) addLegTime(t, it); };
+    setTimeout(put, 40); setTimeout(put, 160);
+  }
+
   const signedKey = (id) => { const it = game.itemById(id); const k = keyOf(it); return !!(cfg && ((k && cfg.byKey[k]) || cfg.byId[id])); };
   MP.podpis = { labelFor: (it, id) => (cfg && cfg.enabled ? labelFor(it, id) : null), isSigned: (id) => signedKey(id) };
 
@@ -4210,7 +4296,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
-    desc: 'Pozwala dodawać własne podpisy do przedmiotów, np. dokąd prowadzi dany kamień teleportacyjny. Podpis nadajesz z menu przedmiotu („Podpisz…”) i od razu widzisz go na wszystkich takich samych przedmiotach.',
+    desc: 'Pozwala dodawać własne podpisy do przedmiotów, np. dokąd prowadzi dany kamień teleportacyjny. Podpis nadajesz z menu przedmiotu („Podpisz…”) i od razu widzisz go na wszystkich takich samych przedmiotach. Dodatkowo w dymku legendy przy dacie zdobycia pokazuje też godzinę.',
     defaults: { enabled: false, byId: {}, byKey: {}, rules: [], autoTeleport: false },
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu', hint: 'Domyślnie wyłączone — podpisy nadajesz sam.' }],
     render(box, c, rerender) {
@@ -4236,6 +4322,7 @@ MP.itemDeco = itemDeco;
       cfg = c;
       c.byKey = c.byKey || {};
       if (!c._noAutoTp) { c._noAutoTp = true; c.autoTeleport = false; config.save(); }   // automatyczne podpisy teleportów domyślnie wyłączone
+      document.addEventListener('mouseover', onItemHover, true);
       itemDeco.add((node, it, id) => { const lb = cfg.enabled && labelFor(it, id); return lb ? { cls: 'sig', text: lb, title: 'Podpisownik: ' + lb } : null; });
       menus.add('item', (id) => (cfg.enabled ? [{ label: 'Podpisz…', fn: () => signItem(id) }] : []));
     },
@@ -8861,5 +8948,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.2";
+MP.version = "1.0.3";
 })();

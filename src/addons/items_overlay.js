@@ -140,6 +140,43 @@ MP.itemDeco = itemDeco;
     }
     return null;
   }
+  /*
+   * Godzina zdobycia legendy. Gra pisze w dymku legendy „W dniu 11.11.2026 został(a) pokonany(a) …”, a w danych
+   * przedmiotu (statystyka „loot”) ma pełny czas — dopisujemy z niego godzinę: „W dniu 11.11.2026 o 23:14 …”.
+   * Tylko legendy, bez dodatkowych ustawień.
+   */
+  const pad = (n) => String(n).padStart(2, '0');
+  function lootTs(it) {
+    const st = (it && it.stats) || {};
+    const m = st.loot && String(st.loot).match(/\b(1[5-9]\d{8})\b/);
+    return m ? Number(m[1]) * 1000 : null;
+  }
+  function addLegTime(tip, it) {
+    if (!tip || tip.querySelector('.mp-loot-at')) return;
+    const ts = lootTs(it); if (!ts) return;
+    const d = new Date(ts);
+    const date = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+    const tw = document.createTreeWalker(tip, NodeFilter.SHOW_TEXT);
+    for (let n = tw.nextNode(); n; n = tw.nextNode()) {
+      const k = n.nodeValue.indexOf(date);
+      if (k < 0 || !/W dniu/i.test((n.parentNode && n.parentNode.textContent) || '')) continue;
+      const after = n.splitText(k + date.length);
+      n.parentNode.insertBefore(el('span', { class: 'mp-loot-at' }, ` o ${pad(d.getHours())}:${pad(d.getMinutes())}`), after);
+      return;
+    }
+  }
+  function onItemHover(e) {
+    if (!cfg || !cfg.enabled) return;
+    const node = e.target && e.target.closest && e.target.closest('.item');
+    if (!node || node.closest('.tip-wrapper, .mp-glass')) return;
+    const id = game.itemIdFromEl(node);
+    let it = id ? game.itemById(id) : null;
+    if (!it && MP.anyLookup) it = MP.anyLookup(node, id);
+    if (!it || String((it.stats || {}).rarity) !== 'legendary' || !lootTs(it)) return;
+    const put = () => { for (const t of $$('.tip-wrapper')) if (isVisible(t)) addLegTime(t, it); };
+    setTimeout(put, 40); setTimeout(put, 160);
+  }
+
   const signedKey = (id) => { const it = game.itemById(id); const k = keyOf(it); return !!(cfg && ((k && cfg.byKey[k]) || cfg.byId[id])); };
   MP.podpis = { labelFor: (it, id) => (cfg && cfg.enabled ? labelFor(it, id) : null), isSigned: (id) => signedKey(id) };
 
@@ -168,7 +205,7 @@ MP.itemDeco = itemDeco;
 
   defineAddon({
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
-    desc: 'Pozwala dodawać własne podpisy do przedmiotów, np. dokąd prowadzi dany kamień teleportacyjny. Podpis nadajesz z menu przedmiotu („Podpisz…”) i od razu widzisz go na wszystkich takich samych przedmiotach.',
+    desc: 'Pozwala dodawać własne podpisy do przedmiotów, np. dokąd prowadzi dany kamień teleportacyjny. Podpis nadajesz z menu przedmiotu („Podpisz…”) i od razu widzisz go na wszystkich takich samych przedmiotach. Dodatkowo w dymku legendy przy dacie zdobycia pokazuje też godzinę.',
     defaults: { enabled: false, byId: {}, byKey: {}, rules: [], autoTeleport: false },
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu', hint: 'Domyślnie wyłączone — podpisy nadajesz sam.' }],
     render(box, c, rerender) {
@@ -194,6 +231,7 @@ MP.itemDeco = itemDeco;
       cfg = c;
       c.byKey = c.byKey || {};
       if (!c._noAutoTp) { c._noAutoTp = true; c.autoTeleport = false; config.save(); }   // automatyczne podpisy teleportów domyślnie wyłączone
+      document.addEventListener('mouseover', onItemHover, true);
       itemDeco.add((node, it, id) => { const lb = cfg.enabled && labelFor(it, id); return lb ? { cls: 'sig', text: lb, title: 'Podpisownik: ' + lb } : null; });
       menus.add('item', (id) => (cfg.enabled ? [{ label: 'Podpisz…', fn: () => signItem(id) }] : []));
     },
