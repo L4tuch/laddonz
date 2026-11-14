@@ -533,18 +533,20 @@ MP.itemDeco = itemDeco;
     return box;
   }
 
-  function tipHasOutfit(t, pid) {
+  /** Postać, którą dymek gry pokazuje sam (np. na Podręcznej mapie — nad EQ). Zwraca element albo null. */
+  function tipOutfitNode(t, pid) {
     try {
       const raw = game.otherRaw(pid), ic = raw && raw.d && raw.d.icon ? String(raw.d.icon).split('/').pop().split('?')[0] : '';
       for (const n of t.querySelectorAll('*')) {
         if (n.closest('.mp-eqrow, .dad-eq-grid, .mp-tipsum')) continue;
-        if (/outfit|avatar|postac/i.test(String(n.className))) return true;
+        if (n.classList.contains('mp-eqoutfit')) continue;
+        if (/outfit|avatar|postac/i.test(String(n.className))) return n;
         const bg = n.style && n.style.backgroundImage || '';
         const src = n.tagName === 'IMG' ? n.getAttribute('src') || '' : '';
-        if ((ic && (bg.includes(ic) || src.includes(ic))) || /postacie/i.test(bg + src)) return true;
+        if ((ic && (bg.includes(ic) || src.includes(ic))) || /postacie/i.test(bg + src)) return n;
       }
     } catch {}
-    return false;
+    return null;
   }
   /** Postać gracza po lewej stronie siatki EQ (jak w oknie „Ekwipunek Postaci”). */
   function withOutfit(grid, pid) {
@@ -553,9 +555,14 @@ MP.itemDeco = itemDeco;
       const tipEl = grid.closest('.tip-wrapper') || grid.parentElement;
       // sprzątanie: stare wiersze z postacią, z których gra zabrała już swoją siatkę (inaczej postać była dwa razy)
       tipEl.querySelectorAll('.mp-eqrow').forEach((r) => { if (!r.contains(grid)) r.remove(); });
+      // dymek sam pokazuje postać nad EQ (np. na Podręcznej mapie) — chowamy ją, a postać stoi tylko po lewej stronie EQ
+      const own = tipOutfitNode(tipEl, pid);
+      if (own) {
+        own.classList.add('mp-hide-outfit');
+        const par = own.parentElement;
+        if (par && par !== tipEl && par.children.length === 1 && !(par.textContent || '').trim()) par.classList.add('mp-hide-outfit');
+      }
       if (grid.parentElement.classList.contains('mp-eqrow')) return;
-      // dymek sam pokazuje już postać (np. na Podręcznej mapie) — drugiej nie dokładamy
-      if (tipHasOutfit(tipEl, pid)) return;
       const o = outfitEl(pid, 1);
       if (!o) return;
       const row = el('div', { class: 'mp-eqrow' });
