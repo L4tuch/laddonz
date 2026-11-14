@@ -229,6 +229,7 @@ const net = {
   sendRaw(task, opts = {}) {
     return new Promise((resolve) => {
       const job = { task, opts, resolve };
+      if (opts.fast) { this.runJob(job); return; }   // „fast" (atak Slayera) — od razu, bez kolejki i odstępu
       if (opts.urgent) this.queue.unshift(job); else this.queue.push(job);
       this.pump();
     });
@@ -236,6 +237,44 @@ const net = {
 
   clearQueue(src) {
     this.queue = this.queue.filter((j) => { if (!src || j.opts.src === src) { j.resolve({ ok: false, error: 'anulowano' }); return false; } return true; });
+  },
+
+  /** Wysłanie jednej komendy (bezpieczniki, tryb próbny, log). */
+  runJob(job) {
+    this.lastSent = now();
+    const { task, opts } = job;
+
+    if (!this.installed && !this.install()) {
+      this.pushLog({ kind: 'error', task, msg: 'Nie znaleziono funkcji wysyłającej komendy gry', src: opts.src });
+      job.resolve({ ok: false, error: 'no transport' });
+      return;
+    }
+    const g = this.checkGuards(task);
+    if (g) {
+      this.stats.blocked++;
+      this.pushLog({ kind: 'block', task, msg: g.reason, src: g.src || opts.src });
+      toast(g.reason, 'bad');
+      job.resolve({ ok: false, blocked: true, error: g.reason });
+      return;
+    }
+    if (config.data.global.dryRun) {
+      this.pushLog({ kind: 'dry', task, msg: 'Tryb próbny — nie wysłano', src: opts.src });
+      job.resolve({ ok: true, dry: true });
+      return;
+    }
+    this.stats.ourCalls++;
+    this.pushLog({ kind: 'send', task, src: opts.src });
+    let done = false;
+    const finish = (data) => { if (done) return; done = true; try { opts.onResponse && opts.onResponse(data || {}); } catch {} job.resolve({ ok: true, data }); };
+    try {
+      this.rawSend(task, (data) => finish(data));
+    } catch (e) {
+      this.pushLog({ kind: 'error', task, msg: String(e), src: opts.src });
+      done = true;
+      job.resolve({ ok: false, error: String(e) });
+    }
+    // jeśli gra nie wywoła callbacka, po 1.5 s uznajemy żądanie za wysłane
+    setTimeout(() => finish(this._lastData), 1500);
   },
 
   async pump() {
@@ -248,40 +287,7 @@ const net = {
         if (wait > 0) await sleep(wait);
         const job = this.queue.shift();
         if (!job) break;
-        this.lastSent = now();
-        const { task, opts } = job;
-
-        if (!this.installed && !this.install()) {
-          this.pushLog({ kind: 'error', task, msg: 'Nie znaleziono funkcji wysyłającej komendy gry', src: opts.src });
-          job.resolve({ ok: false, error: 'no transport' });
-          continue;
-        }
-        const g = this.checkGuards(task);
-        if (g) {
-          this.stats.blocked++;
-          this.pushLog({ kind: 'block', task, msg: g.reason, src: g.src || opts.src });
-          toast(g.reason, 'bad');
-          job.resolve({ ok: false, blocked: true, error: g.reason });
-          continue;
-        }
-        if (config.data.global.dryRun) {
-          this.pushLog({ kind: 'dry', task, msg: 'Tryb próbny — nie wysłano', src: opts.src });
-          job.resolve({ ok: true, dry: true });
-          continue;
-        }
-        this.stats.ourCalls++;
-        this.pushLog({ kind: 'send', task, src: opts.src });
-        let done = false;
-        const finish = (data) => { if (done) return; done = true; try { opts.onResponse && opts.onResponse(data || {}); } catch {} job.resolve({ ok: true, data }); };
-        try {
-          this.rawSend(task, (data) => finish(data));
-        } catch (e) {
-          this.pushLog({ kind: 'error', task, msg: String(e), src: opts.src });
-          done = true;
-          job.resolve({ ok: false, error: String(e) });
-        }
-        // jeśli gra nie wywoła callbacka, po 1.5 s uznajemy żądanie za wysłane
-        setTimeout(() => finish(this._lastData), 1500);
+        this.runJob(job);
       }
     } finally { this.busy = false; }
   },

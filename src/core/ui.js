@@ -5,6 +5,10 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.4', d: '15.11.2026', items: [
+    'Slayer: pierwszy atak idzie od razu po namierzeniu, gdy cel jest w zasięgu — bez czekania w kolejce za innymi dodatkami.',
+    'Slayer: gdy gra chwilowo nie pozwala zaatakować (np. postać jeszcze idzie), ponowienie po 0,3 s zamiast 2,5 s.',
+  ] },
   { v: '1.0.3', d: '14.11.2026', items: [
     'Dymek przedmiotu wyświetla się nad paskiem skrótów — skróty są pod dymkiem i go nie zasłaniają.',
     'Podpisownik: w dymku legendy przy dacie zdobycia jest też godzina (np. „W dniu 11.11.2026 o godzinie 23:14 został(a) pokonany(a)…”).',

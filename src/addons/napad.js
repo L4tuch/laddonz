@@ -9,8 +9,9 @@
  */
 (() => {
   const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
-  const RETRY_MS = 600;       // jak często ponawiać atak na namierzony cel w zasięgu
+  const RETRY_MS = 300;       // jak często ponawiać atak na namierzony cel w zasięgu
   const REFUSE_MS = 2500;     // po odmowie („nie zgadza się na walkę") — krótka przerwa i próbujemy znowu
+  const SOFT_MS = 300;        // inne „nie możesz" (np. postać jeszcze w ruchu) — ponawiamy szybko
   const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, lock: null, timer: null, said: {} };
   /** Komunikat o danym graczu najwyżej raz na `ms` (żeby nie zasypać ekranu przy ponawianiu). */
   const say = (key, msg, ms = 15000, type = 'warn') => { const t = now(); if (S.said[key] > t) return; S.said[key] = t + ms; toast(msg, type); };
@@ -45,12 +46,13 @@
     S.last = t;
     S.tried[p.id] = t;
     const r = await net.send('attackPlayer', { id: p.id }, {
-      src: 'Slayer',
+      src: 'Slayer', urgent: true, fast: true,      // atak bez czekania w kolejce za innymi dodatkami
       onResponse: (data) => {
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
         // komunikat pokazuje już sama gra — Slayer nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
-        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + REFUSE_MS; return; }
+        if (/nie zgadza|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + REFUSE_MS; return; }
+        if (/nie mo[żz]esz|nie mo[żz]na/i.test(txt)) { S.refused[p.id] = now() + SOFT_MS; return; }
         const sec = parseProtection(data);
         if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
       },
@@ -63,6 +65,8 @@
     if (!p) return;
     if (!allowed(p)) { toast(`Slayer: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
+    // pierwszy atak od razu — bez przerw po wcześniejszych próbach
+    S.last = 0; delete S.refused[p.id]; delete S.tried[p.id];
     cfg.target = null;                                // cel tylko do końca sesji (po odświeżeniu gry — zapomniany)
     config.save();
     mark.set(p.id);

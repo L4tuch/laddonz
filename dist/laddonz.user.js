@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.3
+// @version      1.0.4
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -812,6 +812,7 @@ const net = {
   sendRaw(task, opts = {}) {
     return new Promise((resolve) => {
       const job = { task, opts, resolve };
+      if (opts.fast) { this.runJob(job); return; }   // „fast" (atak Slayera) — od razu, bez kolejki i odstępu
       if (opts.urgent) this.queue.unshift(job); else this.queue.push(job);
       this.pump();
     });
@@ -819,6 +820,44 @@ const net = {
 
   clearQueue(src) {
     this.queue = this.queue.filter((j) => { if (!src || j.opts.src === src) { j.resolve({ ok: false, error: 'anulowano' }); return false; } return true; });
+  },
+
+  /** Wysłanie jednej komendy (bezpieczniki, tryb próbny, log). */
+  runJob(job) {
+    this.lastSent = now();
+    const { task, opts } = job;
+
+    if (!this.installed && !this.install()) {
+      this.pushLog({ kind: 'error', task, msg: 'Nie znaleziono funkcji wysyłającej komendy gry', src: opts.src });
+      job.resolve({ ok: false, error: 'no transport' });
+      return;
+    }
+    const g = this.checkGuards(task);
+    if (g) {
+      this.stats.blocked++;
+      this.pushLog({ kind: 'block', task, msg: g.reason, src: g.src || opts.src });
+      toast(g.reason, 'bad');
+      job.resolve({ ok: false, blocked: true, error: g.reason });
+      return;
+    }
+    if (config.data.global.dryRun) {
+      this.pushLog({ kind: 'dry', task, msg: 'Tryb próbny — nie wysłano', src: opts.src });
+      job.resolve({ ok: true, dry: true });
+      return;
+    }
+    this.stats.ourCalls++;
+    this.pushLog({ kind: 'send', task, src: opts.src });
+    let done = false;
+    const finish = (data) => { if (done) return; done = true; try { opts.onResponse && opts.onResponse(data || {}); } catch {} job.resolve({ ok: true, data }); };
+    try {
+      this.rawSend(task, (data) => finish(data));
+    } catch (e) {
+      this.pushLog({ kind: 'error', task, msg: String(e), src: opts.src });
+      done = true;
+      job.resolve({ ok: false, error: String(e) });
+    }
+    // jeśli gra nie wywoła callbacka, po 1.5 s uznajemy żądanie za wysłane
+    setTimeout(() => finish(this._lastData), 1500);
   },
 
   async pump() {
@@ -831,40 +870,7 @@ const net = {
         if (wait > 0) await sleep(wait);
         const job = this.queue.shift();
         if (!job) break;
-        this.lastSent = now();
-        const { task, opts } = job;
-
-        if (!this.installed && !this.install()) {
-          this.pushLog({ kind: 'error', task, msg: 'Nie znaleziono funkcji wysyłającej komendy gry', src: opts.src });
-          job.resolve({ ok: false, error: 'no transport' });
-          continue;
-        }
-        const g = this.checkGuards(task);
-        if (g) {
-          this.stats.blocked++;
-          this.pushLog({ kind: 'block', task, msg: g.reason, src: g.src || opts.src });
-          toast(g.reason, 'bad');
-          job.resolve({ ok: false, blocked: true, error: g.reason });
-          continue;
-        }
-        if (config.data.global.dryRun) {
-          this.pushLog({ kind: 'dry', task, msg: 'Tryb próbny — nie wysłano', src: opts.src });
-          job.resolve({ ok: true, dry: true });
-          continue;
-        }
-        this.stats.ourCalls++;
-        this.pushLog({ kind: 'send', task, src: opts.src });
-        let done = false;
-        const finish = (data) => { if (done) return; done = true; try { opts.onResponse && opts.onResponse(data || {}); } catch {} job.resolve({ ok: true, data }); };
-        try {
-          this.rawSend(task, (data) => finish(data));
-        } catch (e) {
-          this.pushLog({ kind: 'error', task, msg: String(e), src: opts.src });
-          done = true;
-          job.resolve({ ok: false, error: String(e) });
-        }
-        // jeśli gra nie wywoła callbacka, po 1.5 s uznajemy żądanie za wysłane
-        setTimeout(() => finish(this._lastData), 1500);
+        this.runJob(job);
       }
     } finally { this.busy = false; }
   },
@@ -2239,6 +2245,10 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.4', d: '15.11.2026', items: [
+    'Slayer: pierwszy atak idzie od razu po namierzeniu, gdy cel jest w zasięgu — bez czekania w kolejce za innymi dodatkami.',
+    'Slayer: gdy gra chwilowo nie pozwala zaatakować (np. postać jeszcze idzie), ponowienie po 0,3 s zamiast 2,5 s.',
+  ] },
   { v: '1.0.3', d: '14.11.2026', items: [
     'Dymek przedmiotu wyświetla się nad paskiem skrótów — skróty są pod dymkiem i go nie zasłaniają.',
     'Podpisownik: w dymku legendy przy dacie zdobycia jest też godzina (np. „W dniu 11.11.2026 o godzinie 23:14 został(a) pokonany(a)…”).',
@@ -3044,8 +3054,9 @@ function parseProtection(data) {
  */
 (() => {
   const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
-  const RETRY_MS = 600;       // jak często ponawiać atak na namierzony cel w zasięgu
+  const RETRY_MS = 300;       // jak często ponawiać atak na namierzony cel w zasięgu
   const REFUSE_MS = 2500;     // po odmowie („nie zgadza się na walkę") — krótka przerwa i próbujemy znowu
+  const SOFT_MS = 300;        // inne „nie możesz" (np. postać jeszcze w ruchu) — ponawiamy szybko
   const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, lock: null, timer: null, said: {} };
   /** Komunikat o danym graczu najwyżej raz na `ms` (żeby nie zasypać ekranu przy ponawianiu). */
   const say = (key, msg, ms = 15000, type = 'warn') => { const t = now(); if (S.said[key] > t) return; S.said[key] = t + ms; toast(msg, type); };
@@ -3080,12 +3091,13 @@ function parseProtection(data) {
     S.last = t;
     S.tried[p.id] = t;
     const r = await net.send('attackPlayer', { id: p.id }, {
-      src: 'Slayer',
+      src: 'Slayer', urgent: true, fast: true,      // atak bez czekania w kolejce za innymi dodatkami
       onResponse: (data) => {
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
         // komunikat pokazuje już sama gra — Slayer nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
-        if (/nie zgadza|nie mo[żz]esz|nie mo[żz]na|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + REFUSE_MS; return; }
+        if (/nie zgadza|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + REFUSE_MS; return; }
+        if (/nie mo[żz]esz|nie mo[żz]na/i.test(txt)) { S.refused[p.id] = now() + SOFT_MS; return; }
         const sec = parseProtection(data);
         if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
       },
@@ -3098,6 +3110,8 @@ function parseProtection(data) {
     if (!p) return;
     if (!allowed(p)) { toast(`Slayer: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
+    // pierwszy atak od razu — bez przerw po wcześniejszych próbach
+    S.last = 0; delete S.refused[p.id]; delete S.tried[p.id];
     cfg.target = null;                                // cel tylko do końca sesji (po odświeżeniu gry — zapomniany)
     config.save();
     mark.set(p.id);
@@ -8958,5 +8972,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.3";
+MP.version = "1.0.4";
 })();
