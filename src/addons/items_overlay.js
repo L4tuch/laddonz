@@ -516,7 +516,7 @@ MP.itemDeco = itemDeco;
   }
 
   /* ── wygląd ── */
-  function outfitEl(id) {
+  function outfitEl(id, scale) {
     const raw = game.otherRaw(id);
     const d = raw && raw.d;
     if (!d || !d.icon) return null;
@@ -526,7 +526,7 @@ MP.itemDeco = itemDeco;
     const img = new Image();
     img.onload = () => {
       const fw = Number(raw.fw) || img.width / 4, fh = Number(raw.fh) || img.height / 4;   // arkusz 4×4 klatek
-      const S = 1.5;
+      const S = scale || 1.5;
       Object.assign(box.style, { width: fw * S + 'px', height: fh * S + 'px', backgroundImage: `url("${url}")`, backgroundSize: `${img.width * S}px ${img.height * S}px`, backgroundPosition: '0 0' });
     };
     img.src = url;
@@ -537,8 +537,11 @@ MP.itemDeco = itemDeco;
   function withOutfit(grid, pid) {
     try {
       if (!grid || !grid.parentElement) return;
+      const tipEl = grid.closest('.tip-wrapper') || grid.parentElement;
+      // sprzątanie: stare wiersze z postacią, z których gra zabrała już swoją siatkę (inaczej postać była dwa razy)
+      tipEl.querySelectorAll('.mp-eqrow').forEach((r) => { if (!r.contains(grid)) r.remove(); });
       if (grid.parentElement.classList.contains('mp-eqrow')) return;
-      const o = outfitEl(pid);
+      const o = outfitEl(pid, 1);
       if (!o) return;
       const row = el('div', { class: 'mp-eqrow' });
       grid.parentElement.insertBefore(row, grid);
@@ -735,7 +738,7 @@ MP.itemDeco = itemDeco;
       tip.className = 'mp-host';
       eqBox = el('div', { class: 'mp-eqmain' }, el('div', { class: 'mp-dim mp-eqload' }, 'Wczytuję ekwipunek…'));
       sumBox = el('div', { class: 'mp-tipsum' });
-      const o = outfitEl(id);
+      const o = outfitEl(id, 1);
       tip.appendChild(el('div', { class: 'tip-wrapper normal-tip mp-ourtip', 'data-type': 't_other' }, el('div', { class: 'content' }, ...gameHeader(id), o ? el('div', { class: 'mp-eqrow' }, o, eqBox) : eqBox, sumBox)));
       return;
     }
