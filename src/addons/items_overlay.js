@@ -533,6 +533,19 @@ MP.itemDeco = itemDeco;
     return box;
   }
 
+  /** Postać gracza po lewej stronie siatki EQ (jak w oknie „Ekwipunek Postaci”). */
+  function withOutfit(grid, pid) {
+    try {
+      if (!grid || !grid.parentElement) return;
+      if (grid.parentElement.classList.contains('mp-eqrow')) return;
+      const o = outfitEl(pid);
+      if (!o) return;
+      const row = el('div', { class: 'mp-eqrow' });
+      grid.parentElement.insertBefore(row, grid);
+      row.append(o, grid);
+    } catch {}
+  }
+
   /** Linie tekstu dymka gry (działa też, gdy dymek jest już ukryty — nie używa innerText). */
   function tipLines(root) {
     const BLOCK = /^(DIV|P|LI|UL|TABLE|TR|TD|SECTION|HEADER|H\d)$/;
@@ -722,7 +735,8 @@ MP.itemDeco = itemDeco;
       tip.className = 'mp-host';
       eqBox = el('div', { class: 'mp-eqmain' }, el('div', { class: 'mp-dim mp-eqload' }, 'Wczytuję ekwipunek…'));
       sumBox = el('div', { class: 'mp-tipsum' });
-      tip.appendChild(el('div', { class: 'tip-wrapper normal-tip mp-ourtip', 'data-type': 't_other' }, el('div', { class: 'content' }, ...gameHeader(id), eqBox, sumBox)));
+      const o = outfitEl(id);
+      tip.appendChild(el('div', { class: 'tip-wrapper normal-tip mp-ourtip', 'data-type': 't_other' }, el('div', { class: 'content' }, ...gameHeader(id), o ? el('div', { class: 'mp-eqrow' }, o, eqBox) : eqBox, sumBox)));
       return;
     }
     tip.className = 'mp-glass gamey';
@@ -823,6 +837,7 @@ MP.itemDeco = itemDeco;
     try {
       const grid = t.querySelector('.dad-eq-grid');
       if (!grid) return augmentTipIds(t);
+      if (p) withOutfit(grid, p.id);
       const slots = $$('.dad-eq-slot', grid).filter((sl) => sl.querySelector('.item'));
       const legs = slots.filter((sl) => sl.querySelector('.highlight.t-leg, [class*="t-leg"]'));
       const pid = p && p.id;
@@ -925,8 +940,13 @@ MP.itemDeco = itemDeco;
       } else if (!items.length) {
         box.appendChild(el('div', { class: 'mp-injload' }, 'Brak założonych przedmiotów'));
       } else {
-        box.appendChild(gameGrid(items));
+        const g = gameGrid(items);
+        box.appendChild(g);
         box.appendChild(el('div', { class: 'mp-tipsum' }, summaryEl(items)));
+        host.appendChild(box);
+        withOutfit(g, pid);
+        upgFallback(box);
+        return;
       }
       host.appendChild(box);
       upgFallback(box);

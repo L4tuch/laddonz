@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.2', d: '14.11.2026', items: [
+    'Pokaż EQ: w dymku gracza, obok jego EQ, widać też jego postać, tak jak w oknie „Ekwipunek Postaci”.',
+  ] },
   { v: '1.0.1', d: '14.11.2026', items: [
     'Pokaż EQ: na mapie zawsze zostaje dymek gracza z gry. Jeśli gra pokazuje w nim EQ, dodatek dopisuje skróty bonusów i podsumowanie legend. Jeśli nie pokazuje, dodatek sam wstawia do dymka EQ w tym samym układzie.',
     'Pokaż EQ: podgląd z listy graczy i Podręcznej mapy wygląda jak dymek gry. Pokazuje poziom ulepszenia przedmiotów i nie znika przy graczach bez EQ w dymku.',

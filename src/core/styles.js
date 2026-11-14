@@ -431,6 +431,9 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 :where(#mp-eqtip .mp-ourtip .info_tooltip_loot .value){display:inline;margin-left:3px;color:#f2c94c}
 #mp-eqtip.mp-host .mp-eqmain{display:flex;justify-content:center}
 #mp-eqtip.mp-host .mp-eqload{padding:12px 6px;text-align:center;color:#9a9a9a;font:11.5px Arial,sans-serif}
+.tip-wrapper .mp-eqrow{display:flex!important;align-items:center;justify-content:center;gap:14px;margin:4px 6px 2px}
+.tip-wrapper .mp-eqrow > .dad-eq-grid,.tip-wrapper .mp-eqrow > .mp-eqmain{margin:0!important;flex:none}
+.tip-wrapper .mp-eqrow .mp-eqoutfit{flex:none;background-repeat:no-repeat;image-rendering:pixelated}
 .tip-wrapper .mp-inj{display:block!important;visibility:visible!important}
 .tip-wrapper .mp-injload{text-align:center;color:#9a9a9a;font:11px Arial,sans-serif;padding:6px 0 2px}
 .tip-wrapper .mp-gamegrid{position:relative!important;width:102px;height:136px;margin:4px auto 2px}
