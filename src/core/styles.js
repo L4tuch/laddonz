@@ -435,6 +435,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-eqtip .mp-gamegrid .dad-eq-slot{position:absolute!important;width:32px;height:32px}
 #mp-eqtip .mp-gamegrid .item{position:relative!important;width:32px;height:32px}
 #mp-eqtip .mp-gamegrid .item img.icon{width:32px;height:32px;display:block}
+#mp-eqtip .mp-gamegrid .mp-upg{position:absolute!important;left:1px;top:0;font:bold 10px/1 Arial,sans-serif;color:#5dff5d;text-shadow:0 0 2px #000,1px 1px 0 #000;pointer-events:none;z-index:2}
 #mp-eqtip .mp-gamegrid .highlight{position:absolute!important;inset:0;pointer-events:none}
 #mp-eqtip .mp-gamegrid .highlight.t-leg{box-shadow:inset 0 0 0 2px #e8314b}
 #mp-eqtip .mp-gamegrid .highlight.t-her{box-shadow:inset 0 0 0 2px #2fb7c9}

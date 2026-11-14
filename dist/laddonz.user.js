@@ -1511,6 +1511,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-eqtip .mp-gamegrid .dad-eq-slot{position:absolute!important;width:32px;height:32px}
 #mp-eqtip .mp-gamegrid .item{position:relative!important;width:32px;height:32px}
 #mp-eqtip .mp-gamegrid .item img.icon{width:32px;height:32px;display:block}
+#mp-eqtip .mp-gamegrid .mp-upg{position:absolute!important;left:1px;top:0;font:bold 10px/1 Arial,sans-serif;color:#5dff5d;text-shadow:0 0 2px #000,1px 1px 0 #000;pointer-events:none;z-index:2}
 #mp-eqtip .mp-gamegrid .highlight{position:absolute!important;inset:0;pointer-events:none}
 #mp-eqtip .mp-gamegrid .highlight.t-leg{box-shadow:inset 0 0 0 2px #e8314b}
 #mp-eqtip .mp-gamegrid .highlight.t-her{box-shadow:inset 0 0 0 2px #2fb7c9}
@@ -4611,6 +4612,18 @@ MP.itemDeco = itemDeco;
   const ST_POS = { 1: [1, 0], 2: [0, 1], 3: [1, 1], 4: [2, 1], 5: [0, 2], 6: [1, 2], 7: [2, 2], 8: [1, 3], 9: [0, 3] };
   const CL_ST = { 9: 1, 12: 2, 13: 3, 11: 4, 1: 5, 2: 5, 3: 5, 4: 5, 6: 5, 8: 6, 5: 7, 7: 7, 14: 7, 10: 8, 21: 9, 29: 9, 25: 9, 22: 9 };
   const RAR_T = { unique: 't-uni', heroic: 't-her', legendary: 't-leg', upgraded: 't-upg', artefact: 't-art' };
+  /** Gdy gra nie rysuje sama poziomu ulepszenia na naszych przedmiotach — dopisujemy „+N” jak w grze. */
+  function upgFallback(box) {
+    try {
+      for (const n of box.querySelectorAll('.item[data-upgrade]')) {
+        const lv = Number(n.dataset.upgrade);
+        if (!lv) continue;
+        const a = getComputedStyle(n, '::after').content, b = getComputedStyle(n, '::before').content;
+        const drawn = [a, b].some((c) => c && c !== 'none' && c !== 'normal' && c !== '""');
+        if (!drawn && !n.querySelector('.mp-upg')) n.appendChild(el('div', { class: 'mp-upg' }, '+' + lv));
+      }
+    } catch {}
+  }
   function gameGrid(items) {
     const box = el('div', { class: 'dad-eq-grid mp-gamegrid' });
     const taken = new Set();
@@ -4618,8 +4631,11 @@ MP.itemDeco = itemDeco;
       const [c, r] = ST_POS[st];
       taken.add(st);
       const t = RAR_T[it.rarity];
-      box.appendChild(el('div', { class: 'dad-eq-slot', style: { left: c * 34 + 'px', top: r * 34 + 'px' }, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
-        el('div', { class: 'item' },
+      // poziom ulepszenia jak w grze (data-upgrade — gra sama rysuje „+N”, gdy masz włączoną nakładkę)
+      let upg = null;
+      for (const [k, v] of Object.entries(it.stats || {})) if (/enhanc.*(lvl|level)|upgrade_?lvl/i.test(k)) { const n = parseInt(v, 10); if (!isNaN(n)) upg = n; }
+      box.appendChild(el('div', { class: 'dad-eq-slot', 'data-st': String(st), style: { left: c * 34 + 'px', top: r * 34 + 'px' }, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
+        el('div', upg != null ? { class: 'item', 'data-upgrade': String(upg) } : { class: 'item' },
           el('div', { class: 'highlight' + (t ? ' ' + t + ' h-exist' : '') }),
           it.icon ? el('img', { class: 'icon', src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
           it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null)));
@@ -4751,7 +4767,7 @@ MP.itemDeco = itemDeco;
     if (items === 'own-window') eqBox.appendChild(el('div', { class: 'mp-dim mp-eqload' }, 'Masz otwarte okno ekwipunku z gry.'));
     else if (!items) eqBox.appendChild(el('div', { class: 'mp-warnc mp-eqload' }, 'Nie udało się pobrać.'));
     else if (!items.length) { eqBox.appendChild(el('div', { class: 'mp-dim mp-eqload' }, 'Brak założonych przedmiotów.')); sumBox.innerHTML = ''; }
-    else { eqBox.appendChild(layoutGrid(items)); sumBox.innerHTML = ''; sumBox.appendChild(summaryEl(items)); }
+    else { eqBox.appendChild(layoutGrid(items)); sumBox.innerHTML = ''; sumBox.appendChild(summaryEl(items)); upgFallback(eqBox); }
     place();
   }
 
