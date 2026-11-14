@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.4
+// @version      1.0.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -1696,12 +1696,6 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 /* Ulepszarka: ciche pobranie licznika — okno Rzemiosła niewidoczne przez chwilę */
 .mp-ul-silent .c-window:has(.left-grouped-list-and-right-description-window){clip-path:inset(50%)!important;pointer-events:none!important}
 .mp-dbarrow{position:fixed;left:0;top:0;width:24px;height:24px;z-index:2147481000;pointer-events:none;opacity:0;transition:opacity .25s;will-change:transform}
-.mp-dbw{position:fixed;left:calc(50% - 120px);top:90px;width:240px;z-index:2147482000;background:rgba(16,20,16,.94);border:1px solid #3c5a3f;border-radius:7px;box-shadow:0 4px 14px rgba(0,0,0,.55);font:12px/1.3 Arial,sans-serif;color:#e4eee5;user-select:none}
-.mp-dbw-h{display:flex;align-items:center;justify-content:space-between;padding:5px 6px 5px 9px;cursor:move;border-bottom:1px solid #2b3d2d;font-weight:700;color:#ff8a9c}
-.mp-dbw-h button{background:none;border:0;color:#cfd8d0;font-size:16px;line-height:1;cursor:pointer;padding:0 4px}
-.mp-dbw-h button:hover{color:#ff6b6b}
-.mp-dbw-b{display:flex;align-items:center;gap:6px;padding:8px 9px;white-space:nowrap}
-.mp-dbw-b input{width:52px;background:#0b0e0b;border:1px solid #3c5a3f;border-radius:4px;color:#fff;padding:3px 4px;font:12px Arial,sans-serif}
 .mp-ulov{position:fixed;left:50%;top:50%;width:112px;height:112px;margin:-56px 0 0 -56px;z-index:2147483000;pointer-events:none;opacity:0;transform:scale(.85);transition:opacity .22s,transform .22s;border-radius:50%;background:radial-gradient(circle,rgba(20,24,20,.92) 58%,rgba(10,12,10,.85) 70%,transparent 72%);filter:drop-shadow(0 4px 14px rgba(0,0,0,.6))}
 .mp-ulov.on{opacity:1;transform:scale(1)}
 .mp-ulov-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
@@ -2245,22 +2239,7 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
-  { v: '1.0.4', d: '15.11.2026', items: [
-    'Slayer: pierwszy atak idzie od razu po namierzeniu, gdy cel jest w zasięgu — bez czekania w kolejce za innymi dodatkami.',
-    'Slayer: gdy gra chwilowo nie pozwala zaatakować (np. postać jeszcze idzie), ponowienie po 0,3 s zamiast 2,5 s.',
-  ] },
-  { v: '1.0.3', d: '14.11.2026', items: [
-    'Dymek przedmiotu wyświetla się nad paskiem skrótów — skróty są pod dymkiem i go nie zasłaniają.',
-    'Podpisownik: w dymku legendy przy dacie zdobycia jest też godzina (np. „W dniu 11.11.2026 o godzinie 23:14 został(a) pokonany(a)…”).',
-  ] },
-  { v: '1.0.2', d: '14.11.2026', items: [
-    'Kto złapie: po łupie (np. z e2) nie wyskakują już po kolei okienka opisów zdobytych przedmiotów.',
-  ] },
-  { v: '1.0.1', d: '14.11.2026', items: [
-    'Slayer: namierzony cel jest zapominany po każdej walce, z kimkolwiek była.',
-    'Slayer: po odświeżeniu gry albo ponownym wejściu cel nie jest już pamiętany.',
-  ] },
-  { v: '1.0.0', d: '14.11.2026', items: [
+  { v: '1.0.0', d: '15.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
     'Kafelek L4 przy przyciskach gry i pasek skrótów do dodatków.',
@@ -3047,17 +3026,18 @@ function parseProtection(data) {
  * Wszystko działa tylko przy WŁĄCZONYM dodatku.
  * Klawisz   → namierza najbliższego gracza i atakuje go w chwili, gdy będzie w zasięgu. Ponowne
  *             naciśnięcie przy namierzonym celu = anulowanie (bez zmiany celu). Postać nie podchodzi sama.
- * „Atakuj każdego w pobliżu" → osobny przełącznik (też pod klawisz); gdy włączony, na ekranie jest małe
- *             okienko z zakresem poziomów „od – do" i atakowany jest każdy w zasięgu z tego zakresu.
+ * Atak w seriach: cel w zasięgu → 3 polecenia ataku co 0,5 s, potem 2 s przerwy i kolejna seria.
  * Menu gracza (prawy klik) → „Dobij": namierza tego gracza, atak gdy będzie w zasięgu.
  * Kogo NIE atakować (klan, znajomi…) — decyduje Bratan; Slayer takich graczy po prostu pomija.
  */
 (() => {
   const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
-  const RETRY_MS = 300;       // jak często ponawiać atak na namierzony cel w zasięgu
+  const RETRY_MS = 500;       // odstęp między atakami w serii
   const REFUSE_MS = 2500;     // po odmowie („nie zgadza się na walkę") — krótka przerwa i próbujemy znowu
   const SOFT_MS = 300;        // inne „nie możesz" (np. postać jeszcze w ruchu) — ponawiamy szybko
-  const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, lock: null, timer: null, said: {} };
+  const BURST = 3;            // seria: tyle poleceń ataku (co RETRY_MS)…
+  const BURST_PAUSE = 2000;   // …potem przerwa i kolejna seria
+  const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, burst: {}, lock: null, timer: null, said: {} };
   /** Komunikat o danym graczu najwyżej raz na `ms` (żeby nie zasypać ekranu przy ponawianiu). */
   const say = (key, msg, ms = 15000, type = 'warn') => { const t = now(); if (S.said[key] > t) return; S.said[key] = t + ms; toast(msg, type); };
   /** Tekst odpowiedzi serwera (ostrzeżenie/komunikat), jeśli jest. */
@@ -3081,13 +3061,16 @@ function parseProtection(data) {
   const task = (id) => net.build('attackPlayer', { id }).task;
   /** Czy atak na tego gracza przeszedłby przez bezpieczniki (Bratan) — sprawdzamy po cichu. */
   const allowed = (p) => { const t = task(p.id); return !!t && !net.checkGuards(t); };
-  const inLvl = (p) => { const l = Number(p.lvl); if (!Number.isFinite(l) || l <= 0) return true; const lo = Number(cfg.lvlMin) || 0, hi = Number(cfg.lvlMax) || 999; return l >= Math.min(lo, hi) && l <= Math.max(lo, hi); };
 
   async function attack(p) {
     const t = now();
     if (!p || game.inBattle()) return false;
     if (t - S.last < RETRY_MS) return false;
     if (S.protectedUntil[p.id] > t) return false;           // nie marnujemy ataku na ochronę
+    const b = S.burst[p.id] || (S.burst[p.id] = { n: 0, until: 0 });
+    if (b.until > t) return false;                         // przerwa po serii 3 ataków
+    b.n++;
+    if (b.n >= BURST) { b.n = 0; b.until = t + BURST_PAUSE; }
     S.last = t;
     S.tried[p.id] = t;
     const r = await net.send('attackPlayer', { id: p.id }, {
@@ -3111,7 +3094,7 @@ function parseProtection(data) {
     if (!allowed(p)) { toast(`Slayer: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
     // pierwszy atak od razu — bez przerw po wcześniejszych próbach
-    S.last = 0; delete S.refused[p.id]; delete S.tried[p.id];
+    S.last = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
     cfg.target = null;                                // cel tylko do końca sesji (po odświeżeniu gry — zapomniany)
     config.save();
     mark.set(p.id);
@@ -3140,39 +3123,6 @@ function parseProtection(data) {
     lockOn(list[0]);
   }
 
-  /* ── „Atakuj każdego w pobliżu" — osobny przełącznik z małym okienkiem zakresu poziomów ── */
-  function setAll(on, quiet) {
-    cfg.allMode = !!on; config.save();
-    allWin();
-    ensureLoop();
-    if (!quiet) toast(on ? `Slayer: atak na każdego w pobliżu (poz. ${Number(cfg.lvlMin) || 0}–${Number(cfg.lvlMax) || 500})` : 'Slayer: atak na każdego w pobliżu wyłączony', on ? 'ok' : 'info');
-    rr();
-  }
-  function allWin() {
-    let w = document.getElementById('mp-dbw');
-    const show = cfg && cfg.enabled && cfg.allMode;
-    if (!show) { if (w) w.remove(); return; }
-    if (w) return;
-    const num = (key, def) => el('input', { type: 'number', min: 0, max: 500, value: cfg[key] ?? def,
-      onkeydown: (e) => e.stopPropagation(), onkeyup: (e) => e.stopPropagation(),
-      oninput: (e) => { const v = Math.max(0, Math.min(500, parseInt(e.target.value, 10) || 0)); cfg[key] = v; config.save(); } });
-    const head = el('div', { class: 'mp-dbw-h' }, el('span', null, 'Slayer - Zakres poziomów'),
-      el('button', { title: 'Wyłącz', onclick: () => setAll(false) }, '×'));
-    w = el('div', { id: 'mp-dbw', class: 'mp-dbw' }, head,
-      el('div', { class: 'mp-dbw-b' }, el('span', null, 'Poziom od'), num('lvlMin', 0), el('span', null, 'do'), num('lvlMax', 500)));
-    const pos = cfg.allPos;
-    if (pos) { w.style.left = pos.x + 'px'; w.style.top = pos.y + 'px'; }
-    document.body.appendChild(w);
-    // przesuwanie za nagłówek
-    head.addEventListener('pointerdown', (e) => {
-      if (e.target.tagName === 'BUTTON') return;
-      e.preventDefault();
-      const r = w.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
-      const mv = (ev) => { w.style.left = clamp(ev.clientX - dx, 0, innerWidth - r.width) + 'px'; w.style.top = clamp(ev.clientY - dy, 0, innerHeight - r.height) + 'px'; };
-      const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); cfg.allPos = { x: parseInt(w.style.left, 10) || 0, y: parseInt(w.style.top, 10) || 0 }; config.save(); };
-      addEventListener('pointermove', mv); addEventListener('pointerup', up);
-    });
-  }
 
   /*
    * Czerwona strzałka przy postaci, wskazująca kierunek do namierzonego celu (jak strzałki przejść w grze).
@@ -3375,7 +3325,7 @@ function parseProtection(data) {
 
   /* ── pętla: namierzony cel + tryb włączony ── */
   function ensureLoop() {
-    const need = !!(cfg && cfg.enabled) && (!!S.lock || !!cfg.allMode);
+    const need = !!(cfg && cfg.enabled) && !!S.lock;
     ensureArrow();
     if (need && !S.timer) S.timer = setInterval(tick, 150);
     if (!need && S.timer) { clearInterval(S.timer); S.timer = null; }
@@ -3391,7 +3341,7 @@ function parseProtection(data) {
   let seen = new Set();
   function freshArrivals() {
     const cur = new Set(game.others().map((p) => p.id));
-    for (const id of cur) if (!seen.has(id)) { delete S.refused[id]; delete S.tried[id]; }
+    for (const id of cur) if (!seen.has(id)) { delete S.refused[id]; delete S.tried[id]; delete S.burst[id]; }
     seen = cur;
   }
   function tick() {
@@ -3400,7 +3350,7 @@ function parseProtection(data) {
     freshArrivals();
     const h = game.hero(); if (!h) return;
     if (game.inBattle()) return;
-    // 1) namierzony cel — pamiętany, dopóki sam go nie zmienisz/przerwiesz; atak, gdy będzie w zasięgu
+    // namierzony cel — pamiętany, dopóki sam go nie zmienisz/przerwiesz; atak, gdy będzie w zasięgu
     if (S.lock) {
       const p = lockedPlayer();
       if (!p && !cfg.remember) { unlock(`Slayer: ${S.lock.nick} zniknął z mapy`); return; }
@@ -3408,16 +3358,7 @@ function parseProtection(data) {
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
       if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Slayer: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
       if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
-      // cel daleko albo poza mapą — w międzyczasie (gdy włączone „każdy w pobliżu") atakuje innych w zasięgu
     }
-    // 2) „Atakuj każdego w pobliżu" włączone → każdy w zasięgu z zakresu poziomów
-    if (!cfg.allMode) return;
-    const t = now();
-    for (const p of game.others()) if (dist(h, p) <= RANGE && inLvl(p) && !allowed(p)) say('br' + p.id, `Slayer: pomijam ${p.nick} — chroniony przez Bratana`, 120000, 'info');
-    const c = game.others()
-      .filter((p) => dist(h, p) <= RANGE && inLvl(p) && allowed(p) && !(S.tried[p.id] > t - 1500) && !(S.refused[p.id] > t) && !(S.protectedUntil[p.id] > t))
-      .sort((a, b) => dist(h, a) - dist(h, b));
-    if (c.length) attack(c[0]);
   }
 
   /*
@@ -3456,14 +3397,11 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'napad', name: 'Slayer', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
-    desc: 'Pomaga dopaść wybranego przeciwnika. Namierzasz go klawiszem albo opcją „Dobij” w menu gracza, a Slayer zaatakuje go, gdy tylko znajdzie się w zasięgu. Czerwona strzałka przy postaci pokazuje, w którą stronę iść. Osobno możesz włączyć atak na każdego gracza w pobliżu z wybranego przedziału poziomów. Gracze chronieni przez Bratana są zawsze pomijani.',
-    defaults: { enabled: false, keyAttack: '', keyAll: '', allMode: false, lvlMin: 0, lvlMax: 500, target: null, remember: true },
-    notes: () => [{ type: 'warn', text: '„Atakuj każdego w pobliżu” atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
+    desc: 'Pomaga dopaść wybranego przeciwnika. Namierzasz go klawiszem albo opcją „Dobij” w menu gracza, a Slayer zaatakuje go, gdy tylko znajdzie się w zasięgu. Czerwona strzałka przy postaci pokazuje, w którą stronę iść. Gracze chronieni przez Bratana są zawsze pomijani.',
+    defaults: { enabled: false, keyAttack: '', target: null, remember: true },
     settings: [
       { group: 'Namierzanie klawiszem', key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Pierwsze naciśnięcie namierza najbliższego gracza, drugie anuluje atak. Żeby zmienić cel na bliższy: anuluj i naciśnij jeszcze raz.' },
       { group: 'Namierzanie klawiszem', key: 'remember', type: 'bool', label: 'Zapamiętuj cel po jego zniknięciu', hint: 'Cel zostaje (z podświetleniem) także po zniknięciu z mapy i zmianie mapy. Zawsze znika po walce i po odświeżeniu gry. Wyłączone: namierzenie znika razem z celem.' },
-      { group: 'Atakuj każdego w pobliżu', key: 'allMode', type: 'bool', label: 'Włączone', hint: 'Na ekranie pojawi się małe okienko z zakresem poziomów „od – do” — atakowany jest każdy w zasięgu z tego zakresu.' },
-      { group: 'Atakuj każdego w pobliżu', key: 'keyAll', type: 'key', label: 'Klawisz: włącz / wyłącz' },
     ],
     render(box, c, rerender) {
       rr = () => { if (box.isConnected) rerender(); };
@@ -3475,10 +3413,10 @@ function parseProtection(data) {
     },
     init(c) {
       cfg = c;
-      if (!c._v15) { c._v15 = true; c.lvlMin = 0; c.lvlMax = 500; config.save(); }
-      if (!c._v106) { c._v106 = true; c.allMode = false; config.save(); }   // dawniej: włączony dodatek = atak na każdego; teraz to osobny przełącznik
+      // „Atakuj każdego w pobliżu" usunięte — sprzątamy stare ustawienia i okienko
+      if ('allMode' in c || 'keyAll' in c) { ['allMode', 'keyAll', 'lvlMin', 'lvlMax', 'allPos', '_v15', '_v106'].forEach((k) => delete c[k]); config.save(); }
+      { const w = document.getElementById('mp-dbw'); if (w) w.remove(); }
       keys.bind({ label: 'Slayer: namierz / anuluj', get: () => cfg.keyAttack || '', fn: () => keyNearest() });
-      keys.bind({ label: 'Slayer: każdy w pobliżu', get: () => cfg.keyAll || '', fn: () => { if (cfg.enabled) setAll(!cfg.allMode); } });
       menus.add('player', (id) => {
         if (!cfg.enabled) return [];
         // namierzony gracz → zamiast „Dobij" jest „Przerwij dobijanie" (cofa polecenie ataku)
@@ -3493,12 +3431,10 @@ function parseProtection(data) {
       if (cfg.target) { cfg.target = null; config.save(); }
       // po każdej walce (z kimkolwiek) zapominamy namierzony cel
       bus.on('battle:end', () => { if (S.lock) unlock(); });
-      MP.napad = { attack: (p) => lockOn(p), lockOn, unlock, setAll };
+      MP.napad = { attack: (p) => lockOn(p), lockOn, unlock };
       ensureLoop();
-      allWin();
     },
-    onChange(k) { if (k === 'allMode') { allWin(); ensureLoop(); } },
-    onToggle(on) { if (!on && S.lock) unlock(); ensureLoop(); allWin(); },
+    onToggle(on) { if (!on && S.lock) unlock(); ensureLoop(); },
   });
 })();
 
@@ -8972,5 +8908,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.4";
+MP.version = "1.0.0";
 })();
