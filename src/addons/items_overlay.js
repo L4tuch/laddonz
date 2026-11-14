@@ -956,13 +956,14 @@ MP.itemDeco = itemDeco;
       const atEl = document.elementFromPoint(mx, my);
       const onMain = !!(atEl && (atEl.tagName === 'CANVAS' || atEl.closest('.map, .map-overlay, .tip-wrapper')) && !atEl.closest('.c-window, [class*="window"]:not(.game-window-positioner)'));
       // dymki z EQ już się pojawiały — EQ tego gracza też dojdzie (pierwszy raz bywa wolniej), więc NIE pokazujemy w tym czasie naszego podglądu
-      if (p && tipNode && dadSeen && onMain) {
-        if (src === 'map') { src = null; hide(); }
+      if (p && tipNode && dadSeen && onMain && src !== 'map') {
         // od razu pobieramy EQ gracza w tle (równolegle z dymkiem), żeby bonusy były gotowe, gdy EQ pojawi się w dymku
         if (!knownItems(p.id)) bgFetch(p.id);
-        return;
+        // EQ w dymku nie zawsze przychodzi (np. niektórzy gracze) — po 1,5 s pokazujemy nasz podgląd
+        const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
+        if (now() - first < 1500) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 1520 - (now() - first)); return; }
       }
-      if (p && tipNode && src !== 'map' && onMain) {
+      if (p && tipNode && src !== 'map' && onMain && !dadSeen) {
         const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
         if (now() - first < 700) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 720 - (now() - first)); return; }
       }
