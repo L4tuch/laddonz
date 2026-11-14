@@ -907,6 +907,31 @@ MP.itemDeco = itemDeco;
       host.appendChild(box);
     }
   }
+  /** Dymek gracza bez EQ: wstawiamy EQ w układzie gry + podsumowanie legend (dane pobrane raz, pamiętane 5 min). */
+  function injectTip(t, p, force) {
+    try {
+      const pid = p.id;
+      const host = t.querySelector('.content') || t;
+      let box = host.querySelector(':scope > .mp-inj');
+      const items = knownItems(pid);
+      const state = items ? 'ok:' + pid + ':' + items.length : 'load:' + pid;
+      if (!force && box && box.dataset.state === state) return;
+      if (box) box.remove();
+      box = el('div', { class: 'mp-inj' });
+      box.dataset.state = state;
+      if (!items) {
+        box.appendChild(el('div', { class: 'mp-injload' }, 'Wczytuję ekwipunek…'));
+        bgFetch(pid).then(() => { if (t.isConnected) injectTip(t, p, true); });
+      } else if (!items.length) {
+        box.appendChild(el('div', { class: 'mp-injload' }, 'Brak założonych przedmiotów'));
+      } else {
+        box.appendChild(gameGrid(items));
+        box.appendChild(el('div', { class: 'mp-tipsum' }, summaryEl(items)));
+      }
+      host.appendChild(box);
+      upgFallback(box);
+    } catch (e) { console.warn('[L4Tools] Pokaż EQ', e); }
+  }
   function watchHover() {
     let mx = 0, my = 0, rmx = 0, rmy = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
     const want = (id, from, anc) => {
@@ -942,37 +967,14 @@ MP.itemDeco = itemDeco;
           if (p) { tipNode = n; break; }
         }
       }
-      // dymek gry sam pokazuje EQ gracza → nie zasłaniamy go, tylko dopisujemy nasze informacje (bonusy na przedmiotach i podsumowanie)
-      if (p && tipNode && tipNode.querySelector('.dad-eq-grid, [class*="item-id-"]')) {
-        dadSeen = true;
-        // dymek sam pokazuje EQ gracza — zostaje, dopisujemy tylko bonusy (bez własnego okienka)
-        if (src === 'map') { src = null; hide(); }
-        augmentTip(tipNode, p);
-        return;
-      }
-      // dymek BEZ EQ — gra/dodatek często dokłada EQ do dymka po chwili. Czekamy krótko, zanim pokażemy nasz podgląd,
-      // żeby nie było przeskoku „nasz podgląd → dymek z EQ”.
-      // kursor nad mapą główną gry? (na podręcznej mapie i w oknach dymek nie dostaje EQ — tam pokazujemy nasz podgląd)
-      const atEl = document.elementFromPoint(mx, my);
-      const onMain = !!(atEl && (atEl.tagName === 'CANVAS' || atEl.closest('.map, .map-overlay, .tip-wrapper')) && !atEl.closest('.c-window, [class*="window"]:not(.game-window-positioner)'));
-      // dymki z EQ już się pojawiały — EQ tego gracza też dojdzie (pierwszy raz bywa wolniej), więc NIE pokazujemy w tym czasie naszego podglądu
-      if (p && tipNode && dadSeen && onMain && src !== 'map') {
-        // od razu pobieramy EQ gracza w tle (równolegle z dymkiem), żeby bonusy były gotowe, gdy EQ pojawi się w dymku
-        if (!knownItems(p.id)) bgFetch(p.id);
-        // EQ w dymku nie zawsze przychodzi (np. niektórzy gracze) — po 1,5 s pokazujemy nasz podgląd
-        const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
-        if (now() - first < 1500) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 1520 - (now() - first)); return; }
-      }
-      if (p && tipNode && src !== 'map' && onMain && !dadSeen) {
-        const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
-        if (now() - first < 700) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 720 - (now() - first)); return; }
-      }
-      // dymek bez EQ (np. obcy / wróg) — pokazujemy nasz podgląd jak dawniej
-      // gra potrafi na ułamek sekundy przerysować/odświeżyć swój dymek — chowamy dopiero, gdy dymka nie ma przez 250 ms
-      if (p) { lastMapSeen = now(); clearTimeout(graceT); want(p.id, 'map', tipNode); }
-      else if (src === 'map') {
-        if (now() - lastMapSeen > 250) stop('map');
-        else { clearTimeout(graceT); graceT = setTimeout(mapCheck, 260); }
+      // Na mapie ZAWSZE zostaje dymek gry (wygląd jak w grze, bez przeskoków):
+      //  • dymek ma już EQ gracza → dopisujemy skróty bonusów i podsumowanie legend,
+      //  • dymek nie ma EQ → wstawiamy do niego EQ w takim samym układzie (z pobranych danych) + podsumowanie.
+      if (src === 'map') { src = null; hide(); }
+      if (p && tipNode) {
+        const native = tipNode.querySelector('.dad-eq-grid:not(.mp-gamegrid), [class*="item-id-"]');
+        if (native) { tipNode.querySelectorAll('.mp-inj').forEach((n) => n.remove()); augmentTip(tipNode, p); }
+        else injectTip(tipNode, p);
       }
     };
 

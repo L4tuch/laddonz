@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.0
+// @version      1.0.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -1507,6 +1507,20 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 :where(#mp-eqtip .mp-ourtip .info_tooltip_loot .value){display:inline;margin-left:3px;color:#f2c94c}
 #mp-eqtip.mp-host .mp-eqmain{display:flex;justify-content:center}
 #mp-eqtip.mp-host .mp-eqload{padding:12px 6px;text-align:center;color:#9a9a9a;font:11.5px Arial,sans-serif}
+.tip-wrapper .mp-inj{display:block!important;visibility:visible!important}
+.tip-wrapper .mp-injload{text-align:center;color:#9a9a9a;font:11px Arial,sans-serif;padding:6px 0 2px}
+.tip-wrapper .mp-gamegrid{position:relative!important;width:102px;height:136px;margin:4px auto 2px}
+.tip-wrapper .mp-gamegrid .dad-eq-slot{position:absolute!important;width:32px;height:32px}
+.tip-wrapper .mp-gamegrid .item{position:relative!important;width:32px;height:32px}
+.tip-wrapper .mp-gamegrid .item img.icon{width:32px;height:32px;display:block}
+.tip-wrapper .mp-gamegrid .highlight{position:absolute!important;inset:0;pointer-events:none}
+.tip-wrapper .mp-gamegrid .highlight.t-leg{box-shadow:inset 0 0 0 2px #e8314b}
+.tip-wrapper .mp-gamegrid .highlight.t-her{box-shadow:inset 0 0 0 2px #2fb7c9}
+.tip-wrapper .mp-gamegrid .highlight.t-uni{box-shadow:inset 0 0 0 2px #e0c341}
+.tip-wrapper .mp-gamegrid .highlight.t-upg{box-shadow:inset 0 0 0 2px #7fb7ff}
+.tip-wrapper .mp-gamegrid .highlight.t-art{box-shadow:inset 0 0 0 2px #e872ff}
+.tip-wrapper .mp-gamegrid .mp-upg{position:absolute!important;left:1px;top:0;font:bold 10px/1 Arial,sans-serif;color:#5dff5d;text-shadow:0 0 2px #000,1px 1px 0 #000;pointer-events:none;z-index:2}
+.tip-wrapper .mp-gamegrid .mp-ibadge{position:absolute!important}
 #mp-eqtip .mp-gamegrid{position:relative!important;width:102px;height:136px;margin:4px auto 2px}
 #mp-eqtip .mp-gamegrid .dad-eq-slot{position:absolute!important;width:32px;height:32px}
 #mp-eqtip .mp-gamegrid .item{position:relative!important;width:32px;height:32px}
@@ -2221,6 +2235,10 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.1', d: '14.11.2026', items: [
+    'Pokaż EQ: na mapie zawsze zostaje dymek gracza z gry. Jeśli gra pokazuje w nim EQ, dodatek dopisuje skróty bonusów i podsumowanie legend. Jeśli nie pokazuje, dodatek sam wstawia do dymka EQ w tym samym układzie.',
+    'Pokaż EQ: podgląd z listy graczy i Podręcznej mapy wygląda jak dymek gry. Pokazuje poziom ulepszenia przedmiotów i nie znika przy graczach bez EQ w dymku.',
+  ] },
   { v: '1.0.0', d: '14.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
@@ -4937,6 +4955,31 @@ MP.itemDeco = itemDeco;
       host.appendChild(box);
     }
   }
+  /** Dymek gracza bez EQ: wstawiamy EQ w układzie gry + podsumowanie legend (dane pobrane raz, pamiętane 5 min). */
+  function injectTip(t, p, force) {
+    try {
+      const pid = p.id;
+      const host = t.querySelector('.content') || t;
+      let box = host.querySelector(':scope > .mp-inj');
+      const items = knownItems(pid);
+      const state = items ? 'ok:' + pid + ':' + items.length : 'load:' + pid;
+      if (!force && box && box.dataset.state === state) return;
+      if (box) box.remove();
+      box = el('div', { class: 'mp-inj' });
+      box.dataset.state = state;
+      if (!items) {
+        box.appendChild(el('div', { class: 'mp-injload' }, 'Wczytuję ekwipunek…'));
+        bgFetch(pid).then(() => { if (t.isConnected) injectTip(t, p, true); });
+      } else if (!items.length) {
+        box.appendChild(el('div', { class: 'mp-injload' }, 'Brak założonych przedmiotów'));
+      } else {
+        box.appendChild(gameGrid(items));
+        box.appendChild(el('div', { class: 'mp-tipsum' }, summaryEl(items)));
+      }
+      host.appendChild(box);
+      upgFallback(box);
+    } catch (e) { console.warn('[L4Tools] Pokaż EQ', e); }
+  }
   function watchHover() {
     let mx = 0, my = 0, rmx = 0, rmy = 0, shift = false, src = null, tipNode = null, lastMapSeen = 0, graceT = null;
     const want = (id, from, anc) => {
@@ -4972,37 +5015,14 @@ MP.itemDeco = itemDeco;
           if (p) { tipNode = n; break; }
         }
       }
-      // dymek gry sam pokazuje EQ gracza → nie zasłaniamy go, tylko dopisujemy nasze informacje (bonusy na przedmiotach i podsumowanie)
-      if (p && tipNode && tipNode.querySelector('.dad-eq-grid, [class*="item-id-"]')) {
-        dadSeen = true;
-        // dymek sam pokazuje EQ gracza — zostaje, dopisujemy tylko bonusy (bez własnego okienka)
-        if (src === 'map') { src = null; hide(); }
-        augmentTip(tipNode, p);
-        return;
-      }
-      // dymek BEZ EQ — gra/dodatek często dokłada EQ do dymka po chwili. Czekamy krótko, zanim pokażemy nasz podgląd,
-      // żeby nie było przeskoku „nasz podgląd → dymek z EQ”.
-      // kursor nad mapą główną gry? (na podręcznej mapie i w oknach dymek nie dostaje EQ — tam pokazujemy nasz podgląd)
-      const atEl = document.elementFromPoint(mx, my);
-      const onMain = !!(atEl && (atEl.tagName === 'CANVAS' || atEl.closest('.map, .map-overlay, .tip-wrapper')) && !atEl.closest('.c-window, [class*="window"]:not(.game-window-positioner)'));
-      // dymki z EQ już się pojawiały — EQ tego gracza też dojdzie (pierwszy raz bywa wolniej), więc NIE pokazujemy w tym czasie naszego podglądu
-      if (p && tipNode && dadSeen && onMain && src !== 'map') {
-        // od razu pobieramy EQ gracza w tle (równolegle z dymkiem), żeby bonusy były gotowe, gdy EQ pojawi się w dymku
-        if (!knownItems(p.id)) bgFetch(p.id);
-        // EQ w dymku nie zawsze przychodzi (np. niektórzy gracze) — po 1,5 s pokazujemy nasz podgląd
-        const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
-        if (now() - first < 1500) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 1520 - (now() - first)); return; }
-      }
-      if (p && tipNode && src !== 'map' && onMain && !dadSeen) {
-        const first = tipFirst.get(tipNode) || (tipFirst.set(tipNode, now()), now());
-        if (now() - first < 700) { clearTimeout(graceT); graceT = setTimeout(mapCheck, 720 - (now() - first)); return; }
-      }
-      // dymek bez EQ (np. obcy / wróg) — pokazujemy nasz podgląd jak dawniej
-      // gra potrafi na ułamek sekundy przerysować/odświeżyć swój dymek — chowamy dopiero, gdy dymka nie ma przez 250 ms
-      if (p) { lastMapSeen = now(); clearTimeout(graceT); want(p.id, 'map', tipNode); }
-      else if (src === 'map') {
-        if (now() - lastMapSeen > 250) stop('map');
-        else { clearTimeout(graceT); graceT = setTimeout(mapCheck, 260); }
+      // Na mapie ZAWSZE zostaje dymek gry (wygląd jak w grze, bez przeskoków):
+      //  • dymek ma już EQ gracza → dopisujemy skróty bonusów i podsumowanie legend,
+      //  • dymek nie ma EQ → wstawiamy do niego EQ w takim samym układzie (z pobranych danych) + podsumowanie.
+      if (src === 'map') { src = null; hide(); }
+      if (p && tipNode) {
+        const native = tipNode.querySelector('.dad-eq-grid:not(.mp-gamegrid), [class*="item-id-"]');
+        if (native) { tipNode.querySelectorAll('.mp-inj').forEach((n) => n.remove()); augmentTip(tipNode, p); }
+        else injectTip(tipNode, p);
       }
     };
 
@@ -8802,5 +8822,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.0";
+MP.version = "1.0.1";
 })();

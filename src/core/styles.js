@@ -431,6 +431,20 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 :where(#mp-eqtip .mp-ourtip .info_tooltip_loot .value){display:inline;margin-left:3px;color:#f2c94c}
 #mp-eqtip.mp-host .mp-eqmain{display:flex;justify-content:center}
 #mp-eqtip.mp-host .mp-eqload{padding:12px 6px;text-align:center;color:#9a9a9a;font:11.5px Arial,sans-serif}
+.tip-wrapper .mp-inj{display:block!important;visibility:visible!important}
+.tip-wrapper .mp-injload{text-align:center;color:#9a9a9a;font:11px Arial,sans-serif;padding:6px 0 2px}
+.tip-wrapper .mp-gamegrid{position:relative!important;width:102px;height:136px;margin:4px auto 2px}
+.tip-wrapper .mp-gamegrid .dad-eq-slot{position:absolute!important;width:32px;height:32px}
+.tip-wrapper .mp-gamegrid .item{position:relative!important;width:32px;height:32px}
+.tip-wrapper .mp-gamegrid .item img.icon{width:32px;height:32px;display:block}
+.tip-wrapper .mp-gamegrid .highlight{position:absolute!important;inset:0;pointer-events:none}
+.tip-wrapper .mp-gamegrid .highlight.t-leg{box-shadow:inset 0 0 0 2px #e8314b}
+.tip-wrapper .mp-gamegrid .highlight.t-her{box-shadow:inset 0 0 0 2px #2fb7c9}
+.tip-wrapper .mp-gamegrid .highlight.t-uni{box-shadow:inset 0 0 0 2px #e0c341}
+.tip-wrapper .mp-gamegrid .highlight.t-upg{box-shadow:inset 0 0 0 2px #7fb7ff}
+.tip-wrapper .mp-gamegrid .highlight.t-art{box-shadow:inset 0 0 0 2px #e872ff}
+.tip-wrapper .mp-gamegrid .mp-upg{position:absolute!important;left:1px;top:0;font:bold 10px/1 Arial,sans-serif;color:#5dff5d;text-shadow:0 0 2px #000,1px 1px 0 #000;pointer-events:none;z-index:2}
+.tip-wrapper .mp-gamegrid .mp-ibadge{position:absolute!important}
 #mp-eqtip .mp-gamegrid{position:relative!important;width:102px;height:136px;margin:4px auto 2px}
 #mp-eqtip .mp-gamegrid .dad-eq-slot{position:absolute!important;width:32px;height:32px}
 #mp-eqtip .mp-gamegrid .item{position:relative!important;width:32px;height:32px}
