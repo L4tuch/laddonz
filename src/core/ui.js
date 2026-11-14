@@ -5,6 +5,10 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.1', d: '14.11.2026', items: [
+    'Slayer: namierzony cel jest zapominany po każdej walce, z kimkolwiek była.',
+    'Slayer: po odświeżeniu gry albo ponownym wejściu cel nie jest już pamiętany.',
+  ] },
   { v: '1.0.0', d: '14.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',

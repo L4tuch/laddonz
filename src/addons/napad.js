@@ -63,7 +63,7 @@
     if (!p) return;
     if (!allowed(p)) { toast(`Slayer: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
-    cfg.target = { id: p.id, nick: p.nick };          // zapamiętany na stałe (także po odświeżeniu gry)
+    cfg.target = null;                                // cel tylko do końca sesji (po odświeżeniu gry — zapomniany)
     config.save();
     mark.set(p.id);
     toast(`Slayer: dobijam ${p.nick}`);
@@ -335,7 +335,7 @@
   function lockedPlayer() {
     if (!S.lock) return null;
     let p = game.otherById(S.lock.id);
-    if (!p) { p = game.otherByNick(S.lock.nick); if (p) { S.lock.id = p.id; cfg.target = { id: p.id, nick: p.nick }; config.save(); } }
+    if (!p) { p = game.otherByNick(S.lock.nick); if (p) S.lock.id = p.id; }
     return p;
   }
   /** Gracz, który dopiero pojawił się na mapie (np. po teleporcie) — od razu bez przerw po wcześniejszej odmowie. */
@@ -412,7 +412,7 @@
     notes: () => [{ type: 'warn', text: '„Atakuj każdego w pobliżu” atakuje bez Twojego kliknięcia — to automat. Postać nigdy sama nie podchodzi do celu.' }],
     settings: [
       { group: 'Namierzanie klawiszem', key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Pierwsze naciśnięcie namierza najbliższego gracza, drugie anuluje atak. Żeby zmienić cel na bliższy: anuluj i naciśnij jeszcze raz.' },
-      { group: 'Namierzanie klawiszem', key: 'remember', type: 'bool', label: 'Zapamiętuj cel po jego zniknięciu', hint: 'Cel zostaje (z podświetleniem) także po zniknięciu z mapy, zmianie mapy i odświeżeniu gry — aż go anulujesz. Wyłączone: namierzenie znika razem z celem.' },
+      { group: 'Namierzanie klawiszem', key: 'remember', type: 'bool', label: 'Zapamiętuj cel po jego zniknięciu', hint: 'Cel zostaje (z podświetleniem) także po zniknięciu z mapy i zmianie mapy. Zawsze znika po walce i po odświeżeniu gry. Wyłączone: namierzenie znika razem z celem.' },
       { group: 'Atakuj każdego w pobliżu', key: 'allMode', type: 'bool', label: 'Włączone', hint: 'Na ekranie pojawi się małe okienko z zakresem poziomów „od – do” — atakowany jest każdy w zasięgu z tego zakresu.' },
       { group: 'Atakuj każdego w pobliżu', key: 'keyAll', type: 'key', label: 'Klawisz: włącz / wyłącz' },
     ],
@@ -440,8 +440,10 @@
         return [{ label: 'Dobij', fn: () => lockOn(game.otherById(id) || p) }];
       });
       bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; if (!cfg.remember) unlock(); });
-      // przywróć zapamiętany cel
-      if (cfg.remember && cfg.target && cfg.target.nick) S.lock = { id: Number(cfg.target.id), nick: cfg.target.nick, t: now() };
+      // po odświeżeniu / ponownym wejściu do gry cel jest zapomniany
+      if (cfg.target) { cfg.target = null; config.save(); }
+      // po każdej walce (z kimkolwiek) zapominamy namierzony cel
+      bus.on('battle:end', () => { if (S.lock) unlock(); });
       MP.napad = { attack: (p) => lockOn(p), lockOn, unlock, setAll };
       ensureLoop();
       allWin();
