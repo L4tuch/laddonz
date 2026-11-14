@@ -1451,12 +1451,13 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 .mp-ibadge.queued .mp-ico{display:block}
 
 /* Pokaż EQ */
-#mp-eqtip{position:fixed;z-index:2147483150;border-radius:14px;padding:10px;width:290px;pointer-events:none}
+#mp-eqtip{position:fixed;z-index:2147483150;pointer-events:none}
+#mp-eqtip.mp-glass{border-radius:14px;padding:10px;width:290px}
 /* styl jak dymek gry: ciemne tło, szara ramka, wyśrodkowany nagłówek */
 #mp-eqtip.gamey{background:rgba(12,12,12,.93)!important;-webkit-backdrop-filter:none;backdrop-filter:none;border:2px solid #5d5d5d!important;border-radius:3px;box-shadow:0 0 0 1px #000,0 4px 14px rgba(0,0,0,.6)!important;padding:6px 8px;font:12px/1.35 Arial,sans-serif;color:#e8e8e8;width:auto;min-width:200px}
 #mp-eqtip.gamey .mp-eqhead{display:none}
-.mp-eq-on .tip-wrapper:not(.mp-glass){clip-path:inset(0 0 100% 0)!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
-.mp-eq-on .tip-wrapper:not(.mp-glass) *{visibility:hidden!important}
+.mp-eq-on .tip-wrapper:not(.mp-glass):not(.mp-ourtip){clip-path:inset(0 0 100% 0)!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+.mp-eq-on .tip-wrapper:not(.mp-glass):not(.mp-ourtip) *:not(.mp-ourtip):not(.mp-ourtip *){visibility:hidden!important}
 .mp-eq-on .mp-foreign-tip{clip-path:inset(50%)!important}
 .showeq-window .mp-tipsum{text-align:center;border-top:1px solid #3c3c3c;margin:6px 8px 4px;padding-top:4px;font:12px/1.35 Arial,sans-serif;color:#e8e8e8}
 .showeq-window .mp-tipsum .mp-eqbons{margin-top:3px;display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
@@ -1469,7 +1470,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-eqtip .mp-clone{text-align:center;position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:none!important;border:0!important;box-shadow:none!important;background:transparent!important;margin:0 0 4px!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;clip-path:none!important;max-width:none!important;width:auto!important;pointer-events:none!important}
 #mp-eqtip.gamey{max-width:360px;height:auto!important;max-height:92vh;overflow:hidden}
 /* izolacja od stylów gry (gra ma własne klasy o podobnych nazwach) */
-#mp-eqtip div{position:static;float:none;height:auto;min-height:0;background-image:none;transform:none}
+#mp-eqtip.mp-glass div{position:static;float:none;height:auto;min-height:0;background-image:none;transform:none}
 #mp-eqtip .mp-eqlayout{position:relative!important}
 #mp-eqtip .mp-eqlayout .mp-eqcell{position:absolute!important;height:34px!important}
 #mp-eqtip .mp-ibadge{position:absolute!important;height:auto!important}
@@ -1495,6 +1496,17 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 #mp-eqtip .mp-eqcell.mp-eqslot{background:rgba(255,255,255,.025)!important;border:1px dashed rgba(255,255,255,.07)!important;box-shadow:none!important}
 #mp-eqtip.gamey .mp-eqsum{text-align:center;border-top:1px solid #3c3c3c;padding-top:3px}
 #mp-eqtip.gamey.compact{min-width:0;padding:4px 6px;font-size:11.5px}
+#mp-eqtip.mp-host .mp-ourtip{position:relative!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;display:block!important;visibility:visible!important;opacity:1!important;clip-path:none!important;transform:none!important;margin:0!important}
+#mp-eqtip.mp-host .mp-eq-rank{color:#ff9a2e;text-align:center}
+/* zapasowy wygląd dymka gry (zerowa ważność — gdy gra ma własne style dymka, to one wygrywają) */
+:where(#mp-eqtip .mp-ourtip){background:rgba(14,14,14,.93);border:3px solid #6a6a6a;box-shadow:inset 0 0 0 1px #2b2b2b,0 0 0 1px #000,0 4px 14px rgba(0,0,0,.6);border-radius:3px;padding:4px 7px 5px;font:12px/1.35 Arial,sans-serif;color:#e2e2e2;min-width:150px}
+:where(#mp-eqtip .mp-ourtip .nick){border:1px solid #555;background:#1c1c1c;padding:1px 10px;text-align:center;font-weight:700;color:#e8e8e8}
+:where(#mp-eqtip .mp-ourtip .clan-in-tip){color:#d8b45a;text-align:center;margin-top:2px}
+:where(#mp-eqtip .mp-ourtip .info_tooltip_cont .line){border-top:1px solid #444;margin:3px 0}
+:where(#mp-eqtip .mp-ourtip .info_tooltip_loot){text-align:right;font-size:11px;color:#e2e2e2}
+:where(#mp-eqtip .mp-ourtip .info_tooltip_loot .value){display:inline;margin-left:3px;color:#f2c94c}
+#mp-eqtip.mp-host .mp-eqmain{display:flex;justify-content:center}
+#mp-eqtip.mp-host .mp-eqload{padding:12px 6px;text-align:center;color:#9a9a9a;font:11.5px Arial,sans-serif}
 #mp-eqtip .mp-gamegrid{position:relative!important;width:102px;height:136px;margin:4px auto 2px}
 #mp-eqtip .mp-gamegrid .dad-eq-slot{position:absolute!important;width:32px;height:32px}
 #mp-eqtip .mp-gamegrid .item{position:relative!important;width:32px;height:32px}
@@ -4699,12 +4711,38 @@ MP.itemDeco = itemDeco;
   }
 
   let eqBox = null, sumBox = null;
+  /** Nagłówek w budowie dymka gracza z gry (te same klasy — wygląda identycznie). */
+  function gameHeader(id) {
+    const p = game.otherById(id);
+    let lines = [];
+    if (anchor && anchor.isConnected) lines = tipLines(anchor).filter((l) => !/^(CBK|OR|KL|PS|DA|FO|KO|PO|KU|OŚ)\b.*×/.test(l));
+    const nickRe = p ? new RegExp('^' + p.nick.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(', 'i') : null;
+    const ni = nickRe ? lines.findIndex((l) => nickRe.test(l)) : -1;
+    const before = ni > 0 ? lines.slice(0, ni) : [];
+    const after = ni >= 0 ? lines.slice(ni + 1) : [];
+    const lootLine = after.find((l) => /^loot/i.test(l));
+    const clan = after.filter((l) => !/^loot/i.test(l) && !/brak legend|wczytuj/i.test(l))[0] || (p && p.clanName) || '';
+    const out = [];
+    before.forEach((l) => out.push(el('div', { class: 'mp-eq-rank' }, l)));
+    out.push(el('div', { class: 'info-wrapper' }, el('div', { class: 'nick' }, ni >= 0 ? lines[ni] : (p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id))));
+    if (clan) out.push(el('div', { class: 'clan-in-tip' }, clan));
+    if (lootLine) out.push(el('div', { class: 'info_tooltip_cont' }, el('div', { class: 'line' }), el('div', { class: 'info_tooltip_loot' }, 'Loot:', el('div', { class: 'value' }, lootLine.replace(/^loot:?\s*/i, '')))));
+    return out;
+  }
   function build(id) {
     tip.innerHTML = '';
+    if (cfg.compact) {
+      // wygląd identyczny jak dymek gracza w grze: ta sama budowa i te same klasy, plus nasze dopiski
+      tip.className = 'mp-host';
+      eqBox = el('div', { class: 'mp-eqmain' }, el('div', { class: 'mp-dim mp-eqload' }, 'Wczytuję ekwipunek…'));
+      sumBox = el('div', { class: 'mp-tipsum' });
+      tip.appendChild(el('div', { class: 'tip-wrapper normal-tip mp-ourtip', 'data-type': 't_other' }, el('div', { class: 'content' }, ...gameHeader(id), eqBox, sumBox)));
+      return;
+    }
+    tip.className = 'mp-glass gamey';
     eqBox = el('div', { class: 'mp-eqmain' }, el('div', { class: 'mp-dim mp-eqload' }, 'Wczytuję ekwipunek…'));
     sumBox = el('div');
-    tip.classList.toggle('compact', !!cfg.compact);
-    tip.append(headerEl(id), el('div', { class: 'mp-eqbody' }, cfg.compact ? null : outfitEl(id), eqBox), sumBox);
+    tip.append(headerEl(id), el('div', { class: 'mp-eqbody' }, outfitEl(id), eqBox), sumBox);
   }
   async function fill(id) {
     const items = await fetchEq(id);

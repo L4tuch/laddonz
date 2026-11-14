@@ -682,12 +682,38 @@ MP.itemDeco = itemDeco;
   }
 
   let eqBox = null, sumBox = null;
+  /** Nagłówek w budowie dymka gracza z gry (te same klasy — wygląda identycznie). */
+  function gameHeader(id) {
+    const p = game.otherById(id);
+    let lines = [];
+    if (anchor && anchor.isConnected) lines = tipLines(anchor).filter((l) => !/^(CBK|OR|KL|PS|DA|FO|KO|PO|KU|OŚ)\b.*×/.test(l));
+    const nickRe = p ? new RegExp('^' + p.nick.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\(', 'i') : null;
+    const ni = nickRe ? lines.findIndex((l) => nickRe.test(l)) : -1;
+    const before = ni > 0 ? lines.slice(0, ni) : [];
+    const after = ni >= 0 ? lines.slice(ni + 1) : [];
+    const lootLine = after.find((l) => /^loot/i.test(l));
+    const clan = after.filter((l) => !/^loot/i.test(l) && !/brak legend|wczytuj/i.test(l))[0] || (p && p.clanName) || '';
+    const out = [];
+    before.forEach((l) => out.push(el('div', { class: 'mp-eq-rank' }, l)));
+    out.push(el('div', { class: 'info-wrapper' }, el('div', { class: 'nick' }, ni >= 0 ? lines[ni] : (p ? `${p.nick} (${p.lvl}${p.prof})` : '#' + id))));
+    if (clan) out.push(el('div', { class: 'clan-in-tip' }, clan));
+    if (lootLine) out.push(el('div', { class: 'info_tooltip_cont' }, el('div', { class: 'line' }), el('div', { class: 'info_tooltip_loot' }, 'Loot:', el('div', { class: 'value' }, lootLine.replace(/^loot:?\s*/i, '')))));
+    return out;
+  }
   function build(id) {
     tip.innerHTML = '';
+    if (cfg.compact) {
+      // wygląd identyczny jak dymek gracza w grze: ta sama budowa i te same klasy, plus nasze dopiski
+      tip.className = 'mp-host';
+      eqBox = el('div', { class: 'mp-eqmain' }, el('div', { class: 'mp-dim mp-eqload' }, 'Wczytuję ekwipunek…'));
+      sumBox = el('div', { class: 'mp-tipsum' });
+      tip.appendChild(el('div', { class: 'tip-wrapper normal-tip mp-ourtip', 'data-type': 't_other' }, el('div', { class: 'content' }, ...gameHeader(id), eqBox, sumBox)));
+      return;
+    }
+    tip.className = 'mp-glass gamey';
     eqBox = el('div', { class: 'mp-eqmain' }, el('div', { class: 'mp-dim mp-eqload' }, 'Wczytuję ekwipunek…'));
     sumBox = el('div');
-    tip.classList.toggle('compact', !!cfg.compact);
-    tip.append(headerEl(id), el('div', { class: 'mp-eqbody' }, cfg.compact ? null : outfitEl(id), eqBox), sumBox);
+    tip.append(headerEl(id), el('div', { class: 'mp-eqbody' }, outfitEl(id), eqBox), sumBox);
   }
   async function fill(id) {
     const items = await fetchEq(id);
