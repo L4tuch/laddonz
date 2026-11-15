@@ -8,7 +8,7 @@ const CHANGELOG = [
   { v: '1.0.3', d: '15.11.2026', items: [
     'Ustawienia wspólne dla wszystkich postaci obejmują teraz tylko włączone dodatki, klawisze i opcje. Dane postaci zostają przy każdej postaci osobno: cel Slayera, przedmioty i ochrona w Ulepszarce (oraz jej dzienny limit), kolejka Szybkiej Rączki, filtry Graczy na mapie+ i podpisy konkretnych przedmiotów w Podpisowniku.',
     'Kto złapie: przy kolosach nie pokazuje szansy (%) — z kolosa każdy dostaje własny łup. Listę kolosów można uzupełnić w ustawieniach dodatku.',
-    'Lepsza Grupa: nowe ustawienie — automatyczne przyjmowanie zaproszeń do grupy od znajomych, klanowiczów i sojuszników (każdą grupę można włączyć osobno).',
+    'Lepsza Grupa: nowe ustawienie — automatyczne przyjmowanie zaproszeń do grupy od znajomych i klanowiczów (niezależnie od tego, gdzie są) oraz od sojuszników z tej samej mapy. Każdą grupę można włączyć osobno.',
   ] },
   { v: '1.0.2', d: '15.11.2026', items: [
     'Ulepszarka: usunięto panel „Ostatnie ulepszanie” (informacje i tak są na bieżąco podczas ulepszania).',

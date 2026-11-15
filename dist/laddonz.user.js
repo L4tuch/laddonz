@@ -2282,7 +2282,7 @@ const CHANGELOG = [
   { v: '1.0.3', d: '15.11.2026', items: [
     'Ustawienia wspólne dla wszystkich postaci obejmują teraz tylko włączone dodatki, klawisze i opcje. Dane postaci zostają przy każdej postaci osobno: cel Slayera, przedmioty i ochrona w Ulepszarce (oraz jej dzienny limit), kolejka Szybkiej Rączki, filtry Graczy na mapie+ i podpisy konkretnych przedmiotów w Podpisowniku.',
     'Kto złapie: przy kolosach nie pokazuje szansy (%) — z kolosa każdy dostaje własny łup. Listę kolosów można uzupełnić w ustawieniach dodatku.',
-    'Lepsza Grupa: nowe ustawienie — automatyczne przyjmowanie zaproszeń do grupy od znajomych, klanowiczów i sojuszników (każdą grupę można włączyć osobno).',
+    'Lepsza Grupa: nowe ustawienie — automatyczne przyjmowanie zaproszeń do grupy od znajomych i klanowiczów (niezależnie od tego, gdzie są) oraz od sojuszników z tej samej mapy. Każdą grupę można włączyć osobno.',
   ] },
   { v: '1.0.2', d: '15.11.2026', items: [
     'Ulepszarka: usunięto panel „Ostatnie ulepszanie” (informacje i tak są na bieżąco podczas ulepszania).',
@@ -4072,7 +4072,7 @@ function parseProtection(data) {
   }
 
   /*
-   * Automatyczne przyjmowanie zaproszeń do grupy od znajomych / klanu / sojuszników (niezależnie od opcji gry).
+   * Automatyczne przyjmowanie zaproszeń do grupy od znajomych / klanu (niezależnie od opcji gry).
    * 1) zanim okno powstanie: przechwytujemy funkcję gry, która je tworzy, i od razu wywołujemy „Tak",
    * 2) zapas: gdy okno jednak się pojawi — chowamy je i klikamy „Tak".
    */
@@ -4088,14 +4088,45 @@ function parseProtection(data) {
     for (const n of cand) { const p = game.otherByNick(n); if (p) return { nick: n, p }; }
     return { nick: cand[1], p: null };
   }
+  /*
+   * Klanowicze spoza mapy: dodatek zapamiętuje (osobno dla postaci) każdego klanowicza, którego spotkał na jakiejkolwiek
+   * mapie, i czyta listę członków klanu z gry (gdy gra ją ma). Gdy zobaczy tę osobę poza klanem — zapomina ją.
+   */
+  const relKey = () => `lg:rel:${config.worldName()}:${config.charName || '-'}`;
+  let relMem = null;
+  const relGet = () => relMem || (relMem = store.get(relKey(), {}) || {});
+  const relSave = debounce(() => store.set(relKey(), relGet()), 1500);
+  function relLearn() {
+    const m = relGet(); let ch = false;
+    for (const p of game.others()) {
+      const k = String(p.nick).toLowerCase();
+      const v = p.isClan ? 'clan' : null;
+      if (v && m[k] !== v) { m[k] = v; ch = true; } else if (!v && m[k]) { delete m[k]; ch = true; }
+    }
+    // lista członków klanu z danych gry (jeśli gra ją wczytała)
+    try {
+      const E0 = W.Engine || {};
+      const walk = (o, d, inMem) => {
+        if (!o || typeof o !== 'object' || d > 5 || o instanceof Node) return;
+        if (inMem && typeof (o.nick || o.name) === 'string' && (o.id != null || o.lvl != null || o.prof)) { const k = String(o.nick || o.name).toLowerCase(); if (!m[k]) { m[k] = 'clan'; ch = true; } }
+        for (const [kk, v] of Object.entries(o)) if (v && typeof v === 'object') walk(v, d + 1, inMem || /member|cz[łl]on/i.test(kk));
+      };
+      for (const k of Object.keys(E0)) if (/clan|klan/i.test(k)) walk(E0[k], 0, false);
+    } catch {}
+    const h = game.hero(); if (h) delete m[String(h.nick).toLowerCase()];
+    if (ch) relSave();
+  }
   function acceptFrom(text) {
     if (!INV_RE.test(text)) return null;
     const who = inviterOf(text); if (!who) return null;
     const p = who.p;
-    const fr = friendNicks().has(who.nick.toLowerCase()) || (p && isFriendP(p));
+    const k = who.nick.toLowerCase();
+    const mem = relGet()[k];
+    const fr = friendNicks().has(k) || (p && isFriendP(p));
+    const clan = p ? p.isClan : mem === 'clan';
     if (cfg.acceptFriends && fr) return who.nick + ' (znajomy)';
-    if (cfg.acceptClan && p && p.isClan) return who.nick + ' (klan)';
-    if (cfg.acceptAllies && p && p.isAlly) return who.nick + ' (sojusz)';
+    if (cfg.acceptClan && clan) return who.nick + ' (klan)';
+    if (cfg.acceptAllies && p && p.isAlly) return who.nick + ' (sojusz)';   // sojusznik — tylko z tej samej mapy
     return null;
   }
   const accLog = (who, how) => net.pushLog({ kind: 'info', src: 'Lepsza Grupa', msg: `Przyjęto zaproszenie do grupy od ${who} (${how})` });
@@ -4195,10 +4226,10 @@ function parseProtection(data) {
       { group: 'Kogo zapraszać', key: 'never', type: 'list', label: 'Nigdy nie zapraszaj (nicki)' },
       { group: 'Kogo zapraszać', key: 'range', type: 'number', label: 'Zasięg (kratki, 0 = cała mapa)', min: 0, max: 100 },
       { group: 'Kogo zapraszać', key: 'maxParty', type: 'number', label: 'Maksymalny rozmiar grupy', min: 2, max: 10 },
-      { group: 'Przyjmowanie zaproszeń', key: 'acceptAuto', type: 'bool', label: 'Automatycznie przyjmuj zaproszenia do grupy', hint: 'Zaproszenie od wybranych niżej osób jest przyjmowane od razu, bez okienka — niezależnie od ustawień gry.' },
+      { group: 'Przyjmowanie zaproszeń', key: 'acceptAuto', type: 'bool', label: 'Automatycznie przyjmuj zaproszenia do grupy', hint: 'Zaproszenie od wybranych niżej osób jest przyjmowane od razu, bez okienka — niezależnie od ustawień gry. Znajomi i klanowicze — niezależnie od tego, gdzie są (znajomych zna z listy znajomych, klanowiczów z listy klanu w grze i z tego, że spotkał ich na jakiejś mapie). Sojusznicy — tylko gdy są na tej samej mapie.' },
       { group: 'Przyjmowanie zaproszeń', key: 'acceptFriends', type: 'bool', label: 'Od znajomych' },
       { group: 'Przyjmowanie zaproszeń', key: 'acceptClan', type: 'bool', label: 'Od klanowiczów' },
-      { group: 'Przyjmowanie zaproszeń', key: 'acceptAllies', type: 'bool', label: 'Od sojuszników' },
+      { group: 'Przyjmowanie zaproszeń', key: 'acceptAllies', type: 'bool', label: 'Od sojuszników (tylko z tej samej mapy)' },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-btns' },
@@ -4226,6 +4257,7 @@ function parseProtection(data) {
       bus.on('map:change', () => { invited = {}; });
       accHooks();
       setInterval(accHooks, 3000);   // gra może podmienić funkcje po wczytaniu
+      setInterval(() => { if (game.ready()) relLearn(); }, 5000);
       new MutationObserver(accScan).observe(document.body, { childList: true, subtree: true });
     },
   });
