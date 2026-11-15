@@ -7,13 +7,15 @@
  * Kogo NIE atakować (klan, znajomi…) — decyduje Bratan; Slayer takich graczy po prostu pomija.
  */
 (() => {
-  const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
-  const RETRY_MS = 500;       // odstęp między atakami w serii
-  const REFUSE_MS = 2500;     // po odmowie („nie zgadza się na walkę") — krótka przerwa i próbujemy znowu
-  const SOFT_MS = 300;        // inne „nie możesz" (np. postać jeszcze w ruchu) — ponawiamy szybko
-  const BURST = 3;            // seria: tyle poleceń ataku (co RETRY_MS)…
-  const BURST_PAUSE = 2000;   // …potem przerwa i kolejna seria
-  const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, burst: {}, lock: null, timer: null, said: {} };
+  // zasięg ataku: 1 kratka w pionie / poziomie, po skosie — sąsiednie pole na ukos
+  const inRange = (h, p) => { const dx = Math.abs(h.x - p.x), dy = Math.abs(h.y - p.y); return dx <= 1 && dy <= 1; };
+  const RETRY_MIN_MS = 80, RETRY_MAX_MS = 500;       // losowy odstęp między atakami w serii
+  const REFUSE_MIN_MS = 1000, REFUSE_MAX_MS = 2500;  // losowa przerwa po odmowie walki
+  const SOFT_MIN_MS = 300, SOFT_MAX_MS = 800;        // losowe ponowienie po „nie możesz”
+  const BURST = 3;            // seria: tyle poleceń ataku
+  const BURST_PAUSE_MIN_MS = 1800, BURST_PAUSE_MAX_MS = 2500; // losowa przerwa po serii
+  const randomMs = (min, max) => min + Math.random() * (max - min);
+  const S = { last: 0, nextAttackAt: 0, protectedUntil: {}, tried: {}, refused: {}, burst: {}, lock: null, timer: null, said: {} };
   /** Komunikat o danym graczu najwyżej raz na `ms` (żeby nie zasypać ekranu przy ponawianiu). */
   const say = (key, msg, ms = 15000, type = 'warn') => { const t = now(); if (S.said[key] > t) return; S.said[key] = t + ms; toast(msg, type); };
   /** Tekst odpowiedzi serwera (ostrzeżenie/komunikat), jeśli jest. */
@@ -41,13 +43,14 @@
   async function attack(p) {
     const t = now();
     if (!p || game.inBattle()) return false;
-    if (t - S.last < RETRY_MS) return false;
+    if (t < S.nextAttackAt) return false;
     if (S.protectedUntil[p.id] > t) return false;           // nie marnujemy ataku na ochronę
     const b = S.burst[p.id] || (S.burst[p.id] = { n: 0, until: 0 });
     if (b.until > t) return false;                         // przerwa po serii 3 ataków
     b.n++;
-    if (b.n >= BURST) { b.n = 0; b.until = t + BURST_PAUSE; }
+    if (b.n >= BURST) { b.n = 0; b.until = t + randomMs(BURST_PAUSE_MIN_MS, BURST_PAUSE_MAX_MS); }
     S.last = t;
+    S.nextAttackAt = t + randomMs(RETRY_MIN_MS, RETRY_MAX_MS);
     S.tried[p.id] = t;
     const r = await net.send('attackPlayer', { id: p.id }, {
       src: 'Slayer', urgent: true, fast: true,      // atak bez czekania w kolejce za innymi dodatkami
@@ -55,8 +58,8 @@
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
         // komunikat pokazuje już sama gra — Slayer nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
-        if (/nie zgadza|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + REFUSE_MS; return; }
-        if (/nie mo[żz]esz|nie mo[żz]na/i.test(txt)) { S.refused[p.id] = now() + SOFT_MS; return; }
+        if (/nie zgadza|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + randomMs(REFUSE_MIN_MS, REFUSE_MAX_MS); return; }
+        if (/nie mo[żz]esz|nie mo[żz]na/i.test(txt)) { S.refused[p.id] = now() + randomMs(SOFT_MIN_MS, SOFT_MAX_MS); return; }
         const sec = parseProtection(data);
         if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
       },
@@ -70,7 +73,7 @@
     if (!allowed(p)) { toast(`Slayer: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
     // pierwszy atak od razu — bez przerw po wcześniejszych próbach
-    S.last = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
+    S.last = 0; S.nextAttackAt = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
     cfg.target = null;                                // cel tylko do końca sesji (po odświeżeniu gry — zapomniany)
     config.save();
     mark.set(p.id);
@@ -258,7 +261,7 @@
   function arrowTick() {
     const p = cfg && cfg.enabled && S.lock && lockedPlayer();
     const h = p && game.hero();
-    if (!p || !h || game.inBattle() || dist(h, p) <= RANGE) { arTarget = null; if (NA.parent) naDel(); return; }
+    if (!p || !h || game.inBattle() || inRange(h, p)) { arTarget = null; if (NA.parent) naDel(); return; }
     if (!NA.failed && naAdd(p)) { arTarget = null; return; }   // strzałka gry
 
     const raw = p.raw || {};
@@ -303,8 +306,8 @@
   function ensureLoop() {
     const need = !!(cfg && cfg.enabled) && !!S.lock;
     ensureArrow();
-    if (need && !S.timer) S.timer = setInterval(tick, 150);
-    if (!need && S.timer) { clearInterval(S.timer); S.timer = null; }
+    if (need && !S.timer) S.timer = setTimeout(() => { S.timer = null; tick(); ensureLoop(); }, randomMs(150, 630));
+    if (!need && S.timer) { clearTimeout(S.timer); S.timer = null; }
   }
   /** Namierzony gracz na mapie: po id, a gdy wrócił z nowym id — po nicku. */
   function lockedPlayer() {
@@ -332,8 +335,8 @@
       if (!p && !cfg.remember) { unlock(`Slayer: ${S.lock.nick} zniknął z mapy`); return; }
       if (!!p !== S.wasOn) { S.wasOn = !!p; rr(); }   // „na mapie" / „poza mapą" w panelu
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
-      if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Slayer: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
-      if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
+      if (p && inRange(h, p) && !allowed(p)) { say('br' + p.id, `Slayer: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
+      if (p && inRange(h, p) && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
     }
   }
 

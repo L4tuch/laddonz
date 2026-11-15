@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.0
+// @version      1.0.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2239,6 +2239,9 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.1', d: '15.11.2026', items: [
+    'Lekkie zmiany dobijarki.',
+  ] },
   { v: '1.0.0', d: '15.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
@@ -3031,13 +3034,15 @@ function parseProtection(data) {
  * Kogo NIE atakować (klan, znajomi…) — decyduje Bratan; Slayer takich graczy po prostu pomija.
  */
 (() => {
-  const RANGE = 2;            // zasięg ataku w kratkach (liczy się większa z odległości w poziomie/pionie)
-  const RETRY_MS = 500;       // odstęp między atakami w serii
-  const REFUSE_MS = 2500;     // po odmowie („nie zgadza się na walkę") — krótka przerwa i próbujemy znowu
-  const SOFT_MS = 300;        // inne „nie możesz" (np. postać jeszcze w ruchu) — ponawiamy szybko
-  const BURST = 3;            // seria: tyle poleceń ataku (co RETRY_MS)…
-  const BURST_PAUSE = 2000;   // …potem przerwa i kolejna seria
-  const S = { last: 0, protectedUntil: {}, tried: {}, refused: {}, burst: {}, lock: null, timer: null, said: {} };
+  // zasięg ataku: 1 kratka w pionie / poziomie, po skosie — sąsiednie pole na ukos
+  const inRange = (h, p) => { const dx = Math.abs(h.x - p.x), dy = Math.abs(h.y - p.y); return dx <= 1 && dy <= 1; };
+  const RETRY_MIN_MS = 80, RETRY_MAX_MS = 500;       // losowy odstęp między atakami w serii
+  const REFUSE_MIN_MS = 1000, REFUSE_MAX_MS = 2500;  // losowa przerwa po odmowie walki
+  const SOFT_MIN_MS = 300, SOFT_MAX_MS = 800;        // losowe ponowienie po „nie możesz”
+  const BURST = 3;            // seria: tyle poleceń ataku
+  const BURST_PAUSE_MIN_MS = 1800, BURST_PAUSE_MAX_MS = 2500; // losowa przerwa po serii
+  const randomMs = (min, max) => min + Math.random() * (max - min);
+  const S = { last: 0, nextAttackAt: 0, protectedUntil: {}, tried: {}, refused: {}, burst: {}, lock: null, timer: null, said: {} };
   /** Komunikat o danym graczu najwyżej raz na `ms` (żeby nie zasypać ekranu przy ponawianiu). */
   const say = (key, msg, ms = 15000, type = 'warn') => { const t = now(); if (S.said[key] > t) return; S.said[key] = t + ms; toast(msg, type); };
   /** Tekst odpowiedzi serwera (ostrzeżenie/komunikat), jeśli jest. */
@@ -3065,13 +3070,14 @@ function parseProtection(data) {
   async function attack(p) {
     const t = now();
     if (!p || game.inBattle()) return false;
-    if (t - S.last < RETRY_MS) return false;
+    if (t < S.nextAttackAt) return false;
     if (S.protectedUntil[p.id] > t) return false;           // nie marnujemy ataku na ochronę
     const b = S.burst[p.id] || (S.burst[p.id] = { n: 0, until: 0 });
     if (b.until > t) return false;                         // przerwa po serii 3 ataków
     b.n++;
-    if (b.n >= BURST) { b.n = 0; b.until = t + BURST_PAUSE; }
+    if (b.n >= BURST) { b.n = 0; b.until = t + randomMs(BURST_PAUSE_MIN_MS, BURST_PAUSE_MAX_MS); }
     S.last = t;
+    S.nextAttackAt = t + randomMs(RETRY_MIN_MS, RETRY_MAX_MS);
     S.tried[p.id] = t;
     const r = await net.send('attackPlayer', { id: p.id }, {
       src: 'Slayer', urgent: true, fast: true,      // atak bez czekania w kolejce za innymi dodatkami
@@ -3079,8 +3085,8 @@ function parseProtection(data) {
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
         // komunikat pokazuje już sama gra — Slayer nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
-        if (/nie zgadza|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + REFUSE_MS; return; }
-        if (/nie mo[żz]esz|nie mo[żz]na/i.test(txt)) { S.refused[p.id] = now() + SOFT_MS; return; }
+        if (/nie zgadza|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + randomMs(REFUSE_MIN_MS, REFUSE_MAX_MS); return; }
+        if (/nie mo[żz]esz|nie mo[żz]na/i.test(txt)) { S.refused[p.id] = now() + randomMs(SOFT_MIN_MS, SOFT_MAX_MS); return; }
         const sec = parseProtection(data);
         if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
       },
@@ -3094,7 +3100,7 @@ function parseProtection(data) {
     if (!allowed(p)) { toast(`Slayer: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
     // pierwszy atak od razu — bez przerw po wcześniejszych próbach
-    S.last = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
+    S.last = 0; S.nextAttackAt = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
     cfg.target = null;                                // cel tylko do końca sesji (po odświeżeniu gry — zapomniany)
     config.save();
     mark.set(p.id);
@@ -3282,7 +3288,7 @@ function parseProtection(data) {
   function arrowTick() {
     const p = cfg && cfg.enabled && S.lock && lockedPlayer();
     const h = p && game.hero();
-    if (!p || !h || game.inBattle() || dist(h, p) <= RANGE) { arTarget = null; if (NA.parent) naDel(); return; }
+    if (!p || !h || game.inBattle() || inRange(h, p)) { arTarget = null; if (NA.parent) naDel(); return; }
     if (!NA.failed && naAdd(p)) { arTarget = null; return; }   // strzałka gry
 
     const raw = p.raw || {};
@@ -3327,8 +3333,8 @@ function parseProtection(data) {
   function ensureLoop() {
     const need = !!(cfg && cfg.enabled) && !!S.lock;
     ensureArrow();
-    if (need && !S.timer) S.timer = setInterval(tick, 150);
-    if (!need && S.timer) { clearInterval(S.timer); S.timer = null; }
+    if (need && !S.timer) S.timer = setTimeout(() => { S.timer = null; tick(); ensureLoop(); }, randomMs(150, 630));
+    if (!need && S.timer) { clearTimeout(S.timer); S.timer = null; }
   }
   /** Namierzony gracz na mapie: po id, a gdy wrócił z nowym id — po nicku. */
   function lockedPlayer() {
@@ -3356,8 +3362,8 @@ function parseProtection(data) {
       if (!p && !cfg.remember) { unlock(`Slayer: ${S.lock.nick} zniknął z mapy`); return; }
       if (!!p !== S.wasOn) { S.wasOn = !!p; rr(); }   // „na mapie" / „poza mapą" w panelu
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
-      if (p && dist(h, p) <= RANGE && !allowed(p)) { say('br' + p.id, `Slayer: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
-      if (p && dist(h, p) <= RANGE && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
+      if (p && inRange(h, p) && !allowed(p)) { say('br' + p.id, `Slayer: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
+      if (p && inRange(h, p) && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
     }
   }
 
@@ -8908,5 +8914,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.0";
+MP.version = "1.0.1";
 })();
