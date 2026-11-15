@@ -41,6 +41,15 @@ const config = {
   },
 
   charName: null,
+  /*
+   * Dane postaci (cele, przedmioty, kolejki, filtry…) — zawsze osobno dla każdej postaci, także gdy ustawienia są
+   * „wspólne dla wszystkich postaci". Wspólne są tylko: włączone dodatki, przypisane klawisze i opcje.
+   * Dodatek wskazuje takie pola w `charKeys`; trzymamy je pod kluczem priv:<świat>:<postać>.
+   */
+  priv: {},
+  privKey: 'priv:global',
+  privMigrate: false,
+  charKeys: {},
   load(charName) {
     this.charName = charName || null;
     const g = store.get('cfg:global', null);
@@ -48,12 +57,34 @@ const config = {
     this.key = perChar && charName ? `cfg:${this.worldName()}:${charName}` : 'cfg:global';
     const raw = store.get(this.key, null) || g || {};
     this.data = deepMerge(structuredClone(this.defaults), raw);
+    this.privKey = charName ? `priv:${this.worldName()}:${charName}` : 'priv:global';
+    const pv = store.get(this.privKey, null);
+    // pierwszy raz po aktualizacji: przy osobnych ustawieniach każda postać zachowuje swoje dane; przy wspólnych —
+    // dotychczasowe dane (np. przedmioty w Ulepszarce) dostaje tylko pierwsza postać, na którą wejdziesz, reszta zaczyna czysto
+    this.privMigrate = !pv && (this.key !== 'cfg:global' || !store.get('priv:sharedTaken', false));
+    if (!pv && this.key === 'cfg:global') store.set('priv:sharedTaken', true);
+    this.priv = pv || {};
     return this.data;
+  },
+  /** Kopia ustawień bez danych postaci (do zapisu wspólnego / kopiowania na inne postacie). */
+  shared() {
+    const out = JSON.parse(JSON.stringify(this.data));
+    for (const [id, ks] of Object.entries(this.charKeys)) { const a = out.addons && out.addons[id]; if (a) ks.forEach((k) => delete a[k]); }
+    return out;
+  },
+  savePriv() {
+    for (const [id, ks] of Object.entries(this.charKeys)) {
+      const a = this.data.addons[id]; if (!a) continue;
+      const o = {}; ks.forEach((k) => { if (k in a) o[k] = a[k]; });
+      this.priv[id] = o;
+    }
+    store.set(this.privKey, this.priv);
   },
 
   save() {
     if (!this.data) return;
-    store.set(this.key, this.data);
+    this.savePriv();
+    store.set(this.key, this.shared());
     if (this.key !== 'cfg:global') {
       // zapamiętaj tylko przełącznik perCharacter globalnie
       const g = store.get('cfg:global', {}) || {};
@@ -68,7 +99,7 @@ const config = {
     this.data.global.perCharacter = !!on;
     this.key = on && this.charName ? `cfg:${this.worldName()}:${this.charName}` : 'cfg:global';
     this.save();
-    if (!on) store.set('cfg:global', this.data);   // wspólne: pełne ustawienia w jednym miejscu
+    if (!on) store.set('cfg:global', this.shared());   // wspólne: ustawienia w jednym miejscu (bez danych postaci)
   },
   /** Lista postaci, które mają zapisane własne ustawienia (świat:postać). */
   savedCharacters() {
@@ -79,13 +110,22 @@ const config = {
   /** Te same ustawienia dla wszystkich postaci: kopiujemy obecne do każdej zapisanej postaci i do ustawień wspólnych. */
   copyToAll() {
     const list = this.savedCharacters();
-    for (const c of list) store.set(c.key, this.data);
-    const g = JSON.parse(JSON.stringify(this.data)); store.set('cfg:global', g);
+    const g = this.shared();   // bez danych postaci — cele, przedmioty i filtry zostają przy swoich postaciach
+    for (const c of list) store.set(c.key, g);
+    store.set('cfg:global', g);
     return list.length;
   },
 
-  addon(id, defaults) {
+  addon(id, defaults, charKeys) {
     const a = (this.data.addons[id] = deepMerge(structuredClone(defaults || {}), this.data.addons[id] || {}));
+    if (charKeys && charKeys.length) {
+      this.charKeys[id] = charKeys.slice();
+      const p = this.priv[id];
+      for (const k of charKeys) {
+        if (p && k in p) a[k] = structuredClone(p[k]);
+        else if (!this.privMigrate) { if (defaults && k in defaults) a[k] = structuredClone(defaults[k]); else delete a[k]; }
+      }
+    }
     return a;
   },
 
@@ -96,7 +136,7 @@ const config = {
     this.data = deepMerge(structuredClone(this.defaults), obj);
     this.save();
   },
-  reset() { store.del(this.key); },
+  reset() { store.del(this.key); store.del(this.privKey); },
 };
 
 function deepMerge(base, over) {

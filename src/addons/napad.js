@@ -378,6 +378,7 @@
     id: 'napad', name: 'Slayer', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
     desc: 'Pomaga dopaść wybranego przeciwnika. Namierzasz go klawiszem albo opcją „Dobij” w menu gracza, a Slayer zaatakuje go, gdy tylko znajdzie się w zasięgu. Czerwona strzałka przy postaci pokazuje, w którą stronę iść. Gracze chronieni przez Bratana są zawsze pomijani.',
     defaults: { enabled: false, keyAttack: '', target: null, remember: true },
+    charKeys: ['target'],   // cel — zawsze osobno dla każdej postaci
     settings: [
       { group: 'Namierzanie klawiszem', key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Pierwsze naciśnięcie namierza najbliższego gracza, drugie anuluje atak. Żeby zmienić cel na bliższy: anuluj i naciśnij jeszcze raz.' },
       { group: 'Namierzanie klawiszem', key: 'remember', type: 'bool', label: 'Zapamiętuj cel po jego zniknięciu', hint: 'Cel zostaje (z podświetleniem) także po zniknięciu z mapy i zmianie mapy. Zawsze znika po walce i po odświeżeniu gry. Wyłączone: namierzenie znika razem z celem.' },

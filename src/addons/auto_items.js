@@ -409,6 +409,7 @@
   defineAddon({
     id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
     desc: 'Pozwala zaplanować akcje na koniec walki: użycie przedmiotu (teleportu, mikstury, przywołania), zmianę zestawu albo rozwiązanie grupy. Wybierasz je prawym przyciskiem myszy, a dodatek wykona je zaraz po zakończeniu walki.',
+    charKeys: ['queue'],   // kolejka przedmiotów — osobno dla każdej postaci
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
       { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
@@ -1343,6 +1344,7 @@
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
     desc: 'Ulepsza przedmioty wieloma składnikami naraz. Wskazujesz, co chcesz ulepszać i jakimi przedmiotami (według rzadkości i typu, nigdy legendami), a całość uruchamiasz jednym kliknięciem albo klawiszem. Pokazuje też dzienny limit ulepszeń i postęp przedmiotu do +5.',
+    charKeys: ['slots', 'protect', 'protectNames', 'usages'],   // ulepszane przedmioty, ochrona, dzienny limit — osobno dla każdej postaci
     defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: true, notifyUsed: false, warnBoundUnique: false, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [

@@ -116,6 +116,7 @@
     id: 'ktotu', name: 'Gracze na mapie+', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
     desc: 'Przejrzysta lista wszystkich graczy na mapie. Możesz ją filtrować po nicku, klanie, poziomie, profesji i relacji oraz zapisywać ulubione filtry. Po kliknięciu gracza zobaczysz jego kartę z ekwipunkiem i szybkimi akcjami: dobijaniem, zaproszeniem do grupy i do znajomych.',
     defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
+    charKeys: ['filter', 'presets'],   // filtry listy graczy — osobno dla każdej postaci
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
     settings: [
       { key: 'key', type: 'key', label: 'Klawisz: pokaż/ukryj listę graczy' },
@@ -136,6 +137,19 @@
  */
 (() => {
   let cfg, last = { ids: [], prof: {}, t: 0 };
+  /*
+   * Kolosy: każdy uczestnik dostaje własny łup, więc szansy (%) nie pokazujemy. Rozpoznajemy po nazwie przeciwnika
+   * z walki (lista w ustawieniach dodatku — można dopisać kolejne) albo po oznaczeniu „kolos" w danych walki.
+   */
+  const KOLOSY = ['Mamlambo', 'Regulus Mętnooki', 'Umibozu', 'Amaimon Soploręki', 'Hydrokora Chimeryczna', 'Vashkar', 'Lulukav', 'Arachin Podstępny', 'Reuzen', 'Wernoradzki Drakolisz'];
+  let foes = { names: new Set(), kolos: false };
+  const norm = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').trim();
+  function isKolosFight() {
+    if (foes.kolos) return true;
+    const list = ((cfg && cfg.kolosy) || KOLOSY).map(norm).filter(Boolean);
+    for (const n of foes.names) { const x = norm(n); if (list.some((k) => x === k || x.includes(k))) return true; }
+    return false;
+  }
   const LOOT_SEL = '.loot-wnd, .loots-window, .loot-window, [class*="loot-window"], [class*="loots-window"]';
 
   const PROF_BY_NAME = { wojownik: 'w', paladyn: 'p', 'tancerz ostrzy': 'b', 'tancerka ostrzy': 'b', mag: 'm', tropiciel: 't', tropicielka: 't', 'łowca': 'h', 'łowczyni': 'h', lowca: 'h' };
@@ -172,6 +186,11 @@
     const out = {};
     for (const w of arr) {
       const id = idOf(w);
+      if (!sameTeam(w) && !party.has(id)) {          // przeciwnik — zapamiętujemy nazwę (rozpoznanie kolosa)
+        const nm = f(w, 'name') || f(w, 'nick');
+        if (nm) foes.names.add(String(nm));
+        if (/kolos/i.test(String(f(w, 'rank') || '') + ' ' + String(f(w, 'type') || '') + ' ' + String(f(w, 'wtName') || ''))) foes.kolos = true;
+      }
       if (!((sameTeam(w) && isPlayer(w)) || party.has(id))) continue;
       const o = game.otherById(id);
       out[id] = String(f(w, 'prof') || (o && o.prof) || (id === h.id ? h.prof : '') || profFromParty(id) || '');
@@ -236,6 +255,8 @@
     const P = participants();
     // szansa ma sens tylko w grupie — przy walce w pojedynkę nic nie pokazujemy
     if (P.ids.length < 2 && !game.partyMembers().length) { document.querySelectorAll('.mp-ibadge.chance').forEach((b) => b.remove()); return; }
+    // kolos — każdy ma własny łup, szansa nie ma sensu
+    if (isKolosFight()) { document.querySelectorAll('.mp-ibadge.chance').forEach((b) => b.remove()); return; }
     const h = game.hero();
     for (const w of wins) {
       for (const it of $$('.item', w)) {
@@ -271,8 +292,11 @@
 
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
-    desc: 'Przy oknie łupu pokazuje, jaką masz szansę na zdobycie każdego przedmiotu. Uwzględnia członków drużyny, którzy brali udział w walce, oraz pierwszeństwo profesji.',
-    defaults: { enabled: false },
+    desc: 'Przy oknie łupu pokazuje, jaką masz szansę na zdobycie każdego przedmiotu. Uwzględnia członków drużyny, którzy brali udział w walce, oraz pierwszeństwo profesji. Przy kolosach szansy nie pokazuje — tam każdy dostaje własny łup.',
+    defaults: { enabled: false, kolosy: KOLOSY.slice() },
+    settings: [
+      { key: 'kolosy', type: 'list', label: 'Kolosy (bez szansy %)', hint: 'Po walce z tymi przeciwnikami szansa się nie pokazuje — z kolosa każdy ma własny łup. Możesz dopisać brakujące nazwy.' },
+    ],
     init(c) {
       cfg = c;
       if ('onlyOnMap' in c || 'lootSelector' in c) { delete c.onlyOnMap; delete c.lootSelector; config.save(); }
@@ -284,7 +308,7 @@
         if (muts.every((m) => skip(m.target) || [...m.addedNodes, ...m.removedNodes].every((x) => x.nodeType !== 1 || skip(x)))) return;
         run();
       }).observe(document.body, { childList: true, subtree: true });
-      bus.on('battle:start', () => { last = { ids: [], prof: {}, t: 0 }; });
+      bus.on('battle:start', () => { last = { ids: [], prof: {}, t: 0 }; foes = { names: new Set(), kolos: false }; });
       setInterval(() => { if (cfg.enabled && game.ready() && E().battle && (game.inBattle() || (typeof E().battle.isBattleShow === 'function' && E().battle.isBattleShow()))) snapshot(); }, 500);
       bus.on('battle:end', () => { if (cfg.enabled) snapshot(); });
       MP.ktozlapie = { fighters, participants, debug: () => ({ uczestnicy: participants(), wymagania: Object.fromEntries(reqCache) }) };
@@ -382,6 +406,102 @@
     // bez własnego komunikatu — gra sama pokazuje, że zaproszenie poszło
   }
 
+  /*
+   * Automatyczne przyjmowanie zaproszeń do grupy od znajomych / klanu / sojuszników (niezależnie od opcji gry).
+   * 1) zanim okno powstanie: przechwytujemy funkcję gry, która je tworzy, i od razu wywołujemy „Tak",
+   * 2) zapas: gdy okno jednak się pojawi — chowamy je i klikamy „Tak".
+   */
+  const INV_RE = /zaprasza.{0,40}(dru[żz]yn|grup)/i;
+  const ACC_YES = /^\s*(tak|akceptuj|przyjmij|do[łl][aą]cz|zgoda|ok)\b/i;
+  const accOn = () => cfg && cfg.enabled && cfg.acceptAuto && (cfg.acceptFriends || cfg.acceptClan || cfg.acceptAllies);
+  function inviterOf(text) {
+    const m = text.match(/(?:Gracz(?:ka)?\s+)?([^\s,.!?:]+(?:\s[^\s,.!?:]+)?)\s+zaprasza/i);
+    if (!m) return null;
+    let nick = m[1].trim();
+    // dwuczłonowe dopasowanie mogło złapać słowo przed nickiem — sprawdzamy oba warianty
+    const cand = [nick, nick.split(/\s+/).pop()];
+    for (const n of cand) { const p = game.otherByNick(n); if (p) return { nick: n, p }; }
+    return { nick: cand[1], p: null };
+  }
+  function acceptFrom(text) {
+    if (!INV_RE.test(text)) return null;
+    const who = inviterOf(text); if (!who) return null;
+    const p = who.p;
+    const fr = friendNicks().has(who.nick.toLowerCase()) || (p && isFriendP(p));
+    if (cfg.acceptFriends && fr) return who.nick + ' (znajomy)';
+    if (cfg.acceptClan && p && p.isClan) return who.nick + ' (klan)';
+    if (cfg.acceptAllies && p && p.isAlly) return who.nick + ' (sojusz)';
+    return null;
+  }
+  const accLog = (who, how) => net.pushLog({ kind: 'info', src: 'Lepsza Grupa', msg: `Przyjęto zaproszenie do grupy od ${who} (${how})` });
+  function accText(x, d = 0, out = []) {
+    if (d > 4 || x == null) return out;
+    if (typeof x === 'string') out.push(x);
+    else if (Array.isArray(x)) x.forEach((v) => accText(v, d + 1, out));
+    else if (typeof x === 'object' && !(x instanceof Node)) Object.values(x).forEach((v) => accText(v, d + 1, out));
+    return out;
+  }
+  function accYesFn(x, d = 0) {
+    if (d > 4 || x == null || typeof x !== 'object' || x instanceof Node) return null;
+    if (Array.isArray(x) && typeof x[0] === 'string' && typeof x[1] === 'function' && ACC_YES.test(x[0].replace(/<[^>]+>/g, ''))) return x[1];
+    if (!Array.isArray(x)) {
+      const lab = x.txt || x.text || x.label || x.name || x.title;
+      const fn = x.callback || x.clb || x.cb || x.fn || x.action || x.onclick || x.click;
+      if (typeof lab === 'string' && typeof fn === 'function' && ACC_YES.test(lab.replace(/<[^>]+>/g, ''))) return fn;
+    }
+    for (const v of Object.values(x)) { const f = accYesFn(v, d + 1); if (f) return f; }
+    return null;
+  }
+  function accHookOne(obj, name) {
+    const orig = obj && obj[name];
+    if (typeof orig !== 'function' || orig.__mpAcc) return;
+    const wrapped = function (...args) {
+      try {
+        if (accOn()) {
+          const text = accText(args).join(' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+          const who = acceptFrom(text);
+          const f = who && accYesFn(args);
+          if (f) { setTimeout(() => { try { f(); } catch {} }, 0); accLog(who, 'bez okna'); return; }
+        }
+      } catch {}
+      return orig.apply(this, args);
+    };
+    wrapped.__mpAcc = true;
+    for (const k of Object.keys(orig)) { try { wrapped[k] = orig[k]; } catch {} }
+    try { obj[name] = wrapped; } catch {}
+  }
+  function accHooks() {
+    ['askAlert', 'mAlert', 'confirmAlert', 'alertAsk', '_alert'].forEach((n) => accHookOne(W, n));
+    try {
+      const I = W.Engine && W.Engine.interface;
+      if (I) {
+        const seen = new Set();
+        for (let p = I; p && p !== Object.prototype; p = Object.getPrototypeOf(p)) Object.getOwnPropertyNames(p).forEach((n) => seen.add(n));
+        seen.forEach((n) => { if (/alert|ask|confirm|dialog/i.test(n)) { try { if (typeof I[n] === 'function') accHookOne(I, n); } catch {} } });
+      }
+    } catch {}
+  }
+  const accDone = new WeakSet();
+  function accScan() {
+    if (!accOn()) return;
+    let btns = $$('button, .button, .btn, [class*="button"], [class*="accept"], [class*="yes"]').filter((b) => ACC_YES.test(b.textContent || '') && (b.textContent || '').trim().length < 20);
+    btns = btns.filter((b) => !btns.some((o) => o !== b && b.contains(o)));
+    for (const btn of btns) {
+      let box = btn.parentElement;
+      for (let i = 0; i < 8 && box && !INV_RE.test(box.textContent || ''); i++) box = box.parentElement;
+      if (!box || accDone.has(box) || box.closest('.mp-glass')) continue;
+      const text = (box.textContent || '').replace(/\s+/g, ' ');
+      if (!INV_RE.test(text) || text.length > 600) continue;
+      accDone.add(box);
+      const who = acceptFrom(text);
+      if (!who) continue;
+      box.style.setProperty('visibility', 'hidden', 'important');
+      btn.click();
+      setTimeout(() => { try { box.style.removeProperty('visibility'); } catch {} }, 800);
+      accLog(who, 'okno');
+    }
+  }
+
   async function disband() {
     invited = {};
     game._partyCache = [];
@@ -393,8 +513,8 @@
 
   defineAddon({
     id: 'cook', name: 'Lepsza Grupa', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
-    desc: 'Ułatwia zbieranie drużyny. Jednym klawiszem zapraszasz wybrane osoby: znajomych, klanowiczów, sojuszników albo wszystkich graczy na mapie, a drugim rozwiązujesz grupę. Lista w ustawieniach od razu pokazuje, kogo dodatek zaprosi.',
-    defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10 },
+    desc: 'Ułatwia zbieranie drużyny. Jednym klawiszem zapraszasz wybrane osoby: znajomych, klanowiczów, sojuszników albo wszystkich graczy na mapie, a drugim rozwiązujesz grupę. Lista w ustawieniach od razu pokazuje, kogo dodatek zaprosi. Może też sam przyjmować zaproszenia do grupy od znajomych, klanowiczów i sojuszników.',
+    defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10, acceptAuto: false, acceptFriends: true, acceptClan: true, acceptAllies: true },
     keys: [
       { key: 'keyInvite', label: 'zaproś', fn: () => inviteAll() },
       { key: 'keyDisband', label: 'rozwiąż grupę', fn: () => disband() },
@@ -410,6 +530,10 @@
       { group: 'Kogo zapraszać', key: 'never', type: 'list', label: 'Nigdy nie zapraszaj (nicki)' },
       { group: 'Kogo zapraszać', key: 'range', type: 'number', label: 'Zasięg (kratki, 0 = cała mapa)', min: 0, max: 100 },
       { group: 'Kogo zapraszać', key: 'maxParty', type: 'number', label: 'Maksymalny rozmiar grupy', min: 2, max: 10 },
+      { group: 'Przyjmowanie zaproszeń', key: 'acceptAuto', type: 'bool', label: 'Automatycznie przyjmuj zaproszenia do grupy', hint: 'Zaproszenie od wybranych niżej osób jest przyjmowane od razu, bez okienka — niezależnie od ustawień gry.' },
+      { group: 'Przyjmowanie zaproszeń', key: 'acceptFriends', type: 'bool', label: 'Od znajomych' },
+      { group: 'Przyjmowanie zaproszeń', key: 'acceptClan', type: 'bool', label: 'Od klanowiczów' },
+      { group: 'Przyjmowanie zaproszeń', key: 'acceptAllies', type: 'bool', label: 'Od sojuszników' },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-btns' },
@@ -435,6 +559,9 @@
       cfg = c;
       if ('auto' in c) { delete c.auto; config.save(); }   // usunięty automat z wcześniejszych wersji
       bus.on('map:change', () => { invited = {}; });
+      accHooks();
+      setInterval(accHooks, 3000);   // gra może podmienić funkcje po wczytaniu
+      new MutationObserver(accScan).observe(document.body, { childList: true, subtree: true });
     },
   });
 })();

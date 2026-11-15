@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.2
+// @version      1.0.3
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -138,6 +138,15 @@ const config = {
   },
 
   charName: null,
+  /*
+   * Dane postaci (cele, przedmioty, kolejki, filtry…) — zawsze osobno dla każdej postaci, także gdy ustawienia są
+   * „wspólne dla wszystkich postaci". Wspólne są tylko: włączone dodatki, przypisane klawisze i opcje.
+   * Dodatek wskazuje takie pola w `charKeys`; trzymamy je pod kluczem priv:<świat>:<postać>.
+   */
+  priv: {},
+  privKey: 'priv:global',
+  privMigrate: false,
+  charKeys: {},
   load(charName) {
     this.charName = charName || null;
     const g = store.get('cfg:global', null);
@@ -145,12 +154,34 @@ const config = {
     this.key = perChar && charName ? `cfg:${this.worldName()}:${charName}` : 'cfg:global';
     const raw = store.get(this.key, null) || g || {};
     this.data = deepMerge(structuredClone(this.defaults), raw);
+    this.privKey = charName ? `priv:${this.worldName()}:${charName}` : 'priv:global';
+    const pv = store.get(this.privKey, null);
+    // pierwszy raz po aktualizacji: przy osobnych ustawieniach każda postać zachowuje swoje dane; przy wspólnych —
+    // dotychczasowe dane (np. przedmioty w Ulepszarce) dostaje tylko pierwsza postać, na którą wejdziesz, reszta zaczyna czysto
+    this.privMigrate = !pv && (this.key !== 'cfg:global' || !store.get('priv:sharedTaken', false));
+    if (!pv && this.key === 'cfg:global') store.set('priv:sharedTaken', true);
+    this.priv = pv || {};
     return this.data;
+  },
+  /** Kopia ustawień bez danych postaci (do zapisu wspólnego / kopiowania na inne postacie). */
+  shared() {
+    const out = JSON.parse(JSON.stringify(this.data));
+    for (const [id, ks] of Object.entries(this.charKeys)) { const a = out.addons && out.addons[id]; if (a) ks.forEach((k) => delete a[k]); }
+    return out;
+  },
+  savePriv() {
+    for (const [id, ks] of Object.entries(this.charKeys)) {
+      const a = this.data.addons[id]; if (!a) continue;
+      const o = {}; ks.forEach((k) => { if (k in a) o[k] = a[k]; });
+      this.priv[id] = o;
+    }
+    store.set(this.privKey, this.priv);
   },
 
   save() {
     if (!this.data) return;
-    store.set(this.key, this.data);
+    this.savePriv();
+    store.set(this.key, this.shared());
     if (this.key !== 'cfg:global') {
       // zapamiętaj tylko przełącznik perCharacter globalnie
       const g = store.get('cfg:global', {}) || {};
@@ -165,7 +196,7 @@ const config = {
     this.data.global.perCharacter = !!on;
     this.key = on && this.charName ? `cfg:${this.worldName()}:${this.charName}` : 'cfg:global';
     this.save();
-    if (!on) store.set('cfg:global', this.data);   // wspólne: pełne ustawienia w jednym miejscu
+    if (!on) store.set('cfg:global', this.shared());   // wspólne: ustawienia w jednym miejscu (bez danych postaci)
   },
   /** Lista postaci, które mają zapisane własne ustawienia (świat:postać). */
   savedCharacters() {
@@ -176,13 +207,22 @@ const config = {
   /** Te same ustawienia dla wszystkich postaci: kopiujemy obecne do każdej zapisanej postaci i do ustawień wspólnych. */
   copyToAll() {
     const list = this.savedCharacters();
-    for (const c of list) store.set(c.key, this.data);
-    const g = JSON.parse(JSON.stringify(this.data)); store.set('cfg:global', g);
+    const g = this.shared();   // bez danych postaci — cele, przedmioty i filtry zostają przy swoich postaciach
+    for (const c of list) store.set(c.key, g);
+    store.set('cfg:global', g);
     return list.length;
   },
 
-  addon(id, defaults) {
+  addon(id, defaults, charKeys) {
     const a = (this.data.addons[id] = deepMerge(structuredClone(defaults || {}), this.data.addons[id] || {}));
+    if (charKeys && charKeys.length) {
+      this.charKeys[id] = charKeys.slice();
+      const p = this.priv[id];
+      for (const k of charKeys) {
+        if (p && k in p) a[k] = structuredClone(p[k]);
+        else if (!this.privMigrate) { if (defaults && k in defaults) a[k] = structuredClone(defaults[k]); else delete a[k]; }
+      }
+    }
     return a;
   },
 
@@ -193,7 +233,7 @@ const config = {
     this.data = deepMerge(structuredClone(this.defaults), obj);
     this.save();
   },
-  reset() { store.del(this.key); },
+  reset() { store.del(this.key); store.del(this.privKey); },
 };
 
 function deepMerge(base, over) {
@@ -1748,7 +1788,7 @@ const addons = {
   initAll() {
     this.list.sort((a, b) => this.ORDER.indexOf(a.id) - this.ORDER.indexOf(b.id));
     for (const a of this.list) {
-      const cfg = config.addon(a.id, Object.assign({ enabled: false }, a.defaults));
+      const cfg = config.addon(a.id, Object.assign({ enabled: false }, a.defaults), a.charKeys);
       for (const k of a.keys || []) {
         keys.bind({ label: `${a.name}: ${k.label}`, get: () => (cfg.enabled ? cfg[k.key] || '' : ''), fn: k.fn });
       }
@@ -2239,6 +2279,11 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.3', d: '15.11.2026', items: [
+    'Ustawienia wspólne dla wszystkich postaci obejmują teraz tylko włączone dodatki, klawisze i opcje. Dane postaci zostają przy każdej postaci osobno: cel Slayera, przedmioty i ochrona w Ulepszarce (oraz jej dzienny limit), kolejka Szybkiej Rączki, filtry Graczy na mapie+ i podpisy konkretnych przedmiotów w Podpisowniku.',
+    'Kto złapie: przy kolosach nie pokazuje szansy (%) — z kolosa każdy dostaje własny łup. Listę kolosów można uzupełnić w ustawieniach dodatku.',
+    'Lepsza Grupa: nowe ustawienie — automatyczne przyjmowanie zaproszeń do grupy od znajomych, klanowiczów i sojuszników (każdą grupę można włączyć osobno).',
+  ] },
   { v: '1.0.2', d: '15.11.2026', items: [
     'Ulepszarka: usunięto panel „Ostatnie ulepszanie” (informacje i tak są na bieżąco podczas ulepszania).',
     'Podpisownik: godzina zdobycia w dymku legendy nie znika, gdy w tle trwa walka albo wpada łup.',
@@ -2633,7 +2678,7 @@ const ui = {
     M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Zapisywanie ustawień'),
       el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, per
         ? `Każda postać ma własne ustawienia. Teraz edytujesz: ${who}. Nowa postać zaczyna od ustawień wspólnych.`
-        : 'Wszystkie postacie korzystają z tych samych ustawień — zmiana na jednej działa na wszystkich.'),
+        : 'Wszystkie postacie korzystają z tych samych ustawień (włączone dodatki, klawisze, opcje) — zmiana na jednej działa na wszystkich. Cele, przedmioty i filtry każda postać ma własne.'),
       el('div', { class: 'mp-btns' },
         el('button', { class: 'mp-upchip' + (!per ? ' on' : ''), onclick: () => { config.setPerCharacter(false); toast('Ustawienia wspólne dla wszystkich postaci', 'ok'); this.renderMain(); } }, 'Wspólne dla wszystkich postaci'),
         el('button', { class: 'mp-upchip' + (per ? ' on' : ''), onclick: () => { config.setPerCharacter(true); toast(`Osobne ustawienia — zapisano dla: ${who}`, 'ok'); this.renderMain(); } }, 'Osobne dla każdej postaci')),
@@ -3409,6 +3454,7 @@ function parseProtection(data) {
     id: 'napad', name: 'Slayer', icon: 'napad', color: ['#ff5d7a', '#b8325a'],
     desc: 'Pomaga dopaść wybranego przeciwnika. Namierzasz go klawiszem albo opcją „Dobij” w menu gracza, a Slayer zaatakuje go, gdy tylko znajdzie się w zasięgu. Czerwona strzałka przy postaci pokazuje, w którą stronę iść. Gracze chronieni przez Bratana są zawsze pomijani.',
     defaults: { enabled: false, keyAttack: '', target: null, remember: true },
+    charKeys: ['target'],   // cel — zawsze osobno dla każdej postaci
     settings: [
       { group: 'Namierzanie klawiszem', key: 'keyAttack', type: 'key', label: 'Klawisz: namierz najbliższego gracza', hint: 'Pierwsze naciśnięcie namierza najbliższego gracza, drugie anuluje atak. Żeby zmienić cel na bliższy: anuluj i naciśnij jeszcze raz.' },
       { group: 'Namierzanie klawiszem', key: 'remember', type: 'bool', label: 'Zapamiętuj cel po jego zniknięciu', hint: 'Cel zostaje (z podświetleniem) także po zniknięciu z mapy i zmianie mapy. Zawsze znika po walce i po odświeżeniu gry. Wyłączone: namierzenie znika razem z celem.' },
@@ -3735,6 +3781,7 @@ function parseProtection(data) {
     id: 'ktotu', name: 'Gracze na mapie+', icon: 'ktotu', color: ['#3fa2ff', '#2a6fd6'],
     desc: 'Przejrzysta lista wszystkich graczy na mapie. Możesz ją filtrować po nicku, klanie, poziomie, profesji i relacji oraz zapisywać ulubione filtry. Po kliknięciu gracza zobaczysz jego kartę z ekwipunkiem i szybkimi akcjami: dobijaniem, zaproszeniem do grupy i do znajomych.',
     defaults: { enabled: false, key: '', minimal: false, filter: structuredClone(F0), presets: {} },
+    charKeys: ['filter', 'presets'],   // filtry listy graczy — osobno dla każdej postaci
     keys: [{ key: 'key', label: 'pokaż/ukryj listę', fn: () => toggle() }],
     settings: [
       { key: 'key', type: 'key', label: 'Klawisz: pokaż/ukryj listę graczy' },
@@ -3755,6 +3802,19 @@ function parseProtection(data) {
  */
 (() => {
   let cfg, last = { ids: [], prof: {}, t: 0 };
+  /*
+   * Kolosy: każdy uczestnik dostaje własny łup, więc szansy (%) nie pokazujemy. Rozpoznajemy po nazwie przeciwnika
+   * z walki (lista w ustawieniach dodatku — można dopisać kolejne) albo po oznaczeniu „kolos" w danych walki.
+   */
+  const KOLOSY = ['Mamlambo', 'Regulus Mętnooki', 'Umibozu', 'Amaimon Soploręki', 'Hydrokora Chimeryczna', 'Vashkar', 'Lulukav', 'Arachin Podstępny', 'Reuzen', 'Wernoradzki Drakolisz'];
+  let foes = { names: new Set(), kolos: false };
+  const norm = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').trim();
+  function isKolosFight() {
+    if (foes.kolos) return true;
+    const list = ((cfg && cfg.kolosy) || KOLOSY).map(norm).filter(Boolean);
+    for (const n of foes.names) { const x = norm(n); if (list.some((k) => x === k || x.includes(k))) return true; }
+    return false;
+  }
   const LOOT_SEL = '.loot-wnd, .loots-window, .loot-window, [class*="loot-window"], [class*="loots-window"]';
 
   const PROF_BY_NAME = { wojownik: 'w', paladyn: 'p', 'tancerz ostrzy': 'b', 'tancerka ostrzy': 'b', mag: 'm', tropiciel: 't', tropicielka: 't', 'łowca': 'h', 'łowczyni': 'h', lowca: 'h' };
@@ -3791,6 +3851,11 @@ function parseProtection(data) {
     const out = {};
     for (const w of arr) {
       const id = idOf(w);
+      if (!sameTeam(w) && !party.has(id)) {          // przeciwnik — zapamiętujemy nazwę (rozpoznanie kolosa)
+        const nm = f(w, 'name') || f(w, 'nick');
+        if (nm) foes.names.add(String(nm));
+        if (/kolos/i.test(String(f(w, 'rank') || '') + ' ' + String(f(w, 'type') || '') + ' ' + String(f(w, 'wtName') || ''))) foes.kolos = true;
+      }
       if (!((sameTeam(w) && isPlayer(w)) || party.has(id))) continue;
       const o = game.otherById(id);
       out[id] = String(f(w, 'prof') || (o && o.prof) || (id === h.id ? h.prof : '') || profFromParty(id) || '');
@@ -3855,6 +3920,8 @@ function parseProtection(data) {
     const P = participants();
     // szansa ma sens tylko w grupie — przy walce w pojedynkę nic nie pokazujemy
     if (P.ids.length < 2 && !game.partyMembers().length) { document.querySelectorAll('.mp-ibadge.chance').forEach((b) => b.remove()); return; }
+    // kolos — każdy ma własny łup, szansa nie ma sensu
+    if (isKolosFight()) { document.querySelectorAll('.mp-ibadge.chance').forEach((b) => b.remove()); return; }
     const h = game.hero();
     for (const w of wins) {
       for (const it of $$('.item', w)) {
@@ -3890,8 +3957,11 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'ktozlapie', name: 'Kto złapie', icon: 'ktozlapie', color: ['#ffd84a', '#e0a400'],
-    desc: 'Przy oknie łupu pokazuje, jaką masz szansę na zdobycie każdego przedmiotu. Uwzględnia członków drużyny, którzy brali udział w walce, oraz pierwszeństwo profesji.',
-    defaults: { enabled: false },
+    desc: 'Przy oknie łupu pokazuje, jaką masz szansę na zdobycie każdego przedmiotu. Uwzględnia członków drużyny, którzy brali udział w walce, oraz pierwszeństwo profesji. Przy kolosach szansy nie pokazuje — tam każdy dostaje własny łup.',
+    defaults: { enabled: false, kolosy: KOLOSY.slice() },
+    settings: [
+      { key: 'kolosy', type: 'list', label: 'Kolosy (bez szansy %)', hint: 'Po walce z tymi przeciwnikami szansa się nie pokazuje — z kolosa każdy ma własny łup. Możesz dopisać brakujące nazwy.' },
+    ],
     init(c) {
       cfg = c;
       if ('onlyOnMap' in c || 'lootSelector' in c) { delete c.onlyOnMap; delete c.lootSelector; config.save(); }
@@ -3903,7 +3973,7 @@ function parseProtection(data) {
         if (muts.every((m) => skip(m.target) || [...m.addedNodes, ...m.removedNodes].every((x) => x.nodeType !== 1 || skip(x)))) return;
         run();
       }).observe(document.body, { childList: true, subtree: true });
-      bus.on('battle:start', () => { last = { ids: [], prof: {}, t: 0 }; });
+      bus.on('battle:start', () => { last = { ids: [], prof: {}, t: 0 }; foes = { names: new Set(), kolos: false }; });
       setInterval(() => { if (cfg.enabled && game.ready() && E().battle && (game.inBattle() || (typeof E().battle.isBattleShow === 'function' && E().battle.isBattleShow()))) snapshot(); }, 500);
       bus.on('battle:end', () => { if (cfg.enabled) snapshot(); });
       MP.ktozlapie = { fighters, participants, debug: () => ({ uczestnicy: participants(), wymagania: Object.fromEntries(reqCache) }) };
@@ -4001,6 +4071,102 @@ function parseProtection(data) {
     // bez własnego komunikatu — gra sama pokazuje, że zaproszenie poszło
   }
 
+  /*
+   * Automatyczne przyjmowanie zaproszeń do grupy od znajomych / klanu / sojuszników (niezależnie od opcji gry).
+   * 1) zanim okno powstanie: przechwytujemy funkcję gry, która je tworzy, i od razu wywołujemy „Tak",
+   * 2) zapas: gdy okno jednak się pojawi — chowamy je i klikamy „Tak".
+   */
+  const INV_RE = /zaprasza.{0,40}(dru[żz]yn|grup)/i;
+  const ACC_YES = /^\s*(tak|akceptuj|przyjmij|do[łl][aą]cz|zgoda|ok)\b/i;
+  const accOn = () => cfg && cfg.enabled && cfg.acceptAuto && (cfg.acceptFriends || cfg.acceptClan || cfg.acceptAllies);
+  function inviterOf(text) {
+    const m = text.match(/(?:Gracz(?:ka)?\s+)?([^\s,.!?:]+(?:\s[^\s,.!?:]+)?)\s+zaprasza/i);
+    if (!m) return null;
+    let nick = m[1].trim();
+    // dwuczłonowe dopasowanie mogło złapać słowo przed nickiem — sprawdzamy oba warianty
+    const cand = [nick, nick.split(/\s+/).pop()];
+    for (const n of cand) { const p = game.otherByNick(n); if (p) return { nick: n, p }; }
+    return { nick: cand[1], p: null };
+  }
+  function acceptFrom(text) {
+    if (!INV_RE.test(text)) return null;
+    const who = inviterOf(text); if (!who) return null;
+    const p = who.p;
+    const fr = friendNicks().has(who.nick.toLowerCase()) || (p && isFriendP(p));
+    if (cfg.acceptFriends && fr) return who.nick + ' (znajomy)';
+    if (cfg.acceptClan && p && p.isClan) return who.nick + ' (klan)';
+    if (cfg.acceptAllies && p && p.isAlly) return who.nick + ' (sojusz)';
+    return null;
+  }
+  const accLog = (who, how) => net.pushLog({ kind: 'info', src: 'Lepsza Grupa', msg: `Przyjęto zaproszenie do grupy od ${who} (${how})` });
+  function accText(x, d = 0, out = []) {
+    if (d > 4 || x == null) return out;
+    if (typeof x === 'string') out.push(x);
+    else if (Array.isArray(x)) x.forEach((v) => accText(v, d + 1, out));
+    else if (typeof x === 'object' && !(x instanceof Node)) Object.values(x).forEach((v) => accText(v, d + 1, out));
+    return out;
+  }
+  function accYesFn(x, d = 0) {
+    if (d > 4 || x == null || typeof x !== 'object' || x instanceof Node) return null;
+    if (Array.isArray(x) && typeof x[0] === 'string' && typeof x[1] === 'function' && ACC_YES.test(x[0].replace(/<[^>]+>/g, ''))) return x[1];
+    if (!Array.isArray(x)) {
+      const lab = x.txt || x.text || x.label || x.name || x.title;
+      const fn = x.callback || x.clb || x.cb || x.fn || x.action || x.onclick || x.click;
+      if (typeof lab === 'string' && typeof fn === 'function' && ACC_YES.test(lab.replace(/<[^>]+>/g, ''))) return fn;
+    }
+    for (const v of Object.values(x)) { const f = accYesFn(v, d + 1); if (f) return f; }
+    return null;
+  }
+  function accHookOne(obj, name) {
+    const orig = obj && obj[name];
+    if (typeof orig !== 'function' || orig.__mpAcc) return;
+    const wrapped = function (...args) {
+      try {
+        if (accOn()) {
+          const text = accText(args).join(' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+          const who = acceptFrom(text);
+          const f = who && accYesFn(args);
+          if (f) { setTimeout(() => { try { f(); } catch {} }, 0); accLog(who, 'bez okna'); return; }
+        }
+      } catch {}
+      return orig.apply(this, args);
+    };
+    wrapped.__mpAcc = true;
+    for (const k of Object.keys(orig)) { try { wrapped[k] = orig[k]; } catch {} }
+    try { obj[name] = wrapped; } catch {}
+  }
+  function accHooks() {
+    ['askAlert', 'mAlert', 'confirmAlert', 'alertAsk', '_alert'].forEach((n) => accHookOne(W, n));
+    try {
+      const I = W.Engine && W.Engine.interface;
+      if (I) {
+        const seen = new Set();
+        for (let p = I; p && p !== Object.prototype; p = Object.getPrototypeOf(p)) Object.getOwnPropertyNames(p).forEach((n) => seen.add(n));
+        seen.forEach((n) => { if (/alert|ask|confirm|dialog/i.test(n)) { try { if (typeof I[n] === 'function') accHookOne(I, n); } catch {} } });
+      }
+    } catch {}
+  }
+  const accDone = new WeakSet();
+  function accScan() {
+    if (!accOn()) return;
+    let btns = $$('button, .button, .btn, [class*="button"], [class*="accept"], [class*="yes"]').filter((b) => ACC_YES.test(b.textContent || '') && (b.textContent || '').trim().length < 20);
+    btns = btns.filter((b) => !btns.some((o) => o !== b && b.contains(o)));
+    for (const btn of btns) {
+      let box = btn.parentElement;
+      for (let i = 0; i < 8 && box && !INV_RE.test(box.textContent || ''); i++) box = box.parentElement;
+      if (!box || accDone.has(box) || box.closest('.mp-glass')) continue;
+      const text = (box.textContent || '').replace(/\s+/g, ' ');
+      if (!INV_RE.test(text) || text.length > 600) continue;
+      accDone.add(box);
+      const who = acceptFrom(text);
+      if (!who) continue;
+      box.style.setProperty('visibility', 'hidden', 'important');
+      btn.click();
+      setTimeout(() => { try { box.style.removeProperty('visibility'); } catch {} }, 800);
+      accLog(who, 'okno');
+    }
+  }
+
   async function disband() {
     invited = {};
     game._partyCache = [];
@@ -4012,8 +4178,8 @@ function parseProtection(data) {
 
   defineAddon({
     id: 'cook', name: 'Lepsza Grupa', icon: 'cook', color: ['#ff8a5c', '#e2533a'],
-    desc: 'Ułatwia zbieranie drużyny. Jednym klawiszem zapraszasz wybrane osoby: znajomych, klanowiczów, sojuszników albo wszystkich graczy na mapie, a drugim rozwiązujesz grupę. Lista w ustawieniach od razu pokazuje, kogo dodatek zaprosi.',
-    defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10 },
+    desc: 'Ułatwia zbieranie drużyny. Jednym klawiszem zapraszasz wybrane osoby: znajomych, klanowiczów, sojuszników albo wszystkich graczy na mapie, a drugim rozwiązujesz grupę. Lista w ustawieniach od razu pokazuje, kogo dodatek zaprosi. Może też sam przyjmować zaproszenia do grupy od znajomych, klanowiczów i sojuszników.',
+    defaults: { keyInvite: '', keyDisband: '', friends: true, clan: true, allies: false, everyone: false, always: [], never: [], range: 0, maxParty: 10, acceptAuto: false, acceptFriends: true, acceptClan: true, acceptAllies: true },
     keys: [
       { key: 'keyInvite', label: 'zaproś', fn: () => inviteAll() },
       { key: 'keyDisband', label: 'rozwiąż grupę', fn: () => disband() },
@@ -4029,6 +4195,10 @@ function parseProtection(data) {
       { group: 'Kogo zapraszać', key: 'never', type: 'list', label: 'Nigdy nie zapraszaj (nicki)' },
       { group: 'Kogo zapraszać', key: 'range', type: 'number', label: 'Zasięg (kratki, 0 = cała mapa)', min: 0, max: 100 },
       { group: 'Kogo zapraszać', key: 'maxParty', type: 'number', label: 'Maksymalny rozmiar grupy', min: 2, max: 10 },
+      { group: 'Przyjmowanie zaproszeń', key: 'acceptAuto', type: 'bool', label: 'Automatycznie przyjmuj zaproszenia do grupy', hint: 'Zaproszenie od wybranych niżej osób jest przyjmowane od razu, bez okienka — niezależnie od ustawień gry.' },
+      { group: 'Przyjmowanie zaproszeń', key: 'acceptFriends', type: 'bool', label: 'Od znajomych' },
+      { group: 'Przyjmowanie zaproszeń', key: 'acceptClan', type: 'bool', label: 'Od klanowiczów' },
+      { group: 'Przyjmowanie zaproszeń', key: 'acceptAllies', type: 'bool', label: 'Od sojuszników' },
     ],
     render(box) {
       box.appendChild(el('div', { class: 'mp-btns' },
@@ -4054,6 +4224,9 @@ function parseProtection(data) {
       cfg = c;
       if ('auto' in c) { delete c.auto; config.save(); }   // usunięty automat z wcześniejszych wersji
       bus.on('map:change', () => { invited = {}; });
+      accHooks();
+      setInterval(accHooks, 3000);   // gra może podmienić funkcje po wczytaniu
+      new MutationObserver(accScan).observe(document.body, { childList: true, subtree: true });
     },
   });
 })();
@@ -4294,6 +4467,7 @@ MP.itemDeco = itemDeco;
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
     desc: 'Pozwala dodawać własne podpisy do przedmiotów, np. dokąd prowadzi dany kamień teleportacyjny. Podpis nadajesz z menu przedmiotu („Podpisz…”) i od razu widzisz go na wszystkich takich samych przedmiotach. Dodatkowo w dymku legendy przy dacie zdobycia pokazuje też godzinę.',
     defaults: { enabled: false, byId: {}, byKey: {}, rules: [], autoTeleport: false },
+    charKeys: ['byId'],   // podpisy konkretnych przedmiotów (po id) — osobno dla każdej postaci
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu', hint: 'Domyślnie wyłączone — podpisy nadajesz sam.' }],
     render(box, c, rerender) {
       const tb = el('tbody');
@@ -5703,6 +5877,7 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'szybka', name: 'Szybka Rączka', icon: 'szybka', color: ['#40e0d0', '#1a9e9e'],
     desc: 'Pozwala zaplanować akcje na koniec walki: użycie przedmiotu (teleportu, mikstury, przywołania), zmianę zestawu albo rozwiązanie grupy. Wybierasz je prawym przyciskiem myszy, a dodatek wykona je zaraz po zakończeniu walki.',
+    charKeys: ['queue'],   // kolejka przedmiotów — osobno dla każdej postaci
     defaults: { queue: [], partySelector: '.widget-party\n[class*="widget-party"]\n.party-icon' },
     settings: [
       { adv: true, group: 'Zaawansowane', key: 'partySelector', type: 'textarea', label: 'Selektor ikony grupy', hint: 'Zmień tylko, jeśli menu na ikonie grupy się nie pokazuje.' },
@@ -6637,6 +6812,7 @@ MP.itemDeco = itemDeco;
   defineAddon({
     id: 'ulepszarka', name: 'Ulepszarka', icon: 'ulepszarka', color: ['#ff6bd6', '#b23cff'], renderFirst: true,
     desc: 'Ulepsza przedmioty wieloma składnikami naraz. Wskazujesz, co chcesz ulepszać i jakimi przedmiotami (według rzadkości i typu, nigdy legendami), a całość uruchamiasz jednym kliknięciem albo klawiszem. Pokazuje też dzienny limit ulepszeń i postęp przedmiotu do +5.',
+    charKeys: ['slots', 'protect', 'protectNames', 'usages'],   // ulepszane przedmioty, ochrona, dzienny limit — osobno dla każdej postaci
     defaults: { slots: [], protect: [], protectNames: [], key: '', confirm: true, notifyUse: true, notifyUsed: false, warnBoundUnique: false, freeAuto: false, freeAt: 0 },
     keys: [{ key: 'key', label: 'ulepsz teraz', fn: () => run() }],
     notes: () => [
@@ -8919,5 +9095,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.2";
+MP.version = "1.0.3";
 })();

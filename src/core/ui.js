@@ -5,6 +5,11 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.3', d: '15.11.2026', items: [
+    'Ustawienia wspólne dla wszystkich postaci obejmują teraz tylko włączone dodatki, klawisze i opcje. Dane postaci zostają przy każdej postaci osobno: cel Slayera, przedmioty i ochrona w Ulepszarce (oraz jej dzienny limit), kolejka Szybkiej Rączki, filtry Graczy na mapie+ i podpisy konkretnych przedmiotów w Podpisowniku.',
+    'Kto złapie: przy kolosach nie pokazuje szansy (%) — z kolosa każdy dostaje własny łup. Listę kolosów można uzupełnić w ustawieniach dodatku.',
+    'Lepsza Grupa: nowe ustawienie — automatyczne przyjmowanie zaproszeń do grupy od znajomych, klanowiczów i sojuszników (każdą grupę można włączyć osobno).',
+  ] },
   { v: '1.0.2', d: '15.11.2026', items: [
     'Ulepszarka: usunięto panel „Ostatnie ulepszanie” (informacje i tak są na bieżąco podczas ulepszania).',
     'Podpisownik: godzina zdobycia w dymku legendy nie znika, gdy w tle trwa walka albo wpada łup.',
@@ -399,7 +404,7 @@ const ui = {
     M.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Zapisywanie ustawień'),
       el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, per
         ? `Każda postać ma własne ustawienia. Teraz edytujesz: ${who}. Nowa postać zaczyna od ustawień wspólnych.`
-        : 'Wszystkie postacie korzystają z tych samych ustawień — zmiana na jednej działa na wszystkich.'),
+        : 'Wszystkie postacie korzystają z tych samych ustawień (włączone dodatki, klawisze, opcje) — zmiana na jednej działa na wszystkich. Cele, przedmioty i filtry każda postać ma własne.'),
       el('div', { class: 'mp-btns' },
         el('button', { class: 'mp-upchip' + (!per ? ' on' : ''), onclick: () => { config.setPerCharacter(false); toast('Ustawienia wspólne dla wszystkich postaci', 'ok'); this.renderMain(); } }, 'Wspólne dla wszystkich postaci'),
         el('button', { class: 'mp-upchip' + (per ? ' on' : ''), onclick: () => { config.setPerCharacter(true); toast(`Osobne ustawienia — zapisano dla: ${who}`, 'ok'); this.renderMain(); } }, 'Osobne dla każdej postaci')),

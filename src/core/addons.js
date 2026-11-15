@@ -28,7 +28,7 @@ const addons = {
   initAll() {
     this.list.sort((a, b) => this.ORDER.indexOf(a.id) - this.ORDER.indexOf(b.id));
     for (const a of this.list) {
-      const cfg = config.addon(a.id, Object.assign({ enabled: false }, a.defaults));
+      const cfg = config.addon(a.id, Object.assign({ enabled: false }, a.defaults), a.charKeys);
       for (const k of a.keys || []) {
         keys.bind({ label: `${a.name}: ${k.label}`, get: () => (cfg.enabled ? cfg[k.key] || '' : ''), fn: k.fn });
       }

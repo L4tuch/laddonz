@@ -233,6 +233,7 @@ MP.itemDeco = itemDeco;
     id: 'podpis', name: 'Podpisownik', icon: 'podpis', color: ['#78bcff', '#4a7fd8'],
     desc: 'Pozwala dodawać własne podpisy do przedmiotów, np. dokąd prowadzi dany kamień teleportacyjny. Podpis nadajesz z menu przedmiotu („Podpisz…”) i od razu widzisz go na wszystkich takich samych przedmiotach. Dodatkowo w dymku legendy przy dacie zdobycia pokazuje też godzinę.',
     defaults: { enabled: false, byId: {}, byKey: {}, rules: [], autoTeleport: false },
+    charKeys: ['byId'],   // podpisy konkretnych przedmiotów (po id) — osobno dla każdej postaci
     settings: [{ key: 'autoTeleport', type: 'bool', label: 'Automatycznie podpisuj teleporty nazwą celu', hint: 'Domyślnie wyłączone — podpisy nadajesz sam.' }],
     render(box, c, rerender) {
       const tb = el('tbody');
