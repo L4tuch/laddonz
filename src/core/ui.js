@@ -5,6 +5,10 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.4', d: '15.11.2026', items: [
+    'Slayer: gdy cel wyjdzie z zasięgu i wróci, atak idzie od razu (seria liczy się od nowa, bez czekania na przerwę).',
+    'Slayer: ataki odrzucone przez grę (za daleko, postać w ruchu) nie liczą się do serii — nie ma już przerwy, gdy stoisz obok celu.',
+  ] },
   { v: '1.0.3', d: '15.11.2026', items: [
     'Ustawienia wspólne dla wszystkich postaci obejmują teraz tylko włączone dodatki, klawisze i opcje. Dane postaci zostają przy każdej postaci osobno: cel Slayera, przedmioty i ochrona w Ulepszarce (oraz jej dzienny limit), kolejka Szybkiej Rączki, filtry Graczy na mapie+ i podpisy konkretnych przedmiotów w Podpisowniku.',
     'Kto złapie: przy kolosach nie pokazuje szansy (%) — z kolosa każdy dostaje własny łup. Listę kolosów można uzupełnić w ustawieniach dodatku.',

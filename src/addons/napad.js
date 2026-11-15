@@ -47,6 +47,7 @@
     if (S.protectedUntil[p.id] > t) return false;           // nie marnujemy ataku na ochronę
     const b = S.burst[p.id] || (S.burst[p.id] = { n: 0, until: 0 });
     if (b.until > t) return false;                         // przerwa po serii 3 ataków
+    const prevN = b.n, prevUntil = b.until;                // do cofnięcia, gdy gra odrzuci atak (za daleko / w ruchu)
     b.n++;
     if (b.n >= BURST) { b.n = 0; b.until = t + randomMs(BURST_PAUSE_MIN_MS, BURST_PAUSE_MAX_MS); }
     S.last = t;
@@ -59,7 +60,8 @@
         // komunikat pokazuje już sama gra — Slayer nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
         if (/nie zgadza|odmówi|odmowa/i.test(txt)) { S.refused[p.id] = now() + randomMs(REFUSE_MIN_MS, REFUSE_MAX_MS); return; }
-        if (/nie mo[żz]esz|nie mo[żz]na/i.test(txt)) { S.refused[p.id] = now() + randomMs(SOFT_MIN_MS, SOFT_MAX_MS); return; }
+        // gra odrzuciła atak (za daleko, postać w ruchu…) — ta próba nie liczy się do serii, więc nie wpadamy w przerwę
+        if (/nie mo[żz]esz|nie mo[żz]na|za daleko|zbyt daleko|odleg[łl]/i.test(txt)) { b.n = prevN; b.until = prevUntil; S.refused[p.id] = now() + randomMs(SOFT_MIN_MS, SOFT_MAX_MS); return; }
         const sec = parseProtection(data);
         if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
       },
@@ -336,6 +338,8 @@
       if (!!p !== S.wasOn) { S.wasOn = !!p; rr(); }   // „na mapie" / „poza mapą" w panelu
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
       if (p && inRange(h, p) && !allowed(p)) { say('br' + p.id, `Slayer: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
+      // cel wyszedł z zasięgu — seria liczy się od nowa (po powrocie w zasięg atak od razu, bez czekania na przerwę)
+      if (p && !inRange(h, p)) { delete S.burst[p.id]; S.nextAttackAt = 0; }
       if (p && inRange(h, p) && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
     }
   }
