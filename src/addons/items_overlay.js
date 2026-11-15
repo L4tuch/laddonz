@@ -165,16 +165,42 @@ MP.itemDeco = itemDeco;
       return;
     }
   }
+  /*
+   * Godzina pilnowana przez cały czas, gdy dymek legendy jest otwarty: gra potrafi przebudować dymek
+   * (np. po walce i łupie w tle), a wtedy nasza dopiska znikała — co 250 ms dopisujemy ją z powrotem.
+   */
+  let legHover = null;
+  function legWatch() {
+    if (!legHover) return;
+    const { node, id } = legHover;
+    // gra mogła podmienić element przedmiotu (np. po łupie) — pilnujemy dalej po id, dopóki dymek jest otwarty
+    let it = id ? game.itemById(id) : null;
+    if (!it && MP.anyLookup) it = MP.anyLookup(node, id);
+    if (!it) it = legHover.it;
+    const tips = $$('.tip-wrapper').filter((t) => isVisible(t) && !t.closest('#mp-eqtip, .mp-host'));
+    if (!tips.length) { if (++legHover.miss > 4) { legHover = null; return; } }
+    else { legHover.miss = 0; tips.forEach((t) => addLegTime(t, it)); }
+    legHover.timer = setTimeout(legWatch, 250);
+  }
   function onItemHover(e) {
     if (!cfg || !cfg.enabled) return;
     const node = e.target && e.target.closest && e.target.closest('.item');
     if (!node || node.closest('.tip-wrapper, .mp-glass')) return;
+    if (legHover && legHover.node === node) return;
+    if (legHover) { clearTimeout(legHover.timer); legHover = null; }
     const id = game.itemIdFromEl(node);
     let it = id ? game.itemById(id) : null;
     if (!it && MP.anyLookup) it = MP.anyLookup(node, id);
     if (!it || String((it.stats || {}).rarity) !== 'legendary' || !lootTs(it)) return;
-    const put = () => { for (const t of $$('.tip-wrapper')) if (isVisible(t)) addLegTime(t, it); };
-    setTimeout(put, 40); setTimeout(put, 160);
+    legHover = { node, id, it, miss: 0, timer: 0 };
+    legHover.timer = setTimeout(legWatch, 40);
+  }
+  function onItemOut(e) {
+    if (!legHover) return;
+    const to = e.relatedTarget;
+    if (to && legHover.node.contains(to)) return;           // nadal nad tym samym przedmiotem
+    if (e.target && e.target.closest && e.target.closest('.item') !== legHover.node) return;
+    clearTimeout(legHover.timer); legHover = null;
   }
 
   const signedKey = (id) => { const it = game.itemById(id); const k = keyOf(it); return !!(cfg && ((k && cfg.byKey[k]) || cfg.byId[id])); };
@@ -232,6 +258,7 @@ MP.itemDeco = itemDeco;
       c.byKey = c.byKey || {};
       if (!c._noAutoTp) { c._noAutoTp = true; c.autoTeleport = false; config.save(); }   // automatyczne podpisy teleportów domyślnie wyłączone
       document.addEventListener('mouseover', onItemHover, true);
+      document.addEventListener('mouseout', onItemOut, true);
       itemDeco.add((node, it, id) => { const lb = cfg.enabled && labelFor(it, id); return lb ? { cls: 'sig', text: lb, title: 'Podpisownik: ' + lb } : null; });
       menus.add('item', (id) => (cfg.enabled ? [{ label: 'Podpisz…', fn: () => signItem(id) }] : []));
     },

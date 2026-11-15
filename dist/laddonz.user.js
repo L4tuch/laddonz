@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.1
+// @version      1.0.2
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2239,6 +2239,10 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.2', d: '15.11.2026', items: [
+    'Ulepszarka: usunięto panel „Ostatnie ulepszanie” (informacje i tak są na bieżąco podczas ulepszania).',
+    'Podpisownik: godzina zdobycia w dymku legendy nie znika, gdy w tle trwa walka albo wpada łup.',
+  ] },
   { v: '1.0.1', d: '15.11.2026', items: [
     'Lekkie zmiany dobijarki.',
   ] },
@@ -4222,16 +4226,42 @@ MP.itemDeco = itemDeco;
       return;
     }
   }
+  /*
+   * Godzina pilnowana przez cały czas, gdy dymek legendy jest otwarty: gra potrafi przebudować dymek
+   * (np. po walce i łupie w tle), a wtedy nasza dopiska znikała — co 250 ms dopisujemy ją z powrotem.
+   */
+  let legHover = null;
+  function legWatch() {
+    if (!legHover) return;
+    const { node, id } = legHover;
+    // gra mogła podmienić element przedmiotu (np. po łupie) — pilnujemy dalej po id, dopóki dymek jest otwarty
+    let it = id ? game.itemById(id) : null;
+    if (!it && MP.anyLookup) it = MP.anyLookup(node, id);
+    if (!it) it = legHover.it;
+    const tips = $$('.tip-wrapper').filter((t) => isVisible(t) && !t.closest('#mp-eqtip, .mp-host'));
+    if (!tips.length) { if (++legHover.miss > 4) { legHover = null; return; } }
+    else { legHover.miss = 0; tips.forEach((t) => addLegTime(t, it)); }
+    legHover.timer = setTimeout(legWatch, 250);
+  }
   function onItemHover(e) {
     if (!cfg || !cfg.enabled) return;
     const node = e.target && e.target.closest && e.target.closest('.item');
     if (!node || node.closest('.tip-wrapper, .mp-glass')) return;
+    if (legHover && legHover.node === node) return;
+    if (legHover) { clearTimeout(legHover.timer); legHover = null; }
     const id = game.itemIdFromEl(node);
     let it = id ? game.itemById(id) : null;
     if (!it && MP.anyLookup) it = MP.anyLookup(node, id);
     if (!it || String((it.stats || {}).rarity) !== 'legendary' || !lootTs(it)) return;
-    const put = () => { for (const t of $$('.tip-wrapper')) if (isVisible(t)) addLegTime(t, it); };
-    setTimeout(put, 40); setTimeout(put, 160);
+    legHover = { node, id, it, miss: 0, timer: 0 };
+    legHover.timer = setTimeout(legWatch, 40);
+  }
+  function onItemOut(e) {
+    if (!legHover) return;
+    const to = e.relatedTarget;
+    if (to && legHover.node.contains(to)) return;           // nadal nad tym samym przedmiotem
+    if (e.target && e.target.closest && e.target.closest('.item') !== legHover.node) return;
+    clearTimeout(legHover.timer); legHover = null;
   }
 
   const signedKey = (id) => { const it = game.itemById(id); const k = keyOf(it); return !!(cfg && ((k && cfg.byKey[k]) || cfg.byId[id])); };
@@ -4289,6 +4319,7 @@ MP.itemDeco = itemDeco;
       c.byKey = c.byKey || {};
       if (!c._noAutoTp) { c._noAutoTp = true; c.autoTeleport = false; config.save(); }   // automatyczne podpisy teleportów domyślnie wyłączone
       document.addEventListener('mouseover', onItemHover, true);
+      document.addEventListener('mouseout', onItemOut, true);
       itemDeco.add((node, it, id) => { const lb = cfg.enabled && labelFor(it, id); return lb ? { cls: 'sig', text: lb, title: 'Podpisownik: ' + lb } : null; });
       menus.add('item', (id) => (cfg.enabled ? [{ label: 'Podpisz…', fn: () => signItem(id) }] : []));
     },
@@ -6333,18 +6364,6 @@ MP.itemDeco = itemDeco;
       else if (n && cfg.notifyUsed) toast(`Ulepszarka: ulepszono — zużyto ${n} przedmiotów`, 'ok');
       rr();
     }
-    try {
-      cfg.lastRun = {
-        t: Date.now(), used: n, stop: limitHit ? 'limit' : failed ? 'fail' : 'ok',
-        items: runSum.map((x) => {
-          const sl = slots().find((y) => Number(y.id) === x.id);
-          const it = game.itemById(x.id), lv = enhLevel(it);
-          const maxed = maxedNow.has(x.id) || (lv != null && lv >= MAX_LVL);
-          return { name: x.name, used: x.used, from: x.from, maxed, to: maxed ? { lvl: lv != null && lv >= MAX_LVL ? 5 : 4, pct: 100 } : sl && sl.prog ? { lvl: sl.prog.lvl, pct: pctTo5(sl.prog) } : null };
-        }),
-      };
-      config.save();
-    } catch {}
     return { n, failed: failed || limitHit };
   }
   /** Odpowiedź serwera z błędem (np. „Błąd wewnętrzny", t:stop) → przerywamy natychmiast. */
@@ -6650,21 +6669,6 @@ MP.itemDeco = itemDeco;
         box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));
       }
       if (cfg.usages && cfg.usages.limit && cfg.usages.day === new Date().toDateString()) box.appendChild(el('div', { class: 'mp-dim mp-ul-usages', style: { margin: '4px 2px' } }, `Dzisiejsze ulepszenia: ${cfg.usages.count} / ${cfg.usages.limit}`));
-      // ostatnie ulepszanie: ile zużyto, jak zmienił się poziom, czy coś poszło ponad +5
-      if (cfg.lastRun && cfg.lastRun.items && cfg.lastRun.items.length) {
-        const L = cfg.lastRun, d = new Date(L.t);
-        const pc = (x) => (x && x.pct != null ? ` (${String(x.pct).replace('.', ',')}%)` : '');
-        const lvl = (x) => (x ? `+${x.lvl}${pc(x)}` : '?');
-        const stopTxt = L.stop === 'limit' ? 'Zatrzymane: dzienny limit.' : L.stop === 'fail' ? 'Zatrzymane: gra przestała przyjmować ulepszenie albo podała nietypowy postęp.' : null;
-        void d;
-        box.appendChild(el('div', { class: 'mp-card' },
-          el('h3', null, 'Ostatnie ulepszanie'),
-          el('div', { class: 'mp-dim' }, `Zużyto ${L.used} ${L.used === 1 ? 'przedmiot' : L.used % 10 >= 2 && L.used % 10 <= 4 && (L.used % 100 < 12 || L.used % 100 > 14) ? 'przedmioty' : 'przedmiotów'}`),
-          ...L.items.map((x) => el('div', { style: { marginTop: '5px' } },
-            el('b', null, x.name), el('span', { class: 'mp-dim' }, ` · zużyto ${x.used} · ${lvl(x.from)} → ${lvl(x.to)}`),
-            x.maxed ? el('div', { class: 'mp-okc', style: { fontSize: '12px' } }, 'Ulepszony na najwyższy poziom. Po tym nie zużyto już żadnego przedmiotu.') : null)),
-          stopTxt ? el('div', { class: 'mp-warnc', style: { marginTop: '5px' } }, stopTxt) : null));
-      }
       if (cfg.freeAuto) {
         const f = game.freeBagSlots();
         box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, f == null ? 'Nie udało się odczytać wolnych miejsc w torbie.' : `Wolne miejsca w torbie teraz: ${f} · ulepszę przy ${Number(cfg.freeAt) ? cfg.freeAt + ' lub mniej' : 'pełnej torbie'}`));
@@ -6675,6 +6679,7 @@ MP.itemDeco = itemDeco;
     },
     init(c) {
       cfg = c;
+      if ('lastRun' in c) { delete c.lastRun; config.save(); }   // panel „Ostatnie ulepszanie” usunięty
       if (!c._v18) {   // stary format (jeden cel + automat) → nowy
         c._v18 = true;
         const it = c.target && game.itemById(c.target);
@@ -8914,5 +8919,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.1";
+MP.version = "1.0.2";
 })();

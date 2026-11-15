@@ -1070,18 +1070,6 @@
       else if (n && cfg.notifyUsed) toast(`Ulepszarka: ulepszono — zużyto ${n} przedmiotów`, 'ok');
       rr();
     }
-    try {
-      cfg.lastRun = {
-        t: Date.now(), used: n, stop: limitHit ? 'limit' : failed ? 'fail' : 'ok',
-        items: runSum.map((x) => {
-          const sl = slots().find((y) => Number(y.id) === x.id);
-          const it = game.itemById(x.id), lv = enhLevel(it);
-          const maxed = maxedNow.has(x.id) || (lv != null && lv >= MAX_LVL);
-          return { name: x.name, used: x.used, from: x.from, maxed, to: maxed ? { lvl: lv != null && lv >= MAX_LVL ? 5 : 4, pct: 100 } : sl && sl.prog ? { lvl: sl.prog.lvl, pct: pctTo5(sl.prog) } : null };
-        }),
-      };
-      config.save();
-    } catch {}
     return { n, failed: failed || limitHit };
   }
   /** Odpowiedź serwera z błędem (np. „Błąd wewnętrzny", t:stop) → przerywamy natychmiast. */
@@ -1387,21 +1375,6 @@
         box.appendChild(el('div', { class: 'mp-card mp-dim' }, 'Wszystkie typy przedmiotów są już przypisane — nie można dodać kolejnego przedmiotu. Odznacz jakiś typ w ulepszanym przedmiocie, żeby zwolnić miejsce.'));
       }
       if (cfg.usages && cfg.usages.limit && cfg.usages.day === new Date().toDateString()) box.appendChild(el('div', { class: 'mp-dim mp-ul-usages', style: { margin: '4px 2px' } }, `Dzisiejsze ulepszenia: ${cfg.usages.count} / ${cfg.usages.limit}`));
-      // ostatnie ulepszanie: ile zużyto, jak zmienił się poziom, czy coś poszło ponad +5
-      if (cfg.lastRun && cfg.lastRun.items && cfg.lastRun.items.length) {
-        const L = cfg.lastRun, d = new Date(L.t);
-        const pc = (x) => (x && x.pct != null ? ` (${String(x.pct).replace('.', ',')}%)` : '');
-        const lvl = (x) => (x ? `+${x.lvl}${pc(x)}` : '?');
-        const stopTxt = L.stop === 'limit' ? 'Zatrzymane: dzienny limit.' : L.stop === 'fail' ? 'Zatrzymane: gra przestała przyjmować ulepszenie albo podała nietypowy postęp.' : null;
-        void d;
-        box.appendChild(el('div', { class: 'mp-card' },
-          el('h3', null, 'Ostatnie ulepszanie'),
-          el('div', { class: 'mp-dim' }, `Zużyto ${L.used} ${L.used === 1 ? 'przedmiot' : L.used % 10 >= 2 && L.used % 10 <= 4 && (L.used % 100 < 12 || L.used % 100 > 14) ? 'przedmioty' : 'przedmiotów'}`),
-          ...L.items.map((x) => el('div', { style: { marginTop: '5px' } },
-            el('b', null, x.name), el('span', { class: 'mp-dim' }, ` · zużyto ${x.used} · ${lvl(x.from)} → ${lvl(x.to)}`),
-            x.maxed ? el('div', { class: 'mp-okc', style: { fontSize: '12px' } }, 'Ulepszony na najwyższy poziom. Po tym nie zużyto już żadnego przedmiotu.') : null)),
-          stopTxt ? el('div', { class: 'mp-warnc', style: { marginTop: '5px' } }, stopTxt) : null));
-      }
       if (cfg.freeAuto) {
         const f = game.freeBagSlots();
         box.appendChild(el('div', { class: 'mp-dim', style: { margin: '4px 2px' } }, f == null ? 'Nie udało się odczytać wolnych miejsc w torbie.' : `Wolne miejsca w torbie teraz: ${f} · ulepszę przy ${Number(cfg.freeAt) ? cfg.freeAt + ' lub mniej' : 'pełnej torbie'}`));
@@ -1412,6 +1385,7 @@
     },
     init(c) {
       cfg = c;
+      if ('lastRun' in c) { delete c.lastRun; config.save(); }   // panel „Ostatnie ulepszanie” usunięty
       if (!c._v18) {   // stary format (jeden cel + automat) → nowy
         c._v18 = true;
         const it = c.target && game.itemById(c.target);

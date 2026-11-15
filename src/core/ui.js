@@ -5,6 +5,10 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.2', d: '15.11.2026', items: [
+    'Ulepszarka: usunięto panel „Ostatnie ulepszanie” (informacje i tak są na bieżąco podczas ulepszania).',
+    'Podpisownik: godzina zdobycia w dymku legendy nie znika, gdy w tle trwa walka albo wpada łup.',
+  ] },
   { v: '1.0.1', d: '15.11.2026', items: [
     'Lekkie zmiany dobijarki.',
   ] },
