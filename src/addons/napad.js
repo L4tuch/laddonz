@@ -32,6 +32,10 @@
     return out.join(' ').replace(/<[^>]+>/g, '').trim();
   }
   let cfg;
+  /** Dziennik Slayera (do „Kopiuj raport"): namierzenie, przerwanie i każda zmiana stanu celu. */
+  const slog = (msg) => { try { net.pushLog({ kind: 'info', src: 'Slayer', msg }); } catch {} };
+  let lastState = '';
+  const state = (st, extra) => { if (st === lastState) return; lastState = st; slog(st + (extra ? ' ' + extra : '')); };
   /** Odświeżenie widoku dodatku w panelu (gdy jest otwarty). */
   let rr = () => {};
 
@@ -64,6 +68,12 @@
         if (/nie mo[żz]esz|nie mo[żz]na|za daleko|zbyt daleko|odleg[łl]/i.test(txt)) { b.n = prevN; b.until = prevUntil; S.refused[p.id] = now() + randomMs(SOFT_MIN_MS, SOFT_MAX_MS); return; }
         const sec = parseProtection(data);
         if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
+        // każdy inny komunikat gry przy ataku (np. inna treść „za daleko") — też nie liczy się do serii
+        const msg = respText(data);
+        if (msg && !game.inBattle()) { b.n = prevN; b.until = prevUntil; S.refused[p.id] = now() + randomMs(SOFT_MIN_MS, SOFT_MAX_MS); }
+        // do dziennika L4Tools (Kopiuj raport) — żeby było widać, co gra odpowiada na atak
+        const h = game.hero();
+        net.pushLog({ kind: 'info', src: 'Slayer', msg: `Atak na ${p.nick} (odl. ${h ? Math.abs(h.x - p.x) + '/' + Math.abs(h.y - p.y) : '?'}) → ${msg ? msg.slice(0, 120) : 'bez komunikatu'}` });
       },
     });
     return r.ok;
@@ -74,6 +84,7 @@
     if (!p) return;
     if (!allowed(p)) { toast(`Slayer: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
+    { const h = game.hero(); lastState = ''; slog(`Namierzono ${p.nick} (odl. ${h ? Math.abs(h.x - p.x) + '/' + Math.abs(h.y - p.y) : '?'})`); }
     // pierwszy atak od razu — bez przerw po wcześniejszych próbach
     S.last = 0; S.nextAttackAt = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
     cfg.target = null;                                // cel tylko do końca sesji (po odświeżeniu gry — zapomniany)
@@ -87,6 +98,8 @@
   function unlock(msg) {
     if (!S.lock) return;
     if (msg) toast(msg);
+    slog(`Koniec dobijania ${S.lock.nick}` + (msg ? ` — ${msg.replace(/^Slayer:\s*/, '')}` : ' (walka / zmiana)'));
+    lastState = '';
     S.lock = null;
     cfg.target = null;
     config.save();
@@ -99,8 +112,10 @@
     // ponowne naciśnięcie przy namierzonym celu = anulowanie (żeby zmienić cel: anuluj i naciśnij jeszcze raz)
     if (S.lock) { unlock(`Slayer: przerwano dobijanie ${S.lock.nick}`); return; }
     const h = game.hero(); if (!h) return;
-    const list = game.others().filter(allowed).sort((a, b) => dist(h, a) - dist(h, b));
-    if (!list.length) { toast('Slayer: brak graczy na mapie'); return; }
+    // członków własnej grupy nie da się zaatakować — nie namierzamy ich (wcześniej X łapał często kogoś z grupy obok)
+    const party = new Set(game.partyMembers().map(Number));
+    const list = game.others().filter((p) => !party.has(Number(p.id)) && allowed(p)).sort((a, b) => dist(h, a) - dist(h, b));
+    if (!list.length) { toast('Slayer: brak graczy do namierzenia na mapie'); return; }
     lockOn(list[0]);
   }
 
@@ -308,7 +323,7 @@
   function ensureLoop() {
     const need = !!(cfg && cfg.enabled) && !!S.lock;
     ensureArrow();
-    if (need && !S.timer) S.timer = setTimeout(() => { S.timer = null; tick(); ensureLoop(); }, randomMs(150, 630));
+    if (need && !S.timer) S.timer = setTimeout(() => { S.timer = null; try { tick(); } catch (e) { slog('błąd w pętli: ' + (e && e.message || e)); } ensureLoop(); }, randomMs(150, 630));   // błąd w jednym obrocie nie zatrzymuje pętli
     if (!need && S.timer) { clearTimeout(S.timer); S.timer = null; }
   }
   /** Namierzony gracz na mapie: po id, a gdy wrócił z nowym id — po nicku. */
@@ -330,16 +345,19 @@
     if (!game.ready()) return;
     freshArrivals();
     const h = game.hero(); if (!h) return;
-    if (game.inBattle()) return;
+    if (game.inBattle()) { if (S.lock) state('w walce'); return; }
     // namierzony cel — pamiętany, dopóki sam go nie zmienisz/przerwiesz; atak, gdy będzie w zasięgu
     if (S.lock) {
       const p = lockedPlayer();
       if (!p && !cfg.remember) { unlock(`Slayer: ${S.lock.nick} zniknął z mapy`); return; }
       if (!!p !== S.wasOn) { S.wasOn = !!p; rr(); }   // „na mapie" / „poza mapą" w panelu
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
+      if (S.lock && p) { const dx = Math.abs(h.x - p.x), dy = Math.abs(h.y - p.y); state(inRange(h, p) ? 'cel w zasięgu' : 'cel poza zasięgiem', `(odl. ${dx}/${dy})`); }
+      else if (S.lock) state('cel poza mapą');
       if (p && inRange(h, p) && !allowed(p)) { say('br' + p.id, `Slayer: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
       // cel wyszedł z zasięgu — seria liczy się od nowa (po powrocie w zasięg atak od razu, bez czekania na przerwę)
       if (p && !inRange(h, p)) { delete S.burst[p.id]; S.nextAttackAt = 0; }
+      if (p && inRange(h, p) && S.protectedUntil[p.id] > now()) state('cel ma ochronę');
       if (p && inRange(h, p) && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
     }
   }
@@ -407,7 +425,7 @@
         const pp = game.otherById(id);
         if (S.lock && (S.lock.id === Number(id) || (pp && pp.nick === S.lock.nick))) return [{ label: 'Przerwij dobijanie', fn: () => unlock(`Slayer: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`) }];
         const p = game.otherById(id);
-        if (!p || !allowed(p)) return [];
+        if (!p || !allowed(p) || game.partyMembers().map(Number).includes(Number(id))) return [];
         return [{ label: 'Dobij', fn: () => lockOn(game.otherById(id) || p) }];
       });
       bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; if (!cfg.remember) unlock(); });

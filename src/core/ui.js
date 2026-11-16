@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.5', d: '16.11.2026', items: [
+    'Modyfikacja zbierania danych do raportu.',
+  ] },
   { v: '1.0.4', d: '15.11.2026', items: [
     'Slayer: gdy cel wyjdzie z zasięgu i wróci, atak idzie od razu (seria liczy się od nowa, bez czekania na przerwę).',
     'Slayer: ataki odrzucone przez grę (za daleko, postać w ruchu) nie liczą się do serii — nie ma już przerwy, gdy stoisz obok celu.',
@@ -441,7 +444,7 @@ function copyReport() {
     r = {
       wersja: MP.version, czas: new Date().toISOString(),
       wlaczone: addons.list.filter((a) => addons.on(a.id)).map((a) => a.name),
-      log: net.log.slice(0, 40).map((x) => ({ t: x.t, k: x.kind, src: x.src, task: x.task, msg: x.msg })),
+      log: net.log.slice(0, 80).map((x) => { const d = new Date(x.t); return { t: x.t, czas: d.toLocaleTimeString('pl-PL') + '.' + String(d.getMilliseconds()).padStart(3, '0'), k: x.kind, src: x.src, task: x.task, msg: x.msg }; }),
       komendyGry: (net.recent || []).slice(0, 40),
       bledyStrony: store.get('errlog', []),
       ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,

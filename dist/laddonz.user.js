@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.4
+// @version      1.0.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -576,9 +576,15 @@ const keys = {
   },
 
   start() {
-    document.addEventListener('keydown', (e) => {
+    // Klawisz przypisany w L4Tools jest w całości „nasz": gra nie dostaje ani jego naciśnięcia, ani puszczenia
+    // (np. X w grze = atak na najbliższego — bez tego X atakował też potwora obok, a walka kasowała cel Slayera).
+    const held = new Set();
+    const swallow = (e) => { e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); };
+    const match = (c) => this.binds.find((b) => b.get() === c && (!b.when || b.when()));
+    const onDown = (e) => {
+      if (e.__mpKey) return; e.__mpKey = true;
       if (this.capturing) {
-        e.preventDefault(); e.stopPropagation();
+        swallow(e);
         if (e.key === 'Escape') { this.capturing(null); this.capturing = null; return; }
         if (e.key === 'Backspace' || e.key === 'Delete') { this.capturing(''); this.capturing = null; return; }
         const c = comboFromEvent(e);
@@ -586,17 +592,28 @@ const keys = {
         this.capturing(c); this.capturing = null;
         return;
       }
-      if (e.repeat || isTyping()) return;
+      if (isTyping()) return;
       const c = comboFromEvent(e);
       if (!c) return;
-      for (const b of this.binds) {
-        if (b.get() !== c) continue;
-        if (b.when && !b.when()) continue;
-        e.preventDefault(); e.stopPropagation();
-        try { b.fn(e); } catch (err) { console.warn('[L4Tools] skrót', b.label, err); }
-        return;
-      }
-    }, true);
+      const b = match(c);
+      if (!b) return;
+      swallow(e);
+      held.add(e.code || e.key);
+      if (e.repeat) return;   // przytrzymanie = nadal jedna akcja
+      try { b.fn(e); } catch (err) { console.warn('[L4Tools] skrót', b.label, err); }
+    };
+    const onUpPress = (e) => {
+      const k = e.code || e.key;
+      if (!held.has(k)) return;
+      swallow(e);
+      if (e.type === 'keyup') held.delete(k);
+    };
+    for (const tgt of [W, document]) {
+      tgt.addEventListener('keydown', onDown, true);
+      tgt.addEventListener('keyup', onUpPress, true);
+      tgt.addEventListener('keypress', onUpPress, true);
+    }
+    W.addEventListener('blur', () => held.clear());
   },
 
   /** Czeka na naciśnięcie klawisza (do ustawiania skrótu w panelu). */
@@ -2279,6 +2296,9 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.5', d: '16.11.2026', items: [
+    'Modyfikacja zbierania danych do raportu.',
+  ] },
   { v: '1.0.4', d: '15.11.2026', items: [
     'Slayer: gdy cel wyjdzie z zasięgu i wróci, atak idzie od razu (seria liczy się od nowa, bez czekania na przerwę).',
     'Slayer: ataki odrzucone przez grę (za daleko, postać w ruchu) nie liczą się do serii — nie ma już przerwy, gdy stoisz obok celu.',
@@ -2715,7 +2735,7 @@ function copyReport() {
     r = {
       wersja: MP.version, czas: new Date().toISOString(),
       wlaczone: addons.list.filter((a) => addons.on(a.id)).map((a) => a.name),
-      log: net.log.slice(0, 40).map((x) => ({ t: x.t, k: x.kind, src: x.src, task: x.task, msg: x.msg })),
+      log: net.log.slice(0, 80).map((x) => { const d = new Date(x.t); return { t: x.t, czas: d.toLocaleTimeString('pl-PL') + '.' + String(d.getMilliseconds()).padStart(3, '0'), k: x.kind, src: x.src, task: x.task, msg: x.msg }; }),
       komendyGry: (net.recent || []).slice(0, 40),
       bledyStrony: store.get('errlog', []),
       ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,
@@ -3112,6 +3132,10 @@ function parseProtection(data) {
     return out.join(' ').replace(/<[^>]+>/g, '').trim();
   }
   let cfg;
+  /** Dziennik Slayera (do „Kopiuj raport"): namierzenie, przerwanie i każda zmiana stanu celu. */
+  const slog = (msg) => { try { net.pushLog({ kind: 'info', src: 'Slayer', msg }); } catch {} };
+  let lastState = '';
+  const state = (st, extra) => { if (st === lastState) return; lastState = st; slog(st + (extra ? ' ' + extra : '')); };
   /** Odświeżenie widoku dodatku w panelu (gdy jest otwarty). */
   let rr = () => {};
 
@@ -3144,6 +3168,12 @@ function parseProtection(data) {
         if (/nie mo[żz]esz|nie mo[żz]na|za daleko|zbyt daleko|odleg[łl]/i.test(txt)) { b.n = prevN; b.until = prevUntil; S.refused[p.id] = now() + randomMs(SOFT_MIN_MS, SOFT_MAX_MS); return; }
         const sec = parseProtection(data);
         if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
+        // każdy inny komunikat gry przy ataku (np. inna treść „za daleko") — też nie liczy się do serii
+        const msg = respText(data);
+        if (msg && !game.inBattle()) { b.n = prevN; b.until = prevUntil; S.refused[p.id] = now() + randomMs(SOFT_MIN_MS, SOFT_MAX_MS); }
+        // do dziennika L4Tools (Kopiuj raport) — żeby było widać, co gra odpowiada na atak
+        const h = game.hero();
+        net.pushLog({ kind: 'info', src: 'Slayer', msg: `Atak na ${p.nick} (odl. ${h ? Math.abs(h.x - p.x) + '/' + Math.abs(h.y - p.y) : '?'}) → ${msg ? msg.slice(0, 120) : 'bez komunikatu'}` });
       },
     });
     return r.ok;
@@ -3154,6 +3184,7 @@ function parseProtection(data) {
     if (!p) return;
     if (!allowed(p)) { toast(`Slayer: ${p.nick} jest chroniony przez Bratana`); return; }
     S.lock = { id: p.id, nick: p.nick, t: now() };
+    { const h = game.hero(); lastState = ''; slog(`Namierzono ${p.nick} (odl. ${h ? Math.abs(h.x - p.x) + '/' + Math.abs(h.y - p.y) : '?'})`); }
     // pierwszy atak od razu — bez przerw po wcześniejszych próbach
     S.last = 0; S.nextAttackAt = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
     cfg.target = null;                                // cel tylko do końca sesji (po odświeżeniu gry — zapomniany)
@@ -3167,6 +3198,8 @@ function parseProtection(data) {
   function unlock(msg) {
     if (!S.lock) return;
     if (msg) toast(msg);
+    slog(`Koniec dobijania ${S.lock.nick}` + (msg ? ` — ${msg.replace(/^Slayer:\s*/, '')}` : ' (walka / zmiana)'));
+    lastState = '';
     S.lock = null;
     cfg.target = null;
     config.save();
@@ -3179,8 +3212,10 @@ function parseProtection(data) {
     // ponowne naciśnięcie przy namierzonym celu = anulowanie (żeby zmienić cel: anuluj i naciśnij jeszcze raz)
     if (S.lock) { unlock(`Slayer: przerwano dobijanie ${S.lock.nick}`); return; }
     const h = game.hero(); if (!h) return;
-    const list = game.others().filter(allowed).sort((a, b) => dist(h, a) - dist(h, b));
-    if (!list.length) { toast('Slayer: brak graczy na mapie'); return; }
+    // członków własnej grupy nie da się zaatakować — nie namierzamy ich (wcześniej X łapał często kogoś z grupy obok)
+    const party = new Set(game.partyMembers().map(Number));
+    const list = game.others().filter((p) => !party.has(Number(p.id)) && allowed(p)).sort((a, b) => dist(h, a) - dist(h, b));
+    if (!list.length) { toast('Slayer: brak graczy do namierzenia na mapie'); return; }
     lockOn(list[0]);
   }
 
@@ -3388,7 +3423,7 @@ function parseProtection(data) {
   function ensureLoop() {
     const need = !!(cfg && cfg.enabled) && !!S.lock;
     ensureArrow();
-    if (need && !S.timer) S.timer = setTimeout(() => { S.timer = null; tick(); ensureLoop(); }, randomMs(150, 630));
+    if (need && !S.timer) S.timer = setTimeout(() => { S.timer = null; try { tick(); } catch (e) { slog('błąd w pętli: ' + (e && e.message || e)); } ensureLoop(); }, randomMs(150, 630));   // błąd w jednym obrocie nie zatrzymuje pętli
     if (!need && S.timer) { clearTimeout(S.timer); S.timer = null; }
   }
   /** Namierzony gracz na mapie: po id, a gdy wrócił z nowym id — po nicku. */
@@ -3410,16 +3445,19 @@ function parseProtection(data) {
     if (!game.ready()) return;
     freshArrivals();
     const h = game.hero(); if (!h) return;
-    if (game.inBattle()) return;
+    if (game.inBattle()) { if (S.lock) state('w walce'); return; }
     // namierzony cel — pamiętany, dopóki sam go nie zmienisz/przerwiesz; atak, gdy będzie w zasięgu
     if (S.lock) {
       const p = lockedPlayer();
       if (!p && !cfg.remember) { unlock(`Slayer: ${S.lock.nick} zniknął z mapy`); return; }
       if (!!p !== S.wasOn) { S.wasOn = !!p; rr(); }   // „na mapie" / „poza mapą" w panelu
       if (p) mark.ensure(p.id);   // gracz wrócił (nowy obiekt w grze) — przywróć podświetlenie
+      if (S.lock && p) { const dx = Math.abs(h.x - p.x), dy = Math.abs(h.y - p.y); state(inRange(h, p) ? 'cel w zasięgu' : 'cel poza zasięgiem', `(odl. ${dx}/${dy})`); }
+      else if (S.lock) state('cel poza mapą');
       if (p && inRange(h, p) && !allowed(p)) { say('br' + p.id, `Slayer: ${p.nick} jest chroniony przez Bratana — nie zaatakuję`, 60000); return; }
       // cel wyszedł z zasięgu — seria liczy się od nowa (po powrocie w zasięg atak od razu, bez czekania na przerwę)
       if (p && !inRange(h, p)) { delete S.burst[p.id]; S.nextAttackAt = 0; }
+      if (p && inRange(h, p) && S.protectedUntil[p.id] > now()) state('cel ma ochronę');
       if (p && inRange(h, p) && !(S.refused[p.id] > now()) && !(S.protectedUntil[p.id] > now())) { attack(p); return; }
     }
   }
@@ -3487,7 +3525,7 @@ function parseProtection(data) {
         const pp = game.otherById(id);
         if (S.lock && (S.lock.id === Number(id) || (pp && pp.nick === S.lock.nick))) return [{ label: 'Przerwij dobijanie', fn: () => unlock(`Slayer: przerwano dobijanie ${S.lock ? S.lock.nick : ''}`) }];
         const p = game.otherById(id);
-        if (!p || !allowed(p)) return [];
+        if (!p || !allowed(p) || game.partyMembers().map(Number).includes(Number(id))) return [];
         return [{ label: 'Dobij', fn: () => lockOn(game.otherById(id) || p) }];
       });
       bus.on('map:change', () => { S.protectedUntil = {}; S.tried = {}; S.refused = {}; if (!cfg.remember) unlock(); });
@@ -9135,5 +9173,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.4";
+MP.version = "1.0.5";
 })();

@@ -34,9 +34,15 @@ const keys = {
   },
 
   start() {
-    document.addEventListener('keydown', (e) => {
+    // Klawisz przypisany w L4Tools jest w całości „nasz": gra nie dostaje ani jego naciśnięcia, ani puszczenia
+    // (np. X w grze = atak na najbliższego — bez tego X atakował też potwora obok, a walka kasowała cel Slayera).
+    const held = new Set();
+    const swallow = (e) => { e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); };
+    const match = (c) => this.binds.find((b) => b.get() === c && (!b.when || b.when()));
+    const onDown = (e) => {
+      if (e.__mpKey) return; e.__mpKey = true;
       if (this.capturing) {
-        e.preventDefault(); e.stopPropagation();
+        swallow(e);
         if (e.key === 'Escape') { this.capturing(null); this.capturing = null; return; }
         if (e.key === 'Backspace' || e.key === 'Delete') { this.capturing(''); this.capturing = null; return; }
         const c = comboFromEvent(e);
@@ -44,17 +50,28 @@ const keys = {
         this.capturing(c); this.capturing = null;
         return;
       }
-      if (e.repeat || isTyping()) return;
+      if (isTyping()) return;
       const c = comboFromEvent(e);
       if (!c) return;
-      for (const b of this.binds) {
-        if (b.get() !== c) continue;
-        if (b.when && !b.when()) continue;
-        e.preventDefault(); e.stopPropagation();
-        try { b.fn(e); } catch (err) { console.warn('[L4Tools] skrót', b.label, err); }
-        return;
-      }
-    }, true);
+      const b = match(c);
+      if (!b) return;
+      swallow(e);
+      held.add(e.code || e.key);
+      if (e.repeat) return;   // przytrzymanie = nadal jedna akcja
+      try { b.fn(e); } catch (err) { console.warn('[L4Tools] skrót', b.label, err); }
+    };
+    const onUpPress = (e) => {
+      const k = e.code || e.key;
+      if (!held.has(k)) return;
+      swallow(e);
+      if (e.type === 'keyup') held.delete(k);
+    };
+    for (const tgt of [W, document]) {
+      tgt.addEventListener('keydown', onDown, true);
+      tgt.addEventListener('keyup', onUpPress, true);
+      tgt.addEventListener('keypress', onUpPress, true);
+    }
+    W.addEventListener('blur', () => held.clear());
   },
 
   /** Czeka na naciśnięcie klawisza (do ustawiania skrótu w panelu). */
