@@ -121,14 +121,42 @@ MP.itemDeco = itemDeco;
   function keyOf(it) {
     if (!it) return null;
     const raw = it.raw || {};
-    const base = raw.tpl || it.tpl || it.name;
     const st = it.stats || {};
-    const dest = st.custom_teleport || st.teleport || '';
+    const dest = String(st.custom_teleport || st.teleport || '');
+    // teleporty: klucz to sam cel (mapa + kratka) — kamień, zwój czy inny przedmiot z tym samym celem dzielą podpis
+    if (dest) { const p = dest.split(','); if (p.length >= 3 && /^\d+$/.test(p[0].trim())) return `tp|${p[0].trim()},${p[1].trim()},${p[2].trim()}`; }
+    const base = raw.tpl || it.tpl || it.name;
     return base ? `${base}|${dest}` : null;
   }
-  function labelFor(it, id) {
+  /** Stary klucz (szablon + cel) — podpisy nadane przed zmianą nadal działają. */
+  function legacyKey(it) {
+    if (!it) return null;
+    const raw = it.raw || {};
+    const st = it.stats || {};
+    const dest = st.custom_teleport || st.teleport || '';
+    const base = raw.tpl || it.tpl || it.name;
+    return base ? `${base}|${dest}` : null;
+  }
+  /** Podpis po kluczu: nowy klucz, a dla teleportów także dowolny stary podpis z tym samym celem. */
+  function byKeyLabel(it) {
     const k = keyOf(it);
-    if (k && cfg.byKey[k]) return cfg.byKey[k].label;
+    if (!k) return null;
+    if (cfg.byKey[k]) return cfg.byKey[k];
+    const lk = legacyKey(it);
+    if (lk && cfg.byKey[lk]) return cfg.byKey[lk];
+    if (k.startsWith('tp|')) {
+      const dest = String((it.stats || {}).custom_teleport || (it.stats || {}).teleport || '');
+      const p = dest.split(','); const pre = p.slice(0, 3).map((x) => x.trim()).join(',');
+      for (const [kk, v] of Object.entries(cfg.byKey)) {
+        const d = kk.split('|')[1] || '';
+        if (d && d.split(',').slice(0, 3).map((x) => x.trim()).join(',') === pre) return v;
+      }
+    }
+    return null;
+  }
+  function labelFor(it, id) {
+    const bk = byKeyLabel(it);
+    if (bk) return bk.label;
     if (cfg.byId[id]) return cfg.byId[id];
     if (!it) return null;
     const n = it.name.toLowerCase();
@@ -203,13 +231,14 @@ MP.itemDeco = itemDeco;
     clearTimeout(legHover.timer); legHover = null;
   }
 
-  const signedKey = (id) => { const it = game.itemById(id); const k = keyOf(it); return !!(cfg && ((k && cfg.byKey[k]) || cfg.byId[id])); };
+  const signedKey = (id) => { const it = game.itemById(id); return !!(cfg && ((it && byKeyLabel(it)) || cfg.byId[id])); };
   MP.podpis = { labelFor: (it, id) => (cfg && cfg.enabled ? labelFor(it, id) : null), isSigned: (id) => signedKey(id) };
 
   async function signItem(id) {
     const it = game.itemById(id);
     const k = keyOf(it);
-    const cur = (k && cfg.byKey[k] && cfg.byKey[k].label) || cfg.byId[id] || '';
+    const curK = it ? byKeyLabel(it) : null;
+    const cur = (curK && curK.label) || cfg.byId[id] || '';
     const same = k ? game.heroItems().filter((x) => keyOf(x) === k).length : 1;
     const towns = ['Ithan', 'Torneg', 'Werbin', 'Eder', 'Karka-han', 'Nithal', 'Tuzmer', 'Thuzal', 'Mythar', 'Port Tuzmer'];
     const isTp = it && (it.stats.teleport || it.stats.custom_teleport || /telepor|kamie[nń]|zw[oó]j/i.test(it.name));
@@ -223,7 +252,15 @@ MP.itemDeco = itemDeco;
     });
     if (v === null) return;
     delete cfg.byId[id];
-    if (k) { if (v) cfg.byKey[k] = { label: v.slice(0, 14), name: it ? it.name : '' }; else delete cfg.byKey[k]; }
+    if (k) {
+      // stare podpisy tego samego przedmiotu / celu teleportu — zastępujemy jednym nowym
+      const lk = legacyKey(it); if (lk && lk !== k) delete cfg.byKey[lk];
+      if (k.startsWith('tp|')) {
+        const pre = k.slice(3);
+        for (const kk of Object.keys(cfg.byKey)) { const d = kk.split('|')[1] || ''; if (kk !== k && d && d.split(',').slice(0, 3).map((x) => x.trim()).join(',') === pre) delete cfg.byKey[kk]; }
+      }
+      if (v) cfg.byKey[k] = { label: v.slice(0, 14), name: it ? it.name : '' }; else delete cfg.byKey[k];
+    }
     else if (v) cfg.byId[id] = v.slice(0, 14);
     config.save(); bus.emit('deco');
     toast(v ? `Podpisano: ${v}${same > 1 ? ` (${same} szt.)` : ''}` : 'Usunięto podpis', 'ok', 1500);

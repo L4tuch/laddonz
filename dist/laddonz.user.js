@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.5
+// @version      1.0.6
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2296,6 +2296,9 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.6', d: '16.11.2026', items: [
+    'Podpisownik: przedmioty teleportujące w to samo miejsce (np. kamień i zwój czerwonego smoka) mają wspólny podpis — nowy przedmiot z tym samym celem od razu dostaje podpis.',
+  ] },
   { v: '1.0.5', d: '16.11.2026', items: [
     'Modyfikacja zbierania danych do raportu.',
   ] },
@@ -4433,14 +4436,42 @@ MP.itemDeco = itemDeco;
   function keyOf(it) {
     if (!it) return null;
     const raw = it.raw || {};
-    const base = raw.tpl || it.tpl || it.name;
     const st = it.stats || {};
-    const dest = st.custom_teleport || st.teleport || '';
+    const dest = String(st.custom_teleport || st.teleport || '');
+    // teleporty: klucz to sam cel (mapa + kratka) — kamień, zwój czy inny przedmiot z tym samym celem dzielą podpis
+    if (dest) { const p = dest.split(','); if (p.length >= 3 && /^\d+$/.test(p[0].trim())) return `tp|${p[0].trim()},${p[1].trim()},${p[2].trim()}`; }
+    const base = raw.tpl || it.tpl || it.name;
     return base ? `${base}|${dest}` : null;
   }
-  function labelFor(it, id) {
+  /** Stary klucz (szablon + cel) — podpisy nadane przed zmianą nadal działają. */
+  function legacyKey(it) {
+    if (!it) return null;
+    const raw = it.raw || {};
+    const st = it.stats || {};
+    const dest = st.custom_teleport || st.teleport || '';
+    const base = raw.tpl || it.tpl || it.name;
+    return base ? `${base}|${dest}` : null;
+  }
+  /** Podpis po kluczu: nowy klucz, a dla teleportów także dowolny stary podpis z tym samym celem. */
+  function byKeyLabel(it) {
     const k = keyOf(it);
-    if (k && cfg.byKey[k]) return cfg.byKey[k].label;
+    if (!k) return null;
+    if (cfg.byKey[k]) return cfg.byKey[k];
+    const lk = legacyKey(it);
+    if (lk && cfg.byKey[lk]) return cfg.byKey[lk];
+    if (k.startsWith('tp|')) {
+      const dest = String((it.stats || {}).custom_teleport || (it.stats || {}).teleport || '');
+      const p = dest.split(','); const pre = p.slice(0, 3).map((x) => x.trim()).join(',');
+      for (const [kk, v] of Object.entries(cfg.byKey)) {
+        const d = kk.split('|')[1] || '';
+        if (d && d.split(',').slice(0, 3).map((x) => x.trim()).join(',') === pre) return v;
+      }
+    }
+    return null;
+  }
+  function labelFor(it, id) {
+    const bk = byKeyLabel(it);
+    if (bk) return bk.label;
     if (cfg.byId[id]) return cfg.byId[id];
     if (!it) return null;
     const n = it.name.toLowerCase();
@@ -4515,13 +4546,14 @@ MP.itemDeco = itemDeco;
     clearTimeout(legHover.timer); legHover = null;
   }
 
-  const signedKey = (id) => { const it = game.itemById(id); const k = keyOf(it); return !!(cfg && ((k && cfg.byKey[k]) || cfg.byId[id])); };
+  const signedKey = (id) => { const it = game.itemById(id); return !!(cfg && ((it && byKeyLabel(it)) || cfg.byId[id])); };
   MP.podpis = { labelFor: (it, id) => (cfg && cfg.enabled ? labelFor(it, id) : null), isSigned: (id) => signedKey(id) };
 
   async function signItem(id) {
     const it = game.itemById(id);
     const k = keyOf(it);
-    const cur = (k && cfg.byKey[k] && cfg.byKey[k].label) || cfg.byId[id] || '';
+    const curK = it ? byKeyLabel(it) : null;
+    const cur = (curK && curK.label) || cfg.byId[id] || '';
     const same = k ? game.heroItems().filter((x) => keyOf(x) === k).length : 1;
     const towns = ['Ithan', 'Torneg', 'Werbin', 'Eder', 'Karka-han', 'Nithal', 'Tuzmer', 'Thuzal', 'Mythar', 'Port Tuzmer'];
     const isTp = it && (it.stats.teleport || it.stats.custom_teleport || /telepor|kamie[nń]|zw[oó]j/i.test(it.name));
@@ -4535,7 +4567,15 @@ MP.itemDeco = itemDeco;
     });
     if (v === null) return;
     delete cfg.byId[id];
-    if (k) { if (v) cfg.byKey[k] = { label: v.slice(0, 14), name: it ? it.name : '' }; else delete cfg.byKey[k]; }
+    if (k) {
+      // stare podpisy tego samego przedmiotu / celu teleportu — zastępujemy jednym nowym
+      const lk = legacyKey(it); if (lk && lk !== k) delete cfg.byKey[lk];
+      if (k.startsWith('tp|')) {
+        const pre = k.slice(3);
+        for (const kk of Object.keys(cfg.byKey)) { const d = kk.split('|')[1] || ''; if (kk !== k && d && d.split(',').slice(0, 3).map((x) => x.trim()).join(',') === pre) delete cfg.byKey[kk]; }
+      }
+      if (v) cfg.byKey[k] = { label: v.slice(0, 14), name: it ? it.name : '' }; else delete cfg.byKey[k];
+    }
     else if (v) cfg.byId[id] = v.slice(0, 14);
     config.save(); bus.emit('deco');
     toast(v ? `Podpisano: ${v}${same > 1 ? ` (${same} szt.)` : ''}` : 'Usunięto podpis', 'ok', 1500);
@@ -9173,5 +9213,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.5";
+MP.version = "1.0.6";
 })();

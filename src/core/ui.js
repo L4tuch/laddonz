@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.6', d: '16.11.2026', items: [
+    'Podpisownik: przedmioty teleportujące w to samo miejsce (np. kamień i zwój czerwonego smoka) mają wspólny podpis — nowy przedmiot z tym samym celem od razu dostaje podpis.',
+  ] },
   { v: '1.0.5', d: '16.11.2026', items: [
     'Modyfikacja zbierania danych do raportu.',
   ] },
