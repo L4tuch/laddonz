@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.0
+// @version      1.0.1
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2296,6 +2296,11 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.1', d: '17.11.2026', items: [
+    'Rozwinięte statystyki postaci wyświetlają się nad paskiem skrótów (pasek ich nie zasłania).',
+    'Slayer: po przyjętym ataku nie wysyła drugiego, tylko czeka na start walki — koniec z komunikatem „Przeciwnik już się wylogował!”.',
+    'Slayer: zasięg sprawdzany co 0,1 s — cel łapany już na pierwszym polu obok.',
+  ] },
   { v: '1.0.0', d: '16.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
@@ -2859,41 +2864,70 @@ const quickbar = {
     const OURS = ['#mp-qbar', '#mp-launcher', '#mp-qc'];
     let needCut = false;
     const ours = () => OURS.map((q) => document.querySelector(q)).filter(Boolean);
-    const uncut = (n) => { if (n.__mpCut) { n.__mpCut = false; n.style.removeProperty('clip-path'); } };
+    const uncut = (n) => { if (n.__mpCut) { n.__mpCut = false; n.__mpCutV = ''; n.style.removeProperty('clip-path'); } };
     const inter = (a, b) => {
       const x1 = Math.max(a.left, b.left), x2 = Math.min(a.right, b.right), y1 = Math.max(a.top, b.top), y2 = Math.min(a.bottom, b.bottom);
       return x2 > x1 && y2 > y1 ? { x1, x2, y1, y2 } : null;
     };
-    const cut = (n, tr) => {
+    /** Wycina z paska podane prostokąty (dymek, panel statystyk…) — wygląda, jakby to one leżały na pasku. */
+    const cutMany = (n, rects) => {
       const r = n.getBoundingClientRect();
-      const i = inter(tr, r);
-      if (!i) { uncut(n); return; }
+      const holes = rects.map((tr) => inter(tr, r)).filter(Boolean);
+      if (!holes.length) { uncut(n); return; }
       const W0 = -12, H0 = -12, W1 = r.width + 12, H1 = r.height + 12;
-      const a = i.x1 - r.left, b = i.y1 - r.top, c = i.x2 - r.left, d = i.y2 - r.top;
       const P = (x, y) => `${x.toFixed(1)}px ${y.toFixed(1)}px`;
-      const v = `polygon(evenodd, ${P(W0, H0)}, ${P(W1, H0)}, ${P(W1, H1)}, ${P(W0, H1)}, ${P(W0, H0)}, ${P(a, b)}, ${P(c, b)}, ${P(c, d)}, ${P(a, d)}, ${P(a, b)})`;
-      n.__mpCut = true; n.style.setProperty('clip-path', v, 'important');
+      let v = `polygon(evenodd, ${P(W0, H0)}, ${P(W1, H0)}, ${P(W1, H1)}, ${P(W0, H1)}, ${P(W0, H0)}`;
+      for (const i of holes) {
+        const a = i.x1 - r.left, b = i.y1 - r.top, c = i.x2 - r.left, d = i.y2 - r.top;
+        v += `, ${P(a, b)}, ${P(c, b)}, ${P(c, d)}, ${P(a, d)}, ${P(a, b)}, ${P(W0, H0)}`;
+      }
+      v += ')';
+      if (n.__mpCutV === v) return;
+      n.__mpCut = true; n.__mpCutV = v; n.style.setProperty('clip-path', v, 'important');
+    };
+    /*
+     * Rozwinięty panel statystyk postaci (wiersze .stat-row) — ma być NAD paskiem skrótów.
+     * Bierzemy przewijany kontener tych wierszy (a gdy go brak — ich rodzica).
+     */
+    const statsRects = () => {
+      const out = [], seen = new Set();
+      for (const row of document.querySelectorAll('.stat-row')) {
+        if (row.closest('.mp-glass, #mp-qbar') || !isVisible(row)) continue;
+        let box = null;
+        for (let a = row.parentElement, k = 0; a && a !== document.body && k < 8; a = a.parentElement, k++) {
+          const cs = getComputedStyle(a);
+          if (/(auto|scroll)/.test(cs.overflowY) || /scroll-pane|scroll-wrapper/.test(a.className || '')) { box = a; break; }
+        }
+        box = box || row.parentElement;
+        if (!box || seen.has(box)) continue;
+        seen.add(box);
+        const r = box.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0 && r.width < innerWidth * 0.6) out.push(r);
+      }
+      return out;
     };
     const lift = () => {
       const tips = Array.from(document.querySelectorAll('.tip-wrapper')).filter((t) => !t.closest('#mp-eqtip, .mp-host, .mp-glass') && isVisible(t));
-      if (!tips.length) { ours().forEach(uncut); return; }
-      const t = tips[tips.length - 1];
-      if (t.style.zIndex !== TOP) t.style.setProperty('z-index', TOP, 'important');
-      for (let a = t.parentElement; a && a !== document.body; a = a.parentElement) {
-        if (a.classList.contains('c-window')) break;
-        const cs = getComputedStyle(a);
-        if (cs.position !== 'static' && cs.zIndex !== 'auto') { if (!a.querySelector('canvas') && !a.__mpLift) { a.__mpLift = true; a.style.setProperty('z-index', TOP, 'important'); } break; }
-      }
-      const tr = t.getBoundingClientRect();
-      for (const n of ours()) {
-        if (!needCut) {
+      const holes = statsRects();
+      if (tips.length) {
+        const t = tips[tips.length - 1];
+        if (t.style.zIndex !== TOP) t.style.setProperty('z-index', TOP, 'important');
+        for (let a = t.parentElement; a && a !== document.body; a = a.parentElement) {
+          if (a.classList.contains('c-window')) break;
+          const cs = getComputedStyle(a);
+          if (cs.position !== 'static' && cs.zIndex !== 'auto') { if (!a.querySelector('canvas') && !a.__mpLift) { a.__mpLift = true; a.style.setProperty('z-index', TOP, 'important'); } break; }
+        }
+        const tr = t.getBoundingClientRect();
+        for (const n of ours()) {
+          if (needCut) break;
           const i = inter(tr, n.getBoundingClientRect());
           if (!i) continue;
           const top = document.elementFromPoint((i.x1 + i.x2) / 2, (i.y1 + i.y2) / 2);
-          if (top && n.contains(top)) needCut = true; else continue;
+          if (top && n.contains(top)) needCut = true;
         }
-        cut(n, tr);
+        if (needCut) holes.push(tr);
       }
+      for (const n of ours()) { if (holes.length) cutMany(n, holes); else uncut(n); }
     };
     let q = false;
     const kick = () => { if (q) return; q = true; requestAnimationFrame(() => { q = false; lift(); }); };
@@ -2901,6 +2935,8 @@ const quickbar = {
     document.addEventListener('mouseover', later, true);
     document.addEventListener('mouseout', () => setTimeout(kick, 120), true);
     document.addEventListener('mousemove', () => { if (document.querySelector('.tip-wrapper')) kick(); }, true);
+    document.addEventListener('click', () => { kick(); setTimeout(kick, 150); setTimeout(kick, 400); }, true);   // np. „Rozwiń” statystyk
+    setInterval(kick, 500);
   },
   start() {
     this.liftTips();
@@ -3097,7 +3133,7 @@ function parseProtection(data) {
   const BURST = 3;            // seria: tyle poleceń ataku
   const BURST_PAUSE_MIN_MS = 1800, BURST_PAUSE_MAX_MS = 2500; // losowa przerwa po serii
   const randomMs = (min, max) => min + Math.random() * (max - min);
-  const S = { last: 0, nextAttackAt: 0, protectedUntil: {}, tried: {}, refused: {}, burst: {}, lock: null, timer: null, said: {} };
+  const S = { last: 0, nextAttackAt: 0, inFlight: 0, protectedUntil: {}, tried: {}, refused: {}, burst: {}, lock: null, timer: null, said: {} };
   /** Komunikat o danym graczu najwyżej raz na `ms` (żeby nie zasypać ekranu przy ponawianiu). */
   const say = (key, msg, ms = 15000, type = 'warn') => { const t = now(); if (S.said[key] > t) return; S.said[key] = t + ms; toast(msg, type); };
   /** Tekst odpowiedzi serwera (ostrzeżenie/komunikat), jeśli jest. */
@@ -3137,11 +3173,14 @@ function parseProtection(data) {
     b.n++;
     if (b.n >= BURST) { b.n = 0; b.until = t + randomMs(BURST_PAUSE_MIN_MS, BURST_PAUSE_MAX_MS); }
     S.last = t;
+    if (S.inFlight > t) return false;                       // poprzedni atak czeka na odpowiedź / na start walki
+    S.inFlight = t + 1500;
     S.nextAttackAt = t + randomMs(RETRY_MIN_MS, RETRY_MAX_MS);
     S.tried[p.id] = t;
     const r = await net.send('attackPlayer', { id: p.id }, {
       src: 'Slayer', urgent: true, fast: true,      // atak bez czekania w kolejce za innymi dodatkami
       onResponse: (data) => {
+        S.inFlight = 0;   // odpowiedź przyszła — odmowa / ochrona pozwalają na kolejną próbę
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
         // komunikat pokazuje już sama gra — Slayer nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
@@ -3152,6 +3191,9 @@ function parseProtection(data) {
         if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
         // każdy inny komunikat gry przy ataku (np. inna treść „za daleko") — też nie liczy się do serii
         const msg = respText(data);
+        // przyjęty atak (bez komunikatu) — walka zaraz wystartuje: do 1,5 s nie wysyłamy kolejnego
+        // (wcześniej drugi atak trafiał w start walki i gra odpowiadała mylącym „Przeciwnik już się wylogował!")
+        S.inFlight = msg ? 0 : now() + 1500;
         if (msg && !game.inBattle()) { b.n = prevN; b.until = prevUntil; S.refused[p.id] = now() + randomMs(SOFT_MIN_MS, SOFT_MAX_MS); }
         // do dziennika L4Tools (Kopiuj raport) — żeby było widać, co gra odpowiada na atak
         const h = game.hero();
@@ -3168,7 +3210,7 @@ function parseProtection(data) {
     S.lock = { id: p.id, nick: p.nick, t: now() };
     { const h = game.hero(); lastState = ''; slog(`Namierzono ${p.nick} (odl. ${h ? Math.abs(h.x - p.x) + '/' + Math.abs(h.y - p.y) : '?'})`); }
     // pierwszy atak od razu — bez przerw po wcześniejszych próbach
-    S.last = 0; S.nextAttackAt = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
+    S.last = 0; S.nextAttackAt = 0; S.inFlight = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
     cfg.target = null;                                // cel tylko do końca sesji (po odświeżeniu gry — zapomniany)
     config.save();
     mark.set(p.id);
@@ -3405,7 +3447,7 @@ function parseProtection(data) {
   function ensureLoop() {
     const need = !!(cfg && cfg.enabled) && !!S.lock;
     ensureArrow();
-    if (need && !S.timer) S.timer = setTimeout(() => { S.timer = null; try { tick(); } catch (e) { slog('błąd w pętli: ' + (e && e.message || e)); } ensureLoop(); }, randomMs(150, 630));   // błąd w jednym obrocie nie zatrzymuje pętli
+    if (need && !S.timer) S.timer = setTimeout(() => { S.timer = null; try { tick(); } catch (e) { slog('błąd w pętli: ' + (e && e.message || e)); } ensureLoop(); }, 100);   // sprawdzanie zasięgu co 0,1 s (krócej niż krok postaci); błąd w jednym obrocie nie zatrzymuje pętli
     if (!need && S.timer) { clearTimeout(S.timer); S.timer = null; }
   }
   /** Namierzony gracz na mapie: po id, a gdy wrócił z nowym id — po nicku. */
@@ -9170,5 +9212,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.0";
+MP.version = "1.0.1";
 })();

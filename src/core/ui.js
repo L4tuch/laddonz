@@ -5,6 +5,11 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.1', d: '17.11.2026', items: [
+    'Rozwinięte statystyki postaci wyświetlają się nad paskiem skrótów (pasek ich nie zasłania).',
+    'Slayer: po przyjętym ataku nie wysyła drugiego, tylko czeka na start walki — koniec z komunikatem „Przeciwnik już się wylogował!”.',
+    'Slayer: zasięg sprawdzany co 0,1 s — cel łapany już na pierwszym polu obok.',
+  ] },
   { v: '1.0.0', d: '16.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',

@@ -20,41 +20,70 @@ const quickbar = {
     const OURS = ['#mp-qbar', '#mp-launcher', '#mp-qc'];
     let needCut = false;
     const ours = () => OURS.map((q) => document.querySelector(q)).filter(Boolean);
-    const uncut = (n) => { if (n.__mpCut) { n.__mpCut = false; n.style.removeProperty('clip-path'); } };
+    const uncut = (n) => { if (n.__mpCut) { n.__mpCut = false; n.__mpCutV = ''; n.style.removeProperty('clip-path'); } };
     const inter = (a, b) => {
       const x1 = Math.max(a.left, b.left), x2 = Math.min(a.right, b.right), y1 = Math.max(a.top, b.top), y2 = Math.min(a.bottom, b.bottom);
       return x2 > x1 && y2 > y1 ? { x1, x2, y1, y2 } : null;
     };
-    const cut = (n, tr) => {
+    /** Wycina z paska podane prostokąty (dymek, panel statystyk…) — wygląda, jakby to one leżały na pasku. */
+    const cutMany = (n, rects) => {
       const r = n.getBoundingClientRect();
-      const i = inter(tr, r);
-      if (!i) { uncut(n); return; }
+      const holes = rects.map((tr) => inter(tr, r)).filter(Boolean);
+      if (!holes.length) { uncut(n); return; }
       const W0 = -12, H0 = -12, W1 = r.width + 12, H1 = r.height + 12;
-      const a = i.x1 - r.left, b = i.y1 - r.top, c = i.x2 - r.left, d = i.y2 - r.top;
       const P = (x, y) => `${x.toFixed(1)}px ${y.toFixed(1)}px`;
-      const v = `polygon(evenodd, ${P(W0, H0)}, ${P(W1, H0)}, ${P(W1, H1)}, ${P(W0, H1)}, ${P(W0, H0)}, ${P(a, b)}, ${P(c, b)}, ${P(c, d)}, ${P(a, d)}, ${P(a, b)})`;
-      n.__mpCut = true; n.style.setProperty('clip-path', v, 'important');
+      let v = `polygon(evenodd, ${P(W0, H0)}, ${P(W1, H0)}, ${P(W1, H1)}, ${P(W0, H1)}, ${P(W0, H0)}`;
+      for (const i of holes) {
+        const a = i.x1 - r.left, b = i.y1 - r.top, c = i.x2 - r.left, d = i.y2 - r.top;
+        v += `, ${P(a, b)}, ${P(c, b)}, ${P(c, d)}, ${P(a, d)}, ${P(a, b)}, ${P(W0, H0)}`;
+      }
+      v += ')';
+      if (n.__mpCutV === v) return;
+      n.__mpCut = true; n.__mpCutV = v; n.style.setProperty('clip-path', v, 'important');
+    };
+    /*
+     * Rozwinięty panel statystyk postaci (wiersze .stat-row) — ma być NAD paskiem skrótów.
+     * Bierzemy przewijany kontener tych wierszy (a gdy go brak — ich rodzica).
+     */
+    const statsRects = () => {
+      const out = [], seen = new Set();
+      for (const row of document.querySelectorAll('.stat-row')) {
+        if (row.closest('.mp-glass, #mp-qbar') || !isVisible(row)) continue;
+        let box = null;
+        for (let a = row.parentElement, k = 0; a && a !== document.body && k < 8; a = a.parentElement, k++) {
+          const cs = getComputedStyle(a);
+          if (/(auto|scroll)/.test(cs.overflowY) || /scroll-pane|scroll-wrapper/.test(a.className || '')) { box = a; break; }
+        }
+        box = box || row.parentElement;
+        if (!box || seen.has(box)) continue;
+        seen.add(box);
+        const r = box.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0 && r.width < innerWidth * 0.6) out.push(r);
+      }
+      return out;
     };
     const lift = () => {
       const tips = Array.from(document.querySelectorAll('.tip-wrapper')).filter((t) => !t.closest('#mp-eqtip, .mp-host, .mp-glass') && isVisible(t));
-      if (!tips.length) { ours().forEach(uncut); return; }
-      const t = tips[tips.length - 1];
-      if (t.style.zIndex !== TOP) t.style.setProperty('z-index', TOP, 'important');
-      for (let a = t.parentElement; a && a !== document.body; a = a.parentElement) {
-        if (a.classList.contains('c-window')) break;
-        const cs = getComputedStyle(a);
-        if (cs.position !== 'static' && cs.zIndex !== 'auto') { if (!a.querySelector('canvas') && !a.__mpLift) { a.__mpLift = true; a.style.setProperty('z-index', TOP, 'important'); } break; }
-      }
-      const tr = t.getBoundingClientRect();
-      for (const n of ours()) {
-        if (!needCut) {
+      const holes = statsRects();
+      if (tips.length) {
+        const t = tips[tips.length - 1];
+        if (t.style.zIndex !== TOP) t.style.setProperty('z-index', TOP, 'important');
+        for (let a = t.parentElement; a && a !== document.body; a = a.parentElement) {
+          if (a.classList.contains('c-window')) break;
+          const cs = getComputedStyle(a);
+          if (cs.position !== 'static' && cs.zIndex !== 'auto') { if (!a.querySelector('canvas') && !a.__mpLift) { a.__mpLift = true; a.style.setProperty('z-index', TOP, 'important'); } break; }
+        }
+        const tr = t.getBoundingClientRect();
+        for (const n of ours()) {
+          if (needCut) break;
           const i = inter(tr, n.getBoundingClientRect());
           if (!i) continue;
           const top = document.elementFromPoint((i.x1 + i.x2) / 2, (i.y1 + i.y2) / 2);
-          if (top && n.contains(top)) needCut = true; else continue;
+          if (top && n.contains(top)) needCut = true;
         }
-        cut(n, tr);
+        if (needCut) holes.push(tr);
       }
+      for (const n of ours()) { if (holes.length) cutMany(n, holes); else uncut(n); }
     };
     let q = false;
     const kick = () => { if (q) return; q = true; requestAnimationFrame(() => { q = false; lift(); }); };
@@ -62,6 +91,8 @@ const quickbar = {
     document.addEventListener('mouseover', later, true);
     document.addEventListener('mouseout', () => setTimeout(kick, 120), true);
     document.addEventListener('mousemove', () => { if (document.querySelector('.tip-wrapper')) kick(); }, true);
+    document.addEventListener('click', () => { kick(); setTimeout(kick, 150); setTimeout(kick, 400); }, true);   // np. „Rozwiń” statystyk
+    setInterval(kick, 500);
   },
   start() {
     this.liftTips();

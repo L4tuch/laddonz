@@ -15,7 +15,7 @@
   const BURST = 3;            // seria: tyle poleceń ataku
   const BURST_PAUSE_MIN_MS = 1800, BURST_PAUSE_MAX_MS = 2500; // losowa przerwa po serii
   const randomMs = (min, max) => min + Math.random() * (max - min);
-  const S = { last: 0, nextAttackAt: 0, protectedUntil: {}, tried: {}, refused: {}, burst: {}, lock: null, timer: null, said: {} };
+  const S = { last: 0, nextAttackAt: 0, inFlight: 0, protectedUntil: {}, tried: {}, refused: {}, burst: {}, lock: null, timer: null, said: {} };
   /** Komunikat o danym graczu najwyżej raz na `ms` (żeby nie zasypać ekranu przy ponawianiu). */
   const say = (key, msg, ms = 15000, type = 'warn') => { const t = now(); if (S.said[key] > t) return; S.said[key] = t + ms; toast(msg, type); };
   /** Tekst odpowiedzi serwera (ostrzeżenie/komunikat), jeśli jest. */
@@ -55,11 +55,14 @@
     b.n++;
     if (b.n >= BURST) { b.n = 0; b.until = t + randomMs(BURST_PAUSE_MIN_MS, BURST_PAUSE_MAX_MS); }
     S.last = t;
+    if (S.inFlight > t) return false;                       // poprzedni atak czeka na odpowiedź / na start walki
+    S.inFlight = t + 1500;
     S.nextAttackAt = t + randomMs(RETRY_MIN_MS, RETRY_MAX_MS);
     S.tried[p.id] = t;
     const r = await net.send('attackPlayer', { id: p.id }, {
       src: 'Slayer', urgent: true, fast: true,      // atak bez czekania w kolejce za innymi dodatkami
       onResponse: (data) => {
+        S.inFlight = 0;   // odpowiedź przyszła — odmowa / ochrona pozwalają na kolejną próbę
         // odmowa serwera (np. żółta mapa: „Przeciwnik nie zgadza się na walkę") — nie ponawiamy w kółko i MÓWIMY o tym
         // komunikat pokazuje już sama gra — Slayer nie dubluje go własnym, tylko zapamiętuje, żeby nie ponawiać w kółko
         let txt = ''; try { txt = JSON.stringify(data || {}); } catch {}
@@ -70,6 +73,9 @@
         if (sec) { S.protectedUntil[p.id] = now() + sec * 1000; return; }
         // każdy inny komunikat gry przy ataku (np. inna treść „za daleko") — też nie liczy się do serii
         const msg = respText(data);
+        // przyjęty atak (bez komunikatu) — walka zaraz wystartuje: do 1,5 s nie wysyłamy kolejnego
+        // (wcześniej drugi atak trafiał w start walki i gra odpowiadała mylącym „Przeciwnik już się wylogował!")
+        S.inFlight = msg ? 0 : now() + 1500;
         if (msg && !game.inBattle()) { b.n = prevN; b.until = prevUntil; S.refused[p.id] = now() + randomMs(SOFT_MIN_MS, SOFT_MAX_MS); }
         // do dziennika L4Tools (Kopiuj raport) — żeby było widać, co gra odpowiada na atak
         const h = game.hero();
@@ -86,7 +92,7 @@
     S.lock = { id: p.id, nick: p.nick, t: now() };
     { const h = game.hero(); lastState = ''; slog(`Namierzono ${p.nick} (odl. ${h ? Math.abs(h.x - p.x) + '/' + Math.abs(h.y - p.y) : '?'})`); }
     // pierwszy atak od razu — bez przerw po wcześniejszych próbach
-    S.last = 0; S.nextAttackAt = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
+    S.last = 0; S.nextAttackAt = 0; S.inFlight = 0; delete S.refused[p.id]; delete S.tried[p.id]; delete S.burst[p.id];
     cfg.target = null;                                // cel tylko do końca sesji (po odświeżeniu gry — zapomniany)
     config.save();
     mark.set(p.id);
@@ -323,7 +329,7 @@
   function ensureLoop() {
     const need = !!(cfg && cfg.enabled) && !!S.lock;
     ensureArrow();
-    if (need && !S.timer) S.timer = setTimeout(() => { S.timer = null; try { tick(); } catch (e) { slog('błąd w pętli: ' + (e && e.message || e)); } ensureLoop(); }, randomMs(150, 630));   // błąd w jednym obrocie nie zatrzymuje pętli
+    if (need && !S.timer) S.timer = setTimeout(() => { S.timer = null; try { tick(); } catch (e) { slog('błąd w pętli: ' + (e && e.message || e)); } ensureLoop(); }, 100);   // sprawdzanie zasięgu co 0,1 s (krócej niż krok postaci); błąd w jednym obrocie nie zatrzymuje pętli
     if (!need && S.timer) { clearTimeout(S.timer); S.timer = null; }
   }
   /** Namierzony gracz na mapie: po id, a gdy wrócił z nowym id — po nicku. */
