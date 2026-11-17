@@ -5,33 +5,11 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
-  { v: '1.0.6', d: '16.11.2026', items: [
-    'Podpisownik: przedmioty teleportujące w to samo miejsce (np. kamień i zwój czerwonego smoka) mają wspólny podpis — nowy przedmiot z tym samym celem od razu dostaje podpis.',
-  ] },
-  { v: '1.0.5', d: '16.11.2026', items: [
-    'Modyfikacja zbierania danych do raportu.',
-  ] },
-  { v: '1.0.4', d: '15.11.2026', items: [
-    'Slayer: gdy cel wyjdzie z zasięgu i wróci, atak idzie od razu (seria liczy się od nowa, bez czekania na przerwę).',
-    'Slayer: ataki odrzucone przez grę (za daleko, postać w ruchu) nie liczą się do serii — nie ma już przerwy, gdy stoisz obok celu.',
-  ] },
-  { v: '1.0.3', d: '15.11.2026', items: [
-    'Ustawienia wspólne dla wszystkich postaci obejmują teraz tylko włączone dodatki, klawisze i opcje. Dane postaci zostają przy każdej postaci osobno: cel Slayera, przedmioty i ochrona w Ulepszarce (oraz jej dzienny limit), kolejka Szybkiej Rączki, filtry Graczy na mapie+ i podpisy konkretnych przedmiotów w Podpisowniku.',
-    'Kto złapie: przy kolosach nie pokazuje szansy (%) — z kolosa każdy dostaje własny łup. Listę kolosów można uzupełnić w ustawieniach dodatku.',
-    'Lepsza Grupa: nowe ustawienie — automatyczne przyjmowanie zaproszeń do grupy od znajomych i klanowiczów (niezależnie od tego, gdzie są) oraz od sojuszników z tej samej mapy. Każdą grupę można włączyć osobno.',
-  ] },
-  { v: '1.0.2', d: '15.11.2026', items: [
-    'Ulepszarka: usunięto panel „Ostatnie ulepszanie” (informacje i tak są na bieżąco podczas ulepszania).',
-    'Podpisownik: godzina zdobycia w dymku legendy nie znika, gdy w tle trwa walka albo wpada łup.',
-  ] },
-  { v: '1.0.1', d: '15.11.2026', items: [
-    'Lekkie zmiany dobijarki.',
-  ] },
-  { v: '1.0.0', d: '15.11.2026', items: [
+  { v: '1.0.0', d: '16.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
     'Kafelek L4 przy przyciskach gry i pasek skrótów do dodatków.',
-    'Dodatki: Slayer, Hey WakeUP!, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup i Motywy.',
+    'Dodatki: Slayer, Hey WakeUP!, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup i Motywy.',
   ] },
 ];
 
@@ -453,6 +431,7 @@ function copyReport() {
       ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,
       pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
       szybka: MP.szybka ? MP.szybka.debug() : null,
+      ktoZlapie: MP.ktoz ? MP.ktoz.foes() : null,
       oknoLupow: MP.legenda && MP.legenda.debug ? MP.legenda.debug() : null,
       klasyUI: (() => { const c = new Map(); document.querySelectorAll('body *').forEach((n) => { if (typeof n.className !== 'string' || n.closest('.mp-glass')) return; n.className.split(/\s+/).forEach((k) => k && !/^mp-|^mt-/.test(k) && c.set(k, (c.get(k) || 0) + 1)); }); return [...c].sort((a, b) => b[1] - a[1]).slice(0, 300).map(([k]) => k); })(),
     };

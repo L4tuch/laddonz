@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.6
+// @version      1.0.0
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -1800,7 +1800,7 @@ const addons = {
   cfg(id) { return config.data.addons[id]; },
   on(id) { return !!(config.data.addons[id] && config.data.addons[id].enabled); },
 
-  ORDER: ['napad', 'wakeup', 'bratan', 'ktotu', 'ktozlapie', 'cook', 'podpis', 'pokazeq', 'jakibon', 'taxi', 'autof', 'szybka', 'ulepszarka', 'minichat', 'legenda', 'motywnik'],
+  ORDER: ['napad', 'wakeup', 'bratan', 'ktotu', 'ktozlapie', 'cook', 'podpis', 'pokazeq', 'taxi', 'autof', 'szybka', 'ulepszarka', 'minichat', 'legenda', 'motywnik'],
 
   initAll() {
     this.list.sort((a, b) => this.ORDER.indexOf(a.id) - this.ORDER.indexOf(b.id));
@@ -2296,33 +2296,11 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
-  { v: '1.0.6', d: '16.11.2026', items: [
-    'Podpisownik: przedmioty teleportujące w to samo miejsce (np. kamień i zwój czerwonego smoka) mają wspólny podpis — nowy przedmiot z tym samym celem od razu dostaje podpis.',
-  ] },
-  { v: '1.0.5', d: '16.11.2026', items: [
-    'Modyfikacja zbierania danych do raportu.',
-  ] },
-  { v: '1.0.4', d: '15.11.2026', items: [
-    'Slayer: gdy cel wyjdzie z zasięgu i wróci, atak idzie od razu (seria liczy się od nowa, bez czekania na przerwę).',
-    'Slayer: ataki odrzucone przez grę (za daleko, postać w ruchu) nie liczą się do serii — nie ma już przerwy, gdy stoisz obok celu.',
-  ] },
-  { v: '1.0.3', d: '15.11.2026', items: [
-    'Ustawienia wspólne dla wszystkich postaci obejmują teraz tylko włączone dodatki, klawisze i opcje. Dane postaci zostają przy każdej postaci osobno: cel Slayera, przedmioty i ochrona w Ulepszarce (oraz jej dzienny limit), kolejka Szybkiej Rączki, filtry Graczy na mapie+ i podpisy konkretnych przedmiotów w Podpisowniku.',
-    'Kto złapie: przy kolosach nie pokazuje szansy (%) — z kolosa każdy dostaje własny łup. Listę kolosów można uzupełnić w ustawieniach dodatku.',
-    'Lepsza Grupa: nowe ustawienie — automatyczne przyjmowanie zaproszeń do grupy od znajomych i klanowiczów (niezależnie od tego, gdzie są) oraz od sojuszników z tej samej mapy. Każdą grupę można włączyć osobno.',
-  ] },
-  { v: '1.0.2', d: '15.11.2026', items: [
-    'Ulepszarka: usunięto panel „Ostatnie ulepszanie” (informacje i tak są na bieżąco podczas ulepszania).',
-    'Podpisownik: godzina zdobycia w dymku legendy nie znika, gdy w tle trwa walka albo wpada łup.',
-  ] },
-  { v: '1.0.1', d: '15.11.2026', items: [
-    'Lekkie zmiany dobijarki.',
-  ] },
-  { v: '1.0.0', d: '15.11.2026', items: [
+  { v: '1.0.0', d: '16.11.2026', items: [
     'Pierwsza wersja L4Tools.',
     'Panel w stylu okien gry: Dodatki, Motywy, Ustawienia, Changelog i Informacje.',
     'Kafelek L4 przy przyciskach gry i pasek skrótów do dodatków.',
-    'Dodatki: Slayer, Hey WakeUP!, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Jaki To Bon, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup i Motywy.',
+    'Dodatki: Slayer, Hey WakeUP!, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Podpisownik, Pokaż EQ, Fake Taxi, Szybka walka, Szybka Rączka, Ulepszarka, MiniChat, Legendarny Łup i Motywy.',
   ] },
 ];
 
@@ -2744,6 +2722,7 @@ function copyReport() {
       ulepszarka: MP.ulepszarka && MP.ulepszarka.reportData ? MP.ulepszarka.reportData() : null,
       pokazEq: MP.pokazEq && MP.pokazEq.lastDebug || null,
       szybka: MP.szybka ? MP.szybka.debug() : null,
+      ktoZlapie: MP.ktoz ? MP.ktoz.foes() : null,
       oknoLupow: MP.legenda && MP.legenda.debug ? MP.legenda.debug() : null,
       klasyUI: (() => { const c = new Map(); document.querySelectorAll('body *').forEach((n) => { if (typeof n.className !== 'string' || n.closest('.mp-glass')) return; n.className.split(/\s+/).forEach((k) => k && !/^mp-|^mt-/.test(k) && c.set(k, (c.get(k) || 0) + 1)); }); return [...c].sort((a, b) => b[1] - a[1]).slice(0, 300).map(([k]) => k); })(),
     };
@@ -3858,10 +3837,11 @@ function parseProtection(data) {
   const KOLOSY = ['Mamlambo', 'Regulus Mętnooki', 'Umibozu', 'Amaimon Soploręki', 'Hydrokora Chimeryczna', 'Vashkar', 'Lulukav', 'Arachin Podstępny', 'Reuzen', 'Wernoradzki Drakolisz'];
   let foes = { names: new Set(), kolos: false };
   const norm = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').trim();
+  MP.ktoz = { foes: () => ({ przeciwnicy: [...foes.names], obokNaMapie: foes.near || [], kolos: isKolosFight() }) };
   function isKolosFight() {
     if (foes.kolos) return true;
     const list = ((cfg && cfg.kolosy) || KOLOSY).map(norm).filter(Boolean);
-    for (const n of foes.names) { const x = norm(n); if (list.some((k) => x === k || x.includes(k))) return true; }
+    for (const n of [...foes.names, ...(foes.near || [])]) { const x = norm(n); if (list.some((k) => x === k || x.includes(k))) return true; }
     return false;
   }
   const LOOT_SEL = '.loot-wnd, .loots-window, .loot-window, [class*="loot-window"], [class*="loots-window"]';
@@ -3900,7 +3880,9 @@ function parseProtection(data) {
     const out = {};
     for (const w of arr) {
       const id = idOf(w);
-      if (!sameTeam(w) && !party.has(id)) {          // przeciwnik — zapamiętujemy nazwę (rozpoznanie kolosa)
+      // przeciwnik (NPC ma ujemne id; gracz z drugiej drużyny) — zapamiętujemy nazwę (rozpoznanie kolosa).
+      // Wcześniej przy nieodczytanej drużynie nikt nie był „przeciwnikiem", więc kolosa nie dało się rozpoznać.
+      if (!(id > 0) || (myTeam != null && !sameTeam(w) && !party.has(id))) {
         const nm = f(w, 'name') || f(w, 'nick');
         if (nm) foes.names.add(String(nm));
         if (/kolos/i.test(String(f(w, 'rank') || '') + ' ' + String(f(w, 'type') || '') + ' ' + String(f(w, 'wtName') || ''))) foes.kolos = true;
@@ -4022,7 +4004,15 @@ function parseProtection(data) {
         if (muts.every((m) => skip(m.target) || [...m.addedNodes, ...m.removedNodes].every((x) => x.nodeType !== 1 || skip(x)))) return;
         run();
       }).observe(document.body, { childList: true, subtree: true });
-      bus.on('battle:start', () => { last = { ids: [], prof: {}, t: 0 }; foes = { names: new Set(), kolos: false }; });
+      bus.on('battle:start', () => {
+        last = { ids: [], prof: {}, t: 0 }; foes = { names: new Set(), kolos: false };
+        // zapas: kolosy stojące na mapie w chwili startu walki w pobliżu postaci (gdy walka nie poda nazw przeciwników)
+        try {
+          const h = game.hero(); const N = E().npcs; let list = N && (typeof N.check === 'function' ? N.check() : N.getDrawableList ? N.getDrawableList() : N);
+          list = Array.isArray(list) ? list : Object.values(list || {});
+          for (const n of list) { const d = (n && n.d) || n || {}; if (h && d.nick != null && Math.max(Math.abs(d.x - h.x), Math.abs(d.y - h.y)) <= 3) foes.near = (foes.near || []).concat(String(d.nick)); }
+        } catch {}
+      });
       setInterval(() => { if (cfg.enabled && game.ready() && E().battle && (game.inBattle() || (typeof E().battle.isBattleShow === 'function' && E().battle.isBattleShow()))) snapshot(); }, 500);
       bus.on('battle:end', () => { if (cfg.enabled) snapshot(); });
       MP.ktozlapie = { fighters, participants, debug: () => ({ uczestnicy: participants(), wymagania: Object.fromEntries(reqCache) }) };
@@ -4313,7 +4303,7 @@ function parseProtection(data) {
 })();
 
 // ═══ src/addons/items_overlay.js ═══
-/* ───────── wspólny dekorator przedmiotów (Jaki To Bon, Podpisownik, Szybka rączka) ───────── */
+/* ───────── wspólny dekorator przedmiotów (Podpisownik, Szybka rączka) ───────── */
 const itemDeco = {
   painters: [],     // fn(itemEl, item) -> [{cls, text, title}] | null
   add(fn) { this.painters.push(fn); },
@@ -4394,34 +4384,7 @@ MP.itemDeco = itemDeco;
   MP.legName = (code) => { const b = bonusOf(code); return b ? b.name : String(code); };
   MP.legKey = (code) => { const b = bonusOf(code); return b ? b.id : String(code); };
 
-  defineAddon({
-    id: 'jakibon', name: 'Jaki To Bon', icon: 'jakibon', color: ['#ff9a3c', '#d4561c'],
-    desc: 'Wyświetla na przedmiotach legendarnych skrót ich bonusu (np. OR, CBK, FO). Od razu widzisz, z jaką legendą masz do czynienia, we własnym ekwipunku i u innych graczy.',
-    defaults: { enabled: false, allItems: false, abbr: {} },
-    settings: [{ key: 'allItems', type: 'bool', label: 'Pokazuj też na przedmiotach w torbach', hint: 'Domyślnie tylko założone.' }],
-    render(box) {
-      const tb = el('tbody');
-      for (const b of BONUSES) {
-        const i = el('input', { class: 'mp-in', value: (cfg.abbr && cfg.abbr[b.id]) || b.id, style: { width: '70px' } });
-        i.onchange = () => { cfg.abbr = cfg.abbr || {}; cfg.abbr[b.id] = i.value.trim() || b.id; config.save(); bus.emit('deco'); };
-        tb.appendChild(el('tr', null, el('td', null, b.name), el('td', null, i)));
-      }
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Skróty bonusów legendarnych'),
-        el('table', { class: 'mp-table' }, el('thead', null, el('tr', null, el('th', null, 'Bonus'), el('th', null, 'Skrót'))), tb),
-        seenCodes.size ? el('div', { class: 'mp-dim', style: { marginTop: '8px', fontSize: '11.5px' } }, 'Kody widziane w grze: ', el('span', { class: 'mp-mono' }, [...seenCodes].join(', '))) : null));
-    },
-    init(c) {
-      cfg = c;
-      if (!c._v17) { c._v17 = true; delete c.map; c.abbr = c.abbr || {}; config.save(); }
-      itemDeco.add((node, it) => {
-        if (!cfg.enabled || !it || !it.legbon) return null;
-        const other = /-showeq/.test(String(node.className)) || !!node.closest('.tip-wrapper');
-        if (!cfg.allItems && !other && !(it.st > 0)) return null;
-        return { cls: 'bon', text: abbr(it.legbon, it.raw), title: MP.legName(it.legbon) };
-      });
-    },
-    onToggle() { bus.emit('deco'); },
-  });
+  // Dodatek „Jaki To Bon” (skróty na przedmiotach) usunięty — zostają tylko nazwy/skróty bonusów do podsumowania w Pokaż EQ.
 })();
 
 /* ───────── Podpisownik ─────────
@@ -5063,8 +5026,7 @@ MP.itemDeco = itemDeco;
       box.appendChild(el('div', { class: 'dad-eq-slot', 'data-st': String(st), style: { left: c * 34 + 'px', top: r * 34 + 'px' }, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
         el('div', upg != null ? { class: 'item', 'data-upgrade': String(upg) } : { class: 'item' },
           el('div', { class: 'highlight' + (t ? ' ' + t + ' h-exist' : '') }),
-          it.icon ? el('img', { class: 'icon', src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
-          it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null)));
+          it.icon ? el('img', { class: 'icon', src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null)));
     };
     const loose = [];
     for (const it of items) {
@@ -5079,8 +5041,7 @@ MP.itemDeco = itemDeco;
   function layoutGrid(items) {
     if (cfg.compact) return gameGrid(items);
     const cell = (it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
-      it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
-      it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null);
+      it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null);
     if (!items.length) return el('div');
     const S = cfg.compact ? 34 : 36;
     // Układ okna „Ekwipunek Postaci": 3 kolumny × 4 rzędy. Geometrię (rozstaw slotów i przesunięcie siatki)
@@ -5298,11 +5259,7 @@ MP.itemDeco = itemDeco;
       for (const f of found) {
         const node = f.sl.querySelector('.item');
         if (!node) continue;
-        node.querySelectorAll(':scope > .mp-ibadge.bon').forEach((b) => b.remove());
-        if (f.it && f.it.legbon) {
-          if (getComputedStyle(node).position === 'static') node.style.position = 'relative';
-          node.appendChild(el('div', { class: 'mp-ibadge bon', title: MP.legName(f.it.legbon) }, MP.legAbbr(f.it.legbon, f.it.raw)));
-        }
+        node.querySelectorAll(':scope > .mp-ibadge.bon').forEach((b) => b.remove());   // skróty bonusów na przedmiotach — usunięte
       }
       // podsumowanie: same legendy
       const sum = {};
@@ -9213,5 +9170,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.6";
+MP.version = "1.0.0";
 })();

@@ -144,10 +144,11 @@
   const KOLOSY = ['Mamlambo', 'Regulus Mętnooki', 'Umibozu', 'Amaimon Soploręki', 'Hydrokora Chimeryczna', 'Vashkar', 'Lulukav', 'Arachin Podstępny', 'Reuzen', 'Wernoradzki Drakolisz'];
   let foes = { names: new Set(), kolos: false };
   const norm = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').trim();
+  MP.ktoz = { foes: () => ({ przeciwnicy: [...foes.names], obokNaMapie: foes.near || [], kolos: isKolosFight() }) };
   function isKolosFight() {
     if (foes.kolos) return true;
     const list = ((cfg && cfg.kolosy) || KOLOSY).map(norm).filter(Boolean);
-    for (const n of foes.names) { const x = norm(n); if (list.some((k) => x === k || x.includes(k))) return true; }
+    for (const n of [...foes.names, ...(foes.near || [])]) { const x = norm(n); if (list.some((k) => x === k || x.includes(k))) return true; }
     return false;
   }
   const LOOT_SEL = '.loot-wnd, .loots-window, .loot-window, [class*="loot-window"], [class*="loots-window"]';
@@ -186,7 +187,9 @@
     const out = {};
     for (const w of arr) {
       const id = idOf(w);
-      if (!sameTeam(w) && !party.has(id)) {          // przeciwnik — zapamiętujemy nazwę (rozpoznanie kolosa)
+      // przeciwnik (NPC ma ujemne id; gracz z drugiej drużyny) — zapamiętujemy nazwę (rozpoznanie kolosa).
+      // Wcześniej przy nieodczytanej drużynie nikt nie był „przeciwnikiem", więc kolosa nie dało się rozpoznać.
+      if (!(id > 0) || (myTeam != null && !sameTeam(w) && !party.has(id))) {
         const nm = f(w, 'name') || f(w, 'nick');
         if (nm) foes.names.add(String(nm));
         if (/kolos/i.test(String(f(w, 'rank') || '') + ' ' + String(f(w, 'type') || '') + ' ' + String(f(w, 'wtName') || ''))) foes.kolos = true;
@@ -308,7 +311,15 @@
         if (muts.every((m) => skip(m.target) || [...m.addedNodes, ...m.removedNodes].every((x) => x.nodeType !== 1 || skip(x)))) return;
         run();
       }).observe(document.body, { childList: true, subtree: true });
-      bus.on('battle:start', () => { last = { ids: [], prof: {}, t: 0 }; foes = { names: new Set(), kolos: false }; });
+      bus.on('battle:start', () => {
+        last = { ids: [], prof: {}, t: 0 }; foes = { names: new Set(), kolos: false };
+        // zapas: kolosy stojące na mapie w chwili startu walki w pobliżu postaci (gdy walka nie poda nazw przeciwników)
+        try {
+          const h = game.hero(); const N = E().npcs; let list = N && (typeof N.check === 'function' ? N.check() : N.getDrawableList ? N.getDrawableList() : N);
+          list = Array.isArray(list) ? list : Object.values(list || {});
+          for (const n of list) { const d = (n && n.d) || n || {}; if (h && d.nick != null && Math.max(Math.abs(d.x - h.x), Math.abs(d.y - h.y)) <= 3) foes.near = (foes.near || []).concat(String(d.nick)); }
+        } catch {}
+      });
       setInterval(() => { if (cfg.enabled && game.ready() && E().battle && (game.inBattle() || (typeof E().battle.isBattleShow === 'function' && E().battle.isBattleShow()))) snapshot(); }, 500);
       bus.on('battle:end', () => { if (cfg.enabled) snapshot(); });
       MP.ktozlapie = { fighters, participants, debug: () => ({ uczestnicy: participants(), wymagania: Object.fromEntries(reqCache) }) };

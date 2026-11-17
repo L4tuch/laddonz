@@ -1,4 +1,4 @@
-/* ───────── wspólny dekorator przedmiotów (Jaki To Bon, Podpisownik, Szybka rączka) ───────── */
+/* ───────── wspólny dekorator przedmiotów (Podpisownik, Szybka rączka) ───────── */
 const itemDeco = {
   painters: [],     // fn(itemEl, item) -> [{cls, text, title}] | null
   add(fn) { this.painters.push(fn); },
@@ -79,34 +79,7 @@ MP.itemDeco = itemDeco;
   MP.legName = (code) => { const b = bonusOf(code); return b ? b.name : String(code); };
   MP.legKey = (code) => { const b = bonusOf(code); return b ? b.id : String(code); };
 
-  defineAddon({
-    id: 'jakibon', name: 'Jaki To Bon', icon: 'jakibon', color: ['#ff9a3c', '#d4561c'],
-    desc: 'Wyświetla na przedmiotach legendarnych skrót ich bonusu (np. OR, CBK, FO). Od razu widzisz, z jaką legendą masz do czynienia, we własnym ekwipunku i u innych graczy.',
-    defaults: { enabled: false, allItems: false, abbr: {} },
-    settings: [{ key: 'allItems', type: 'bool', label: 'Pokazuj też na przedmiotach w torbach', hint: 'Domyślnie tylko założone.' }],
-    render(box) {
-      const tb = el('tbody');
-      for (const b of BONUSES) {
-        const i = el('input', { class: 'mp-in', value: (cfg.abbr && cfg.abbr[b.id]) || b.id, style: { width: '70px' } });
-        i.onchange = () => { cfg.abbr = cfg.abbr || {}; cfg.abbr[b.id] = i.value.trim() || b.id; config.save(); bus.emit('deco'); };
-        tb.appendChild(el('tr', null, el('td', null, b.name), el('td', null, i)));
-      }
-      box.appendChild(el('div', { class: 'mp-card' }, el('h3', null, 'Skróty bonusów legendarnych'),
-        el('table', { class: 'mp-table' }, el('thead', null, el('tr', null, el('th', null, 'Bonus'), el('th', null, 'Skrót'))), tb),
-        seenCodes.size ? el('div', { class: 'mp-dim', style: { marginTop: '8px', fontSize: '11.5px' } }, 'Kody widziane w grze: ', el('span', { class: 'mp-mono' }, [...seenCodes].join(', '))) : null));
-    },
-    init(c) {
-      cfg = c;
-      if (!c._v17) { c._v17 = true; delete c.map; c.abbr = c.abbr || {}; config.save(); }
-      itemDeco.add((node, it) => {
-        if (!cfg.enabled || !it || !it.legbon) return null;
-        const other = /-showeq/.test(String(node.className)) || !!node.closest('.tip-wrapper');
-        if (!cfg.allItems && !other && !(it.st > 0)) return null;
-        return { cls: 'bon', text: abbr(it.legbon, it.raw), title: MP.legName(it.legbon) };
-      });
-    },
-    onToggle() { bus.emit('deco'); },
-  });
+  // Dodatek „Jaki To Bon” (skróty na przedmiotach) usunięty — zostają tylko nazwy/skróty bonusów do podsumowania w Pokaż EQ.
 })();
 
 /* ───────── Podpisownik ─────────
@@ -748,8 +721,7 @@ MP.itemDeco = itemDeco;
       box.appendChild(el('div', { class: 'dad-eq-slot', 'data-st': String(st), style: { left: c * 34 + 'px', top: r * 34 + 'px' }, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
         el('div', upg != null ? { class: 'item', 'data-upgrade': String(upg) } : { class: 'item' },
           el('div', { class: 'highlight' + (t ? ' ' + t + ' h-exist' : '') }),
-          it.icon ? el('img', { class: 'icon', src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
-          it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null)));
+          it.icon ? el('img', { class: 'icon', src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null)));
     };
     const loose = [];
     for (const it of items) {
@@ -764,8 +736,7 @@ MP.itemDeco = itemDeco;
   function layoutGrid(items) {
     if (cfg.compact) return gameGrid(items);
     const cell = (it) => el('div', { class: 'mp-eqcell ' + it.rarity, title: it.name ? `${it.name}${it.legbon ? ' — ' + MP.legName(it.legbon) : ''}` : '' },
-      it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null,
-      it.legbon ? el('div', { class: 'mp-ibadge bon' }, MP.legAbbr(it.legbon, it.raw)) : null);
+      it.icon ? el('img', { src: /^data:/.test(it.icon) ? it.icon : game.iconUrl(it.icon), alt: '' }) : null);
     if (!items.length) return el('div');
     const S = cfg.compact ? 34 : 36;
     // Układ okna „Ekwipunek Postaci": 3 kolumny × 4 rzędy. Geometrię (rozstaw slotów i przesunięcie siatki)
@@ -983,11 +954,7 @@ MP.itemDeco = itemDeco;
       for (const f of found) {
         const node = f.sl.querySelector('.item');
         if (!node) continue;
-        node.querySelectorAll(':scope > .mp-ibadge.bon').forEach((b) => b.remove());
-        if (f.it && f.it.legbon) {
-          if (getComputedStyle(node).position === 'static') node.style.position = 'relative';
-          node.appendChild(el('div', { class: 'mp-ibadge bon', title: MP.legName(f.it.legbon) }, MP.legAbbr(f.it.legbon, f.it.raw)));
-        }
+        node.querySelectorAll(':scope > .mp-ibadge.bon').forEach((b) => b.remove());   // skróty bonusów na przedmiotach — usunięte
       }
       // podsumowanie: same legendy
       const sum = {};
