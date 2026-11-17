@@ -839,6 +839,7 @@
 
   async function run(src, limit = 0) {
     if (running) return;
+    if (!cfg || !cfg.enabled) { toast('Ulepszarka jest wyłączona — włącz ją, żeby ulepszać', 'warn'); return; }
     if (game.inBattle()) { toast('Ulepszarka: najpierw skończ walkę', 'warn'); return; }
     dropMaxed();
     if (!slots().length) { toast('Ulepszarka: najpierw wskaż przedmiot do ulepszania', 'warn'); return; }

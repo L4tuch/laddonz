@@ -368,6 +368,7 @@ select.mp-lu-in{padding:0 2px;cursor:pointer}select.mp-lu-in option{background:#
 /* nakładki na przedmioty */
 .mp-ibadge{position:absolute;pointer-events:none;z-index:5;font:700 9px/1 "Segoe UI",system-ui,sans-serif;padding:2px 3px;border-radius:4px;background:rgba(10,10,18,.82);color:#ffd36b;border:1px solid rgba(255,211,107,.45);text-shadow:0 1px 1px #000;white-space:nowrap}
 .mp-ibadge.bon{top:-2px;right:-2px}
+.mp-locked button,.mp-locked .mp-btn,.mp-locked .mp-mini{opacity:.45;cursor:not-allowed!important}
 .mp-ibadge.sig{bottom:-3px;left:50%;transform:translateX(-50%);max-width:60px;overflow:hidden;text-overflow:ellipsis;color:#bfe3ff;border-color:rgba(120,190,255,.5)}
 .mp-ibadge.chance.zero{color:#ff8b8b;border-color:rgba(255,93,122,.5)}
 .mp-ibadge.chance{bottom:-14px;left:50%;transform:translateX(-50%);color:#9dffcf;border-color:rgba(61,220,151,.5);font-size:10px}

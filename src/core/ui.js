@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.2', d: '17.11.2026', items: [
+    'Wyłączony dodatek naprawdę nie działa: jego przyciski akcji (np. „Ulepsz teraz” w Ulepszarce) są zablokowane — także w okienku z paska skrótów. Ustawienia nadal można zmieniać.',
+  ] },
   { v: '1.0.1', d: '17.11.2026', items: [
     'Rozwinięte statystyki postaci wyświetlają się nad paskiem skrótów (pasek ich nie zasłania).',
     'Slayer: po przyjętym ataku nie wysyła drugiego, tylko czeka na start walki — koniec z komunikatem „Przeciwnik już się wylogował!”.',
@@ -308,6 +311,19 @@ const ui = {
     const cfg = addons.cfg(a.id);
     if (!compact) M.appendChild(el('p', { class: 'mp-desc' }, a.desc));
     if (a.notes) a.notes(cfg).forEach((n) => n && M.appendChild(note(n.type, n.text)));
+    // wyłączony dodatek: ustawienia można zmieniać, ale jego przyciski akcji (np. „Ulepsz teraz”) nie działają
+    const off = !cfg.enabled && a.id !== 'motywnik';
+    if (off) M.appendChild(note('warn', 'Dodatek jest wyłączony — możesz zmieniać ustawienia, ale jego funkcje nie działają, dopóki go nie włączysz.'));
+    const lockBox = (box) => {
+      if (!off) return;
+      box.classList.add('mp-locked');
+      box.addEventListener('click', (e) => {
+        const b = e.target.closest('button, .mp-btn, .mp-mini, [role="button"]');
+        if (!b || !box.contains(b)) return;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        toast(`${a.name} jest wyłączony — najpierw go włącz`, 'warn');
+      }, true);
+    };
     let renderBox = null;
     if (a.render && a.renderFirst) { renderBox = el('div'); M.appendChild(renderBox); }
     if (a.settings && a.settings.length) {
@@ -323,6 +339,7 @@ const ui = {
       const box = renderBox || el('div');
       if (!renderBox) M.appendChild(box);
       try { a.render(box, cfg, rerender); } catch (e) { box.appendChild(note('bad', 'Błąd widoku: ' + e.message)); }
+      lockBox(box);
     }
   },
 
