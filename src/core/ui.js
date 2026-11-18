@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.3', d: '18.11.2026', items: [
+    'Motywy: własny styl CSS działa także ze stylem „Domyślny” — wcześniej przy „Domyślnym” wczytany styl się nie włączał.',
+  ] },
   { v: '1.0.2', d: '17.11.2026', items: [
     'Wyłączony dodatek naprawdę nie działa: jego przyciski akcji (np. „Ulepsz teraz” w Ulepszarce) są zablokowane — także w okienku z paska skrótów. Ustawienia nadal można zmieniać.',
   ] },

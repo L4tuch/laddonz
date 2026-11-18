@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.2
+// @version      1.0.3
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2297,6 +2297,9 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.3', d: '18.11.2026', items: [
+    'Motywy: własny styl CSS działa także ze stylem „Domyślny” — wcześniej przy „Domyślnym” wczytany styl się nie włączał.',
+  ] },
   { v: '1.0.2', d: '17.11.2026', items: [
     'Wyłączony dodatek naprawdę nie działa: jego przyciski akcji (np. „Ulepsz teraz” w Ulepszarce) są zablokowane — także w okienku z paska skrótów. Ustawienia nadal można zmieniać.',
   ] },
@@ -7569,6 +7572,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     document.removeEventListener('contextmenu', onCtx, true);
     ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi', 'mt-loot', 'mt-lc', 'mt-lcb', 'mt-lcard', 'mt-lslot', 'mt-lclear', 'mt-lin'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
   }
+  /** Motywy działają, gdy wybrano styl inny niż „Domyślny” ALBO włączono własny styl (także sam, na „Domyślnym”). */
+  const syncOn = () => { addons.setEnabled('motywnik', !!((cfg.theme && cfg.theme !== 'domyslny') || cfg.customOn)); };
   const active = () => !!(cfg && cfg.enabled && THEMES[cfg.theme] && !THEMES[cfg.theme].none);
 
   function apply() {
@@ -7649,7 +7654,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     if (!nm) return;
     const item = { id: uid(), name: nm, css: text };
     cfg.custom = (cfg.custom || []).concat(item); cfg.customOn = item.id;
-    config.save(); apply(); rerender();
+    syncOn(); config.save(); apply(); rerender();
     toast(`Motywnik: zapisano i włączono styl „${nm}"`);
   }
   function loadFile(rerender) {
@@ -7689,18 +7694,18 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     settings: [],
     render(box, c, rerender) {
       const grid = el('div', { class: 'mp-mt-grid' });
-      for (const [k, t] of Object.entries(THEMES)) grid.appendChild(el('div', { class: 'mp-mt-card' + ((c.enabled ? c.theme : 'domyslny') === k ? ' on' : ''), onclick: () => { c.theme = k; addons.setEnabled('motywnik', k !== 'domyslny'); config.save(); apply(); rerender(); } }, preview(k), el('div', { class: 'mp-mt-name' }, t.name), el('div', { class: 'mp-mt-desc' }, t.desc)));
+      for (const [k, t] of Object.entries(THEMES)) grid.appendChild(el('div', { class: 'mp-mt-card' + ((c.enabled ? c.theme : 'domyslny') === k ? ' on' : ''), onclick: () => { c.theme = k; syncOn(); config.save(); apply(); rerender(); } }, preview(k), el('div', { class: 'mp-mt-name' }, t.name), el('div', { class: 'mp-mt-desc' }, t.desc)));
       const tc = el('div', { class: 'mp-card' }, el('h3', null, 'Styl interfejsu'), grid);
       let editing = null;
       const ta = el('textarea', { class: 'mp-in', placeholder: '/* Własny CSS, np.:\n.button.green { color: #ffd27a !important; } */' });
       ta.addEventListener('keydown', (e) => e.stopPropagation());
       const list = el('div', { class: 'mp-mt-own' });
       (c.custom || []).forEach((s) => list.appendChild(el('div', { class: 'mp-mt-row' },
-        el('button', { class: 'mp-upchip' + (c.customOn === s.id ? ' on' : ''), onclick: () => { c.customOn = c.customOn === s.id ? null : s.id; config.save(); apply(); rerender(); } }, c.customOn === s.id ? 'Włączony' : 'Włącz'),
+        el('button', { class: 'mp-upchip' + (c.customOn === s.id ? ' on' : ''), onclick: () => { c.customOn = c.customOn === s.id ? null : s.id; syncOn(); config.save(); apply(); rerender(); } }, c.customOn === s.id ? 'Włączony' : 'Włącz'),
         el('b', { style: { flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, s.name),
         el('button', { class: 'mp-btn', onclick: () => { ta.value = s.css; ta.focus(); editing = s.id; } }, 'Edytuj'),
         el('button', { class: 'mp-btn', onclick: () => download(s.name, s.css) }, 'Pobierz'),
-        el('button', { class: 'mp-btn bad', onclick: async () => { if (await MP.confirmBox({ title: `Usunąć „${s.name}"?`, okText: 'Usuń', danger: true })) { c.custom = c.custom.filter((x) => x.id !== s.id); if (c.customOn === s.id) c.customOn = null; config.save(); apply(); rerender(); } } }, 'Usuń'))));
+        el('button', { class: 'mp-btn bad', onclick: async () => { if (await MP.confirmBox({ title: `Usunąć „${s.name}"?`, okText: 'Usuń', danger: true })) { c.custom = c.custom.filter((x) => x.id !== s.id); if (c.customOn === s.id) c.customOn = null; syncOn(); config.save(); apply(); rerender(); } } }, 'Usuń'))));
       const oc = el('div', { class: 'mp-card' }, el('h3', null, 'Własne style'),
         (c.custom || []).length ? list : el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Wklej CSS albo wczytaj plik .css. Działa razem z wybranym stylem (z „Domyślnym" jest jedyny).'),
         ta,
@@ -9231,5 +9236,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.2";
+MP.version = "1.0.3";
 })();

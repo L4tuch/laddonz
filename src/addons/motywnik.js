@@ -524,6 +524,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     document.removeEventListener('contextmenu', onCtx, true);
     ['mt-menu', 'mt-mi', 'mt-lt', 'mt-lt2', 'mt-lw', 'mt-bd', 'mt-b0', 'mt-b1', 'mt-b2', 'mt-bov', 'mt-btn', 'mt-skin', 'mt-frame', 'mt-plate', 'mt-plate-bi', 'mt-loot', 'mt-lc', 'mt-lcb', 'mt-lcard', 'mt-lslot', 'mt-lclear', 'mt-lin'].forEach((c) => $$('.' + c).forEach((n) => n.classList.remove(c)));
   }
+  /** Motywy działają, gdy wybrano styl inny niż „Domyślny” ALBO włączono własny styl (także sam, na „Domyślnym”). */
+  const syncOn = () => { addons.setEnabled('motywnik', !!((cfg.theme && cfg.theme !== 'domyslny') || cfg.customOn)); };
   const active = () => !!(cfg && cfg.enabled && THEMES[cfg.theme] && !THEMES[cfg.theme].none);
 
   function apply() {
@@ -604,7 +606,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     if (!nm) return;
     const item = { id: uid(), name: nm, css: text };
     cfg.custom = (cfg.custom || []).concat(item); cfg.customOn = item.id;
-    config.save(); apply(); rerender();
+    syncOn(); config.save(); apply(); rerender();
     toast(`Motywnik: zapisano i włączono styl „${nm}"`);
   }
   function loadFile(rerender) {
@@ -644,18 +646,18 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
     settings: [],
     render(box, c, rerender) {
       const grid = el('div', { class: 'mp-mt-grid' });
-      for (const [k, t] of Object.entries(THEMES)) grid.appendChild(el('div', { class: 'mp-mt-card' + ((c.enabled ? c.theme : 'domyslny') === k ? ' on' : ''), onclick: () => { c.theme = k; addons.setEnabled('motywnik', k !== 'domyslny'); config.save(); apply(); rerender(); } }, preview(k), el('div', { class: 'mp-mt-name' }, t.name), el('div', { class: 'mp-mt-desc' }, t.desc)));
+      for (const [k, t] of Object.entries(THEMES)) grid.appendChild(el('div', { class: 'mp-mt-card' + ((c.enabled ? c.theme : 'domyslny') === k ? ' on' : ''), onclick: () => { c.theme = k; syncOn(); config.save(); apply(); rerender(); } }, preview(k), el('div', { class: 'mp-mt-name' }, t.name), el('div', { class: 'mp-mt-desc' }, t.desc)));
       const tc = el('div', { class: 'mp-card' }, el('h3', null, 'Styl interfejsu'), grid);
       let editing = null;
       const ta = el('textarea', { class: 'mp-in', placeholder: '/* Własny CSS, np.:\n.button.green { color: #ffd27a !important; } */' });
       ta.addEventListener('keydown', (e) => e.stopPropagation());
       const list = el('div', { class: 'mp-mt-own' });
       (c.custom || []).forEach((s) => list.appendChild(el('div', { class: 'mp-mt-row' },
-        el('button', { class: 'mp-upchip' + (c.customOn === s.id ? ' on' : ''), onclick: () => { c.customOn = c.customOn === s.id ? null : s.id; config.save(); apply(); rerender(); } }, c.customOn === s.id ? 'Włączony' : 'Włącz'),
+        el('button', { class: 'mp-upchip' + (c.customOn === s.id ? ' on' : ''), onclick: () => { c.customOn = c.customOn === s.id ? null : s.id; syncOn(); config.save(); apply(); rerender(); } }, c.customOn === s.id ? 'Włączony' : 'Włącz'),
         el('b', { style: { flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, s.name),
         el('button', { class: 'mp-btn', onclick: () => { ta.value = s.css; ta.focus(); editing = s.id; } }, 'Edytuj'),
         el('button', { class: 'mp-btn', onclick: () => download(s.name, s.css) }, 'Pobierz'),
-        el('button', { class: 'mp-btn bad', onclick: async () => { if (await MP.confirmBox({ title: `Usunąć „${s.name}"?`, okText: 'Usuń', danger: true })) { c.custom = c.custom.filter((x) => x.id !== s.id); if (c.customOn === s.id) c.customOn = null; config.save(); apply(); rerender(); } } }, 'Usuń'))));
+        el('button', { class: 'mp-btn bad', onclick: async () => { if (await MP.confirmBox({ title: `Usunąć „${s.name}"?`, okText: 'Usuń', danger: true })) { c.custom = c.custom.filter((x) => x.id !== s.id); if (c.customOn === s.id) c.customOn = null; syncOn(); config.save(); apply(); rerender(); } } }, 'Usuń'))));
       const oc = el('div', { class: 'mp-card' }, el('h3', null, 'Własne style'),
         (c.custom || []).length ? list : el('div', { class: 'mp-dim', style: { marginBottom: '8px' } }, 'Wklej CSS albo wczytaj plik .css. Działa razem z wybranym stylem (z „Domyślnym" jest jedyny).'),
         ta,
