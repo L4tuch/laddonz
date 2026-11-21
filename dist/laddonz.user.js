@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         L4Tools — dodatki (NI)
 // @namespace    https://github.com/L4tuch/laddonz
-// @version      1.0.4
+// @version      1.0.5
 // @description  Panel dodatków do Margonem (nowy interfejs): Slayer, Bratan, Gracze na mapie+, Kto złapie, Lepsza Grupa, Legendarny Łup, Motywy i inne. Jedna akcja = jedno naciśnięcie, automaty domyślnie wyłączone.
 // @author       L4tuch
 // @icon         data:image/png;base64,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
@@ -2297,6 +2297,9 @@ MP.menus = menus;
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.5', d: '21.11.2026', items: [
+    'Motywy: „Karmazyn” w płaskim stylu — bez metalowych ramek, czerwony dym na paskach, cienkie linie, przyciemniona mapa i nowe kolory.',
+  ] },
   { v: '1.0.4', d: '21.11.2026', items: [
     'Motywy: nowy styl „Karmazyn” — głęboka czerń i krwista czerwień.',
   ] },
@@ -7094,9 +7097,9 @@ MP.itemDeco = itemDeco;
       btn: ['#2b2623', '#1a1715'], btnLine: 'rgba(205,100,45,.6)', btnText: '#f6ece1', head: '"Marcellus SC", "Roboto", Georgia, serif', fonts: ['Roboto:wght@400;500;700', 'Marcellus+SC'],
     },
     karmazyn: {
-      m: ['#ffd6d6', '#b3343a', '#3a0c10'], orn: 'diamond', xp: ['#8e0f1a', '#e8323f'], name: 'Karmazyn', desc: 'Głęboka czerń i krwista czerwień, ostre akcenty i ciemna poświata.',
-      bg0: '#070405', bg1: '#100809', bg2: '#1a0c0e', line: '#4a1418', line2: '#2a0d10', a1: '#e3283a', a2: '#8e0f1a', text: '#f3e6e6', text2: '#b39a9c',
-      glow: 'rgba(227,40,58,.32)', edge: 'rgba(160,15,30,.26)', tint: 'grayscale(1) brightness(.42) sepia(1) hue-rotate(-38deg) saturate(3.2)', blend: '#22090c',
+      m: ['#b8505a', '#6a1820', '#1e0507'], orn: 'smoke', flat: true, xp: ['#8e0f1a', '#e8323f'], name: 'Karmazyn', desc: 'Głęboka czerń i krwista czerwień, ostre akcenty i ciemna poświata.',
+      bg0: '#050205', bg1: '#0d0508', bg2: '#180a0f', line: '#4c0a12', line2: '#260810', a1: '#d11a2a', a2: '#8a101c', text: '#ece6e8', text2: '#c9b5b9',
+      glow: 'rgba(209,26,42,.28)', edge: 'rgba(138,16,28,.30)', tint: 'grayscale(1) brightness(.42) sepia(1) hue-rotate(-38deg) saturate(3.2)', blend: '#22090c',
       btn: ['#3a0e13', '#1c0709'], btnLine: 'rgba(227,40,58,.7)', btnText: '#ffe9ea', head: '"Cinzel", "Marcellus SC", Georgia, serif', fonts: ['Roboto:wght@400;500;700', 'Cinzel:wght@600;700'],
     },
     glebia: {
@@ -7236,6 +7239,11 @@ ${[[32, 64], [128, 160], [160, 32], [64, 128]].map(([x, y]) => `<circle cx='${x}
         }
       }
       body = facets;
+    } else if (t.orn === 'smoke') {
+      // czerwony dym na czerni (płaskie style)
+      w = 512; h = 256;
+      body = `<filter id='s' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.005 .016' numOctaves='4' seed='11' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .46  0 0 0 0 .03  0 0 0 0 .06  1.5 0 0 0 -.72'/></filter>
+<rect width='${w}' height='${h}' filter='url(#s)'/>`;
     } else if (t.orn === 'drop') {
       let bub = '';
       for (let i = 0; i < 9; i++) { const x = (r() * w).toFixed(1), y = (r() * h).toFixed(1), s = (r() * 2 + 0.8).toFixed(2); bub += `<circle cx='${x}' cy='${y}' r='${s}' fill='none' stroke='${t.m[0]}' stroke-width='.5' opacity='.22'/>`; }
@@ -7283,6 +7291,29 @@ ${[[32, 64], [128, 160], [160, 32], [64, 128]].map(([x, y]) => `<circle cx='${x}
     if (fontEl) fontEl.remove();
     fontEl = el('link', { rel: 'stylesheet', href });
     document.head.appendChild(fontEl);
+  }
+
+  /*
+   * Wygląd płaski (np. Karmazyn): bez metalowych listew i okuć — cienkie linie, dymne tło pasków i kolumn,
+   * przyciemniona mapa z winietą. Dokładany na końcu stylu, więc nadpisuje metalowe elementy.
+   */
+  function flatCss(t, IL) {
+    const sm = texture(t), SM = `${sm.url} 0 0 / ${sm.w}px ${sm.h}px repeat`;
+    const frame = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='104'><rect x='.5' y='.5' width='79' height='103' rx='3' fill='${t.bg1}' stroke='${t.line}'/><rect x='1' y='1' width='78' height='27' fill='${t.bg2}'/><rect x='1' y='27.5' width='78' height='.8' fill='${t.a2}' opacity='.8'/></svg>`);
+    return `
+/* ═══ wygląd płaski — ${t.name} ═══ */
+${IL} .left-column.main-column, ${IL} .right-column.main-column{background:linear-gradient(rgba(9,4,5,.86), rgba(9,4,5,.9)), ${SM}, ${t.bg0}!important}
+${IL} .left-column.main-column > .border, ${IL} .right-column.main-column > .border{background:linear-gradient(90deg, transparent 4px, ${t.a2} 4px, ${t.a2} 5px, transparent 5px)!important;opacity:1!important}
+${IL} .top.positioner > .bg{background:linear-gradient(transparent calc(100% - 1px), ${t.a2} calc(100% - 1px)), linear-gradient(rgba(6,2,3,.35), rgba(6,2,3,.55)), ${SM}, ${t.bg0}!important}
+${IL} .bottom.positioner > .bg{background:linear-gradient(${t.a2} 1px, transparent 1px), linear-gradient(rgba(6,2,3,.55), rgba(6,2,3,.35)), ${SM}, ${t.bg0}!important}
+.c-window:not(.transparent).border-window, .additional-skill-panel-border{border-image-source:${frame}!important}
+.c-window:not(.transparent){box-shadow:0 10px 26px rgba(0,0,0,.75), 0 0 0 1px ${t.line}!important}
+.c-window:not(.transparent) .header-label{border-image:none!important;background:linear-gradient(${t.bg2},${t.bg0})!important;box-shadow:0 0 0 1px ${t.a2}, 0 0 10px ${t.glow}!important;border-radius:3px;filter:none!important}
+.c-window .close-button{border-radius:3px!important}
+${IL} .game-layer > canvas{filter:brightness(.72) saturate(.85)}
+${IL} .game-layer::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse 78% 72% at 50% 50%, transparent 52%, rgba(0,0,0,.55))}
+body::after{box-shadow:inset 0 0 30px ${t.edge}!important}
+`;
   }
 
   function css(t) {
@@ -7440,7 +7471,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
 /* — przewijanie — */
 .game-window-positioner ::-webkit-scrollbar-thumb{background:${t.line}!important}
-`;
+${t.flat ? flatCss(t, IL) : ''}`;
   }
 
   /* ── menu prawego przycisku i ciemny tekst ── */
@@ -9245,5 +9276,5 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
   }
 })();
 
-MP.version = "1.0.4";
+MP.version = "1.0.5";
 })();

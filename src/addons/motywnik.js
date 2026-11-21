@@ -43,9 +43,9 @@
       btn: ['#2b2623', '#1a1715'], btnLine: 'rgba(205,100,45,.6)', btnText: '#f6ece1', head: '"Marcellus SC", "Roboto", Georgia, serif', fonts: ['Roboto:wght@400;500;700', 'Marcellus+SC'],
     },
     karmazyn: {
-      m: ['#ffd6d6', '#b3343a', '#3a0c10'], orn: 'diamond', xp: ['#8e0f1a', '#e8323f'], name: 'Karmazyn', desc: 'Głęboka czerń i krwista czerwień, ostre akcenty i ciemna poświata.',
-      bg0: '#070405', bg1: '#100809', bg2: '#1a0c0e', line: '#4a1418', line2: '#2a0d10', a1: '#e3283a', a2: '#8e0f1a', text: '#f3e6e6', text2: '#b39a9c',
-      glow: 'rgba(227,40,58,.32)', edge: 'rgba(160,15,30,.26)', tint: 'grayscale(1) brightness(.42) sepia(1) hue-rotate(-38deg) saturate(3.2)', blend: '#22090c',
+      m: ['#b8505a', '#6a1820', '#1e0507'], orn: 'smoke', flat: true, xp: ['#8e0f1a', '#e8323f'], name: 'Karmazyn', desc: 'Głęboka czerń i krwista czerwień, ostre akcenty i ciemna poświata.',
+      bg0: '#050205', bg1: '#0d0508', bg2: '#180a0f', line: '#4c0a12', line2: '#260810', a1: '#d11a2a', a2: '#8a101c', text: '#ece6e8', text2: '#c9b5b9',
+      glow: 'rgba(209,26,42,.28)', edge: 'rgba(138,16,28,.30)', tint: 'grayscale(1) brightness(.42) sepia(1) hue-rotate(-38deg) saturate(3.2)', blend: '#22090c',
       btn: ['#3a0e13', '#1c0709'], btnLine: 'rgba(227,40,58,.7)', btnText: '#ffe9ea', head: '"Cinzel", "Marcellus SC", Georgia, serif', fonts: ['Roboto:wght@400;500;700', 'Cinzel:wght@600;700'],
     },
     glebia: {
@@ -185,6 +185,11 @@ ${[[32, 64], [128, 160], [160, 32], [64, 128]].map(([x, y]) => `<circle cx='${x}
         }
       }
       body = facets;
+    } else if (t.orn === 'smoke') {
+      // czerwony dym na czerni (płaskie style)
+      w = 512; h = 256;
+      body = `<filter id='s' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.005 .016' numOctaves='4' seed='11' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .46  0 0 0 0 .03  0 0 0 0 .06  1.5 0 0 0 -.72'/></filter>
+<rect width='${w}' height='${h}' filter='url(#s)'/>`;
     } else if (t.orn === 'drop') {
       let bub = '';
       for (let i = 0; i < 9; i++) { const x = (r() * w).toFixed(1), y = (r() * h).toFixed(1), s = (r() * 2 + 0.8).toFixed(2); bub += `<circle cx='${x}' cy='${y}' r='${s}' fill='none' stroke='${t.m[0]}' stroke-width='.5' opacity='.22'/>`; }
@@ -232,6 +237,29 @@ ${[[32, 64], [128, 160], [160, 32], [64, 128]].map(([x, y]) => `<circle cx='${x}
     if (fontEl) fontEl.remove();
     fontEl = el('link', { rel: 'stylesheet', href });
     document.head.appendChild(fontEl);
+  }
+
+  /*
+   * Wygląd płaski (np. Karmazyn): bez metalowych listew i okuć — cienkie linie, dymne tło pasków i kolumn,
+   * przyciemniona mapa z winietą. Dokładany na końcu stylu, więc nadpisuje metalowe elementy.
+   */
+  function flatCss(t, IL) {
+    const sm = texture(t), SM = `${sm.url} 0 0 / ${sm.w}px ${sm.h}px repeat`;
+    const frame = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='80' height='104'><rect x='.5' y='.5' width='79' height='103' rx='3' fill='${t.bg1}' stroke='${t.line}'/><rect x='1' y='1' width='78' height='27' fill='${t.bg2}'/><rect x='1' y='27.5' width='78' height='.8' fill='${t.a2}' opacity='.8'/></svg>`);
+    return `
+/* ═══ wygląd płaski — ${t.name} ═══ */
+${IL} .left-column.main-column, ${IL} .right-column.main-column{background:linear-gradient(rgba(9,4,5,.86), rgba(9,4,5,.9)), ${SM}, ${t.bg0}!important}
+${IL} .left-column.main-column > .border, ${IL} .right-column.main-column > .border{background:linear-gradient(90deg, transparent 4px, ${t.a2} 4px, ${t.a2} 5px, transparent 5px)!important;opacity:1!important}
+${IL} .top.positioner > .bg{background:linear-gradient(transparent calc(100% - 1px), ${t.a2} calc(100% - 1px)), linear-gradient(rgba(6,2,3,.35), rgba(6,2,3,.55)), ${SM}, ${t.bg0}!important}
+${IL} .bottom.positioner > .bg{background:linear-gradient(${t.a2} 1px, transparent 1px), linear-gradient(rgba(6,2,3,.55), rgba(6,2,3,.35)), ${SM}, ${t.bg0}!important}
+.c-window:not(.transparent).border-window, .additional-skill-panel-border{border-image-source:${frame}!important}
+.c-window:not(.transparent){box-shadow:0 10px 26px rgba(0,0,0,.75), 0 0 0 1px ${t.line}!important}
+.c-window:not(.transparent) .header-label{border-image:none!important;background:linear-gradient(${t.bg2},${t.bg0})!important;box-shadow:0 0 0 1px ${t.a2}, 0 0 10px ${t.glow}!important;border-radius:3px;filter:none!important}
+.c-window .close-button{border-radius:3px!important}
+${IL} .game-layer > canvas{filter:brightness(.72) saturate(.85)}
+${IL} .game-layer::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse 78% 72% at 50% 50%, transparent 52%, rgba(0,0,0,.55))}
+body::after{box-shadow:inset 0 0 30px ${t.edge}!important}
+`;
   }
 
   function css(t) {
@@ -389,7 +417,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:214748
 
 /* — przewijanie — */
 .game-window-positioner ::-webkit-scrollbar-thumb{background:${t.line}!important}
-`;
+${t.flat ? flatCss(t, IL) : ''}`;
   }
 
   /* ── menu prawego przycisku i ciemny tekst ── */

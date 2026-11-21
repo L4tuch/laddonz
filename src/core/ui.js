@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.5', d: '21.11.2026', items: [
+    'Motywy: „Karmazyn” w płaskim stylu — bez metalowych ramek, czerwony dym na paskach, cienkie linie, przyciemniona mapa i nowe kolory.',
+  ] },
   { v: '1.0.4', d: '21.11.2026', items: [
     'Motywy: nowy styl „Karmazyn” — głęboka czerń i krwista czerwień.',
   ] },
