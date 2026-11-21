@@ -5,6 +5,9 @@
 
 /** Lista zmian — wyświetlana w zakładce Changelog (najnowsze na górze). */
 const CHANGELOG = [
+  { v: '1.0.4', d: '21.11.2026', items: [
+    'Motywy: nowy styl „Karmazyn” — głęboka czerń i krwista czerwień.',
+  ] },
   { v: '1.0.3', d: '18.11.2026', items: [
     'Motywy: własny styl CSS działa także ze stylem „Domyślny” — wcześniej przy „Domyślnym” wczytany styl się nie włączał.',
   ] },

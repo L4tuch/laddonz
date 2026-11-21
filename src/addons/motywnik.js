@@ -42,6 +42,12 @@
       glow: 'rgba(255,120,50,.18)', edge: 'rgba(255,110,40,.10)', tint: 'grayscale(1) brightness(.5) sepia(.55) hue-rotate(-12deg) saturate(1.3)', blend: '#1e1713',
       btn: ['#2b2623', '#1a1715'], btnLine: 'rgba(205,100,45,.6)', btnText: '#f6ece1', head: '"Marcellus SC", "Roboto", Georgia, serif', fonts: ['Roboto:wght@400;500;700', 'Marcellus+SC'],
     },
+    karmazyn: {
+      m: ['#ffd6d6', '#b3343a', '#3a0c10'], orn: 'diamond', xp: ['#8e0f1a', '#e8323f'], name: 'Karmazyn', desc: 'Głęboka czerń i krwista czerwień, ostre akcenty i ciemna poświata.',
+      bg0: '#070405', bg1: '#100809', bg2: '#1a0c0e', line: '#4a1418', line2: '#2a0d10', a1: '#e3283a', a2: '#8e0f1a', text: '#f3e6e6', text2: '#b39a9c',
+      glow: 'rgba(227,40,58,.32)', edge: 'rgba(160,15,30,.26)', tint: 'grayscale(1) brightness(.42) sepia(1) hue-rotate(-38deg) saturate(3.2)', blend: '#22090c',
+      btn: ['#3a0e13', '#1c0709'], btnLine: 'rgba(227,40,58,.7)', btnText: '#ffe9ea', head: '"Cinzel", "Marcellus SC", Georgia, serif', fonts: ['Roboto:wght@400;500;700', 'Cinzel:wght@600;700'],
+    },
     glebia: {
       m: ['#dafcff', '#5bb9cf', '#143f50'], orn: 'drop', xp: ['#1580b0', '#5fd0ff'], name: 'Głębia', desc: 'Ciemny ocean i chłodne, błękitne światło.',
       bg0: '#04101a', bg1: '#081b2a', bg2: '#0c273b', line: '#185070', line2: '#0f364c', a1: '#38bdf8', a2: '#22d3ee', text: '#e3f6ff', text2: '#8db7cc',
@@ -53,7 +59,7 @@
   /* ── grafiki ramek (SVG) — wymiary cięcia jak w grze ── */
   const strip = (t) => `<linearGradient id='a' x1='0' x2='1'><stop offset='0' stop-color='${t.a1}' stop-opacity='0'/><stop offset='.2' stop-color='${t.a1}'/><stop offset='.55' stop-color='${t.a3 || t.a2}'/><stop offset='.85' stop-color='${t.a2}'/><stop offset='1' stop-color='${t.a2}' stop-opacity='0'/></linearGradient><filter id='g' x='-10%' y='-200%' width='120%' height='500%'><feGaussianBlur stdDeviation='2.2'/></filter>`;
   /* ── grafika metalu ──
-   * Emblemat w narożnikach i na plakietkach: gwiazda (Zorza), nit (Dark), romb (Neon), żar (Obsydian), kropla (Głębia). */
+   * Emblemat w narożnikach i na plakietkach: gwiazda (Zorza), nit (Dark), romb (Neon, Karmazyn), żar (Obsydian), kropla (Głębia). */
   function emblem(t, cx, cy, r) {
     const [m1, m2, m3] = t.m;
     if (t.orn === 'star') {
